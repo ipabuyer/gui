@@ -1,0 +1,24 @@
+# VS和其他IDE的隐藏文件
+.vs/
+*.suo
+
+# 编译和打包输出目录
+bin/
+obj/
+
+# 用户专属项目文件
+*.user
+
+# 临时/中间产物
+*.intermediate
+*.cache
+*.Up2Date
+
+# 编译生成的二进制/调试文件
+*.dll
+*.exe
+*.pdb
+*.xbf
+*.pri
+*.deps.json
+*.runtimeconfig.json
