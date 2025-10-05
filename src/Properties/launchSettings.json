@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "IPAbuyer (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "IPAbuyer (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
