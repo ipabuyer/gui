@@ -16,6 +16,8 @@ namespace IPAbuyer
         public App()
         {
             this.InitializeComponent();
+            IPAbuyer.Data.PurchasedAppDb.InitDb();
+            IPAbuyer.Data.AccountHistoryDb.InitDb();
         }
 
         /// <summary>
@@ -34,7 +36,16 @@ namespace IPAbuyer
                 window.Content = rootFrame;
             }
 
-            _ = rootFrame.Navigate(typeof(LoginPage), e.Arguments);
+            // 检查本地登录状态
+            bool isLoggedIn = IPAbuyer.Data.AccountHistoryDb.GetAccounts().Count > 0 && !IPAbuyer.Data.AccountHistoryDb.IsLogoutFlag();
+            if (isLoggedIn)
+            {
+                rootFrame.Navigate(typeof(IPAbuyer.Views.SearchPage), e.Arguments);
+            }
+            else
+            {
+                rootFrame.Navigate(typeof(IPAbuyer.Views.LoginPage), e.Arguments);
+            }
             window.Activate();
         }
 

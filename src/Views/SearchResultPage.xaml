@@ -6,7 +6,7 @@
     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="900" Spacing="24">
         <TextBlock Text="查询结果(双击购买)" Style="{StaticResource MyLabel}" FontSize="20" HorizontalAlignment="Center"/>
         <Button x:Name="BackButton" Content="返回" Style="{StaticResource Action}" Click="BackButton_Click" Width="80"/>
-        <ListView x:Name="ResultList" Height="600" Width="900" ScrollViewer.VerticalScrollBarVisibility="Auto">
+    <ListView x:Name="ResultList" Height="600" Width="900" ScrollViewer.VerticalScrollBarVisibility="Auto" SelectionMode="Multiple">
             <ListView.Header>
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -15,12 +15,14 @@
                         <ColumnDefinition Width="250"/>
                         <ColumnDefinition Width="80"/>
                         <ColumnDefinition Width="120"/>
+                        <ColumnDefinition Width="100"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="bundleID" Grid.Column="0" FontWeight="Bold"/>
                     <TextBlock Text="id" Grid.Column="1" FontWeight="Bold"/>
                     <TextBlock Text="name" Grid.Column="2" FontWeight="Bold"/>
                     <TextBlock Text="price" Grid.Column="3" FontWeight="Bold"/>
                     <TextBlock Text="version" Grid.Column="4" FontWeight="Bold"/>
+                    <TextBlock Text="purchased" Grid.Column="5" FontWeight="Bold"/>
                 </Grid>
             </ListView.Header>
             <ListView.ItemTemplate>
@@ -32,12 +34,14 @@
                             <ColumnDefinition Width="250"/>
                             <ColumnDefinition Width="80"/>
                             <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="100"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="{Binding bundleID}" Grid.Column="0"/>
                         <TextBlock Text="{Binding id}" Grid.Column="1"/>
                         <TextBlock Text="{Binding name}" Grid.Column="2"/>
                         <TextBlock Text="{Binding price}" Grid.Column="3"/>
                         <TextBlock Text="{Binding version}" Grid.Column="4"/>
+                        <TextBlock Text="{Binding purchased}" Grid.Column="5"/>
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>
@@ -45,6 +49,8 @@
         <StackPanel x:Name="PaginationPanel" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0" Spacing="8">
             <Button x:Name="PrevPageButton" Content="上一页" Click="PrevPageButton_Click"/>
             <Button x:Name="NextPageButton" Content="下一页" Click="NextPageButton_Click"/>
+            <Button x:Name="BatchPurchaseButton" Content="批量购买选中" Click="BatchPurchaseButton_Click" Style="{StaticResource PrimaryAction}" Margin="16,0,0,0"/>
+            <Button x:Name="RefreshButton" Content="刷新" Click="RefreshButton_Click" Style="{StaticResource Action}" Margin="16,0,0,0"/>
         </StackPanel>
     </StackPanel>
 </Page>

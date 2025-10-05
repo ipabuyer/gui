@@ -1,6 +1,8 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System.Diagnostics;
+using IPAbuyer.Data;
+using System.Linq;
 
 namespace IPAbuyer.Views
 {
@@ -13,11 +15,32 @@ namespace IPAbuyer.Views
         public LoginPage()
         {
             this.InitializeComponent();
+            LoadAccountHistory();
+            EmailComboBox.SelectionChanged += EmailComboBox_SelectionChanged;
+        }
+
+        private void LoadAccountHistory()
+        {
+            var accounts = AccountHistoryDb.GetAccounts();
+            EmailComboBox.ItemsSource = accounts.Select(a => a.email).ToList();
+        }
+
+        private void EmailComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (EmailComboBox.SelectedItem is string selectedEmail)
+            {
+                var accounts = AccountHistoryDb.GetAccounts();
+                var acc = accounts.FirstOrDefault(a => a.email == selectedEmail);
+                if (acc != default)
+                {
+                    PasswordBox.Password = acc.password;
+                }
+            }
         }
 
         private async void NextButton_Click(object sender, RoutedEventArgs e)
         {
-            email = EmailBox.Text.Trim();
+            email = EmailComboBox.SelectedItem as string ?? EmailComboBox.Text.Trim();
             password = PasswordBox.Password;
             ResultText.Text = "";
 
@@ -28,7 +51,7 @@ namespace IPAbuyer.Views
             }
 
             NextButton.IsEnabled = false;
-            EmailBox.IsEnabled = false;
+            EmailComboBox.IsEnabled = false;
             PasswordBox.IsEnabled = false;
 
             // 第一次调用命令
@@ -37,8 +60,23 @@ namespace IPAbuyer.Views
 
             if (result.Contains("success=true") || result.Contains("[36msuccess=[0mtrue")||(result.Contains("success")&&result.Contains("success") ))
             {
-                // 登录成功，跳转到 MainPage
-                    Frame.Navigate(typeof(SearchPage));
+                // 登录成功，保存账号密码到历史库（仅当邮箱不存在时插入，否则只更新密码）
+                var accounts = AccountHistoryDb.GetAccounts();
+                var exists = accounts.Any(a => a.email == email);
+                if (!exists)
+                {
+                    AccountHistoryDb.SaveAccount(email, password);
+                }
+                else
+                {
+                    // 邮箱已存在，仅更新密码（如有变化）
+                    var acc = accounts.FirstOrDefault(a => a.email == email);
+                    if (acc.password != password)
+                        AccountHistoryDb.SaveAccount(email, password);
+                }
+                // 登录成功后清除退出标记
+                IPAbuyer.Data.AccountHistoryDb.ClearLogoutFlag();
+                Frame.Navigate(typeof(SearchPage));
                 return;
             }
             if (result.Contains("请输入验证码") || result.Contains("auth code") || result.Contains("2FA code is required"))
@@ -49,7 +87,7 @@ namespace IPAbuyer.Views
             {
                 ResultText.Text = result;
                 NextButton.IsEnabled = true;
-                EmailBox.IsEnabled = true;
+                EmailComboBox.IsEnabled = true;
                 PasswordBox.IsEnabled = true;
             }
         }
@@ -73,8 +111,22 @@ namespace IPAbuyer.Views
             // 判断登录成功
             if (result.Contains("success=true") || result.Contains("[36msuccess=[0mtrue")||(result.Contains("success")&&result.Contains("success") ))
             {
-                // 跳转到 MainPage
-                    Frame.Navigate(typeof(SearchPage));
+                // 登录成功，保存账号密码到历史库（仅当邮箱不存在时插入，否则只更新密码）
+                var accounts = AccountHistoryDb.GetAccounts();
+                var exists = accounts.Any(a => a.email == email);
+                if (!exists)
+                {
+                    AccountHistoryDb.SaveAccount(email, password);
+                }
+                else
+                {
+                    var acc = accounts.FirstOrDefault(a => a.email == email);
+                    if (acc.password != password)
+                        AccountHistoryDb.SaveAccount(email, password);
+                }
+                // 登录成功后清除退出标记
+                IPAbuyer.Data.AccountHistoryDb.ClearLogoutFlag();
+                Frame.Navigate(typeof(SearchPage));
             }
         }
 

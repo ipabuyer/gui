@@ -22,7 +22,7 @@ namespace IPAbuyer.Views
                 return;
             }
             SearchButton.IsEnabled = false;
-            string cmd = $"./ipatool.exe search --keychain-passphrase {keychainPassphrase} {appName} --limit 100";
+            string cmd = $"./ipatool.exe search --keychain-passphrase {keychainPassphrase} {appName} --limit 100 --non-interactive --format json";
             var result = await RunCommandAsync(cmd);
             SearchButton.IsEnabled = true;
 
@@ -79,6 +79,16 @@ namespace IPAbuyer.Views
             {
                 return $"命令执行失败: {ex.Message}";
             }
+        }
+
+        private void PurchasedHistoryButton_Click(object sender, RoutedEventArgs e)
+        {
+            Frame.Navigate(typeof(PurchasedListPage));
+        }
+        private void LogoutButton_Click(object sender, RoutedEventArgs e)
+        {
+            IPAbuyer.Data.AccountHistoryDb.SetLogoutFlag();
+            Frame.Navigate(typeof(LoginPage));
         }
     }
 }
