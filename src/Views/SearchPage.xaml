@@ -1,0 +1,12 @@
+<Page
+    x:Class="IPAbuyer.Views.SearchPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="320" Spacing="16">
+        <TextBlock Text="App查询" Style="{StaticResource MyLabel}" FontSize="20" HorizontalAlignment="Center"/>
+        <TextBox x:Name="AppNameBox" Header="APP名称" PlaceholderText="请输入APP名称"/>
+        <Button x:Name="SearchButton" Content="查询" Style="{StaticResource PrimaryAction}" Click="SearchButton_Click"/>
+        <TextBlock x:Name="ResultText" TextWrapping="Wrap"/>
+    </StackPanel>
+</Page>

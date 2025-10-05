@@ -34,7 +34,7 @@ namespace IPAbuyer
                 window.Content = rootFrame;
             }
 
-            _ = rootFrame.Navigate(typeof(MainPage), e.Arguments);
+            _ = rootFrame.Navigate(typeof(LoginPage), e.Arguments);
             window.Activate();
         }
 
