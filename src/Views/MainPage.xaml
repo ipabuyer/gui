@@ -16,23 +16,23 @@
                 FontSize="24"
                 HorizontalAlignment="Center"
                 Style="{StaticResource MyLabel}"
-                Text="Hello, World!" />
+                Text="Hello, World!"/>
             <TextBlock
                 FontSize="20"
                 HorizontalAlignment="Center"
                 Style="{StaticResource MyLabel}"
-                Text="Welcome to WinUI 3!" />
+                Text="Welcome to WinUI 3!"/>
             <TextBlock
                 x:Name="txtCount"
                 FontSize="16"
                 HorizontalAlignment="Center"
                 Style="{StaticResource MyLabel}"
-                Text="Current count: 0" />
+                Text="Current count: 0"/>
             <Button
                 Click="OnCountClicked"
                 Content="Click Me"
                 HorizontalAlignment="Center"
-                Style="{StaticResource PrimaryAction}" />
+                Style="{StaticResource PrimaryAction}"/>
         </StackPanel>
     </Page.Content>
 </Page>

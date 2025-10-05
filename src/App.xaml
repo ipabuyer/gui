@@ -10,39 +10,44 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls"/>
                 <!-- Other merged dictionaries here -->
             </ResourceDictionary.MergedDictionaries>
             <!-- Other app resources here -->
             <Color x:Key="Primary">#512BD4</Color>
 
-            <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}" />
-            <SolidColorBrush x:Key="WhiteBrush" Color="White" />
-            <SolidColorBrush x:Key="BlackBrush" Color="Black" />
+            <SolidColorBrush x:Key="PrimaryBrush"
+                    Color="{StaticResource Primary}"/>
+            <SolidColorBrush x:Key="WhiteBrush"
+                    Color="White"/>
+            <SolidColorBrush x:Key="BlackBrush"
+                    Color="Black"/>
 
             <x:Double x:Key="AppFontSize">14</x:Double>
 
-            <Style x:Key="MyLabel" TargetType="TextBlock">
+            <Style x:Key="MyLabel"
+                    TargetType="TextBlock">
                 <Setter Property="Foreground"
-                        Value="{StaticResource PrimaryBrush}" />
+                        Value="{StaticResource PrimaryBrush}"/>
             </Style>
 
-            <Style x:Key="Action" TargetType="Button">
+            <Style x:Key="Action"
+                    TargetType="Button">
                 <Setter Property="FontSize"
-                        Value="{StaticResource AppFontSize}" />
+                        Value="{StaticResource AppFontSize}"/>
                 <Setter Property="Padding"
-                        Value="14,10" />
+                        Value="14,10"/>
             </Style>
 
             <Style x:Key="PrimaryAction"
                    TargetType="Button"
                    BasedOn="{StaticResource Action}">
                 <Setter Property="Background"
-                        Value="{StaticResource PrimaryBrush}" />
+                        Value="{StaticResource PrimaryBrush}"/>
                 <Setter Property="CornerRadius"
-                        Value="8" />
+                        Value="8"/>
                 <Setter Property="Foreground"
-                        Value="{StaticResource WhiteBrush}" />
+                        Value="{StaticResource WhiteBrush}"/>
             </Style>
         </ResourceDictionary>
     </Application.Resources>
