@@ -19,7 +19,7 @@
         <TextBlock Text="登录" Style="{StaticResource MyLabel}" FontSize="20" Grid.Row="0" Grid.ColumnSpan="2" HorizontalAlignment="Center" Margin="0,0,0,16"/>
         <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="16" Margin="0,0,0,12">
             <TextBlock Text="邮箱" VerticalAlignment="Center" Margin="0,0,8,0" Width="40"/>
-            <ComboBox x:Name="EmailComboBox" Width="200" IsEditable="True"/>
+            <ComboBox x:Name="EmailComboBox" PlaceholderText="请输入邮箱或手机号" Width="200" IsEditable="True"/>
         </StackPanel>
         <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="16" Margin="0,0,0,12">
             <TextBlock Text="密码" VerticalAlignment="Center" Margin="0,0,8,0" Width="40"/>
