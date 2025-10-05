@@ -1,11 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36518.9 d17.14
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11018.127 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "ipabuyer (Package)", "ipabuyer (Package)\ipabuyer (Package).wapproj", "{5AF9D5CF-3C83-4BBD-A8AD-FD05EEFD67F9}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ipabuyer", "ipabuyer\ipabuyer.csproj", "{A9C0367A-2AE1-4E34-967D-9D40AA522319}"
+Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "IPAbuyer", "..\package\IPAbuyer.wapproj", "{5AF9D5CF-3C83-4BBD-A8AD-FD05EEFD67F9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,23 +33,11 @@ Global
 		{5AF9D5CF-3C83-4BBD-A8AD-FD05EEFD67F9}.Release|x86.ActiveCfg = Release|x86
 		{5AF9D5CF-3C83-4BBD-A8AD-FD05EEFD67F9}.Release|x86.Build.0 = Release|x86
 		{5AF9D5CF-3C83-4BBD-A8AD-FD05EEFD67F9}.Release|x86.Deploy.0 = Release|x86
-		{A9C0367A-2AE1-4E34-967D-9D40AA522319}.Debug|ARM64.ActiveCfg = Debug|ARM64
-		{A9C0367A-2AE1-4E34-967D-9D40AA522319}.Debug|ARM64.Build.0 = Debug|ARM64
-		{A9C0367A-2AE1-4E34-967D-9D40AA522319}.Debug|x64.ActiveCfg = Debug|x64
-		{A9C0367A-2AE1-4E34-967D-9D40AA522319}.Debug|x64.Build.0 = Debug|x64
-		{A9C0367A-2AE1-4E34-967D-9D40AA522319}.Debug|x86.ActiveCfg = Debug|x86
-		{A9C0367A-2AE1-4E34-967D-9D40AA522319}.Debug|x86.Build.0 = Debug|x86
-		{A9C0367A-2AE1-4E34-967D-9D40AA522319}.Release|ARM64.ActiveCfg = Release|ARM64
-		{A9C0367A-2AE1-4E34-967D-9D40AA522319}.Release|ARM64.Build.0 = Release|ARM64
-		{A9C0367A-2AE1-4E34-967D-9D40AA522319}.Release|x64.ActiveCfg = Release|x64
-		{A9C0367A-2AE1-4E34-967D-9D40AA522319}.Release|x64.Build.0 = Release|x64
-		{A9C0367A-2AE1-4E34-967D-9D40AA522319}.Release|x86.ActiveCfg = Release|x86
-		{A9C0367A-2AE1-4E34-967D-9D40AA522319}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {07408FAB-CB90-4493-8D34-552E8CB79146}
+		SolutionGuid = {DF8EEAE8-57FA-4C02-A097-1D19020D20DC}
 	EndGlobalSection
 EndGlobal
