@@ -1,4 +1,6 @@
 using IPAbuyer.Views;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 namespace IPAbuyer.Views
 {

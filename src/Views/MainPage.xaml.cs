@@ -1,5 +1,8 @@
 using IPAbuyer.Data;
 using IPAbuyer.Views;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using System.Diagnostics;
 
 namespace IPAbuyer.Views
 {
