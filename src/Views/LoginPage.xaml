@@ -45,6 +45,12 @@
 
         <TextBlock x:Name="ResultText" HorizontalAlignment="Center" VerticalAlignment="Bottom" Foreground="Gray" TextWrapping="Wrap" Margin="0,0,0,0"/>
 
+        <!-- 警告弹窗 -->
+        <ContentDialog x:Name="WarningDialog"
+               Title="警告"
+               CloseButtonText="确认"
+               DefaultButton="Primary"/>
+
         <!-- 验证码弹窗 -->
         <ContentDialog x:Name="AuthCodeDialog"
                        Title="两步验证"
