@@ -59,49 +59,54 @@
                 <ListView.Header>
                     <Grid>
                         <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="2*"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock x:Name="name" Text="App名称" Grid.Column="0">
+                        <TextBlock x:Name="SelectAllApps" Text="App名称" Grid.Column="0" HorizontalAlignment="Center">
                         </TextBlock>
-                        <TextBlock x:Name="id" Text="AppID" Grid.Column="1">
+                        <TextBlock Text="AppID" Grid.Column="1" HorizontalAlignment="Center">
                         </TextBlock>
-                        <TextBlock x:Name="bundleID" Text="包名" Grid.Column="2">
+                        <TextBlock Text="包名" Grid.Column="2" HorizontalAlignment="Center">
                         </TextBlock>
-                        <TextBlock x:Name="version" Text="版本" Grid.Column="3">
+                        <TextBlock Text="版本" Grid.Column="3" HorizontalAlignment="Center">
                         </TextBlock>
-                        <TextBlock x:Name="price" Text="价格" Grid.Column="4">
+                        <TextBlock Text="价格" Grid.Column="4" HorizontalAlignment="Center">
                         </TextBlock>
-                        <TextBlock x:Name="purchased" Text="状态" Grid.Column="5">
+                        <TextBlock Text="状态" Grid.Column="5" HorizontalAlignment="Center">
                         </TextBlock>
                     </Grid>
                 </ListView.Header>
-                <ListView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid DoubleTapped="ResultRow_DoubleTapped">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                        <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="180"/>
-                                <ColumnDefinition Width="90"/>
-                                <ColumnDefinition Width="220"/>
-                                <ColumnDefinition Width="70"/>
-                                <ColumnDefinition Width="120"/>
-                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="{Binding bundleID}" Grid.Column="0"/>
-                            <TextBlock Text="{Binding bundleID}" Grid.Column="0" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding bundleID}"/>
-                            <TextBlock Text="{Binding id}" Grid.Column="1"/>
-                            <TextBlock Text="{Binding name}" Grid.Column="2"/>
-                            <TextBlock Text="{Binding price}" Grid.Column="3"/>
-                            <TextBlock Text="{Binding version}" Grid.Column="4"/>
-                            <TextBlock Text="{Binding purchased}" Grid.Column="5"/>
+                            <TextBlock Grid.Column="0" Text="{Binding name}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding name}" HorizontalAlignment="Left">
+                            </TextBlock>
+                            <TextBlock Grid.Column="1" Text="{Binding id}" HorizontalAlignment="Center">
+                            </TextBlock>
+                            <TextBlock Grid.Column="2" Text="{Binding bundleID}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding bundleID}" HorizontalAlignment="Center">
+                            </TextBlock>
+                            <TextBlock Grid.Column="3" Text="{Binding version}" HorizontalAlignment="Center">
+                            </TextBlock>
+                            <TextBlock Grid.Column="4" Text="{Binding price}" HorizontalAlignment="Center">
+                            </TextBlock>
+                            <TextBlock Grid.Column="5" Text="{Binding purchased}" HorizontalAlignment="Center">
+                            </TextBlock>
                         </Grid>
                     </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
+                    </ListView.ItemTemplate>
+                </ListView>
         </Border>
         <TextBlock VerticalAlignment="Bottom" x:Name="ResultText" TextWrapping="Wrap" Margin="40,0,40,0">
             状态栏
