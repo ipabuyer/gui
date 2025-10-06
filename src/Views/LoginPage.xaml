@@ -7,7 +7,7 @@
         <TextBlock HorizontalAlignment="Center" VerticalAlignment="Top" Grid.Column="0" FontSize="16" Margin="0,100,0,0">
             输入您的Apple ID与密码以登录
         </TextBlock>
-        <Grid Margin="40,120,40,0" MinHeight="200">
+        <Grid Margin="40,150,40,0" Height="250" HorizontalAlignment="Center" VerticalAlignment="Top">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="*"/>
