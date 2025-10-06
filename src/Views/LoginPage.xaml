@@ -30,4 +30,5 @@
             <Button x:Name="LoginButton" Content="登录" Click="LoginButton_Click"/>
         </StackPanel>
     </Grid>
+    <TextBlock x:Name="ResultText" Foreground="Red" TextWrapping="Wrap" Grid.Row="5" Grid.ColumnSpan="2" Margin="0,12,0,0"/>
 </Page>
