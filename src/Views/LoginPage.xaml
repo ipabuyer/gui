@@ -29,6 +29,6 @@
             <TextBox x:Name="CodeBox" Header="验证码" PlaceholderText="请输入6位验证码" MaxLength="6" Width="120"/>
             <Button x:Name="LoginButton" Content="登录" Click="LoginButton_Click"/>
         </StackPanel>
+        <TextBlock x:Name="ResultText" Foreground="Red" TextWrapping="Wrap" Grid.Row="5" Grid.ColumnSpan="2" Margin="0,12,0,0"/>
     </Grid>
-    <TextBlock x:Name="ResultText" Foreground="Red" TextWrapping="Wrap" Grid.Row="5" Grid.ColumnSpan="2" Margin="0,12,0,0"/>
 </Page>
