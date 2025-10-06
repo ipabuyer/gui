@@ -88,12 +88,13 @@ namespace IPAbuyer.Views
                 var result = await RunCommandAsync(cmd);
 
                 // 判断是否需要2FA
-                if (result.Contains("2FA required") || result.Contains("auth code") || result.Contains("authentication code"))
+                if (result.Contains("2FA required") || result.Contains("auth code") || result.Contains("authentication code")||result.Contains("error") && result.Contains("something went wrong")|| result.Contains("\"success\":false"))
                 {
                     await ShowAuthCodeDialog();
                     return;
                 }
                 // 判断是否为邮箱或密码错误
+                /*
                 if ((result.Contains("error") && result.Contains("something went wrong")) || (result.Contains("\"success\":false")))
                 {
                     var dialog = new ContentDialog
@@ -110,6 +111,7 @@ namespace IPAbuyer.Views
                     NextButton.IsEnabled = true;
                     return;
                 }
+                */
                 // 登录成功
                 if (result.Contains("\"success\":true"))
                 {
@@ -199,12 +201,12 @@ namespace IPAbuyer.Views
                     var dialog = new ContentDialog
                     {
                         Title = "登录失败",
-                        Content = "账号或密码错误，请检查后重试。",
+                        Content = "Apple ID或密码错误，请检查后重试。",
                         CloseButtonText = "确定",
                         XamlRoot = this.XamlRoot
                     };
                     await dialog.ShowAsync();
-                    ResultText.Text = "登录失败，账号或密码错误";
+                    ResultText.Text = "登录失败，Apple ID或密码错误";
                     ResultText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
                     SetInputControlsEnabled(true);
                     NextButton.IsEnabled = true;
