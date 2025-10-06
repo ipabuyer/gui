@@ -17,12 +17,7 @@ namespace IPAbuyer.Views
             Frame.Navigate(typeof(MainPage));
         }
 
-        // 明暗模式 ComboBox 改变时触发
-        private void ThemeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-
-        }
-
+        // 明暗模式 ComboBox 改变时触发(已删除)
         // 跳转到开发者官网
         private async void GithubButton(object sender, RoutedEventArgs e)
         {
