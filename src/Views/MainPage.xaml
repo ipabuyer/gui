@@ -8,31 +8,121 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
     <Page.Content>
-        <StackPanel
-            HorizontalAlignment="Center"
-            Spacing="25"
-            VerticalAlignment="Center">
-            <TextBlock
-                FontSize="24"
-                HorizontalAlignment="Center"
-                Style="{StaticResource MyLabel}"
-                Text="Hello, World!"/>
-            <TextBlock
-                FontSize="20"
-                HorizontalAlignment="Center"
-                Style="{StaticResource MyLabel}"
-                Text="Welcome to WinUI 3!"/>
-            <TextBlock
-                x:Name="txtCount"
-                FontSize="16"
-                HorizontalAlignment="Center"
-                Style="{StaticResource MyLabel}"
-                Text="Current count: 0"/>
-            <Button
-                Click="OnCountClicked"
-                Content="Click Me"
-                HorizontalAlignment="Center"
-                Style="{StaticResource PrimaryAction}"/>
-        </StackPanel>
+        <Grid Margin="100,20,100,20">
+            <!-- 顶部右侧按钮区 -->
+            <Grid HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Background="Red" Foreground="White" x:Name="LogoutButton" MinWidth="100" Click="LogoutButton_Click" Margin="0,0,10,0">
+                    退出登录
+                </Button>
+                <Button Grid.Column="1" x:Name="SettingsButton" MinWidth="100" Click="SettingsButton_Click" Margin="0,0,0,0">
+                    软件设置
+                </Button>
+            </Grid>
+            <!-- 搜索区 -->
+            <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Margin="40,40,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="6*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0" x:Name="AppNameBox" MinWidth="300" MinHeight="20" PlaceholderText="请输入App名称">
+                </TextBox>
+                <Button Grid.Column="1" x:Name="SearchButton" Click="SearchButton_Click" MinHeight="30" MinWidth="100" Margin="16,0,0,0">
+                    开始查询
+                </Button>
+            </Grid>
+            <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Margin="40,90,0,0" Width="350">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="6*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Slider Grid.Column="0" x:Name="SearchLimit" Minimum="1" Maximum="100" Value="5" MinWidth="300" IsThumbToolTipEnabled="True" ValueChanged="SearchLimit_ValueChanged" />
+                <TextBlock x:Name="SearchLimitNumText" Text="5" Grid.Column="1" FontSize="14" Foreground="Gray" Margin="16,0,0,0" VerticalAlignment="Center" />
+            </Grid>
+
+            <!-- 操作按钮区 -->
+            <Grid HorizontalAlignment="Right" VerticalAlignment="Top" Margin="40,90,0,0" >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Margin="0,0,0,0" x:Name="BatchPurchaseButton" Click="BatchPurchaseButton_Click" MinWidth="100">
+                    购买
+                </Button>
+                <Button Grid.Column="1" Margin="10,0,0,0" x:Name="DownloadButton" Click="DownloadButton_Click" MinWidth="100">
+                    下载
+                </Button>
+                <Button Grid.Column="2" Margin="10,0,0,0" x:Name="PrevPageButton" Click="PrevPageButton_Click" MinWidth="100">
+                    上一页
+                </Button>
+                <Button Grid.Column="3" Margin="10,0,0,0" x:Name="NextPageButton" Click="NextPageButton_Click" MinWidth="100">
+                    下一页
+                </Button>
+            </Grid>
+            <!-- 表格区 -->
+            <Border CornerRadius="2" Background="AliceBlue" BorderBrush="White" BorderThickness="1" Margin="40,150,0,20">
+                <ListView x:Name="ResultList" Margin="10,10,10,10" SelectionMode="Multiple">
+                    <ListView.Header>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="SelectAllApps" Text="App名称" Grid.Column="0" HorizontalAlignment="Center">
+                            </TextBlock>
+                            <TextBlock Text="AppID" Grid.Column="1" HorizontalAlignment="Center">
+                            </TextBlock>
+                            <TextBlock Text="包名" Grid.Column="2" HorizontalAlignment="Center">
+                            </TextBlock>
+                            <TextBlock Text="版本" Grid.Column="3" HorizontalAlignment="Center">
+                            </TextBlock>
+                            <TextBlock Text="价格" Grid.Column="4" HorizontalAlignment="Center">
+                            </TextBlock>
+                            <TextBlock Text="状态" Grid.Column="5" HorizontalAlignment="Center">
+                            </TextBlock>
+                        </Grid>
+                    </ListView.Header>
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{Binding name}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding name}" HorizontalAlignment="Left">
+                                </TextBlock>
+                                <TextBlock Grid.Column="1" Text="{Binding id}" HorizontalAlignment="Center">
+                                </TextBlock>
+                                <TextBlock Grid.Column="2" Text="{Binding bundleID}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding bundleID}" HorizontalAlignment="Center">
+                                </TextBlock>
+                                <TextBlock Grid.Column="3" Text="{Binding version}" HorizontalAlignment="Center">
+                                </TextBlock>
+                                <TextBlock Grid.Column="4" Text="{Binding price}" HorizontalAlignment="Center">
+                                </TextBlock>
+                                <TextBlock Grid.Column="5" Text="{Binding purchased}" HorizontalAlignment="Center">
+                                </TextBlock>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Border>
+            <TextBlock Foreground="Gray" VerticalAlignment="Bottom" x:Name="ResultText" Text="状态栏" TextWrapping="Wrap" Margin="40,0,40,0">
+            </TextBlock>
+        </Grid>
     </Page.Content>
 </Page>
