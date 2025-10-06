@@ -192,6 +192,7 @@ namespace IPAbuyer.Views
 
             BatchPurchaseButton.IsEnabled = false;
             int success = 0, fail = 0, skip = 0;
+            List<string> failedOwnedNames = new List<string>();
             UpdateStatusBar($"开始购买 {selected.Count} 个应用...");
 
             foreach (var item in selected)
@@ -230,6 +231,7 @@ namespace IPAbuyer.Views
                         {
                             app.purchased = "已购买";
                             PurchasedAppDb.SavePurchasedApp(app.bundleID ?? "", app.name ?? "", app.version ?? "");
+                            failedOwnedNames.Add(app.name ?? "");
                             UpdateStatusBar($"购买失败但已拥有: {app.name}", true);
                         }
                         else
@@ -240,7 +242,10 @@ namespace IPAbuyer.Views
                 }
             }
 
-            UpdateStatusBar($"批量购买完成 - 成功: {success}, 失败: {fail}, 跳过: {skip}");
+            string extra = failedOwnedNames.Count > 0
+                ? $"，购买失败但已拥有: {failedOwnedNames.Count} 个 [{string.Join(", ", failedOwnedNames)}]"
+                : "";
+            UpdateStatusBar($"批量购买完成 - 成功: {success}, 失败: {fail}, 跳过: {skip}{extra}");
             BatchPurchaseButton.IsEnabled = true;
             RefreshPurchasedStatus();
         }

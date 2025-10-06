@@ -56,5 +56,16 @@ namespace IPAbuyer.Data
             }
             return list;
         }
+
+        public static void ClearAllPurchasedApps()
+        {
+            using (var conn = new SqliteConnection(connStr))
+            {
+                conn.Open();
+                var cmd = conn.CreateCommand();
+                cmd.CommandText = "DELETE FROM PurchasedApp";
+                cmd.ExecuteNonQuery();
+            }
+        }
     }
 }
