@@ -229,7 +229,7 @@ namespace IPAbuyer.Views
                         // 购买失败但为免费应用，视为已购买
                         if (app.price == "0")
                         {
-                            app.purchased = "已购买";
+                            app.purchased = "已拥有";
                             PurchasedAppDb.SavePurchasedApp(app.bundleID ?? "", app.name ?? "", app.version ?? "");
                             failedOwnedNames.Add(app.name ?? "");
                             UpdateStatusBar($"购买失败但已拥有: {app.name}", true);
@@ -243,7 +243,7 @@ namespace IPAbuyer.Views
             }
 
             string extra = failedOwnedNames.Count > 0
-                ? $"，购买失败但已拥有: {failedOwnedNames.Count} 个 [{string.Join(", ", failedOwnedNames)}]"
+                ? $"，购买失败但已拥有: {failedOwnedNames.Count} 个"
                 : "";
             UpdateStatusBar($"批量购买完成 - 成功: {success}, 失败: {fail}, 跳过: {skip}{extra}");
             BatchPurchaseButton.IsEnabled = true;
