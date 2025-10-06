@@ -42,29 +42,6 @@ namespace IPAbuyer.Views
             }
         }
 
-        // 双击购买事件
-        private async void ResultRow_DoubleTapped(object sender, Microsoft.UI.Xaml.Input.DoubleTappedRoutedEventArgs e)
-        {
-            if (sender is Grid grid && grid.DataContext is AppResult app)
-            {
-                if (app.price != "0")
-                {
-                    ResultText.Text = "购买失败，价格不为0";
-                    return;
-                }
-                string cmd = $"./ipatool.exe purchase --keychain-passphrase 12345678 --bundle-identifier {app.bundleID}";
-                string result = await RunCommandAsync(cmd);
-                if ((result.Contains("success") && result.Contains("true")) || result.Contains("购买成功"))
-                {
-                    ResultText.Text = "购买成功";
-                }
-                else
-                {
-                    ResultText.Text = "购买失败，已购买或其他错误";
-                }
-            }
-        }
-
         // 批量购买事件
         private async void BatchPurchaseButton_Click(object sender, RoutedEventArgs e)
         {
@@ -96,12 +73,6 @@ namespace IPAbuyer.Views
                 }
             }
             ResultText.Text = $"批量购买完成：成功{success}，失败{fail}，跳过{skip}";
-            RefreshPurchasedStatus();
-        }
-
-        // 刷新按钮事件
-        private void RefreshButton_Click(object sender, RoutedEventArgs e)
-        {
             RefreshPurchasedStatus();
         }
 
