@@ -11,19 +11,19 @@ namespace IPAbuyer.Views
             this.InitializeComponent();
         }
 
-        // ·µ»ØÊ×Ò³
+        // è¿”å›é¦–é¡µ
         private void BackToMainpage(object sender, RoutedEventArgs e)
         {
             Frame.Navigate(typeof(MainPage));
         }
 
-        // Ã÷°µÄ£Ê½ ComboBox ¸Ä±äÊ±´¥·¢
+        // æ˜æš—æ¨¡å¼ ComboBox æ”¹å˜æ—¶è§¦å‘
         private void ThemeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
 
         }
 
-        // Ìø×ªµ½¿ª·¢Õß¹ÙÍø
+        // è·³è½¬åˆ°å¼€å‘è€…å®˜ç½‘
         private async void GithubButton(object sender, RoutedEventArgs e)
         {
             var url = "https://github.com/ipabuyer/";
@@ -34,7 +34,7 @@ namespace IPAbuyer.Views
             });
         }
 
-        // Çå³ı±¾µØÊı¾İ¿â
+        // æ¸…é™¤æœ¬åœ°æ•°æ®åº“
         private async void DeleteDataBase(object sender, RoutedEventArgs e)
         {
 
