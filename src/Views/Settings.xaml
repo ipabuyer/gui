@@ -24,21 +24,6 @@
                     </Button>
                 </Grid>
 
-                <TextBlock Margin="20,30,20,0" Grid.Column="0" FontSize="20">
-                    明暗模式
-                </TextBlock>
-                <Grid Margin="40,20,40,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="5*"/>
-                        <ColumnDefinition Width="3*"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock VerticalAlignment="Center" Grid.Column="0" FontSize="16">选择应用的明暗模式</TextBlock>
-                    <ComboBox HorizontalAlignment="Right" Grid.Column="1" MinWidth="120" x:Name="ThemeComboBox" SelectedIndex="0" SelectionChanged="ThemeComboBox_SelectionChanged">
-                        <ComboBoxItem>跟随系统</ComboBoxItem>
-                        <ComboBoxItem>浅色模式</ComboBoxItem>
-                        <ComboBoxItem>深色模式</ComboBoxItem>
-                    </ComboBox>
-                </Grid>
                 <TextBlock Margin="20,20,0,0" FontSize="20">
                     软件相关
                 </TextBlock>
