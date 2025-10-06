@@ -34,10 +34,8 @@
                 <ColumnDefinition Width="6*"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Slider Grid.Column="0" x:Name="SearchLimit" Minimum="1" Maximum="100" Value="5" MinWidth="300" IsThumbToolTipEnabled="True" />
-            <TextBlock Text="{Binding SearchLimitNum}" Grid.Column="1" FontSize="14" Foreground="Gray" Margin="16,0,0,0" VerticalAlignment="Center">
-                5
-            </TextBlock>
+            <Slider Grid.Column="0" x:Name="SearchLimit" Minimum="1" Maximum="100" Value="5" MinWidth="300" IsThumbToolTipEnabled="True" ValueChanged="SearchLimit_ValueChanged" />
+            <TextBlock x:Name="SearchLimitNumText" Text="5" Grid.Column="1" FontSize="14" Foreground="Gray" Margin="16,0,0,0" VerticalAlignment="Center" />
         </Grid>
         
         <!-- 操作按钮区 -->

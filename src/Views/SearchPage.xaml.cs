@@ -7,15 +7,24 @@ namespace IPAbuyer.Views
 {
     public sealed partial class SearchPage : Page
     {
+        // 搜索范围属性
+        public int SearchLimitNum { get; set; } = 5;
+
+        private void SearchLimit_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+        {
+            SearchLimitNum = (int)e.NewValue;
+            var tb = this.FindName("SearchLimitNumText") as TextBlock;
+            if (tb != null) tb.Text = SearchLimitNum.ToString();
+        }
         // 查询结果数据模型
         public class AppResult
         {
-            public string bundleID { get; set; }
-            public string id { get; set; }
-            public string name { get; set; }
-            public string price { get; set; }
-            public string version { get; set; }
-            public string purchased { get; set; }
+            public string? bundleID { get; set; }
+            public string? id { get; set; }
+            public string? name { get; set; }
+            public string? price { get; set; }
+            public string? version { get; set; }
+            public string? purchased { get; set; }
         }
 
         private List<AppResult> allResults = new List<AppResult>();
@@ -110,7 +119,7 @@ namespace IPAbuyer.Views
                 return;
             }
             SearchButton.IsEnabled = false;
-            string cmd = $"./ipatool.exe search --keychain-passphrase {keychainPassphrase} {appName} --limit 100 --non-interactive --format json";
+            string cmd = $"./ipatool.exe search --keychain-passphrase {keychainPassphrase} {appName} --limit {SearchLimitNum} --non-interactive --format json";
             var result = await RunCommandAsync(cmd);
             SearchButton.IsEnabled = true;
 
