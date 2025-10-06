@@ -211,7 +211,7 @@ namespace IPAbuyer.Views
             }
         }
 
-        private void PurchasedHistoryButton_Click(object sender, RoutedEventArgs e)
+        private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
             Frame.Navigate(typeof(PurchasedListPage));
         }
@@ -219,6 +219,11 @@ namespace IPAbuyer.Views
         {
             IPAbuyer.Data.AccountHistoryDb.SetLogoutFlag();
             Frame.Navigate(typeof(LoginPage));
+        }
+        private void DownloadButton_Click(object sender, RoutedEventArgs e)
+        {
+            UpdatePage();
+            //Frame.Navigate(typeof(SettingPage));
         }
     }
 }
