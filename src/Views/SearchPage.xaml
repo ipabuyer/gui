@@ -29,7 +29,7 @@
                 开始查询
             </Button>
         </Grid>
-        <Slider HorizontalAlignment="Left" VerticalAlignment="Top" Margin="40,90,0,0" Minimum="1" Maximum="100" Value="5" Width="200" TickFrequency="10" IsThumbToolTipEnabled="True" />
+        <Slider x:Name="SearchLimit" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="40,90,0,0" Minimum="1" Maximum="100" Value="5" Width="200" TickFrequency="10" IsThumbToolTipEnabled="True" />
         <!-- 操作按钮区 -->
         <Grid HorizontalAlignment="Right" VerticalAlignment="Top" Margin="40,90,0,0" >
             <Grid.ColumnDefinitions>
