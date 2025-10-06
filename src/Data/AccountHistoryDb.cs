@@ -54,32 +54,13 @@ namespace IPAbuyer.Data
             {
                 conn.Open();
                 var cmd = conn.CreateCommand();
-                cmd.CommandText = "INSERT INTO AccountHistory (Email, Password) VALUES ($email, $password)";
+                cmd.CommandText = @"
+                DELETE FROM AccountHistory WHERE Email = $email;
+                INSERT INTO AccountHistory (Email, Password) VALUES ($email, $password)";
                 cmd.Parameters.AddWithValue("$email", email);
                 cmd.Parameters.AddWithValue("$password", password);
-                try
-                {
-                    cmd.ExecuteNonQuery();
-                }
-                catch (SqliteException ex)
-                {
-                    // 如果唯一约束冲突则更新密码
-                    if (ex.SqliteErrorCode == 19) // SQLITE_CONSTRAINT
-                    {
-                        var updateCmd = conn.CreateCommand();
-                        updateCmd.CommandText = "UPDATE AccountHistory SET Password = $password WHERE Email = $email";
-                        updateCmd.Parameters.AddWithValue("$email", email);
-                        updateCmd.Parameters.AddWithValue("$password", password);
-                        updateCmd.ExecuteNonQuery();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
+                cmd.ExecuteNonQuery();
             }
-            // 每次保存后清理重复
-            CleanupDuplicateAccounts();
         }
 
         public static List<(string email, string password)> GetAccounts()

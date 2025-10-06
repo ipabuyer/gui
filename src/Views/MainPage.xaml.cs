@@ -199,7 +199,7 @@ namespace IPAbuyer.Views
             {
                 if (item is AppResult app)
                 {
-                    if (app.purchased == "已购买")
+                    if (app.purchased == "已购买"||app.purchased == "已拥有")
                     {
                         skip++;
                         continue;
