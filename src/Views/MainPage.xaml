@@ -66,7 +66,7 @@
                 </Button>
             </Grid>
             <!-- 表格区 -->
-            <Border CornerRadius="2" Background="AliceBlue" BorderBrush="White" BorderThickness="1" Margin="0,150,0,20">
+            <Border CornerRadius="2" Background="#80F0F8FF" BorderBrush="White" BorderThickness="1" Margin="0,150,0,20">
                 <ListView x:Name="ResultList" Margin="10,10,10,10" SelectionMode="Multiple">
                     <ListView.Header>
                         <Grid>
