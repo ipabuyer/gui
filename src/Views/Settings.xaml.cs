@@ -4,11 +4,17 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace IPAbuyer.Views
 {
-    public sealed partial class Settings : Window
+    public sealed partial class Settings : Page
     {
         public Settings()
         {
             this.InitializeComponent();
+        }
+
+        // 返回首页
+        private void BackToMainpage(object sender, RoutedEventArgs e)
+        {
+            Frame.Navigate(typeof(MainPage));
         }
 
         // 明暗模式 ComboBox 改变时触发

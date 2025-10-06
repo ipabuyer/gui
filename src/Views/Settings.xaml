@@ -1,20 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Window
+<Page
     x:Class="IPAbuyer.Views.Settings"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:IPAbuyer"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d"
-    Title="IPAbuyer">
+    mc:Ignorable="d">
 
     <Grid>
+
         <ScrollViewer>
             <StackPanel Margin="40,20,40,20">
-                <TextBlock Margin="0" FontSize="40" FontWeight="Bold">
-                    设置
-                </TextBlock>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Margin="0" FontSize="40" FontWeight="Bold">
+                        设置
+                    </TextBlock>
+                    <Button Grid.Column="1" Margin="0,0,60,0" VerticalAlignment="Top" HorizontalAlignment="Right" MinWidth="120" FontSize="14" Click="BackToMainpage">
+                        返回首页
+                    </Button>
+                </Grid>
+
                 <TextBlock Margin="20,30,20,0" Grid.Column="0" FontSize="20">
                     明暗模式
                 </TextBlock>
@@ -98,4 +108,4 @@
             </StackPanel>
         </ScrollViewer>
     </Grid>
-</Window>
+</Page>
