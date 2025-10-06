@@ -390,5 +390,9 @@ namespace IPAbuyer.Views
                 return $"命令执行失败: {ex.Message}";
             }
         }
+        private void BackToMainpage(object sender, RoutedEventArgs e)
+        {
+            Frame.Navigate(typeof(MainPage));
+        }
     }
 }
