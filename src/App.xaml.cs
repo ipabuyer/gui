@@ -1,62 +1,51 @@
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using System;
+using IPAbuyer.Views;
+using IPAbuyer.Data;
 
 namespace IPAbuyer
 {
-    /// <summary>
-    /// Provides application-specific behavior to supplement the default Application class.
-    /// </summary>
     public partial class App : Application
     {
-        private Window window = Window.Current;
+        private Window? _window;
 
-        /// <summary>
-        /// Initializes the singleton application object.  This is the first line of authored code
-        /// executed, and as such is the logical equivalent of main() or WinMain().
-        /// </summary>
         public App()
         {
+            // 初始化数据库
+            PurchasedAppDb.InitDb();
+            AccountHistoryDb.InitDb();
             this.InitializeComponent();
-            IPAbuyer.Data.PurchasedAppDb.InitDb();
-            IPAbuyer.Data.AccountHistoryDb.InitDb();
         }
 
-        /// <summary>
-        /// Invoked when the application is launched normally by the end user.  Other entry points
-        /// will be used such as when the application is launched to open a specific file.
-        /// </summary>
-        /// <param name="e">Details about the launch request and process.</param>
-        protected override void OnLaunched(LaunchActivatedEventArgs e)
+        protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
-            window ??= new Window();
+            _window = new Window
+            {
+                Title = "IPAbuyer"
+            };
 
-            if (window.Content is not Frame rootFrame)
-            {
-                rootFrame = new Frame();
-                rootFrame.NavigationFailed += OnNavigationFailed;
-                window.Content = rootFrame;
-            }
+            // 创建 Frame 用于页面导航
+            Frame rootFrame = new Frame();
+            rootFrame.NavigationFailed += OnNavigationFailed;
 
-            // 检查本地登录状态
-            bool isLoggedIn = IPAbuyer.Data.AccountHistoryDb.GetAccounts().Count > 0 && !IPAbuyer.Data.AccountHistoryDb.IsLogoutFlag();
-            if (isLoggedIn)
-            {
-                rootFrame.Navigate(typeof(IPAbuyer.Views.SearchPage), e.Arguments);
-            }
-            else
-            {
-                rootFrame.Navigate(typeof(IPAbuyer.Views.LoginPage), e.Arguments);
-            }
-            window.Activate();
+            // 导航到登录页
+            rootFrame.Navigate(typeof(MainPage));
+
+            // 将 Frame 设置为窗口内容
+            _window.Content = rootFrame;
+
+            // 激活窗口
+            _window.Activate();
         }
 
         /// <summary>
-        /// Invoked when Navigation to a certain page fails
+        /// 导航失败时的处理
         /// </summary>
-        /// <param name="sender">The Frame which failed navigation</param>
-        /// <param name="e">Details about the navigation failure</param>
         void OnNavigationFailed(object sender, NavigationFailedEventArgs e)
         {
-            throw new Exception("Failed to load Page " + e.SourcePageType.FullName);
+            throw new Exception($"Failed to load Page {e.SourcePageType.FullName}");
         }
     }
 }

@@ -1,4 +1,13 @@
-global using IPAbuyer.Views;
-
 global using Microsoft.UI.Xaml;
 global using Microsoft.UI.Xaml.Controls;
+global using Microsoft.UI.Xaml.Navigation;
+global using System.Diagnostics;
+global using System.Threading.Tasks;
+global using System.Linq;
+global using IPAbuyer;
+global using IPAbuyer.Views;
+global using IPAbuyer.Data;
+global using Microsoft.Data.Sqlite;
+global using System;
+global using System.Collections.Generic;
+global using System.IO;

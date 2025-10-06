@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="IPAbuyer.Views.Settings"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:IPAbuyer"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="IPAbuyer">
+
+    <Grid>
+        <ScrollViewer>
+            <StackPanel Margin="40,20,40,20">
+                <TextBlock Margin="0" FontSize="40" FontWeight="Bold">
+                    设置
+                </TextBlock>
+                <TextBlock Margin="20,30,20,0" Grid.Column="0" FontSize="20">
+                    明暗模式
+                </TextBlock>
+                <Grid Margin="40,20,40,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="5*"/>
+                        <ColumnDefinition Width="3*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock VerticalAlignment="Center" Grid.Column="0" FontSize="16">选择应用的明暗模式</TextBlock>
+                    <ComboBox HorizontalAlignment="Right" Grid.Column="1" MinWidth="120" x:Name="ThemeComboBox" SelectedIndex="0" SelectionChanged="ThemeComboBox_SelectionChanged">
+                        <ComboBoxItem>跟随系统</ComboBoxItem>
+                        <ComboBoxItem>浅色模式</ComboBoxItem>
+                        <ComboBoxItem>深色模式</ComboBoxItem>
+                    </ComboBox>
+                </Grid>
+                <TextBlock Margin="20,20,0,0" FontSize="20">
+                    软件相关
+                </TextBlock>
+                <Grid Margin="40,20,40,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="5*"/>
+                        <ColumnDefinition Width="3*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock VerticalAlignment="Center" Grid.Column="0" FontSize="16" TextWrapping="Wrap">
+                        点击跳转按钮以了解本软件开发者的更多信息
+                    </TextBlock>
+                    <Button HorizontalAlignment="Right" Grid.Column="1" MinWidth="120" FontSize="14" Click="GithubButton">
+                        访问官方网站
+                    </Button>
+                </Grid>
+                <Grid Margin="40,20,40,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="5*"/>
+                        <ColumnDefinition Width="3*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock VerticalAlignment="Center" Grid.Column="0" FontSize="16" TextWrapping="Wrap">
+                        本地数据库保存了已购买的App列表，以便展示App是否已购买
+                    </TextBlock>
+                    <Button Foreground="White" Background="Red" HorizontalAlignment="Right" Grid.Column="1" MinWidth="120" FontSize="14" Click="DeleteDataBase">
+                        清除本地数据库
+                    </Button>
+                </Grid>
+                <TextBlock Margin="20,20,0,0" FontSize="20">
+                    常见问题
+                </TextBlock>
+                <TextBlock Margin="40,20,40,0" FontSize="16" TextWrapping="Wrap">
+                    为什么已购买的app在iPhone上仍然显示未购买？
+                </TextBlock>
+                <TextBlock Margin="60,20,40,0" FontWeight="Light" FontSize="16" TextWrapping="Wrap">
+                    这是因为iPhone未对已购买app列表进行刷新，对任意app进行一次购买即可刷新整个列表。
+                </TextBlock>
+                <TextBlock Margin="40,20,40,0" FontSize="16" TextWrapping="Wrap">
+                    为什么iPhone上已购买的app在软件内显示未购买？
+                </TextBlock>
+                <TextBlock Margin="60,20,40,0" FontWeight="Light" FontSize="16" TextWrapping="Wrap">
+                    对于App是否购买，软件会以购买app的形式，向Apple服务器查询，
+                    这个过程受限于软件策略，只有用户手动点击购买后，才能获取软件的购买状态，
+                    所以软件内显示已购买的软件数量必然≤账户已购买的软件数量。
+                </TextBlock>
+                <TextBlock Margin="40,20,40,0" FontSize="16" TextWrapping="Wrap">
+                    为什么要登录账户？
+                </TextBlock>
+                <TextBlock Margin="60,20,40,0" FontWeight="Light" FontSize="16" TextWrapping="Wrap">
+                    受限于本软件上游软件ipatool的策略，无论是下载、购买还是查询软件，
+                    都需要进行Apple账户的登录。
+                </TextBlock>
+                <TextBlock Margin="40,20,40,0" FontSize="16" TextWrapping="Wrap">
+                    登录账户安全吗？
+                </TextBlock>
+                <TextBlock Margin="60,20,40,0" FontWeight="Light" FontSize="16" TextWrapping="Wrap">
+                    本软件将所有的登录信息保存于本地，不会对任何敏感信息进行上传，
+                    同时使用存储于Windows凭据管理器的随机密钥进行加密。
+                </TextBlock>
+                <TextBlock Margin="40,20,40,0" FontSize="16" TextWrapping="Wrap">
+                    为什么不能进行付费购买？
+                </TextBlock>
+                <TextBlock Margin="60,20,40,0" FontWeight="Light" FontSize="16" TextWrapping="Wrap">
+                    为了保证账户安全性，本软件将进行App购买检查，只允许购买价格为0的App。
+                </TextBlock>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>

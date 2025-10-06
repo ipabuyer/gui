@@ -1,8 +1,3 @@
-using Microsoft.Data.Sqlite;
-using System;
-using System.Collections.Generic;
-using System.IO;
-
 namespace IPAbuyer.Data
 {
     public class AccountHistoryDb
