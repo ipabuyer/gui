@@ -9,10 +9,9 @@
     mc:Ignorable="d">
 
     <Grid>
-
         <ScrollViewer>
-            <StackPanel Margin="40,20,40,20">
-                <Grid>
+            <StackPanel Margin="100,20,100,20">
+                <Grid VerticalAlignment="Top">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
@@ -20,7 +19,7 @@
                     <TextBlock Grid.Column="0" Margin="0" FontSize="40" FontWeight="Bold">
                         设置
                     </TextBlock>
-                    <Button Grid.Column="1" Margin="0,0,60,0" VerticalAlignment="Top" HorizontalAlignment="Right" MinWidth="120" FontSize="14" Click="BackToMainpage">
+                    <Button Grid.Column="1" Margin="0,0,0,0" VerticalAlignment="Top" HorizontalAlignment="Right" MinWidth="120" FontSize="14" Click="BackToMainpage">
                         返回首页
                     </Button>
                 </Grid>
