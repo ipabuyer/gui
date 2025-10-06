@@ -102,8 +102,8 @@
                 </ListView.ItemTemplate>
             </ListView>
         </Border>
-        <!-- 分页区已合并至操作按钮区 -->
-        <!-- 状态栏 -->
-        <TextBlock x:Name="ResultText" TextWrapping="Wrap" Margin="32,630,0,0" Width="820" Height="40"/>
+        <TextBlock VerticalAlignment="Bottom" x:Name="ResultText" TextWrapping="Wrap" Margin="40,0,40,0">
+            状态栏
+        </TextBlock>
     </Grid>
 </Page>
