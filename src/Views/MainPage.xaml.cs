@@ -225,7 +225,17 @@ namespace IPAbuyer.Views
                     else
                     {
                         fail++;
-                        UpdateStatusBar($"购买失败: {app.name}", true);
+                        // 购买失败但为免费应用，视为已购买
+                        if (app.price == "0")
+                        {
+                            app.purchased = "已购买";
+                            PurchasedAppDb.SavePurchasedApp(app.bundleID ?? "", app.name ?? "", app.version ?? "");
+                            UpdateStatusBar($"购买失败但已拥有: {app.name}", true);
+                        }
+                        else
+                        {
+                            UpdateStatusBar($"购买失败: {app.name}", true);
+                        }
                     }
                 }
             }

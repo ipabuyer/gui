@@ -83,11 +83,40 @@ namespace IPAbuyer.Views
 
             try
             {
-                // 执行登录命令
-                string cmd = $"./ipatool.exe auth login --email {_email} --password \"{_password}\" --keychain-passphrase {KeychainPassphrase} --non-interactive";
+                // 执行登录命令，初始验证码000000，json格式，verbose日志
+                string cmd = $"./ipatool.exe auth login --email {_email} --password \"{_password}\" --keychain-passphrase {KeychainPassphrase} --non-interactive --auth-code 000000 --format json --verbose";
                 var result = await RunCommandAsync(cmd);
 
-                // 处理登录结果
+                // 判断是否需要2FA
+                if (result.Contains("2FA required") || result.Contains("auth code") || result.Contains("authentication code"))
+                {
+                    await ShowAuthCodeDialog();
+                    return;
+                }
+                // 判断是否为邮箱或密码错误
+                if ((result.Contains("error") && result.Contains("something went wrong")) || (result.Contains("\"success\":false")))
+                {
+                    var dialog = new ContentDialog
+                    {
+                        Title = "登录失败",
+                        Content = "邮箱或密码错误，请检查后重试。",
+                        CloseButtonText = "确定",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await dialog.ShowAsync();
+                    ResultText.Text = "登录失败，账号或密码错误";
+                    ResultText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
+                    SetInputControlsEnabled(true);
+                    NextButton.IsEnabled = true;
+                    return;
+                }
+                // 登录成功
+                if (result.Contains("\"success\":true"))
+                {
+                    await OnLoginSuccess();
+                    return;
+                }
+                // 其它情况
                 await HandleLoginResult(result, false);
             }
             catch (Exception ex)
@@ -152,28 +181,52 @@ namespace IPAbuyer.Views
                     Microsoft.UI.Colors.Gray);
                 CodeErrorText.Visibility = Visibility.Visible;
 
-                // 执行带验证码的登录命令
-                string cmd = $"./ipatool.exe auth login --email {_email} --password \"{_password}\" --keychain-passphrase {KeychainPassphrase} --non-interactive --auth-code {code}";
+                // 执行带验证码的登录命令，json格式，verbose日志
+                string cmd = $"./ipatool.exe auth login --email {_email} --password \"{_password}\" --keychain-passphrase {KeychainPassphrase} --non-interactive --auth-code {code} --format json --verbose";
                 var result = await RunCommandAsync(cmd);
 
                 // 检查是否登录成功
-                if (IsLoginSuccess(result))
+                if (result.Contains("\"success\":true"))
                 {
                     await OnLoginSuccess();
                     // 成功后关闭对话框
                     deferral.Complete();
                     return;
                 }
-                else
+                // 账号或密码错误（json结果）
+                if ((result.Contains("error") && result.Contains("something went wrong")) || (result.Contains("invalid credentials")) || (result.Contains("incorrect")))
                 {
-                    // 验证失败
-                    CodeErrorText.Text = ParseErrorMessage(result);
-                    CodeErrorText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                        Microsoft.UI.Colors.Red);
+                    var dialog = new ContentDialog
+                    {
+                        Title = "登录失败",
+                        Content = "账号或密码错误，请检查后重试。",
+                        CloseButtonText = "确定",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await dialog.ShowAsync();
+                    ResultText.Text = "登录失败，账号或密码错误";
+                    ResultText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
+                    SetInputControlsEnabled(true);
+                    NextButton.IsEnabled = true;
+                    args.Cancel = true;
+                    return;
+                }
+                // 验证码错误
+                if (result.Contains("invalid auth code") || result.Contains("验证码错误"))
+                {
+                    CodeErrorText.Text = "验证码错误，请重新输入。";
+                    CodeErrorText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
                     CodeErrorText.Visibility = Visibility.Visible;
                     CodeBox.Text = "";
-                    args.Cancel = true; // 取消关闭对话框
+                    args.Cancel = true;
+                    return;
                 }
+                // 其它情况
+                CodeErrorText.Text = ParseErrorMessage(result);
+                CodeErrorText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
+                CodeErrorText.Visibility = Visibility.Visible;
+                CodeBox.Text = "";
+                args.Cancel = true;
             }
             catch (Exception ex)
             {
