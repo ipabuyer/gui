@@ -23,7 +23,7 @@
                 </Button>
             </Grid>
             <!-- 搜索区 -->
-            <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Margin="40,40,0,0">
+            <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,40,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="6*"/>
                     <ColumnDefinition Width="*"/>
@@ -34,7 +34,7 @@
                     开始查询
                 </Button>
             </Grid>
-            <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Margin="40,90,0,0" Width="350">
+            <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,90,0,0" Width="350">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="6*"/>
                     <ColumnDefinition Width="*"/>
@@ -44,7 +44,7 @@
             </Grid>
 
             <!-- 操作按钮区 -->
-            <Grid HorizontalAlignment="Right" VerticalAlignment="Top" Margin="40,90,0,0" >
+            <Grid HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,90,0,0" >
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
@@ -67,7 +67,7 @@
                 </Button>
             </Grid>
             <!-- 表格区 -->
-            <Border CornerRadius="2" Background="AliceBlue" BorderBrush="White" BorderThickness="1" Margin="40,150,0,20">
+            <Border CornerRadius="2" Background="AliceBlue" BorderBrush="White" BorderThickness="1" Margin="0,150,0,20">
                 <ListView x:Name="ResultList" Margin="10,10,10,10" SelectionMode="Multiple">
                     <ListView.Header>
                         <Grid>
@@ -121,7 +121,7 @@
                     </ListView.ItemTemplate>
                 </ListView>
             </Border>
-            <TextBlock Foreground="Gray" VerticalAlignment="Bottom" x:Name="ResultText" Text="状态栏" TextWrapping="Wrap" Margin="40,0,40,0">
+            <TextBlock Foreground="Gray" VerticalAlignment="Bottom" x:Name="ResultText" Text="状态栏" TextWrapping="Wrap" Margin="0,0,0,0">
             </TextBlock>
         </Grid>
     </Page.Content>
