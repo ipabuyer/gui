@@ -29,6 +29,7 @@
                 开始查询
             </Button>
         </Grid>
+        <Slider HorizontalAlignment="Left" VerticalAlignment="Top" Margin="40,90,0,0" Minimum="1" Maximum="100" Value="5" Width="200" TickFrequency="10" IsThumbToolTipEnabled="True" />
         <!-- 操作按钮区 -->
         <Grid HorizontalAlignment="Right" VerticalAlignment="Top" Margin="40,90,0,0" >
             <Grid.ColumnDefinitions>
@@ -65,17 +66,17 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="App名称" Grid.Column="0">
+                        <TextBlock x:Name="name" Text="App名称" Grid.Column="0">
                         </TextBlock>
-                        <TextBlock Text="AppID" Grid.Column="1">
+                        <TextBlock x:Name="id" Text="AppID" Grid.Column="1">
                         </TextBlock>
-                        <TextBlock Text="包名" Grid.Column="2">
+                        <TextBlock x:Name="bundleID" Text="包名" Grid.Column="2">
                         </TextBlock>
-                        <TextBlock Text="版本" Grid.Column="3">
+                        <TextBlock x:Name="version" Text="版本" Grid.Column="3">
                         </TextBlock>
-                        <TextBlock Text="价格" Grid.Column="4">
+                        <TextBlock x:Name="price" Text="价格" Grid.Column="4">
                         </TextBlock>
-                        <TextBlock Text="状态" Grid.Column="5">
+                        <TextBlock x:Name="purchased" Text="状态" Grid.Column="5">
                         </TextBlock>
                     </Grid>
                 </ListView.Header>
