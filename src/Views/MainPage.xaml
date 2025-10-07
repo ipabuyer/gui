@@ -60,21 +60,23 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <Button Grid.Column="0" Margin="0,0,0,0" x:Name="BatchPurchaseButton"
-                    Click="BatchPurchaseButton_Click" MinWidth="100">
+                    Click="BatchPurchaseButton_Click" MinHeight="30" MinWidth="100">
                     购买
                 </Button>
-                <Button Grid.Column="1" Margin="10,0,0,0" x:Name="DownloadButton"
-                    Click="DownloadButton_Click" MinWidth="100">
-                    下载
-                </Button>
                 <Button Grid.Column="2" Margin="10,0,0,0" x:Name="PrevPageButton"
-                    Click="PrevPageButton_Click" MinWidth="100">
+                    Click="PrevPageButton_Click" MinHeight="30" MinWidth="100">
                     上一页
                 </Button>
                 <Button Grid.Column="3" Margin="10,0,0,0" x:Name="NextPageButton"
-                    Click="NextPageButton_Click" MinWidth="100">
+                    Click="NextPageButton_Click" MinHeight="30" MinWidth="100">
                     下一页
                 </Button>
+                <ComboBox Grid.Column="4" Margin="10,0,0,0" x:Name="ScreeningComboBox" SelectedIndex="0" SelectionChanged="ScreeningComboBox_SelectionChanged" MinHeight="30" MinWidth="120">
+                    <ComboBoxItem>筛选</ComboBoxItem>
+                    <ComboBoxItem>仅未购买</ComboBoxItem>
+                    <ComboBoxItem>仅已购买</ComboBoxItem>
+                    <ComboBoxItem>仅已拥有</ComboBoxItem>
+                </ComboBox>
             </Grid>
             <!-- 表格区 -->
             <Border CornerRadius="2" Background="#80F0F8FF" BorderBrush="White" BorderThickness="1"
