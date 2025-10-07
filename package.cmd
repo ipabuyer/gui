@@ -1,1 +1,0 @@
-dotnet build .\src\IPAbuyer.csproj -c Release /p:WindowsPackageType=MSIX /p:GenerateAppxPackageOnBuild=true /p:Platform=x64
