@@ -1,6 +1,7 @@
 # VS和其他IDE的隐藏文件
 .vs/
 .config/
+src/AppPackages/
 *.suo
 
 # 编译和打包输出目录
