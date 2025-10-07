@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO;
 using IPAbuyer.Data;
 using IPAbuyer.Views;
 using Microsoft.UI.Xaml;
@@ -40,13 +41,54 @@ namespace IPAbuyer.Views
         private int pageSize = 15;
         private int totalPages = 1;
         private bool isLoggedIn = false;
-        private bool isPageLoaded = false; // 添加页面加载标记
+        private bool isPageLoaded = false;
         private const string keychainPassphrase = "12345678";
+        private string _ipatoolPath;
 
         public MainPage()
         {
             this.InitializeComponent();
             this.Loaded += MainPage_Loaded;
+            
+            // 查找ipatool.exe路径
+            _ipatoolPath = FindIpatoolPath();
+        }
+
+        /// <summary>
+        /// 查找ipatool.exe的路径，优先使用Include文件夹中的
+        /// </summary>
+        private string FindIpatoolPath()
+        {
+            try
+            {
+                // 获取当前应用程序的基础目录
+                string baseDirectory = AppContext.BaseDirectory;
+                
+                // 优先查找项目根目录下的Include文件夹中的ipatool.exe
+                string includePath = Path.Combine(baseDirectory, "Include", "ipatool.exe");
+                if (File.Exists(includePath))
+                {
+                    Debug.WriteLine($"找到Include文件夹中的ipatool.exe: {includePath}");
+                    return includePath;
+                }
+
+                // 如果Include文件夹中没有，查找当前目录下的ipatool.exe
+                string currentDirPath = Path.Combine(baseDirectory, "ipatool.exe");
+                if (File.Exists(currentDirPath))
+                {
+                    Debug.WriteLine($"找到当前目录下的ipatool.exe: {currentDirPath}");
+                    return currentDirPath;
+                }
+
+                // 如果都找不到，返回默认的ipatool.exe（保持原有行为）
+                Debug.WriteLine("未找到ipatool.exe，使用默认路径");
+                return "ipatool.exe";
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"查找ipatool.exe路径时出错: {ex.Message}");
+                return "ipatool.exe";
+            }
         }
 
         /// <summary>
@@ -54,8 +96,23 @@ namespace IPAbuyer.Views
         /// </summary>
         private async void MainPage_Loaded(object sender, RoutedEventArgs e)
         {
-            isPageLoaded = true; // 标记页面已加载
-            await CheckLoginStatus();
+            isPageLoaded = true;
+            
+            // 检查是否有从登录页面传递过来的登录状态
+            if (this.DataContext is bool loginStatus)
+            {
+                isLoggedIn = loginStatus;
+                if (isLoggedIn)
+                {
+                    UpdateStatusBar("登录成功，欢迎使用");
+                }
+            }
+            else
+            {
+                // 如果没有传递状态，则检查本地登录状态
+                await CheckLoginStatus();
+            }
+            
             UpdateLoginButton();
         }
 
@@ -77,9 +134,8 @@ namespace IPAbuyer.Views
             // 尝试验证登录状态
             try
             {
-                string cmd =
-                    $"./ipatool.exe search --keychain-passphrase {keychainPassphrase} test --limit 1 --non-interactive";
-                var result = await RunCommandAsync(cmd);
+                string arguments = $"search --keychain-passphrase {keychainPassphrase} test --limit 1 --non-interactive";
+                var result = await RunIpatoolCommandAsync(arguments);
 
                 if (result.Contains("not logged in") || result.Contains("未登录"))
                 {
@@ -113,7 +169,7 @@ namespace IPAbuyer.Views
         private void UpdateLoginButton()
         {
             if (LogoutButton == null)
-                return; // 添加空值检查
+                return;
 
             if (isLoggedIn)
             {
@@ -132,13 +188,13 @@ namespace IPAbuyer.Views
         }
 
         /// <summary>
-        /// 更新状态栏信息（带空值检查）
+        /// 更新状态栏信息
         /// </summary>
         private void UpdateStatusBar(string message, bool isError = false)
         {
             if (ResultText == null || !isPageLoaded)
             {
-                Debug.WriteLine($"[状态栏] {message}"); // 如果控件未加载，输出到调试窗口
+                Debug.WriteLine($"[状态栏] {message}");
                 return;
             }
 
@@ -227,9 +283,8 @@ namespace IPAbuyer.Views
                     }
 
                     UpdateStatusBar($"正在购买: {app.name}...");
-                    string cmd =
-                        $"./ipatool.exe purchase --keychain-passphrase {keychainPassphrase} --bundle-identifier {app.bundleID}";
-                    string result = await RunCommandAsync(cmd);
+                    string arguments = $"purchase --keychain-passphrase {keychainPassphrase} --bundle-identifier {app.bundleID}";
+                    string result = await RunIpatoolCommandAsync(arguments);
 
                     if (
                         (result.Contains("success") && result.Contains("true"))
@@ -330,16 +385,17 @@ namespace IPAbuyer.Views
         }
 
         /// <summary>
-        /// 执行命令
+        /// 执行命令行命令 - 修复版本
         /// </summary>
         private async Task<string> RunCommandAsync(string command)
         {
             try
             {
+                // 使用cmd.exe而不是powershell，因为cmd对路径中的空格处理更好
                 var psi = new ProcessStartInfo
                 {
-                    FileName = "powershell.exe",
-                    Arguments = $"-Command \"{command}\"",
+                    FileName = "cmd.exe",
+                    Arguments = $"/c \"{command}\"",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
@@ -347,6 +403,7 @@ namespace IPAbuyer.Views
                     StandardOutputEncoding = System.Text.Encoding.UTF8,
                     StandardErrorEncoding = System.Text.Encoding.UTF8,
                 };
+
                 using (var process = Process.Start(psi))
                 {
                     if (process == null)
@@ -356,8 +413,52 @@ namespace IPAbuyer.Views
 
                     string output = await process.StandardOutput.ReadToEndAsync();
                     string error = await process.StandardError.ReadToEndAsync();
+
                     await process.WaitForExitAsync();
-                    return string.IsNullOrEmpty(error) ? output : error;
+
+                    return string.IsNullOrWhiteSpace(error) ? output : error;
+                }
+            }
+            catch (Exception ex)
+            {
+                return $"命令执行失败: {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// 执行ipatool命令 - 专门处理路径问题
+        /// </summary>
+        private async Task<string> RunIpatoolCommandAsync(string arguments)
+        {
+            try
+            {
+                // 直接执行ipatool.exe，而不是通过powershell或cmd
+                var psi = new ProcessStartInfo
+                {
+                    FileName = _ipatoolPath,
+                    Arguments = arguments,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    StandardOutputEncoding = System.Text.Encoding.UTF8,
+                    StandardErrorEncoding = System.Text.Encoding.UTF8,
+                    WorkingDirectory = Path.GetDirectoryName(_ipatoolPath) // 设置工作目录为ipatool所在目录
+                };
+
+                using (var process = Process.Start(psi))
+                {
+                    if (process == null)
+                    {
+                        return "无法启动进程";
+                    }
+
+                    string output = await process.StandardOutput.ReadToEndAsync();
+                    string error = await process.StandardError.ReadToEndAsync();
+
+                    await process.WaitForExitAsync();
+
+                    return string.IsNullOrWhiteSpace(error) ? output : error;
                 }
             }
             catch (Exception ex)
@@ -395,252 +496,6 @@ namespace IPAbuyer.Views
             }
         }
 
-        /// <summary>
-        /// 下载按钮点击
-        /// </summary>
-        /// <summary>
-        /// 下载按钮点击事件（仅下载已购买应用）
-        /// </summary>
-        /*
-        private async void DownloadButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (!isLoggedIn)
-            {
-                UpdateStatusBar("请先登录账户", true);
-                return;
-            }
-
-            var selected = ResultList.SelectedItems;
-            if (selected == null || selected.Count == 0)
-            {
-                UpdateStatusBar("请先选择要下载的应用", true);
-                return;
-            }
-
-            // 禁用相关按钮防止重复操作
-            DownloadButton.IsEnabled = false;
-            BatchPurchaseButton.IsEnabled = false;
-            SearchButton.IsEnabled = false;
-
-            int success = 0,
-                fail = 0,
-                skip = 0;
-            List<string> failedNames = new List<string>();
-            List<string> successNames = new List<string>();
-            List<string> skipNames = new List<string>();
-
-            UpdateStatusBar($"检查选中应用的购买状态...");
-
-            // 创建进度对话框
-            var progressDialog = new ContentDialog
-            {
-                Title = "下载进度",
-                Content = $"正在检查 {selected.Count} 个应用的购买状态...",
-                PrimaryButtonText = "取消下载",
-                XamlRoot = this.XamlRoot,
-            };
-
-            bool isCancelled = false;
-            progressDialog.PrimaryButtonClick += (s, args) =>
-            {
-                isCancelled = true;
-                UpdateStatusBar("用户取消了下载", true);
-            };
-
-            // 显示进度对话框
-            _ = progressDialog.ShowAsync();
-
-            try
-            {
-                // 获取已购买应用列表
-                var purchasedList = PurchasedAppDb
-                    .GetPurchasedApps()
-                    .Select(x => x.bundleID)
-                    .ToHashSet();
-
-                // 筛选已购买的应用
-                var purchasedApps = selected
-                    .OfType<AppResult>()
-                    .Where(app => purchasedList.Contains(app.bundleID))
-                    .ToList();
-
-                if (purchasedApps.Count == 0)
-                {
-                    progressDialog.Hide();
-                    UpdateStatusBar("选中的应用中没有已购买的应用", true);
-
-                    var dialog = new ContentDialog
-                    {
-                        Title = "无法下载",
-                        Content = "选中的应用中没有已购买的应用，请先购买后再下载。",
-                        CloseButtonText = "确定",
-                        XamlRoot = this.XamlRoot,
-                    };
-                    await dialog.ShowAsync();
-
-                    // 重新启用按钮
-                    DownloadButton.IsEnabled = true;
-                    BatchPurchaseButton.IsEnabled = true;
-                    SearchButton.IsEnabled = true;
-                    return;
-                }
-
-                // 记录跳过的应用（未购买）
-                var skippedApps = selected
-                    .OfType<AppResult>()
-                    .Where(app => !purchasedList.Contains(app.bundleID))
-                    .ToList();
-                skip = skippedApps.Count;
-                skipNames = skippedApps.Select(app => app.name ?? "未知应用").ToList();
-
-                UpdateStatusBar($"开始下载 {purchasedApps.Count} 个已购买应用...");
-                progressDialog.Content = $"准备下载 {purchasedApps.Count} 个已购买应用...";
-
-                int currentIndex = 0;
-                foreach (var app in purchasedApps)
-                {
-                    if (isCancelled)
-                        break;
-
-                    currentIndex++;
-
-                    // 更新进度对话框
-                    progressDialog.Content =
-                        $"正在下载 ({currentIndex}/{purchasedApps.Count}): {app.name}";
-
-                    // 再次确认购买状态（防止数据不一致）
-                    if (!purchasedList.Contains(app.bundleID))
-                    {
-                        skip++;
-                        skipNames.Add(app.name ?? "");
-                        UpdateStatusBar($"跳过未购买的应用: {app.name}", true);
-                        continue;
-                    }
-
-                    // 检查必要的参数
-                    if (string.IsNullOrEmpty(app.id) || string.IsNullOrEmpty(app.bundleID))
-                    {
-                        skip++;
-                        skipNames.Add(app.name ?? "");
-                        UpdateStatusBar($"跳过参数不全的应用: {app.name}", true);
-                        continue;
-                    }
-
-                    UpdateStatusBar(
-                        $"正在下载 ({currentIndex}/{purchasedApps.Count}): {app.name}..."
-                    );
-
-                    // 构建下载命令
-                    string cmd =
-                        $"./ipatool download --keychain-passphrase {keychainPassphrase} --app-id {app.id} --bundle-identifier {app.bundleID} --format json --non-interactive --verbose";
-                    string result = await RunCommandAsync(cmd);
-
-                    // 解析下载结果
-                    if (IsDownloadSuccess(result))
-                    {
-                        success++;
-                        successNames.Add(app.name ?? "");
-                        UpdateStatusBar(
-                            $"成功下载 ({currentIndex}/{purchasedApps.Count}): {app.name}"
-                        );
-
-                        // 保存下载记录
-                        //SaveDownloadRecord(app);
-                    }
-                    else
-                    {
-                        fail++;
-                        failedNames.Add(app.name ?? "");
-                        UpdateStatusBar(
-                            $"下载失败 ({currentIndex}/{purchasedApps.Count}): {app.name}",
-                            true
-                        );
-
-                        // 记录详细的错误信息
-                        Debug.WriteLine(
-                            $"下载失败详情 - 应用: {app.name}, ID: {app.id}, BundleID: {app.bundleID}, 错误: {result}"
-                        );
-                    }
-
-                    // 短暂延迟，避免请求过于频繁
-                    if (!isCancelled && currentIndex < purchasedApps.Count)
-                    {
-                        await Task.Delay(1000);
-                    }
-                }
-
-                // 显示下载结果摘要
-                string successMsg =
-                    successNames.Count > 0
-                        ? $"成功: {string.Join(", ", successNames.Take(3))}"
-                        : "";
-                if (successNames.Count > 3)
-                    successMsg += "...";
-
-                string failMsg =
-                    failedNames.Count > 0 ? $"失败: {string.Join(", ", failedNames.Take(3))}" : "";
-                if (failedNames.Count > 3)
-                    failMsg += "...";
-
-                string skipMsg =
-                    skipNames.Count > 0 ? $"跳过: {string.Join(", ", skipNames.Take(3))}" : "";
-                if (skipNames.Count > 3)
-                    skipMsg += "...";
-
-                string summary = isCancelled ? "下载已取消 - " : "下载完成 - ";
-                summary +=
-                    $"选中: {selected.Count}, 已购买: {purchasedApps.Count}, 成功: {success}, 失败: {fail}, 跳过: {skip}";
-                
-                if (!string.IsNullOrEmpty(successMsg))
-                    summary += $"\n{successMsg}";
-                if (!string.IsNullOrEmpty(failMsg))
-                    summary += $"\n{failMsg}";
-                if (!string.IsNullOrEmpty(skipMsg))
-                    summary += $"\n{skipMsg}";
-                
-                UpdateStatusBar(summary);
-
-                // 显示完成对话框
-                progressDialog.Hide();
-                var completeDialog = new ContentDialog
-                {
-                    Title = isCancelled ? "下载取消" : "下载完成",
-                    Content = summary,
-                    CloseButtonText = "确定",
-                    XamlRoot = this.XamlRoot,
-                };
-                await completeDialog.ShowAsync();
-            }
-            catch (Exception ex)
-            {
-                UpdateStatusBar($"下载过程发生错误: {ex.Message}", true);
-                progressDialog.Hide();
-            }
-            finally
-            {
-                // 重新启用按钮
-                DownloadButton.IsEnabled = true;
-                BatchPurchaseButton.IsEnabled = true;
-                SearchButton.IsEnabled = true;
-            }
-        }
-
-        /// <summary>
-        /// 判断下载是否成功
-        /// </summary>
-        private bool IsDownloadSuccess(string result)
-        {
-            // 根据 ipatool 的实际输出调整这些判断条件
-            return result.Contains("\"success\":true")
-                || result.Contains("download completed")
-                || result.Contains("下载完成")
-                || result.Contains("successfully downloaded")
-                || (result.Contains("success") && !result.Contains("false"))
-                || result.Contains(".ipa")
-                || // 如果输出中包含ipa文件路径
-                result.Contains("file saved"); // 文件保存成功
-        }
-    */
         /// <summary>
         /// 搜索框按键事件
         /// </summary>
@@ -685,9 +540,8 @@ namespace IPAbuyer.Views
             SearchButton.IsEnabled = false;
             UpdateStatusBar($"正在搜索 \"{appName}\"...");
 
-            string cmd =
-                $"./ipatool.exe search --keychain-passphrase {keychainPassphrase} {appName} --limit {SearchLimitNum} --non-interactive --format json";
-            var result = await RunCommandAsync(cmd);
+            string arguments = $"search --keychain-passphrase {keychainPassphrase} {appName} --limit {SearchLimitNum} --non-interactive --format json";
+            var result = await RunIpatoolCommandAsync(arguments);
             SearchButton.IsEnabled = true;
 
             allResults.Clear();
@@ -757,9 +611,35 @@ namespace IPAbuyer.Views
                 $"搜索完成 - 找到 {allResults.Count} 个应用 (成功: {successCount}, 失败: {failCount})"
             );
         }
+
         private void ScreeningComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             // 你的处理逻辑
+        }
+
+        /// <summary>
+        /// 当页面通过导航到达时调用
+        /// </summary>
+        protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
+            
+            // 检查是否有传递的登录状态
+            if (e.Parameter is bool loginStatus)
+            {
+                isLoggedIn = loginStatus;
+                if (isLoggedIn)
+                {
+                    UpdateStatusBar("登录成功，欢迎使用");
+                }
+                UpdateLoginButton();
+            }
+            else if (!isPageLoaded)
+            {
+                // 如果页面还没加载，检查登录状态
+                await CheckLoginStatus();
+                UpdateLoginButton();
+            }
         }
     }
 }
