@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using IPAbuyer.Data;
@@ -14,6 +15,7 @@ namespace IPAbuyer.Views
         private string _email;
         private string _password;
         private const string KeychainPassphrase = "12345678";
+        private string _ipatoolPath;
 
         public LoginPage()
         {
@@ -26,8 +28,48 @@ namespace IPAbuyer.Views
         /// </summary>
         private void InitializePage()
         {
+            // 查找ipatool.exe路径
+            _ipatoolPath = FindIpatoolPath();
+            
             // 加载账号历史
             LoadAccountHistory();
+        }
+
+        /// <summary>
+        /// 查找ipatool.exe的路径，优先使用Include文件夹中的
+        /// </summary>
+        private string FindIpatoolPath()
+        {
+            try
+            {
+                // 获取当前应用程序的基础目录
+                string baseDirectory = AppContext.BaseDirectory;
+                
+                // 优先查找项目根目录下的Include文件夹中的ipatool.exe
+                string includePath = Path.Combine(baseDirectory, "Include", "ipatool.exe");
+                if (File.Exists(includePath))
+                {
+                    Debug.WriteLine($"找到Include文件夹中的ipatool.exe: {includePath}");
+                    return includePath;
+                }
+
+                // 如果Include文件夹中没有，查找当前目录下的ipatool.exe
+                string currentDirPath = Path.Combine(baseDirectory, "ipatool.exe");
+                if (File.Exists(currentDirPath))
+                {
+                    Debug.WriteLine($"找到当前目录下的ipatool.exe: {currentDirPath}");
+                    return currentDirPath;
+                }
+
+                // 如果都找不到，返回默认的ipatool.exe（保持原有行为）
+                Debug.WriteLine("未找到ipatool.exe，使用默认路径");
+                return "ipatool.exe";
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"查找ipatool.exe路径时出错: {ex.Message}");
+                return "ipatool.exe";
+            }
         }
 
         /// <summary>
@@ -356,8 +398,7 @@ namespace IPAbuyer.Views
             try
             {
                 // 执行登录命令，初始验证码000000，json格式，verbose日志
-                string cmd =
-                    $"./ipatool.exe auth login --email {_email} --password \"{_password}\" --keychain-passphrase {KeychainPassphrase} --non-interactive --auth-code 000000 --format json --verbose";
+                string cmd = $"\"{_ipatoolPath}\" auth login --email {_email} --password \"{_password}\" --keychain-passphrase {KeychainPassphrase} --non-interactive --auth-code 000000 --format json --verbose";
                 var result = await RunCommandAsync(cmd);
 
                 // 判断是否需要2FA
@@ -430,8 +471,7 @@ namespace IPAbuyer.Views
                 CodeErrorText.Visibility = Visibility.Visible;
 
                 // 执行带验证码的登录命令，json格式，verbose日志
-                string cmd =
-                    $"./ipatool.exe auth login --email {_email} --password \"{_password}\" --keychain-passphrase {KeychainPassphrase} --non-interactive --auth-code {code} --format json --verbose";
+                string cmd = $"\"{_ipatoolPath}\" auth login --email {_email} --password \"{_password}\" --keychain-passphrase {KeychainPassphrase} --non-interactive --auth-code {code} --format json --verbose";
                 var result = await RunCommandAsync(cmd);
 
                 // 检查是否登录成功

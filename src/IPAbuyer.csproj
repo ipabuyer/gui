@@ -53,6 +53,7 @@
         <Content Include="Include\ipatool.exe">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <TargetPath>ipatool.exe</TargetPath>
+            <IncludeInPackage>true</IncludeInPackage>
         </Content>
     </ItemGroup>
 
