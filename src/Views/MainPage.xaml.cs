@@ -1,8 +1,9 @@
+using System.Diagnostics;
 using IPAbuyer.Data;
 using IPAbuyer.Views;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using System.Diagnostics;
+using Microsoft.UI.Xaml.Input;
 
 namespace IPAbuyer.Views
 {
@@ -11,11 +12,15 @@ namespace IPAbuyer.Views
         // 搜索范围限制
         public int SearchLimitNum { get; set; } = 5;
 
-        private void SearchLimit_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+        private void SearchLimit_ValueChanged(
+            object sender,
+            Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e
+        )
         {
             SearchLimitNum = (int)e.NewValue;
             var tb = this.FindName("SearchLimitNumText") as TextBlock;
-            if (tb != null) tb.Text = SearchLimitNum.ToString();
+            if (tb != null)
+                tb.Text = SearchLimitNum.ToString();
             UpdateStatusBar($"已调整搜索限制为 {SearchLimitNum} 个结果");
         }
 
@@ -72,7 +77,8 @@ namespace IPAbuyer.Views
             // 尝试验证登录状态
             try
             {
-                string cmd = $"./ipatool.exe search --keychain-passphrase {keychainPassphrase} test --limit 1 --non-interactive";
+                string cmd =
+                    $"./ipatool.exe search --keychain-passphrase {keychainPassphrase} test --limit 1 --non-interactive";
                 var result = await RunCommandAsync(cmd);
 
                 if (result.Contains("not logged in") || result.Contains("未登录"))
@@ -106,17 +112,22 @@ namespace IPAbuyer.Views
         /// </summary>
         private void UpdateLoginButton()
         {
-            if (LogoutButton == null) return; // 添加空值检查
+            if (LogoutButton == null)
+                return; // 添加空值检查
 
             if (isLoggedIn)
             {
                 LogoutButton.Content = "退出登录";
-                LogoutButton.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
+                LogoutButton.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                    Microsoft.UI.Colors.Red
+                );
             }
             else
             {
                 LogoutButton.Content = "前往登录";
-                LogoutButton.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.DodgerBlue);
+                LogoutButton.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                    Microsoft.UI.Colors.DodgerBlue
+                );
             }
         }
 
@@ -135,7 +146,8 @@ namespace IPAbuyer.Views
             {
                 ResultText.Text = $"[{DateTime.Now:HH:mm:ss}] {message}";
                 ResultText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                    isError ? Microsoft.UI.Colors.Red : Microsoft.UI.Colors.Gray);
+                    isError ? Microsoft.UI.Colors.Red : Microsoft.UI.Colors.Gray
+                );
             }
             catch (Exception ex)
             {
@@ -191,7 +203,9 @@ namespace IPAbuyer.Views
             }
 
             BatchPurchaseButton.IsEnabled = false;
-            int success = 0, fail = 0, skip = 0;
+            int success = 0,
+                fail = 0,
+                skip = 0;
             List<string> failedOwnedNames = new List<string>();
             UpdateStatusBar($"开始购买 {selected.Count} 个应用...");
 
@@ -199,7 +213,7 @@ namespace IPAbuyer.Views
             {
                 if (item is AppResult app)
                 {
-                    if (app.purchased == "已购买"||app.purchased == "已拥有")
+                    if (app.purchased == "已购买" || app.purchased == "已拥有")
                     {
                         skip++;
                         continue;
@@ -213,14 +227,22 @@ namespace IPAbuyer.Views
                     }
 
                     UpdateStatusBar($"正在购买: {app.name}...");
-                    string cmd = $"./ipatool.exe purchase --keychain-passphrase {keychainPassphrase} --bundle-identifier {app.bundleID}";
+                    string cmd =
+                        $"./ipatool.exe purchase --keychain-passphrase {keychainPassphrase} --bundle-identifier {app.bundleID}";
                     string result = await RunCommandAsync(cmd);
 
-                    if ((result.Contains("success") && result.Contains("true")) || result.Contains("购买成功"))
+                    if (
+                        (result.Contains("success") && result.Contains("true"))
+                        || result.Contains("购买成功")
+                    )
                     {
                         success++;
                         app.purchased = "已购买";
-                        PurchasedAppDb.SavePurchasedApp(app.bundleID ?? "", app.name ?? "", app.version ?? "");
+                        PurchasedAppDb.SavePurchasedApp(
+                            app.bundleID ?? "",
+                            app.name ?? "",
+                            app.version ?? ""
+                        );
                         UpdateStatusBar($"成功购买: {app.name}");
                     }
                     else
@@ -230,7 +252,11 @@ namespace IPAbuyer.Views
                         if (app.price == "0")
                         {
                             app.purchased = "已拥有";
-                            PurchasedAppDb.SavePurchasedApp(app.bundleID ?? "", app.name ?? "", app.version ?? "");
+                            PurchasedAppDb.SavePurchasedApp(
+                                app.bundleID ?? "",
+                                app.name ?? "",
+                                app.version ?? ""
+                            );
                             failedOwnedNames.Add(app.name ?? "");
                             UpdateStatusBar($"购买失败但已拥有: {app.name}", true);
                         }
@@ -242,9 +268,10 @@ namespace IPAbuyer.Views
                 }
             }
 
-            string extra = failedOwnedNames.Count > 0
-                ? $"，购买失败但已拥有: {failedOwnedNames.Count} 个"
-                : "";
+            string extra =
+                failedOwnedNames.Count > 0
+                    ? $"，购买失败但已拥有: {failedOwnedNames.Count} 个"
+                    : "";
             UpdateStatusBar($"批量购买完成 - 成功: {success}, 失败: {fail}, 跳过: {skip}{extra}");
             BatchPurchaseButton.IsEnabled = true;
             RefreshPurchasedStatus();
@@ -255,7 +282,10 @@ namespace IPAbuyer.Views
         /// </summary>
         private void RefreshPurchasedStatus()
         {
-            var purchasedList = PurchasedAppDb.GetPurchasedApps().Select(x => x.bundleID).ToHashSet();
+            var purchasedList = PurchasedAppDb
+                .GetPurchasedApps()
+                .Select(x => x.bundleID)
+                .ToHashSet();
             foreach (var app in allResults)
             {
                 if (purchasedList.Contains(app.bundleID))
@@ -274,8 +304,10 @@ namespace IPAbuyer.Views
             if (allResults.Count == 0)
             {
                 ResultList.ItemsSource = null;
-                if (PrevPageButton != null) PrevPageButton.IsEnabled = false;
-                if (NextPageButton != null) NextPageButton.IsEnabled = false;
+                if (PrevPageButton != null)
+                    PrevPageButton.IsEnabled = false;
+                if (NextPageButton != null)
+                    NextPageButton.IsEnabled = false;
                 return;
             }
 
@@ -283,8 +315,10 @@ namespace IPAbuyer.Views
             int end = System.Math.Min(start + pageSize, allResults.Count);
             ResultList.ItemsSource = allResults.GetRange(start, end - start);
 
-            if (PrevPageButton != null) PrevPageButton.IsEnabled = currentPage > 1;
-            if (NextPageButton != null) NextPageButton.IsEnabled = currentPage < totalPages;
+            if (PrevPageButton != null)
+                PrevPageButton.IsEnabled = currentPage > 1;
+            if (NextPageButton != null)
+                NextPageButton.IsEnabled = currentPage < totalPages;
         }
 
         /// <summary>
@@ -292,72 +326,7 @@ namespace IPAbuyer.Views
         /// </summary>
         private async void SearchButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!isLoggedIn)
-            {
-                UpdateStatusBar("请先登录账户", true);
-                return;
-            }
-
-            string appName = AppNameBox.Text.Trim();
-            if (string.IsNullOrEmpty(appName))
-            {
-                UpdateStatusBar("请输入应用名称", true);
-                return;
-            }
-
-            SearchButton.IsEnabled = false;
-            UpdateStatusBar($"正在搜索 \"{appName}\"...");
-
-            string cmd = $"./ipatool.exe search --keychain-passphrase {keychainPassphrase} {appName} --limit {SearchLimitNum} --non-interactive --format json";
-            var result = await RunCommandAsync(cmd);
-            SearchButton.IsEnabled = true;
-
-            allResults.Clear();
-            int successCount = 0, failCount = 0;
-            var purchasedList = PurchasedAppDb.GetPurchasedApps().Select(x => x.bundleID).ToHashSet();
-
-            try
-            {
-                var root = System.Text.Json.JsonDocument.Parse(result).RootElement;
-                if (root.TryGetProperty("apps", out var apps) && apps.ValueKind == System.Text.Json.JsonValueKind.Array)
-                {
-                    foreach (var obj in apps.EnumerateArray())
-                    {
-                        try
-                        {
-                            var bundleId = obj.TryGetProperty("bundleID", out var bid) ? bid.GetString() :
-                                          obj.TryGetProperty("bundleId", out var bid2) ? bid2.GetString() : "";
-                            var app = new AppResult
-                            {
-                                bundleID = bundleId,
-                                id = obj.TryGetProperty("id", out var idv) ? idv.GetRawText() : "",
-                                name = obj.TryGetProperty("name", out var namev) ? namev.GetString() : "",
-                                price = obj.TryGetProperty("price", out var pricev) ? pricev.GetRawText() : "",
-                                version = obj.TryGetProperty("version", out var ver) ? ver.GetString() : "",
-                                purchased = purchasedList.Contains(bundleId) ? "已购买" : "可购买"
-                            };
-                            allResults.Add(app);
-                            successCount++;
-                        }
-                        catch { failCount++; }
-                    }
-                }
-                else
-                {
-                    UpdateStatusBar("搜索结果为空或格式错误", true);
-                    return;
-                }
-            }
-            catch (Exception ex)
-            {
-                UpdateStatusBar($"解析搜索结果失败: {ex.Message}", true);
-                return;
-            }
-
-            totalPages = (allResults.Count + pageSize - 1) / pageSize;
-            currentPage = 1;
-            UpdatePage();
-            UpdateStatusBar($"搜索完成 - 找到 {allResults.Count} 个应用 (成功: {successCount}, 失败: {failCount})");
+            await PerformSearchAsync();
         }
 
         /// <summary>
@@ -376,7 +345,7 @@ namespace IPAbuyer.Views
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     StandardOutputEncoding = System.Text.Encoding.UTF8,
-                    StandardErrorEncoding = System.Text.Encoding.UTF8
+                    StandardErrorEncoding = System.Text.Encoding.UTF8,
                 };
                 using (var process = Process.Start(psi))
                 {
@@ -445,6 +414,123 @@ namespace IPAbuyer.Views
             }
 
             UpdateStatusBar($"下载功能开发中,已选择 {selected.Count} 个应用");
+        }
+
+        /// <summary>
+        /// 搜索框按键事件
+        /// </summary>
+        private async void Search_KeyUp(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key == Windows.System.VirtualKey.Enter)
+            {
+                // 阻止默认行为
+                e.Handled = true;
+
+                // 移除输入框焦点
+                if (sender is Control control)
+                {
+                    control.IsEnabled = false;
+                    control.IsEnabled = true;
+                }
+
+                // 触发搜索
+                await PerformSearchAsync();
+            }
+        }
+
+        /// <summary>
+        /// 统一的搜索方法
+        /// </summary>
+        private async Task PerformSearchAsync()
+        {
+            if (!isLoggedIn)
+            {
+                UpdateStatusBar("请先登录账户", true);
+                return;
+            }
+
+            string appName = AppNameBox.Text.Trim();
+            if (string.IsNullOrEmpty(appName))
+            {
+                UpdateStatusBar("请输入应用名称", true);
+                AppNameBox.Focus(FocusState.Programmatic);
+                return;
+            }
+
+            SearchButton.IsEnabled = false;
+            UpdateStatusBar($"正在搜索 \"{appName}\"...");
+
+            string cmd =
+                $"./ipatool.exe search --keychain-passphrase {keychainPassphrase} {appName} --limit {SearchLimitNum} --non-interactive --format json";
+            var result = await RunCommandAsync(cmd);
+            SearchButton.IsEnabled = true;
+
+            allResults.Clear();
+            int successCount = 0,
+                failCount = 0;
+            var purchasedList = PurchasedAppDb
+                .GetPurchasedApps()
+                .Select(x => x.bundleID)
+                .ToHashSet();
+
+            try
+            {
+                var root = System.Text.Json.JsonDocument.Parse(result).RootElement;
+                if (
+                    root.TryGetProperty("apps", out var apps)
+                    && apps.ValueKind == System.Text.Json.JsonValueKind.Array
+                )
+                {
+                    foreach (var obj in apps.EnumerateArray())
+                    {
+                        try
+                        {
+                            var bundleId =
+                                obj.TryGetProperty("bundleID", out var bid) ? bid.GetString()
+                                : obj.TryGetProperty("bundleId", out var bid2) ? bid2.GetString()
+                                : "";
+                            var app = new AppResult
+                            {
+                                bundleID = bundleId,
+                                id = obj.TryGetProperty("id", out var idv) ? idv.GetRawText() : "",
+                                name = obj.TryGetProperty("name", out var namev)
+                                    ? namev.GetString()
+                                    : "",
+                                price = obj.TryGetProperty("price", out var pricev)
+                                    ? pricev.GetRawText()
+                                    : "",
+                                version = obj.TryGetProperty("version", out var ver)
+                                    ? ver.GetString()
+                                    : "",
+                                purchased = purchasedList.Contains(bundleId) ? "已购买" : "可购买",
+                            };
+                            allResults.Add(app);
+                            successCount++;
+                        }
+                        catch
+                        {
+                            failCount++;
+                        }
+                    }
+                }
+                else
+                {
+                    UpdateStatusBar("搜索结果为空或格式错误", true);
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                UpdateStatusBar($"解析搜索结果失败: {ex.Message}", true);
+                return;
+            }
+
+            totalPages = (allResults.Count + pageSize - 1) / pageSize;
+            currentPage = 1;
+            UpdatePage();
+            UpdateStatusBar(
+                $"搜索完成 - 找到 {allResults.Count} 个应用 (成功: {successCount}, 失败: {failCount})"
+            );
         }
     }
 }

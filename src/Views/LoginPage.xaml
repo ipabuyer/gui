@@ -5,75 +5,88 @@
     <Grid Margin="100,20,100,20">
         <Grid VerticalAlignment="Top">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Margin="0" VerticalAlignment="Top" FontSize="40" FontWeight="Bold">
+            <TextBlock Grid.Column="0" Margin="0" VerticalAlignment="Top" FontSize="40"
+                FontWeight="Bold">
                 登录
             </TextBlock>
-            <Button Grid.Column="1" Margin="0,0,0,0" VerticalAlignment="Top" HorizontalAlignment="Right" MinWidth="120" FontSize="14" Click="BackToMainpage">
+            <Button Grid.Column="1" Margin="0,0,0,0" VerticalAlignment="Top"
+                HorizontalAlignment="Right" MinWidth="120" FontSize="14" Click="BackToMainpage">
                 返回首页
             </Button>
         </Grid>
-        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Top" Grid.Column="0" FontSize="16" Margin="0,100,0,0">
+        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Top" Grid.Column="0"
+            FontSize="16" Margin="0,100,0,0">
             输入您的Apple ID与密码以登录
         </TextBlock>
         <Grid Margin="40,150,40,0" Height="250" HorizontalAlignment="Center" VerticalAlignment="Top">
             <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="2*"/>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="2*" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="3*"/>
-                <ColumnDefinition Width="5*"/>
+                <ColumnDefinition Width="3*" />
+                <ColumnDefinition Width="5*" />
             </Grid.ColumnDefinitions>
 
-            <TextBlock Grid.Row="0" Grid.Column="0" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0">
+            <TextBlock Grid.Row="0" Grid.Column="0" HorizontalAlignment="Right"
+                VerticalAlignment="Center" Margin="0,0,10,0">
                 电子邮件地址
             </TextBlock>
-            <TextBox Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center" x:Name="EmailComboBox" PlaceholderText="example@icloud.com" MinWidth="300" MinHeight="30">
+            <TextBox Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left"
+                VerticalAlignment="Center" x:Name="EmailComboBox"
+                PlaceholderText="example@icloud.com" MinWidth="300" MinHeight="30"
+                KeyUp="Input_KeyUp">
             </TextBox>
 
-            <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,10,0">
+            <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right"
+                VerticalAlignment="Center" Margin="0,0,10,0">
                 密码
             </TextBlock>
-            <PasswordBox Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center" x:Name="PasswordBox" PlaceholderText="请输入密码" MinWidth="300" MinHeight="30"/>
+            <PasswordBox Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left"
+                VerticalAlignment="Center" x:Name="PasswordBox" PlaceholderText="请输入密码"
+                MinWidth="300" MinHeight="30" KeyUp="Input_KeyUp" />
         </Grid>
 
-        <Button VerticalAlignment="Center" HorizontalAlignment="Center" x:Name="NextButton" Content="登录" Margin="0,140,0,0" MinWidth="120" Click="NextButton_Click"/>
+        <Button VerticalAlignment="Center" HorizontalAlignment="Center" x:Name="NextButton"
+            Content="登录" Margin="0,140,0,0" MinWidth="120" Click="NextButton_Click" />
 
-        <TextBlock x:Name="ResultText" HorizontalAlignment="Center" VerticalAlignment="Bottom" Foreground="Gray" TextWrapping="Wrap" Margin="0,0,0,0"/>
+        <TextBlock x:Name="ResultText" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+            Foreground="Gray" TextWrapping="Wrap" Margin="0,0,0,0" />
 
         <!-- 警告弹窗 -->
         <ContentDialog x:Name="WarningDialog"
-               Title="警告"
-               CloseButtonText="确认"
-               DefaultButton="Primary"/>
+            Title="警告"
+            CloseButtonText="确认"
+            DefaultButton="Primary" />
 
         <!-- 验证码弹窗 -->
         <ContentDialog x:Name="AuthCodeDialog"
-                       Title="两步验证"
-                       PrimaryButtonText="验证"
-                       CloseButtonText="取消"
-                       DefaultButton="Primary"
-                       PrimaryButtonClick="AuthCodeDialog_PrimaryButtonClick"
-                       CloseButtonClick="AuthCodeDialog_CloseButtonClick">
+            Title="两步验证"
+            PrimaryButtonText="验证"
+            CloseButtonText="取消"
+            DefaultButton="Primary"
+            PrimaryButtonClick="AuthCodeDialog_PrimaryButtonClick"
+            CloseButtonClick="AuthCodeDialog_CloseButtonClick">
             <StackPanel Spacing="12">
                 <TextBlock TextWrapping="Wrap" Margin="0,0,0,12">
                     您的账户已启用两步验证，请输入发送到您信任设备上的6位验证码。若未收到验证码，请检查ID和密码是否正确。
                 </TextBlock>
-                <TextBox x:Name="CodeBox" 
-                         Header="验证码" 
-                         PlaceholderText="请输入6位验证码" 
-                         MaxLength="6" 
-                         MinWidth="200"
-                         InputScope="Number"
-                         TextChanged="CodeBox_TextChanged"/>
-                <TextBlock x:Name="CodeErrorText" 
-                           Foreground="Red" 
-                           Visibility="Collapsed"
-                           TextWrapping="Wrap"/>
+                <TextBox x:Name="CodeBox"
+                    Header="验证码"
+                    PlaceholderText="请输入6位验证码"
+                    MaxLength="6"
+                    MinWidth="200"
+                    InputScope="Number"
+                    TextChanged="CodeBox_TextChanged"
+                    KeyUp="CodeBox_KeyUp" />
+                <TextBlock x:Name="CodeErrorText"
+                    Foreground="Red"
+                    Visibility="Collapsed"
+                    TextWrapping="Wrap" />
             </StackPanel>
         </ContentDialog>
     </Grid>
