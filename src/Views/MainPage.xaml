@@ -92,8 +92,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock x:Name="SelectAllApps" Text="App名称" Grid.Column="0"
-                                HorizontalAlignment="Center">
+                            <TextBlock Text="App名称" Grid.Column="0" HorizontalAlignment="Center">
                             </TextBlock>
                             <TextBlock Text="AppID" Grid.Column="1" HorizontalAlignment="Center">
                             </TextBlock>
