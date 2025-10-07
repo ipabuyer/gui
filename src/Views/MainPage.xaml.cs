@@ -401,6 +401,7 @@ namespace IPAbuyer.Views
         /// <summary>
         /// 下载按钮点击事件（仅下载已购买应用）
         /// </summary>
+        /*
         private async void DownloadButton_Click(object sender, RoutedEventArgs e)
         {
             if (!isLoggedIn)
@@ -589,14 +590,14 @@ namespace IPAbuyer.Views
                 string summary = isCancelled ? "下载已取消 - " : "下载完成 - ";
                 summary +=
                     $"选中: {selected.Count}, 已购买: {purchasedApps.Count}, 成功: {success}, 失败: {fail}, 跳过: {skip}";
-                /*
+                
                 if (!string.IsNullOrEmpty(successMsg))
                     summary += $"\n{successMsg}";
                 if (!string.IsNullOrEmpty(failMsg))
                     summary += $"\n{failMsg}";
                 if (!string.IsNullOrEmpty(skipMsg))
                     summary += $"\n{skipMsg}";
-                */
+                
                 UpdateStatusBar(summary);
 
                 // 显示完成对话框
@@ -639,7 +640,7 @@ namespace IPAbuyer.Views
                 || // 如果输出中包含ipa文件路径
                 result.Contains("file saved"); // 文件保存成功
         }
-
+    */
         /// <summary>
         /// 搜索框按键事件
         /// </summary>
@@ -755,6 +756,10 @@ namespace IPAbuyer.Views
             UpdateStatusBar(
                 $"搜索完成 - 找到 {allResults.Count} 个应用 (成功: {successCount}, 失败: {failCount})"
             );
+        }
+        private void ScreeningComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // 你的处理逻辑
         }
     }
 }
