@@ -14,7 +14,6 @@ namespace IPAbuyer.Views
     {
         private string _email;
         private string _password;
-        private const string KeychainPassphrase = "12345678";
         private string _ipatoolPath;
 
         public LoginPage()
@@ -441,7 +440,8 @@ namespace IPAbuyer.Views
             try
             {
                 // 执行登录命令，初始验证码000000，json格式，verbose日志
-                string arguments = $"auth login --email {_email} --password \"{_password}\" --keychain-passphrase {KeychainPassphrase} --non-interactive --auth-code 000000 --format json --verbose";
+                string pass = IPAbuyer.Common.KeychainConfig.GetPassphrase();
+                string arguments = $"auth login --email {_email} --password \"{_password}\" --keychain-passphrase {pass} --non-interactive --auth-code 000000 --format json --verbose";
                 var result = await RunIpatoolCommandAsync(arguments);
 
                 // 判断是否需要2FA
@@ -514,7 +514,8 @@ namespace IPAbuyer.Views
                 CodeErrorText.Visibility = Visibility.Visible;
 
                 // 执行带验证码的登录命令，json格式，verbose日志
-                string arguments = $"auth login --email {_email} --password \"{_password}\" --keychain-passphrase {KeychainPassphrase} --non-interactive --auth-code {code} --format json --verbose";
+                string pass = IPAbuyer.Common.KeychainConfig.GetPassphrase();
+                string arguments = $"auth login --email {_email} --password \"{_password}\" --keychain-passphrase {pass} --non-interactive --auth-code {code} --format json --verbose";
                 var result = await RunIpatoolCommandAsync(arguments);
 
                 // 检查是否登录成功

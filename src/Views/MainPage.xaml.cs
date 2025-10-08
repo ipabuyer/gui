@@ -43,7 +43,7 @@ namespace IPAbuyer.Views
         private bool isLoggedIn = false;
         private bool isPageLoaded = false;
     private bool showOnlyNotPurchased = false; // 新增：是否仅显示未购买
-        private const string keychainPassphrase = "12345678";
+
         private string _ipatoolPath;
 
         public MainPage()
@@ -135,7 +135,8 @@ namespace IPAbuyer.Views
             // 尝试验证登录状态
             try
             {
-                string arguments = $"search --keychain-passphrase {keychainPassphrase} test --limit 1 --non-interactive";
+                string pass = IPAbuyer.Common.KeychainConfig.GetPassphrase();
+                string arguments = $"search --keychain-passphrase {pass} test --limit 1 --non-interactive";
                 var result = await RunIpatoolCommandAsync(arguments);
 
                 if (result.Contains("not logged in") || result.Contains("未登录"))
@@ -284,7 +285,8 @@ namespace IPAbuyer.Views
                     }
 
                     UpdateStatusBar($"正在购买: {app.name}...");
-                    string arguments = $"purchase --keychain-passphrase {keychainPassphrase} --bundle-identifier {app.bundleID}";
+                    string pass = IPAbuyer.Common.KeychainConfig.GetPassphrase();
+                    string arguments = $"purchase --keychain-passphrase {pass} --bundle-identifier {app.bundleID}";
                     string result = await RunIpatoolCommandAsync(arguments);
 
                     if (
@@ -566,7 +568,8 @@ namespace IPAbuyer.Views
             SearchButton.IsEnabled = false;
             UpdateStatusBar($"正在搜索 \"{appName}\"...");
 
-            string arguments = $"search --keychain-passphrase {keychainPassphrase} {appName} --limit {SearchLimitNum} --non-interactive --format json";
+            string pass2 = IPAbuyer.Common.KeychainConfig.GetPassphrase();
+            string arguments = $"search --keychain-passphrase {pass2} {appName} --limit {SearchLimitNum} --non-interactive --format json";
             var result = await RunIpatoolCommandAsync(arguments);
             SearchButton.IsEnabled = true;
 
