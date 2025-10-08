@@ -1,1 +1,1 @@
-.\src\bin\Debug\net9.0-windows10.0.19041.0\IPAbuyer.exe
+.\src\bin\x64\Debug\net9.0-windows10.0.19041.0\win-x64\IPAbuyer.exe

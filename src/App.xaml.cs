@@ -1,9 +1,11 @@
+using IPAbuyer.Data;
+using IPAbuyer.Views;
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using System;
-using IPAbuyer.Views;
-using IPAbuyer.Data;
 
 namespace IPAbuyer
 {
@@ -16,6 +18,7 @@ namespace IPAbuyer
             // 初始化数据库
             PurchasedAppDb.InitDb();
             AccountHistoryDb.InitDb();
+            
             this.InitializeComponent();
         }
 
