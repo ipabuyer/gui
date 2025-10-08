@@ -10,8 +10,8 @@ $cert = New-SelfSignedCertificate `
 
 Export-Certificate -Cert $cert -FilePath ".\cert.cer" -Type CERT
 
-$emptyPassword = New-Object System.Security.SecureString
-Export-PfxCertificate -Cert $cert -FilePath ".\cert.pfx" -Password $emptyPassword
+$Password = ConvertTo-SecureString -String " " -Force -AsPlainText
+Export-PfxCertificate -Cert $cert -FilePath ".\cert.pfx" -Password $Password
 
 $pfxBytes = [IO.File]::ReadAllBytes(".\cert.pfx")
 $pfxBase64 = [Convert]::ToBase64String($pfxBytes)

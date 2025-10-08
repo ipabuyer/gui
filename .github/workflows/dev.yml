@@ -27,20 +27,26 @@ jobs:
       uses: microsoft/setup-msbuild@v2
 
     - name: Restore
+      shell: pwsh
       run: dotnet restore ${{ env.PROJECTCSPROJ }}
 
     - name: Decode and Install Certificate
       id: cert
+      shell: pwsh
+      env:
+        CERT_PFX_BASE64: ${{ secrets.CERT_PFX_BASE64 }}
       run: |
-        $certBytes = [Convert]::FromBase64String($secrets.CERT_PFX_BASE64)
+        $certBytes = [Convert]::FromBase64String($env:CERT_PFX_BASE64)
         $certPath = Join-Path -Path $env:RUNNER_TEMP -ChildPath "cert.pfx"
         [System.IO.File]::WriteAllBytes($certPath, $certBytes)
 
-        $cert = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My
+        $password = ConvertTo-SecureString -String "" -Force -AsPlainText
+        $cert = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My -Password $password
 
         echo "THUMBPRINT=$($cert.Thumbprint)" >> $env:GITHUB_OUTPUT
 
     - name: Build
+      shell: pwsh
       run: |
         dotnet build ${{ env.PROJECTCSPROJ }} `
           -c Release /p:WindowsPackageType=MSIX `
@@ -57,7 +63,7 @@ jobs:
           **\AppPackages\**\*.msix
 
     - name: Cleanup Certificate
-      if: always()
+      shell: pwsh
       run: |
         $certPath = Join-Path -Path $env:RUNNER_TEMP -ChildPath "cert.pfx"
         if (Test-Path $certPath) {
