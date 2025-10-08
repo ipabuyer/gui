@@ -324,7 +324,7 @@ namespace IPAbuyer.Views
             try
             {
                 // 执行登录命令，初始验证码000000，json格式，verbose日志
-                var result = await IPAbuyer.Common.IpatoolRunner.AuthLoginAsync(_email ?? string.Empty, _password ?? string.Empty, "000000");
+                var result = ipatoolExecution.authLogin(_email ?? string.Empty, _password ?? string.Empty, "000000");
 
                 // 判断是否需要2FA
                 if (
@@ -396,7 +396,7 @@ namespace IPAbuyer.Views
                 CodeErrorText.Visibility = Visibility.Visible;
 
                 // 执行带验证码的登录命令，json格式，verbose日志
-                var result = await IPAbuyer.Common.IpatoolRunner.AuthLoginAsync(_email ?? string.Empty, _password ?? string.Empty, code);
+                var result = ipatoolExecution.authLogin(_email ?? string.Empty, _password ?? string.Empty, code);
 
                 // 检查是否登录成功
                 if (result.Contains("\"success\":true"))
