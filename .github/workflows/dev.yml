@@ -26,10 +26,6 @@ jobs:
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v2
 
-    - name: Restore
-      shell: pwsh
-      run: dotnet restore ${{ env.PROJECTCSPROJ }}
-
     - name: Decode and Install Certificate
       id: cert
       shell: pwsh
@@ -40,10 +36,14 @@ jobs:
         $certPath = Join-Path -Path $env:RUNNER_TEMP -ChildPath "cert.pfx"
         [System.IO.File]::WriteAllBytes($certPath, $certBytes)
 
-        $password = ConvertTo-SecureString -String "" -Force -AsPlainText
+        $password = ConvertTo-SecureString -String " " -Force -AsPlainText
         $cert = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My -Password $password
 
         echo "THUMBPRINT=$($cert.Thumbprint)" >> $env:GITHUB_OUTPUT
+
+    - name: Restore
+      shell: pwsh
+      run: dotnet restore ${{ env.PROJECTCSPROJ }}
 
     - name: Build
       shell: pwsh
