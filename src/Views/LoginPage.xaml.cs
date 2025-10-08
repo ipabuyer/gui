@@ -15,7 +15,6 @@ namespace IPAbuyer.Views
     {
         private string _email;
         private string _password;
-        private ipatoolExecution ipatoolExecution;
 
         public LoginPage()
         {
@@ -320,7 +319,7 @@ namespace IPAbuyer.Views
             try
             {
                 // 执行登录命令，初始验证码000000，json格式，verbose日志
-                var result = await ipatoolExecution.authLogin(_email, _password, "000000");
+                var result = ipatoolExecution.authLogin(_email, _password, "000000");
 
                 // 判断是否需要2FA
                 if (
@@ -392,7 +391,7 @@ namespace IPAbuyer.Views
                 CodeErrorText.Visibility = Visibility.Visible;
 
                 // 执行带验证码的登录命令，json格式，verbose日志
-                var result = await ipatoolExecution.authLogin(_email, _password, code);
+                var result = ipatoolExecution.authLogin(_email, _password, code);
 
                 // 检查是否登录成功
                 if (result.Contains("\"success\":true"))

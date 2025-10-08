@@ -9,18 +9,13 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace IPAbuyer.Common
 {
-    public class ipatoolExecution
+    public static class ipatoolExecution
     {
-        private string ipatoolPath;
-        private string Passphrase = KeychainConfig.GetPassphrase();
-
-        public ipatoolExecution()
-        {
-            findIpatoolPath();
-        }
+        public static string ipatoolPath;
+        public static string Passphrase = KeychainConfig.GetPassphrase();
 
         // 查找ipatool.exe的路径，优先使用Include文件夹中的
-        private void findIpatoolPath()
+        public static void findIpatoolPath()
         {
             // 获取当前应用程序的基础目录
             string baseDirectory = AppContext.BaseDirectory;
@@ -47,31 +42,31 @@ namespace IPAbuyer.Common
             }
         }
 
-        public Task<string> authLogin(string account, string password, string authcode)
+        public static string authLogin(string account, string password, string authcode)
         {
             string arguments = $"auth login --email {account} --password {password} --auth-code {authcode} --keychain-passphrase {Passphrase} --format json --non-interactive --verbose";
             return ExecuteIpatool(arguments);
         }
 
-        public Task<string> authLogout()
+        public static string authLogout()
         {
             string arguments = $"auth revoke --keychain-passphrase {Passphrase} --format json --non-interactive --verbose";
             return ExecuteIpatool(arguments);
         }
 
-        public Task<string> searchApp(string name, int limit)
+        public static string searchApp(string name, int limit)
         {
             string arguments = $"search {name} --limit {limit} --keychain-passphrase {Passphrase} --format json --non-interactive --verbose";
             return ExecuteIpatool(arguments);
         }
 
-        public Task<string> purchaseApp(string bundleID)
+        public static string purchaseApp(string bundleID)
         {
             string arguments = $"purchase --bundle-identifier {bundleID} --keychain-passphrase {Passphrase} --format json --non-interactive --verbose";
             return ExecuteIpatool(arguments);
         }
 
-        private async Task<string> ExecuteIpatool(string arguments)
+        public static string ExecuteIpatool(string arguments)
         {
             var psi = new ProcessStartInfo
             {
@@ -95,7 +90,7 @@ namespace IPAbuyer.Common
                 var output = process.StandardOutput.ToString();
                 var error = process.StandardError.ToString();
 
-                await process.WaitForExitAsync();
+                process.WaitForExitAsync();
 
                 return string.IsNullOrWhiteSpace(error) ? output : error;
             }

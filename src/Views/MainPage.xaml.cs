@@ -44,7 +44,6 @@ namespace IPAbuyer.Views
         private bool isLoggedIn = false;
         private bool isPageLoaded = false;
         private string selectedValue;
-        private ipatoolExecution ipatoolExecution = new ipatoolExecution();
 
         public MainPage()
         {
@@ -95,7 +94,7 @@ namespace IPAbuyer.Views
             // 尝试验证登录状态
             try
             {
-                var result = await ipatoolExecution.searchApp("test", 1);
+                var result = ipatoolExecution.searchApp("test", 1);
 
                 if (result.Contains("not logged in") || result.Contains("未登录"))
                 {
@@ -244,7 +243,7 @@ namespace IPAbuyer.Views
 
                     UpdateStatusBar($"正在购买: {app.name}...");
 
-                    var result = await ipatoolExecution.purchaseApp(app.name);
+                    var result = ipatoolExecution.purchaseApp(app.name);
 
                     if (
                         (result.Contains("success") && result.Contains("true"))
@@ -448,7 +447,7 @@ namespace IPAbuyer.Views
             SearchButton.IsEnabled = false;
             UpdateStatusBar($"正在搜索 \"{appName}\"...");
 
-            var result = await ipatoolExecution.searchApp(appName, SearchLimitNum);
+            var result = ipatoolExecution.searchApp(appName, SearchLimitNum);
             SearchButton.IsEnabled = true;
 
             allResults.Clear();
