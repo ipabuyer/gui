@@ -71,12 +71,9 @@
                     Click="NextPageButton_Click" MinHeight="30" MinWidth="100">
                     下一页
                 </Button>
-                <ComboBox Grid.Column="4" Margin="10,0,0,0" x:Name="ScreeningComboBox" SelectedIndex="0" SelectionChanged="ScreeningComboBox_SelectionChanged" MinHeight="30" MinWidth="120">
-                    <ComboBoxItem>筛选</ComboBoxItem>
-                    <ComboBoxItem>仅未购买</ComboBoxItem>
-                    <ComboBoxItem>仅已购买</ComboBoxItem>
-                    <ComboBoxItem>仅已拥有</ComboBoxItem>
-                </ComboBox>
+                <Button Grid.Column="4" Margin="10,0,0,0" x:Name="ScreeningButton" Click="ScreeningButton_Click" MinHeight="30" MinWidth="120">
+                    仅未购买
+                </Button>
             </Grid>
             <!-- 表格区 -->
             <Border CornerRadius="2" Background="#80F0F8FF" BorderBrush="White" BorderThickness="1"

@@ -22,7 +22,7 @@ namespace IPAbuyer.Views
             var tb = this.FindName("SearchLimitNumText") as TextBlock;
             if (tb != null)
                 tb.Text = SearchLimitNum.ToString();
-            UpdateStatusBar($"已调整搜索限制为 {SearchLimitNum} 个结果");
+            UpdateStatusBar($"已调整搜索范围");
         }
 
         // 查询结果数据模型
@@ -42,6 +42,7 @@ namespace IPAbuyer.Views
         private int totalPages = 1;
         private bool isLoggedIn = false;
         private bool isPageLoaded = false;
+    private bool showOnlyNotPurchased = false; // 新增：是否仅显示未购买
         private const string keychainPassphrase = "12345678";
         private string _ipatoolPath;
 
@@ -356,7 +357,12 @@ namespace IPAbuyer.Views
         /// </summary>
         private void UpdatePage()
         {
-            if (allResults.Count == 0)
+            // 根据筛选状态决定显示的数据源
+            var displayList = showOnlyNotPurchased
+                ? allResults.Where(a => a.purchased != "已购买" && a.purchased != "已拥有").ToList()
+                : allResults;
+
+            if (displayList.Count == 0)
             {
                 ResultList.ItemsSource = null;
                 if (PrevPageButton != null)
@@ -367,13 +373,33 @@ namespace IPAbuyer.Views
             }
 
             int start = (currentPage - 1) * pageSize;
-            int end = System.Math.Min(start + pageSize, allResults.Count);
-            ResultList.ItemsSource = allResults.GetRange(start, end - start);
+            int end = System.Math.Min(start + pageSize, displayList.Count);
+            ResultList.ItemsSource = displayList.GetRange(start, end - start);
 
             if (PrevPageButton != null)
                 PrevPageButton.IsEnabled = currentPage > 1;
             if (NextPageButton != null)
                 NextPageButton.IsEnabled = currentPage < totalPages;
+        }
+
+        private void ScreeningButton_Click(object sender, RoutedEventArgs e)
+        {
+            // 切换筛选状态
+            showOnlyNotPurchased = !showOnlyNotPurchased;
+
+            // 更新按钮外观
+            if (ScreeningButton != null)
+            {
+                ScreeningButton.Content = showOnlyNotPurchased ? "仅未购买 (ON)" : "仅未购买";
+                ScreeningButton.Background = showOnlyNotPurchased
+                    ? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.DodgerBlue)
+                    : new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
+            }
+
+            // 重置分页并刷新页面
+            currentPage = 1;
+            totalPages = (allResults.Count + pageSize - 1) / pageSize;
+            UpdatePage();
         }
 
         /// <summary>
