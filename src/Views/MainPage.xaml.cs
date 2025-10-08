@@ -49,7 +49,10 @@ namespace IPAbuyer.Views
         {
             this.InitializeComponent();
             this.Loaded += MainPage_Loaded;
+
         }
+
+        // ipatool 路径和执行统一交由 IPAbuyer.Common.IpatoolRunner 管理
 
         /// <summary>
         /// 页面加载时检查登录状态
@@ -255,7 +258,8 @@ namespace IPAbuyer.Views
                         PurchasedAppDb.SavePurchasedApp(
                             app.bundleID ?? "",
                             app.name ?? "",
-                            app.version ?? ""
+                            app.version ?? "",
+                            "已购买"
                         );
                         UpdateStatusBar($"成功购买: {app.name}");
                     }
@@ -269,7 +273,8 @@ namespace IPAbuyer.Views
                             PurchasedAppDb.SavePurchasedApp(
                                 app.bundleID ?? "",
                                 app.name ?? "",
-                                app.version ?? ""
+                                app.version ?? "",
+                                "已拥有"
                             );
                             failedOwnedNames.Add(app.name ?? "");
                             UpdateStatusBar($"购买失败但已拥有: {app.name}", true);
@@ -284,7 +289,7 @@ namespace IPAbuyer.Views
 
             string extra =
                 failedOwnedNames.Count > 0
-                    ? $"，购买失败但已拥有: {failedOwnedNames.Count} 个"
+                    ? $"，购买失败但已拥有: {skip+failedOwnedNames.Count} 个"
                     : "";
             UpdateStatusBar($"批量购买完成 - 成功: {success}, 失败: {fail}, 跳过: {skip}{extra}");
             BatchPurchaseButton.IsEnabled = true;
@@ -296,18 +301,33 @@ namespace IPAbuyer.Views
         /// </summary>
         private void RefreshPurchasedStatus()
         {
-            var purchasedList = PurchasedAppDb
+            // 使用 bundleID -> status 的映射，保留数据库中的 status 信息
+            var purchasedDict = PurchasedAppDb
                 .GetPurchasedApps()
-                .Select(x => x.bundleID)
-                .ToHashSet();
+                .ToDictionary(x => x.bundleID, x => x.status);
+
             foreach (var app in allResults)
             {
-                if (purchasedList.Contains(app.bundleID))
+                var key = app.bundleID ?? string.Empty;
+                if (purchasedDict.TryGetValue(key, out var status))
                 {
-                    app.purchased = "已购买";
+                    // 数据库中的语义可能是 "已拥有"，但 UI 需求是显示为 "已购买"
+                    app.purchased = MapDbStatusToUi(status);
                 }
             }
             UpdatePage();
+        }
+
+        // 将数据库中的 status 映射为界面上显示的状态
+        private string MapDbStatusToUi(string? dbStatus)
+        {
+            if (string.IsNullOrEmpty(dbStatus))
+                return "已拥有"; // 兼容旧数据或空值
+
+            // 按照你的要求：数据库中保存为 "已拥有"，但界面上需要显示为 "已购买"
+            if (dbStatus == "已拥有")
+                return "已拥有";
+            return dbStatus;
         }
 
         /// <summary>
@@ -453,10 +473,10 @@ namespace IPAbuyer.Views
             allResults.Clear();
             int successCount = 0,
                 failCount = 0;
-            var purchasedList = PurchasedAppDb
+            // 使用 bundleID -> status 的映射，以便区分已拥有/已购买
+            var purchasedDict = PurchasedAppDb
                 .GetPurchasedApps()
-                .Select(x => x.bundleID)
-                .ToHashSet();
+                .ToDictionary(x => x.bundleID, x => x.status);
 
             try
             {
@@ -466,6 +486,8 @@ namespace IPAbuyer.Views
                     && apps.ValueKind == System.Text.Json.JsonValueKind.Array
                 )
                 {
+                    int appsArrayCount = apps.GetArrayLength();
+                    Debug.WriteLine($"JSON apps array length: {appsArrayCount}");
                     foreach (var obj in apps.EnumerateArray())
                     {
                         try
@@ -487,7 +509,9 @@ namespace IPAbuyer.Views
                                 version = obj.TryGetProperty("version", out var ver)
                                     ? ver.GetString()
                                     : "",
-                                purchased = purchasedList.Contains(bundleId) ? "已购买" : "可购买",
+                                purchased = purchasedDict.TryGetValue(bundleId ?? string.Empty, out var stat)
+                                    ? (string.IsNullOrEmpty(stat) ? "已购买" : stat)
+                                    : "可购买",
                             };
                             allResults.Add(app);
                             successCount++;
@@ -513,8 +537,10 @@ namespace IPAbuyer.Views
             totalPages = (allResults.Count + pageSize - 1) / pageSize;
             currentPage = 1;
             UpdatePage();
+            // 记录实际返回数，便于诊断 ipatool 是否按请求返回了足够数量
+            Debug.WriteLine($"Search requested {SearchLimitNum}, returned {allResults.Count}");
             UpdateStatusBar(
-                $"搜索完成 - 找到 {allResults.Count} 个应用 (成功: {successCount}, 失败: {failCount})"
+                $"搜索完成 - 请求: {SearchLimitNum}, 找到 {allResults.Count} 个应用 (成功: {successCount}, 失败: {failCount})"
             );
         }
 

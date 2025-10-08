@@ -13,8 +13,9 @@ namespace IPAbuyer.Views
 {
     public sealed partial class LoginPage : Page
     {
-        private string _email;
-        private string _password;
+    private string? _email;
+    private string? _password;
+    // ipatool path and execution now centralized in IPAbuyer.Common.IpatoolRunner
 
         public LoginPage()
         {
@@ -27,9 +28,13 @@ namespace IPAbuyer.Views
         /// </summary>
         private void InitializePage()
         {
+            // 查找/缓存由 IpatoolRunner 管理，无需本地保存
+
             // 加载账号历史
             LoadAccountHistory();
         }
+
+        // ipatool 路径与执行由 Common.IpatoolRunner 管理
 
         /// <summary>
         /// 加载账号历史记录
@@ -246,7 +251,7 @@ namespace IPAbuyer.Views
             try
             {
                 // 直接保存，数据库会自动处理重复情况
-                AccountHistoryDb.SaveAccount(_email, _password);
+                AccountHistoryDb.SaveAccount(_email ?? string.Empty, _password ?? string.Empty);
             }
             catch (Exception ex)
             {
@@ -268,11 +273,11 @@ namespace IPAbuyer.Views
         {
             if (e.Key == Windows.System.VirtualKey.Enter)
             {
-                if (sender == EmailComboBox)
+                if (sender is TextBox tb && tb == EmailComboBox)
                 {
                     PasswordBox.Focus(FocusState.Programmatic);
                 }
-                else if (sender == PasswordBox)
+                else if (sender is PasswordBox pb && pb == PasswordBox)
                 {
                     await LoginAsync();
                 }
@@ -319,7 +324,7 @@ namespace IPAbuyer.Views
             try
             {
                 // 执行登录命令，初始验证码000000，json格式，verbose日志
-                var result = ipatoolExecution.authLogin(_email, _password, "000000");
+                var result = await IPAbuyer.Common.IpatoolRunner.AuthLoginAsync(_email ?? string.Empty, _password ?? string.Empty, "000000");
 
                 // 判断是否需要2FA
                 if (
@@ -391,7 +396,7 @@ namespace IPAbuyer.Views
                 CodeErrorText.Visibility = Visibility.Visible;
 
                 // 执行带验证码的登录命令，json格式，verbose日志
-                var result = ipatoolExecution.authLogin(_email, _password, code);
+                var result = await IPAbuyer.Common.IpatoolRunner.AuthLoginAsync(_email ?? string.Empty, _password ?? string.Empty, code);
 
                 // 检查是否登录成功
                 if (result.Contains("\"success\":true"))

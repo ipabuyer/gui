@@ -19,7 +19,7 @@ namespace IPAbuyer.Views
 
         // 明暗模式 ComboBox 改变时触发(已删除)
         // 跳转到开发者官网
-        private async void GithubButton(object sender, RoutedEventArgs e)
+        private void GithubButton(object sender, RoutedEventArgs e)
         {
             var url = "https://github.com/ipabuyer/";
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
