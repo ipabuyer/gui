@@ -3,13 +3,13 @@ name: IPAbuyer Development Workflow
 on:
   push:
     branches:
+    - main
     - beta
   workflow_dispatch:
 
 
 env:
   PROJECTCSPROJ: .\src\IPAbuyer.csproj
-  APPPACKAGE: .\src\IPAbuyer\AppPackages\**\IPAbuyer_*.msix
 
 jobs:
   build:
@@ -60,7 +60,8 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: IPAbuyer_x64
-        path: ${{ env.APPPACKAGE }}
+        path: |
+          **\AppPackages\**\IPAbuyer_*.msix
 
     - name: Cleanup Certificate
       shell: pwsh
