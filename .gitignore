@@ -4,6 +4,12 @@
 src/AppPackages/
 *.suo
 
+# 证书和密钥
+*.pfx
+*.pfx.txt
+*.cer
+*.key
+
 # 编译和打包输出目录
 bin/
 obj/

@@ -1,0 +1,77 @@
+name: IPAbuyer Development Workflow
+
+on:
+  push:
+    branches:
+    - main
+    - beta
+  workflow_dispatch:
+
+
+env:
+  PROJECTCSPROJ: .\src\IPAbuyer.csproj
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Set up Dotnet
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 9.x
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Decode and Install Certificate
+      id: cert
+      shell: pwsh
+      env:
+        CERT_PFX_BASE64: ${{ secrets.CERT_PFX_BASE64 }}
+      run: |
+        $certBytes = [Convert]::FromBase64String($env:CERT_PFX_BASE64)
+        $certPath = Join-Path -Path $env:RUNNER_TEMP -ChildPath "cert.pfx"
+        [System.IO.File]::WriteAllBytes($certPath, $certBytes)
+
+        $password = ConvertTo-SecureString -String " " -Force -AsPlainText
+        $cert = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My -Password $password
+
+        echo "THUMBPRINT=$($cert.Thumbprint)" >> $env:GITHUB_OUTPUT
+
+    - name: Restore
+      shell: pwsh
+      run: dotnet restore ${{ env.PROJECTCSPROJ }}
+
+    - name: Build
+      shell: pwsh
+      run: |
+        dotnet build ${{ env.PROJECTCSPROJ }} `
+          -c Release /p:WindowsPackageType=MSIX `
+          /p:GenerateAppxPackageOnBuild=true `
+          /p:Platform=x64 `
+          /p:AppxPackageSigningEnabled=true `
+          /p:PackageCertificateThumbprint="${{ steps.cert.outputs.THUMBPRINT }}"
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: IPAbuyer_x64
+        path: |
+          **\AppPackages\**\IPAbuyer_*.msix
+
+    - name: Cleanup Certificate
+      shell: pwsh
+      run: |
+        $certPath = Join-Path -Path $env:RUNNER_TEMP -ChildPath "cert.pfx"
+        if (Test-Path $certPath) {
+          Remove-Item -Path $certPath -Force
+        }
+
+        $thumbprint = "${{ steps.cert.outputs.THUMBPRINT }}"
+        if ($thumbprint) {
+          Get-ChildItem Cert:\CurrentUser\My | Where-Object { $_.Thumbprint -eq $thumbprint } | Remove-Item -Force
+        }

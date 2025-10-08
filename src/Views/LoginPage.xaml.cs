@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using IPAbuyer.Data;
@@ -14,6 +15,7 @@ namespace IPAbuyer.Views
         private string _email;
         private string _password;
         private const string KeychainPassphrase = "12345678";
+        private string _ipatoolPath;
 
         public LoginPage()
         {
@@ -26,8 +28,48 @@ namespace IPAbuyer.Views
         /// </summary>
         private void InitializePage()
         {
+            // 查找ipatool.exe路径
+            _ipatoolPath = FindIpatoolPath();
+
             // 加载账号历史
             LoadAccountHistory();
+        }
+
+        /// <summary>
+        /// 查找ipatool.exe的路径，优先使用Include文件夹中的
+        /// </summary>
+        private string FindIpatoolPath()
+        {
+            try
+            {
+                // 获取当前应用程序的基础目录
+                string baseDirectory = AppContext.BaseDirectory;
+
+                // 优先查找项目根目录下的Include文件夹中的ipatool.exe
+                string includePath = Path.Combine(baseDirectory, "Include", "ipatool.exe");
+                if (File.Exists(includePath))
+                {
+                    Debug.WriteLine($"找到Include文件夹中的ipatool.exe: {includePath}");
+                    return includePath;
+                }
+
+                // 如果Include文件夹中没有，查找当前目录下的ipatool.exe
+                string currentDirPath = Path.Combine(baseDirectory, "ipatool.exe");
+                if (File.Exists(currentDirPath))
+                {
+                    Debug.WriteLine($"找到当前目录下的ipatool.exe: {currentDirPath}");
+                    return currentDirPath;
+                }
+
+                // 如果都找不到，返回默认的ipatool.exe（保持原有行为）
+                Debug.WriteLine("未找到ipatool.exe，使用默认路径");
+                return "ipatool.exe";
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"查找ipatool.exe路径时出错: {ex.Message}");
+                return "ipatool.exe";
+            }
         }
 
         /// <summary>
@@ -205,8 +247,8 @@ namespace IPAbuyer.Views
             // 延迟跳转，让用户看到成功提示
             await Task.Delay(500);
 
-            // 导航到搜索页面
-            Frame.Navigate(typeof(MainPage));
+            // 导航到搜索页面，并传递登录状态
+            Frame.Navigate(typeof(MainPage), true); // 传递 true 表示登录成功
         }
 
         /// <summary>
@@ -254,22 +296,65 @@ namespace IPAbuyer.Views
         }
 
         /// <summary>
-        /// 执行命令行命令
+        /// 执行命令行命令 - 修复版本
         /// </summary>
         private async Task<string> RunCommandAsync(string command)
         {
             try
             {
+                // 使用cmd.exe而不是powershell，因为cmd对路径中的空格处理更好
                 var psi = new ProcessStartInfo
                 {
-                    FileName = "powershell.exe",
-                    Arguments = $"-Command \"{command}\"",
+                    FileName = "cmd.exe",
+                    Arguments = $"/c \"{command}\"",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     StandardOutputEncoding = System.Text.Encoding.UTF8,
                     StandardErrorEncoding = System.Text.Encoding.UTF8,
+                };
+
+                using (var process = Process.Start(psi))
+                {
+                    if (process == null)
+                    {
+                        return "无法启动进程";
+                    }
+
+                    string output = await process.StandardOutput.ReadToEndAsync();
+                    string error = await process.StandardError.ReadToEndAsync();
+
+                    await process.WaitForExitAsync();
+
+                    return string.IsNullOrWhiteSpace(error) ? output : error;
+                }
+            }
+            catch (Exception ex)
+            {
+                return $"命令执行失败: {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// 执行ipatool命令 - 专门处理路径问题
+        /// </summary>
+        private async Task<string> RunIpatoolCommandAsync(string arguments)
+        {
+            try
+            {
+                // 直接执行ipatool.exe，而不是通过powershell或cmd
+                var psi = new ProcessStartInfo
+                {
+                    FileName = _ipatoolPath,
+                    Arguments = arguments,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    StandardOutputEncoding = System.Text.Encoding.UTF8,
+                    StandardErrorEncoding = System.Text.Encoding.UTF8,
+                    WorkingDirectory = Path.GetDirectoryName(_ipatoolPath) // 设置工作目录为ipatool所在目录
                 };
 
                 using (var process = Process.Start(psi))
@@ -356,9 +441,8 @@ namespace IPAbuyer.Views
             try
             {
                 // 执行登录命令，初始验证码000000，json格式，verbose日志
-                string cmd =
-                    $"./ipatool.exe auth login --email {_email} --password \"{_password}\" --keychain-passphrase {KeychainPassphrase} --non-interactive --auth-code 000000 --format json --verbose";
-                var result = await RunCommandAsync(cmd);
+                string arguments = $"auth login --email {_email} --password \"{_password}\" --keychain-passphrase {KeychainPassphrase} --non-interactive --auth-code 000000 --format json --verbose";
+                var result = await RunIpatoolCommandAsync(arguments);
 
                 // 判断是否需要2FA
                 if (
@@ -430,9 +514,8 @@ namespace IPAbuyer.Views
                 CodeErrorText.Visibility = Visibility.Visible;
 
                 // 执行带验证码的登录命令，json格式，verbose日志
-                string cmd =
-                    $"./ipatool.exe auth login --email {_email} --password \"{_password}\" --keychain-passphrase {KeychainPassphrase} --non-interactive --auth-code {code} --format json --verbose";
-                var result = await RunCommandAsync(cmd);
+                string arguments = $"auth login --email {_email} --password \"{_password}\" --keychain-passphrase {KeychainPassphrase} --non-interactive --auth-code {code} --format json --verbose";
+                var result = await RunIpatoolCommandAsync(arguments);
 
                 // 检查是否登录成功
                 if (result.Contains("\"success\":true"))
