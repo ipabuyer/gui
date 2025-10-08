@@ -43,16 +43,11 @@ namespace IPAbuyer.Views
         {
             try
             {
-                var accounts = AccountHistoryDb.GetAccounts();
-                if (accounts != null && accounts.Any())
-                {
-                    // 获取最后一个账号（最近使用的）
-                    var lastAccount = accounts.LastOrDefault();
-                    if (!string.IsNullOrEmpty(lastAccount.email))
+                string lastAccount = KeychainConfig.GetLastLoginUsername();
+                if (!string.IsNullOrEmpty(lastAccount))
                     {
-                        EmailComboBox.Text = lastAccount.email;
+                        EmailComboBox.Text = lastAccount;
                     }
-                }
             }
             catch (Exception ex)
             {
@@ -196,12 +191,6 @@ namespace IPAbuyer.Views
         /// </summary>
         private async Task OnLoginSuccess()
         {
-            // 保存账号信息
-            SaveAccountToHistory();
-
-            // 清除退出标记
-            AccountHistoryDb.ClearLogoutFlag();
-
             // 显示成功消息
             ResultText.Text = "登录成功，正在跳转...";
             ResultText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
@@ -242,24 +231,6 @@ namespace IPAbuyer.Views
 
             return result.Length > 200 ? result.Substring(0, 200) + "..." : result;
         }
-
-        /// <summary>
-        /// 保存账号到历史记录
-        /// </summary>
-        private void SaveAccountToHistory()
-        {
-            try
-            {
-                // 直接保存，数据库会自动处理重复情况
-                AccountHistoryDb.SaveAccount(_email ?? string.Empty, _password ?? string.Empty);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"保存账号历史失败: {ex.Message}");
-            }
-        }
-
-        
 
         private void BackToMainpage(object sender, RoutedEventArgs e)
         {
@@ -324,7 +295,7 @@ namespace IPAbuyer.Views
             try
             {
                 // 执行登录命令，初始验证码000000，json格式，verbose日志
-                var result = ipatoolExecution.authLogin(_email ?? string.Empty, _password ?? string.Empty, "000000");
+                var result = ipatoolExecution.authLogin(_email ?? string.Empty, _password ?? string.Empty, "000000",KeychainConfig.GenerateAndSaveSecretKey(_email ?? string.Empty));
 
                 // 判断是否需要2FA
                 if (
@@ -396,7 +367,7 @@ namespace IPAbuyer.Views
                 CodeErrorText.Visibility = Visibility.Visible;
 
                 // 执行带验证码的登录命令，json格式，verbose日志
-                var result = ipatoolExecution.authLogin(_email ?? string.Empty, _password ?? string.Empty, code);
+                var result = ipatoolExecution.authLogin(_email ?? string.Empty, _password ?? string.Empty, code,KeychainConfig.GetSecretKey(_email ?? string.Empty));
 
                 // 检查是否登录成功
                 if (result.Contains("\"success\":true"))

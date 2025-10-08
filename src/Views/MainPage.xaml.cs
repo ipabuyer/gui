@@ -11,6 +11,8 @@ namespace IPAbuyer.Views
 {
     public sealed partial class MainPage : Page
     {
+        private string _email = KeychainConfig.GetLastLoginUsername();
+
         // 搜索范围限制
         public int SearchLimitNum { get; set; } = 5;
 
@@ -86,36 +88,20 @@ namespace IPAbuyer.Views
         {
             UpdateStatusBar("正在检查登录状态...");
 
-            // 检查是否有退出标记
-            if (AccountHistoryDb.IsLogoutFlag())
-            {
-                isLoggedIn = false;
-                UpdateStatusBar("未登录,请先登录账户");
-                return;
-            }
-
             // 尝试验证登录状态
             try
             {
-                var result = ipatoolExecution.searchApp("test", 1);
+                var result = ipatoolExecution.searchApp("test", 1, KeychainConfig.GetSecretKey(_email ?? string.Empty));
 
-                if (result.Contains("not logged in") || result.Contains("未登录"))
-                {
-                    isLoggedIn = false;
-                    UpdateStatusBar("登录已过期,请重新登录");
-                }
-                else if (result.Contains("apps") || result.Contains("success"))
+                if (result.Contains("apps") || result.Contains("success"))
                 {
                     isLoggedIn = true;
-                    var accounts = AccountHistoryDb.GetAccounts();
-                    var lastAccount = accounts.LastOrDefault();
-                    var email = lastAccount.email ?? "未知账户";
-                    UpdateStatusBar($"已登录账户: {email}");
+                    UpdateStatusBar($"已登录账户: {_email}");
                 }
                 else
                 {
                     isLoggedIn = false;
-                    UpdateStatusBar("无法验证登录状态,请尝试重新登录");
+                    UpdateStatusBar($"无法验证登录状态,请尝试重新登录");
                 }
             }
             catch (Exception ex)
@@ -130,9 +116,6 @@ namespace IPAbuyer.Views
         /// </summary>
         private void UpdateLoginButton()
         {
-            if (LogoutButton == null)
-                return;
-
             if (isLoggedIn)
             {
                 LogoutButton.Content = "退出登录";
@@ -246,7 +229,7 @@ namespace IPAbuyer.Views
 
                     UpdateStatusBar($"正在购买: {app.name}...");
 
-                    var result = ipatoolExecution.purchaseApp(app.name);
+                    var result = ipatoolExecution.purchaseApp(app.name ?? string.Empty, KeychainConfig.GetSecretKey(_email ?? string.Empty));
 
                     if (
                         (result.Contains("success") && result.Contains("true"))
@@ -289,7 +272,7 @@ namespace IPAbuyer.Views
 
             string extra =
                 failedOwnedNames.Count > 0
-                    ? $"，购买失败但已拥有: {skip+failedOwnedNames.Count} 个"
+                    ? $"，购买失败但已拥有: {skip + failedOwnedNames.Count} 个"
                     : "";
             UpdateStatusBar($"批量购买完成 - 成功: {success}, 失败: {fail}, 跳过: {skip}{extra}");
             BatchPurchaseButton.IsEnabled = true;
@@ -410,7 +393,6 @@ namespace IPAbuyer.Views
             if (isLoggedIn)
             {
                 // 退出登录
-                AccountHistoryDb.SetLogoutFlag();
                 isLoggedIn = false;
                 UpdateStatusBar("已退出登录");
                 Frame.Navigate(typeof(LoginPage));
@@ -467,7 +449,7 @@ namespace IPAbuyer.Views
             SearchButton.IsEnabled = false;
             UpdateStatusBar($"正在搜索 \"{appName}\"...");
 
-            var result = ipatoolExecution.searchApp(appName, SearchLimitNum);
+            var result = ipatoolExecution.searchApp(appName, SearchLimitNum, KeychainConfig.GetSecretKey(_email ?? string.Empty));
             SearchButton.IsEnabled = true;
 
             allResults.Clear();

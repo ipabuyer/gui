@@ -1,4 +1,5 @@
-﻿using System;
+﻿using IPAbuyer.Data;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -12,27 +13,25 @@ namespace IPAbuyer.Common
 {
     public static class ipatoolExecution
     {
-        public static string Passphrase = KeychainConfig.GetPassphrase();
-
-        public static string authLogin(string account, string password, string authcode)
+        public static string authLogin(string account, string password, string authcode, string Passphrase)
         {
             string arguments = $"auth login --email {account} --password {password} --auth-code {authcode} --keychain-passphrase {Passphrase} --format json --non-interactive --verbose";
             return ExecuteIpatool(arguments);
         }
 
-        public static string authLogout()
+        public static string authLogout(string Passphrase)
         {
             string arguments = $"auth revoke --keychain-passphrase {Passphrase} --format json --non-interactive --verbose";
             return ExecuteIpatool(arguments);
         }
 
-        public static string searchApp(string name, int limit)
+        public static string searchApp(string name, int limit, string Passphrase)
         {
             string arguments = $"search {name} --limit {limit} --keychain-passphrase {Passphrase} --format json --non-interactive --verbose";
             return ExecuteIpatool(arguments);
         }
 
-        public static string purchaseApp(string bundleID)
+        public static string purchaseApp(string bundleID, string Passphrase)
         {
             string arguments = $"purchase --bundle-identifier {bundleID} --keychain-passphrase {Passphrase} --format json --non-interactive --verbose";
             return ExecuteIpatool(arguments);

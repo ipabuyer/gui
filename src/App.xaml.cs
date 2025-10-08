@@ -17,7 +17,7 @@ namespace IPAbuyer
         {
             // 初始化数据库
             PurchasedAppDb.InitDb();
-            AccountHistoryDb.InitDb();
+            KeychainConfig.InitializeDatabase();
             
             this.InitializeComponent();
         }
