@@ -1,0 +1,29 @@
+name: Publish Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag'
+        required: true
+        default: 'v2025.10.8.1'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Download Release Action
+      uses: actions/download-artifact@v5
+      with:
+        name: IPAbuyer_x64
+
+    - uses: ncipollo/release-action@v1
+      with:
+        tag: ${{ inputs.tag }}
+        artifacts: IPAbuyer_x64.zip
