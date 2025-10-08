@@ -9,6 +9,7 @@ on:
 
 env:
   PROJECTCSPROJ: .\src\IPAbuyer.csproj
+  APPPACKAGE: .\src\IPAbuyer\AppPackages\**\IPAbuyer_*.msix
 
 jobs:
   build:
@@ -58,9 +59,8 @@ jobs:
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: WinUI3-Package-x64
-        path: |
-          **\AppPackages\**\*.msix
+        name: IPAbuyer_x64
+        path: ${{ env.APPPACKAGE }}
 
     - name: Cleanup Certificate
       shell: pwsh
