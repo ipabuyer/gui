@@ -41,56 +41,20 @@ namespace IPAbuyer.Views
         private int pageSize = 15;
         private int totalPages = 1;
         private bool isLoggedIn = false;
-        private bool isPageLoaded = false;
-    private bool showOnlyNotPurchased = false; // 新增：是否仅显示未购买
-
-        private string _ipatoolPath;
+    private bool isPageLoaded = false;
+    // 过滤复选框状态：如果都为 false 则表示不过滤（显示全部）
+    private bool filterNotPurchased = false;
+    private bool filterOwned = false;
+    private bool filterPurchased = false;
 
         public MainPage()
         {
             this.InitializeComponent();
             this.Loaded += MainPage_Loaded;
-            
-            // 查找ipatool.exe路径
-            _ipatoolPath = FindIpatoolPath();
+
         }
 
-        /// <summary>
-        /// 查找ipatool.exe的路径，优先使用Include文件夹中的
-        /// </summary>
-        private string FindIpatoolPath()
-        {
-            try
-            {
-                // 获取当前应用程序的基础目录
-                string baseDirectory = AppContext.BaseDirectory;
-                
-                // 优先查找项目根目录下的Include文件夹中的ipatool.exe
-                string includePath = Path.Combine(baseDirectory, "Include", "ipatool.exe");
-                if (File.Exists(includePath))
-                {
-                    Debug.WriteLine($"找到Include文件夹中的ipatool.exe: {includePath}");
-                    return includePath;
-                }
-
-                // 如果Include文件夹中没有，查找当前目录下的ipatool.exe
-                string currentDirPath = Path.Combine(baseDirectory, "ipatool.exe");
-                if (File.Exists(currentDirPath))
-                {
-                    Debug.WriteLine($"找到当前目录下的ipatool.exe: {currentDirPath}");
-                    return currentDirPath;
-                }
-
-                // 如果都找不到，返回默认的ipatool.exe（保持原有行为）
-                Debug.WriteLine("未找到ipatool.exe，使用默认路径");
-                return "ipatool.exe";
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"查找ipatool.exe路径时出错: {ex.Message}");
-                return "ipatool.exe";
-            }
-        }
+        // ipatool 路径和执行统一交由 IPAbuyer.Common.IpatoolRunner 管理
 
         /// <summary>
         /// 页面加载时检查登录状态
@@ -98,7 +62,7 @@ namespace IPAbuyer.Views
         private async void MainPage_Loaded(object sender, RoutedEventArgs e)
         {
             isPageLoaded = true;
-            
+
             // 检查是否有从登录页面传递过来的登录状态
             if (this.DataContext is bool loginStatus)
             {
@@ -113,7 +77,7 @@ namespace IPAbuyer.Views
                 // 如果没有传递状态，则检查本地登录状态
                 await CheckLoginStatus();
             }
-            
+
             UpdateLoginButton();
         }
 
@@ -135,9 +99,7 @@ namespace IPAbuyer.Views
             // 尝试验证登录状态
             try
             {
-                string pass = IPAbuyer.Common.KeychainConfig.GetPassphrase();
-                string arguments = $"search --keychain-passphrase {pass} test --limit 1 --non-interactive";
-                var result = await RunIpatoolCommandAsync(arguments);
+                var result = await IPAbuyer.Common.IpatoolRunner.SearchAsync("test", 1);
 
                 if (result.Contains("not logged in") || result.Contains("未登录"))
                 {
@@ -285,9 +247,7 @@ namespace IPAbuyer.Views
                     }
 
                     UpdateStatusBar($"正在购买: {app.name}...");
-                    string pass = IPAbuyer.Common.KeychainConfig.GetPassphrase();
-                    string arguments = $"purchase --keychain-passphrase {pass} --bundle-identifier {app.bundleID}";
-                    string result = await RunIpatoolCommandAsync(arguments);
+                    string result = await IPAbuyer.Common.IpatoolRunner.PurchaseAsync(app.bundleID ?? string.Empty);
 
                     if (
                         (result.Contains("success") && result.Contains("true"))
@@ -299,7 +259,8 @@ namespace IPAbuyer.Views
                         PurchasedAppDb.SavePurchasedApp(
                             app.bundleID ?? "",
                             app.name ?? "",
-                            app.version ?? ""
+                            app.version ?? "",
+                            "已购买"
                         );
                         UpdateStatusBar($"成功购买: {app.name}");
                     }
@@ -313,7 +274,8 @@ namespace IPAbuyer.Views
                             PurchasedAppDb.SavePurchasedApp(
                                 app.bundleID ?? "",
                                 app.name ?? "",
-                                app.version ?? ""
+                                app.version ?? "",
+                                "已拥有"
                             );
                             failedOwnedNames.Add(app.name ?? "");
                             UpdateStatusBar($"购买失败但已拥有: {app.name}", true);
@@ -328,7 +290,7 @@ namespace IPAbuyer.Views
 
             string extra =
                 failedOwnedNames.Count > 0
-                    ? $"，购买失败但已拥有: {failedOwnedNames.Count} 个"
+                    ? $"，购买失败但已拥有: {skip+failedOwnedNames.Count} 个"
                     : "";
             UpdateStatusBar($"批量购买完成 - 成功: {success}, 失败: {fail}, 跳过: {skip}{extra}");
             BatchPurchaseButton.IsEnabled = true;
@@ -340,18 +302,33 @@ namespace IPAbuyer.Views
         /// </summary>
         private void RefreshPurchasedStatus()
         {
-            var purchasedList = PurchasedAppDb
+            // 使用 bundleID -> status 的映射，保留数据库中的 status 信息
+            var purchasedDict = PurchasedAppDb
                 .GetPurchasedApps()
-                .Select(x => x.bundleID)
-                .ToHashSet();
+                .ToDictionary(x => x.bundleID, x => x.status);
+
             foreach (var app in allResults)
             {
-                if (purchasedList.Contains(app.bundleID))
+                var key = app.bundleID ?? string.Empty;
+                if (purchasedDict.TryGetValue(key, out var status))
                 {
-                    app.purchased = "已购买";
+                    // 数据库中的语义可能是 "已拥有"，但 UI 需求是显示为 "已购买"
+                    app.purchased = MapDbStatusToUi(status);
                 }
             }
             UpdatePage();
+        }
+
+        // 将数据库中的 status 映射为界面上显示的状态
+        private string MapDbStatusToUi(string? dbStatus)
+        {
+            if (string.IsNullOrEmpty(dbStatus))
+                return "已拥有"; // 兼容旧数据或空值
+
+            // 按照你的要求：数据库中保存为 "已拥有"，但界面上需要显示为 "已购买"
+            if (dbStatus == "已拥有")
+                return "已拥有";
+            return dbStatus;
         }
 
         /// <summary>
@@ -359,10 +336,17 @@ namespace IPAbuyer.Views
         /// </summary>
         private void UpdatePage()
         {
-            // 根据筛选状态决定显示的数据源
-            var displayList = showOnlyNotPurchased
-                ? allResults.Where(a => a.purchased != "已购买" && a.purchased != "已拥有").ToList()
-                : allResults;
+            // 根据三个复选框的筛选状态决定显示的数据源
+            var displayList = allResults;
+            bool anyFilter = filterNotPurchased || filterOwned || filterPurchased;
+            if (anyFilter)
+            {
+                displayList = allResults.Where(a =>
+                    (filterNotPurchased && (string.IsNullOrEmpty(a.purchased) || a.purchased == "可购买" || a.purchased == ""))
+                    || (filterOwned && a.purchased == "已拥有")
+                    || (filterPurchased && a.purchased == "已购买")
+                ).ToList();
+            }
 
             if (displayList.Count == 0)
             {
@@ -384,19 +368,12 @@ namespace IPAbuyer.Views
                 NextPageButton.IsEnabled = currentPage < totalPages;
         }
 
-        private void ScreeningButton_Click(object sender, RoutedEventArgs e)
+        private void FilterCheckBox_Changed(object sender, RoutedEventArgs e)
         {
-            // 切换筛选状态
-            showOnlyNotPurchased = !showOnlyNotPurchased;
-
-            // 更新按钮外观
-            if (ScreeningButton != null)
-            {
-                ScreeningButton.Content = showOnlyNotPurchased ? "仅未购买 (ON)" : "仅未购买";
-                ScreeningButton.Background = showOnlyNotPurchased
-                    ? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.DodgerBlue)
-                    : new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
-            }
+            // 读取三个复选框的当前状态
+            filterNotPurchased = FilterNotPurchased?.IsChecked == true;
+            filterOwned = FilterOwned?.IsChecked == true;
+            filterPurchased = FilterPurchased?.IsChecked == true;
 
             // 重置分页并刷新页面
             currentPage = 1;
@@ -453,47 +430,7 @@ namespace IPAbuyer.Views
             }
         }
 
-        /// <summary>
-        /// 执行ipatool命令 - 专门处理路径问题
-        /// </summary>
-        private async Task<string> RunIpatoolCommandAsync(string arguments)
-        {
-            try
-            {
-                // 直接执行ipatool.exe，而不是通过powershell或cmd
-                var psi = new ProcessStartInfo
-                {
-                    FileName = _ipatoolPath,
-                    Arguments = arguments,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = System.Text.Encoding.UTF8,
-                    StandardErrorEncoding = System.Text.Encoding.UTF8,
-                    WorkingDirectory = Path.GetDirectoryName(_ipatoolPath) // 设置工作目录为ipatool所在目录
-                };
-
-                using (var process = Process.Start(psi))
-                {
-                    if (process == null)
-                    {
-                        return "无法启动进程";
-                    }
-
-                    string output = await process.StandardOutput.ReadToEndAsync();
-                    string error = await process.StandardError.ReadToEndAsync();
-
-                    await process.WaitForExitAsync();
-
-                    return string.IsNullOrWhiteSpace(error) ? output : error;
-                }
-            }
-            catch (Exception ex)
-            {
-                return $"命令执行失败: {ex.Message}";
-            }
-        }
+        // ipatool 执行逻辑已移动到 Common/IpatoolRunner.cs
 
         /// <summary>
         /// 设置按钮点击
@@ -568,18 +505,16 @@ namespace IPAbuyer.Views
             SearchButton.IsEnabled = false;
             UpdateStatusBar($"正在搜索 \"{appName}\"...");
 
-            string pass2 = IPAbuyer.Common.KeychainConfig.GetPassphrase();
-            string arguments = $"search --keychain-passphrase {pass2} {appName} --limit {SearchLimitNum} --non-interactive --format json";
-            var result = await RunIpatoolCommandAsync(arguments);
+            var result = await IPAbuyer.Common.IpatoolRunner.SearchAsync(appName, SearchLimitNum);
             SearchButton.IsEnabled = true;
 
             allResults.Clear();
             int successCount = 0,
                 failCount = 0;
-            var purchasedList = PurchasedAppDb
+            // 使用 bundleID -> status 的映射，以便区分已拥有/已购买
+            var purchasedDict = PurchasedAppDb
                 .GetPurchasedApps()
-                .Select(x => x.bundleID)
-                .ToHashSet();
+                .ToDictionary(x => x.bundleID, x => x.status);
 
             try
             {
@@ -589,6 +524,8 @@ namespace IPAbuyer.Views
                     && apps.ValueKind == System.Text.Json.JsonValueKind.Array
                 )
                 {
+                    int appsArrayCount = apps.GetArrayLength();
+                    Debug.WriteLine($"JSON apps array length: {appsArrayCount}");
                     foreach (var obj in apps.EnumerateArray())
                     {
                         try
@@ -610,7 +547,9 @@ namespace IPAbuyer.Views
                                 version = obj.TryGetProperty("version", out var ver)
                                     ? ver.GetString()
                                     : "",
-                                purchased = purchasedList.Contains(bundleId) ? "已购买" : "可购买",
+                                purchased = purchasedDict.TryGetValue(bundleId ?? string.Empty, out var stat)
+                                    ? (string.IsNullOrEmpty(stat) ? "已购买" : stat)
+                                    : "可购买",
                             };
                             allResults.Add(app);
                             successCount++;
@@ -636,8 +575,10 @@ namespace IPAbuyer.Views
             totalPages = (allResults.Count + pageSize - 1) / pageSize;
             currentPage = 1;
             UpdatePage();
+            // 记录实际返回数，便于诊断 ipatool 是否按请求返回了足够数量
+            Debug.WriteLine($"Search requested {SearchLimitNum}, returned {allResults.Count}");
             UpdateStatusBar(
-                $"搜索完成 - 找到 {allResults.Count} 个应用 (成功: {successCount}, 失败: {failCount})"
+                $"搜索完成 - 请求: {SearchLimitNum}, 找到 {allResults.Count} 个应用 (成功: {successCount}, 失败: {failCount})"
             );
         }
 
@@ -652,7 +593,7 @@ namespace IPAbuyer.Views
         protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-            
+
             // 检查是否有传递的登录状态
             if (e.Parameter is bool loginStatus)
             {

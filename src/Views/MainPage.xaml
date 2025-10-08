@@ -63,17 +63,20 @@
                     Click="BatchPurchaseButton_Click" MinHeight="30" MinWidth="100">
                     购买
                 </Button>
-                <Button Grid.Column="2" Margin="10,0,0,0" x:Name="PrevPageButton"
+                <Button Grid.Column="1" Margin="10,0,0,0" x:Name="PrevPageButton"
                     Click="PrevPageButton_Click" MinHeight="30" MinWidth="100">
                     上一页
                 </Button>
-                <Button Grid.Column="3" Margin="10,0,0,0" x:Name="NextPageButton"
+                <Button Grid.Column="2" Margin="10,0,0,0" x:Name="NextPageButton"
                     Click="NextPageButton_Click" MinHeight="30" MinWidth="100">
                     下一页
                 </Button>
-                <Button Grid.Column="4" Margin="10,0,0,0" x:Name="ScreeningButton" Click="ScreeningButton_Click" MinHeight="30" MinWidth="120">
-                    仅未购买
-                </Button>
+                <!-- 三个筛选复选框，扩大占用列以避免右侧被裁剪 -->
+                <StackPanel Grid.Column="3" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="10,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center">
+                    <CheckBox x:Name="FilterNotPurchased" Margin="0,0,8,0" MinWidth="60" Content="未购买" Checked="FilterCheckBox_Changed" Unchecked="FilterCheckBox_Changed" />
+                    <CheckBox x:Name="FilterOwned" Margin="0,0,8,0" MinWidth="60" Content="已拥有" Checked="FilterCheckBox_Changed" Unchecked="FilterCheckBox_Changed" />
+                    <CheckBox x:Name="FilterPurchased" Margin="0,0,8,0" MinWidth="60" Content="已购买" Checked="FilterCheckBox_Changed" Unchecked="FilterCheckBox_Changed" />
+                </StackPanel>
             </Grid>
             <!-- 表格区 -->
             <Border CornerRadius="2" Background="#80F0F8FF" BorderBrush="White" BorderThickness="1"
