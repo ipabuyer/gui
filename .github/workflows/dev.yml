@@ -16,7 +16,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        platform: [ x64, x86, ARM64 ]
+        platform: [ x64, ARM64 ]
 
     steps:
     - name: Checkout code

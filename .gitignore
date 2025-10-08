@@ -30,3 +30,6 @@ obj/
 *.pri
 *.deps.json
 *.runtimeconfig.json
+
+# 不忽略上游exe
+!src/Include/*.exe
