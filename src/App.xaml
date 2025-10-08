@@ -11,9 +11,29 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls"/>
-                <!-- Other merged dictionaries here -->
             </ResourceDictionary.MergedDictionaries>
-            <!-- Other app resources here -->
+
+            <x:String x:Key="GlobalFontFamily">Microsoft YaHei UI, Microsoft YaHei, Segoe UI</x:String>
+
+            <Style TargetType="TextBlock" BasedOn="{StaticResource DefaultTextBlockStyle}">
+                <Setter Property="FontFamily" Value="{StaticResource GlobalFontFamily}"/>
+            </Style>
+
+            <Style TargetType="TextBox" BasedOn="{StaticResource DefaultTextBoxStyle}">
+                <Setter Property="FontFamily" Value="{StaticResource GlobalFontFamily}"/>
+            </Style>
+
+            <Style TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+                <Setter Property="FontFamily" Value="{StaticResource GlobalFontFamily}"/>
+            </Style>
+
+            <Style TargetType="ComboBox" BasedOn="{StaticResource DefaultComboBoxStyle}">
+                <Setter Property="FontFamily" Value="{StaticResource GlobalFontFamily}"/>
+            </Style>
+
+            <Style TargetType="ContentDialog" BasedOn="{StaticResource DefaultContentDialogStyle}">
+                <Setter Property="FontFamily" Value="{StaticResource GlobalFontFamily}"/>
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

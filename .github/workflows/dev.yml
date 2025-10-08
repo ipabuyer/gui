@@ -14,6 +14,9 @@ env:
 jobs:
   build:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        platform: [ x64, ARM64 ]
 
     steps:
     - name: Checkout code
@@ -52,14 +55,14 @@ jobs:
         dotnet build ${{ env.PROJECTCSPROJ }} `
           -c Release /p:WindowsPackageType=MSIX `
           /p:GenerateAppxPackageOnBuild=true `
-          /p:Platform=x64 `
+          /p:Platform=${{ matrix.platform }} `
           /p:AppxPackageSigningEnabled=true `
           /p:PackageCertificateThumbprint="${{ steps.cert.outputs.THUMBPRINT }}"
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: IPAbuyer_x64
+        name: IPAbuyer_${{ matrix.platform }}
         path: |
           **\AppPackages\**\IPAbuyer_*.msix
 
