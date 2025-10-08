@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using IPAbuyer.Data;
 using IPAbuyer.Views;
+using IPAbuyer.Common;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -38,58 +39,17 @@ namespace IPAbuyer.Views
 
         private List<AppResult> allResults = new List<AppResult>();
         private int currentPage = 1;
-        private int pageSize = 15;
+        private int pageSize = 10;
         private int totalPages = 1;
         private bool isLoggedIn = false;
         private bool isPageLoaded = false;
-    private bool showOnlyNotPurchased = false; // 新增：是否仅显示未购买
-
-        private string _ipatoolPath;
+        private string selectedValue;
+        private ipatoolExecution ipatoolExecution = new ipatoolExecution();
 
         public MainPage()
         {
             this.InitializeComponent();
             this.Loaded += MainPage_Loaded;
-            
-            // 查找ipatool.exe路径
-            _ipatoolPath = FindIpatoolPath();
-        }
-
-        /// <summary>
-        /// 查找ipatool.exe的路径，优先使用Include文件夹中的
-        /// </summary>
-        private string FindIpatoolPath()
-        {
-            try
-            {
-                // 获取当前应用程序的基础目录
-                string baseDirectory = AppContext.BaseDirectory;
-                
-                // 优先查找项目根目录下的Include文件夹中的ipatool.exe
-                string includePath = Path.Combine(baseDirectory, "Include", "ipatool.exe");
-                if (File.Exists(includePath))
-                {
-                    Debug.WriteLine($"找到Include文件夹中的ipatool.exe: {includePath}");
-                    return includePath;
-                }
-
-                // 如果Include文件夹中没有，查找当前目录下的ipatool.exe
-                string currentDirPath = Path.Combine(baseDirectory, "ipatool.exe");
-                if (File.Exists(currentDirPath))
-                {
-                    Debug.WriteLine($"找到当前目录下的ipatool.exe: {currentDirPath}");
-                    return currentDirPath;
-                }
-
-                // 如果都找不到，返回默认的ipatool.exe（保持原有行为）
-                Debug.WriteLine("未找到ipatool.exe，使用默认路径");
-                return "ipatool.exe";
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"查找ipatool.exe路径时出错: {ex.Message}");
-                return "ipatool.exe";
-            }
         }
 
         /// <summary>
@@ -98,7 +58,7 @@ namespace IPAbuyer.Views
         private async void MainPage_Loaded(object sender, RoutedEventArgs e)
         {
             isPageLoaded = true;
-            
+
             // 检查是否有从登录页面传递过来的登录状态
             if (this.DataContext is bool loginStatus)
             {
@@ -113,7 +73,7 @@ namespace IPAbuyer.Views
                 // 如果没有传递状态，则检查本地登录状态
                 await CheckLoginStatus();
             }
-            
+
             UpdateLoginButton();
         }
 
@@ -135,9 +95,7 @@ namespace IPAbuyer.Views
             // 尝试验证登录状态
             try
             {
-                string pass = IPAbuyer.Common.KeychainConfig.GetPassphrase();
-                string arguments = $"search --keychain-passphrase {pass} test --limit 1 --non-interactive";
-                var result = await RunIpatoolCommandAsync(arguments);
+                var result = await ipatoolExecution.searchApp("test", 1);
 
                 if (result.Contains("not logged in") || result.Contains("未登录"))
                 {
@@ -285,9 +243,8 @@ namespace IPAbuyer.Views
                     }
 
                     UpdateStatusBar($"正在购买: {app.name}...");
-                    string pass = IPAbuyer.Common.KeychainConfig.GetPassphrase();
-                    string arguments = $"purchase --keychain-passphrase {pass} --bundle-identifier {app.bundleID}";
-                    string result = await RunIpatoolCommandAsync(arguments);
+
+                    var result = await ipatoolExecution.purchaseApp(app.name);
 
                     if (
                         (result.Contains("success") && result.Contains("true"))
@@ -360,13 +317,26 @@ namespace IPAbuyer.Views
         private void UpdatePage()
         {
             // 根据筛选状态决定显示的数据源
-            var displayList = showOnlyNotPurchased
-                ? allResults.Where(a => a.purchased != "已购买" && a.purchased != "已拥有").ToList()
-                : allResults;
+            List<AppResult> displayList = allResults.ToList();
+
+            switch (selectedValue)
+            {
+                default:
+                    displayList = allResults.ToList();
+                    break;
+                case "OnlyPurchased":
+                    displayList = allResults.Where(a => a.purchased == "已购买").ToList();
+                    break;
+                case "OnlyNotPurchased":
+                    displayList = allResults.Where(a => a.purchased == "未购买").ToList();
+                    break;
+                case "OnlyHad":
+                    displayList = allResults.Where(a => a.purchased == "已拥有").ToList();
+                    break;
+            }
 
             if (displayList.Count == 0)
             {
-                ResultList.ItemsSource = null;
                 if (PrevPageButton != null)
                     PrevPageButton.IsEnabled = false;
                 if (NextPageButton != null)
@@ -384,24 +354,17 @@ namespace IPAbuyer.Views
                 NextPageButton.IsEnabled = currentPage < totalPages;
         }
 
-        private void ScreeningButton_Click(object sender, RoutedEventArgs e)
+        private void ScreeningComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // 切换筛选状态
-            showOnlyNotPurchased = !showOnlyNotPurchased;
-
-            // 更新按钮外观
-            if (ScreeningButton != null)
+            if (ScreeningComboBox.SelectedItem is ComboBoxItem selectedItem)
             {
-                ScreeningButton.Content = showOnlyNotPurchased ? "仅未购买 (ON)" : "仅未购买";
-                ScreeningButton.Background = showOnlyNotPurchased
-                    ? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.DodgerBlue)
-                    : new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent);
-            }
+                selectedValue = ScreeningComboBox.Name;
 
-            // 重置分页并刷新页面
-            currentPage = 1;
-            totalPages = (allResults.Count + pageSize - 1) / pageSize;
-            UpdatePage();
+                // 重置分页并刷新页面
+                currentPage = 1;
+                totalPages = (allResults.Count + pageSize - 1) / pageSize;
+                UpdatePage();
+            }
         }
 
         /// <summary>
@@ -410,89 +373,6 @@ namespace IPAbuyer.Views
         private async void SearchButton_Click(object sender, RoutedEventArgs e)
         {
             await PerformSearchAsync();
-        }
-
-        /// <summary>
-        /// 执行命令行命令 - 修复版本
-        /// </summary>
-        private async Task<string> RunCommandAsync(string command)
-        {
-            try
-            {
-                // 使用cmd.exe而不是powershell，因为cmd对路径中的空格处理更好
-                var psi = new ProcessStartInfo
-                {
-                    FileName = "cmd.exe",
-                    Arguments = $"/c \"{command}\"",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = System.Text.Encoding.UTF8,
-                    StandardErrorEncoding = System.Text.Encoding.UTF8,
-                };
-
-                using (var process = Process.Start(psi))
-                {
-                    if (process == null)
-                    {
-                        return "无法启动进程";
-                    }
-
-                    string output = await process.StandardOutput.ReadToEndAsync();
-                    string error = await process.StandardError.ReadToEndAsync();
-
-                    await process.WaitForExitAsync();
-
-                    return string.IsNullOrWhiteSpace(error) ? output : error;
-                }
-            }
-            catch (Exception ex)
-            {
-                return $"命令执行失败: {ex.Message}";
-            }
-        }
-
-        /// <summary>
-        /// 执行ipatool命令 - 专门处理路径问题
-        /// </summary>
-        private async Task<string> RunIpatoolCommandAsync(string arguments)
-        {
-            try
-            {
-                // 直接执行ipatool.exe，而不是通过powershell或cmd
-                var psi = new ProcessStartInfo
-                {
-                    FileName = _ipatoolPath,
-                    Arguments = arguments,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = System.Text.Encoding.UTF8,
-                    StandardErrorEncoding = System.Text.Encoding.UTF8,
-                    WorkingDirectory = Path.GetDirectoryName(_ipatoolPath) // 设置工作目录为ipatool所在目录
-                };
-
-                using (var process = Process.Start(psi))
-                {
-                    if (process == null)
-                    {
-                        return "无法启动进程";
-                    }
-
-                    string output = await process.StandardOutput.ReadToEndAsync();
-                    string error = await process.StandardError.ReadToEndAsync();
-
-                    await process.WaitForExitAsync();
-
-                    return string.IsNullOrWhiteSpace(error) ? output : error;
-                }
-            }
-            catch (Exception ex)
-            {
-                return $"命令执行失败: {ex.Message}";
-            }
         }
 
         /// <summary>
@@ -568,9 +448,7 @@ namespace IPAbuyer.Views
             SearchButton.IsEnabled = false;
             UpdateStatusBar($"正在搜索 \"{appName}\"...");
 
-            string pass2 = IPAbuyer.Common.KeychainConfig.GetPassphrase();
-            string arguments = $"search --keychain-passphrase {pass2} {appName} --limit {SearchLimitNum} --non-interactive --format json";
-            var result = await RunIpatoolCommandAsync(arguments);
+            var result = await ipatoolExecution.searchApp(appName, SearchLimitNum);
             SearchButton.IsEnabled = true;
 
             allResults.Clear();
@@ -641,18 +519,13 @@ namespace IPAbuyer.Views
             );
         }
 
-        private void ScreeningComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            // 你的处理逻辑
-        }
-
         /// <summary>
         /// 当页面通过导航到达时调用
         /// </summary>
         protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-            
+
             // 检查是否有传递的登录状态
             if (e.Parameter is bool loginStatus)
             {
