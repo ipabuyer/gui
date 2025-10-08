@@ -8,11 +8,11 @@ $cert = New-SelfSignedCertificate `
     -NotAfter (Get-Date).AddYears(2) `
     -KeyExportPolicy Exportable
 
-$thumbprint = $cert.Thumbprint
+Export-Certificate -Cert $cert -FilePath ".\cert.cer" -Type CERT
 
-dotnet build .\src\IPAbuyer.csproj `
--c Release /p:WindowsPackageType=MSIX `
-/p:GenerateAppxPackageOnBuild=true `
-/p:Platform=x64 `
-/p:AppxPackageSigningEnabled=true `
-/p:PackageCertificateThumbprint=$thumbprint
+$emptyPassword = New-Object System.Security.SecureString
+Export-PfxCertificate -Cert $cert -FilePath ".\cert.pfx" -Password $emptyPassword
+
+$pfxBytes = [IO.File]::ReadAllBytes(".\cert.pfx")
+$pfxBase64 = [Convert]::ToBase64String($pfxBytes)
+$pfxBase64 | Out-File ".\cert.pfx.txt" -Encoding ASCII -NoNewline

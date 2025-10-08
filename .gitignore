@@ -6,6 +6,7 @@ src/AppPackages/
 
 # 证书和密钥
 *.pfx
+*.pfx.txt
 *.cer
 *.key
 

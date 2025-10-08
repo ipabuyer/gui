@@ -32,8 +32,9 @@ jobs:
     - name: Decode and Install Certificate
       id: cert
       run: |
+        $certBytes = [Convert]::FromBase64String($secrets.CERT_PFX_BASE64)
         $certPath = Join-Path -Path $env:RUNNER_TEMP -ChildPath "cert.pfx"
-        [System.IO.File]::WriteAllBytes($certPath, [Convert]::FromBase64String("${{ secrets.CERTPFX }}"))
+        [System.IO.File]::WriteAllBytes($certPath, $certBytes)
 
         $cert = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My
 
