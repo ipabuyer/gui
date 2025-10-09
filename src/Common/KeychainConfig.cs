@@ -22,7 +22,7 @@ namespace IPAbuyer.Common
         /// </summary>
         public static void InitializeDatabase()
         {
-            _dbDirectory = Path.Combine(AppContext.BaseDirectory, "db");
+            _dbDirectory = Path.Combine(ResolveDataDirectory(), "db");
             _dbPath = Path.Combine(_dbDirectory, "KeychainConfig.db");
             _connectionString = $"Data Source={_dbPath}";
             if (!Directory.Exists(_dbDirectory))
@@ -190,6 +190,27 @@ namespace IPAbuyer.Common
 
             insertCmd.Parameters.AddWithValue("@username", username);
             insertCmd.ExecuteNonQuery();
+        }
+
+        private static string ResolveDataDirectory()
+        {
+            try
+            {
+                if (ApplicationData.Current != null)
+                {
+                    string localPath = Path.Combine(ApplicationData.Current.LocalFolder.Path, "IPAbuyer");
+                    Directory.CreateDirectory(localPath);
+                    return localPath;
+                }
+            }
+            catch
+            {
+                // ignore and fall back
+            }
+
+            string fallback = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IPAbuyer");
+            Directory.CreateDirectory(fallback);
+            return fallback;
         }
     }
 }

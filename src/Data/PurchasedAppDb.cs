@@ -17,7 +17,7 @@ namespace IPAbuyer.Data
 
         public static void InitDb()
         {
-            _dbDirectory = Path.Combine(AppContext.BaseDirectory, "db");
+            _dbDirectory = Path.Combine(ResolveDataDirectory(), "db");
             _dbPath = Path.Combine(_dbDirectory, "PurchasedAppDb.db");
             _connectionString = $"Data Source={_dbPath}";
             if (!Directory.Exists(_dbDirectory))
@@ -187,6 +187,27 @@ namespace IPAbuyer.Data
                 var result = cmd.ExecuteScalar();
                 return result != null ? Convert.ToInt32(result) : 0;
             }
+        }
+
+        private static string ResolveDataDirectory()
+        {
+            try
+            {
+                if (ApplicationData.Current != null)
+                {
+                    string localPath = Path.Combine(ApplicationData.Current.LocalFolder.Path, "IPAbuyer");
+                    Directory.CreateDirectory(localPath);
+                    return localPath;
+                }
+            }
+            catch
+            {
+                // ignore and fall back
+            }
+
+            string fallback = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IPAbuyer");
+            Directory.CreateDirectory(fallback);
+            return fallback;
         }
     }
 }

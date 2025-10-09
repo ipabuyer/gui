@@ -386,6 +386,7 @@ namespace IPAbuyer.Views
             int failCount = 0;
             int skipCount = 0;
             List<string> ownedButFailed = new();
+            List<AppResult> pricedApps = new();
 
             UpdateStatusBar($"开始购买 {appsToPurchase.Count} 个应用...");
 
@@ -399,8 +400,9 @@ namespace IPAbuyer.Views
 
                 if (!string.Equals(app.price, "0", StringComparison.OrdinalIgnoreCase))
                 {
-                    skipCount++;
-                    UpdateStatusBar($"跳过付费应用: {app.name}");
+                    failCount++;
+                    pricedApps.Add(app);
+                    UpdateStatusBar($"购买失败(非免费): {app.name}", true);
                     continue;
                 }
 
@@ -454,6 +456,19 @@ namespace IPAbuyer.Views
                 batchPurchaseButton.IsEnabled = true;
             }
             RefreshPurchasedStatus();
+
+            if (pricedApps.Count > 0)
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = "发现付费应用",
+                    Content = $"以下 {pricedApps.Count} 个应用价格不为 0，已标记为购买失败:" + Environment.NewLine + string.Join(Environment.NewLine, pricedApps.Select(a => $"• {a.name} ({a.price})")),
+                    PrimaryButtonText = "知道了",
+                    XamlRoot = this.XamlRoot
+                };
+
+                _ = dialog.ShowAsync();
+            }
         }
 
         private static bool IsPurchaseSuccess(string response)
