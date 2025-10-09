@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using System;
+using System.IO;
 
 namespace IPAbuyer
 {
@@ -16,32 +17,52 @@ namespace IPAbuyer
 
         public App()
         {
-            // 初始化数据库
-            PurchasedAppDb.InitDb();
-            KeychainConfig.InitializeDatabase();
-            
-            this.InitializeComponent();
+            try
+            {
+                // 初始化数据库
+                PurchasedAppDb.InitDb();
+                KeychainConfig.InitializeDatabase();
+                
+                this.InitializeComponent();
+            }
+            catch (Exception ex)
+            {
+                // 记录错误到文件
+                var errorPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "IPAbuyer_Error.txt");
+                File.WriteAllText(errorPath, $"启动错误: {ex.ToString()}");
+                throw;
+            }
         }
 
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
-            _window = new Window
+            try
             {
-                Title = "IPAbuyer"
-            };
+                _window = new Window
+                {
+                    Title = "IPAbuyer"
+                };
 
-            // 创建 Frame 用于页面导航
-            Frame rootFrame = new Frame();
-            rootFrame.NavigationFailed += OnNavigationFailed;
+                // 创建 Frame 用于页面导航
+                Frame rootFrame = new Frame();
+                rootFrame.NavigationFailed += OnNavigationFailed;
 
-            // 导航到主页
-            rootFrame.Navigate(typeof(MainPage));
+                // 导航到主页
+                rootFrame.Navigate(typeof(MainPage));
 
-            // 将 Frame 设置为窗口内容
-            _window.Content = rootFrame;
+                // 将 Frame 设置为窗口内容
+                _window.Content = rootFrame;
 
-            // 激活窗口
-            _window.Activate();
+                // 激活窗口
+                _window.Activate();
+            }
+            catch (Exception ex)
+            {
+                // 记录错误到文件
+                var errorPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "IPAbuyer_LaunchError.txt");
+                File.WriteAllText(errorPath, $"启动错误: {ex.ToString()}");
+                throw;
+            }
         }
 
         /// <summary>

@@ -326,6 +326,10 @@ namespace IPAbuyer.Views
         /// </summary>
         private void ScreeningComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            // 如果页面还未加载完成,不处理事件
+            if (!isPageLoaded || ScreeningComboBox == null || ScreeningComboBox.SelectedItem == null)
+                return;
+                
             if (ScreeningComboBox.SelectedItem is ComboBoxItem selectedItem)
             {
                 selectedValue = selectedItem.Tag?.ToString() ?? "All";
@@ -345,6 +349,10 @@ namespace IPAbuyer.Views
         /// </summary>
         private void UpdatePage()
         {
+            // 如果页面还未加载完成或ResultList为null,不处理
+            if (!isPageLoaded || ResultList == null)
+                return;
+                
             // 根据筛选状态决定显示的数据源
             List<AppResult> displayList = GetFilteredResults();
 
