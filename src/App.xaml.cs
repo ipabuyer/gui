@@ -20,8 +20,8 @@ namespace IPAbuyer
             try
             {
                 // 初始化数据库
-                PurchasedAppDb.InitDb();
                 KeychainConfig.InitializeDatabase();
+                PurchasedAppDb.InitDb();
                 
                 this.InitializeComponent();
             }
