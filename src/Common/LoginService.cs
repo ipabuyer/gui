@@ -217,7 +217,8 @@ namespace IPAbuyer.Common
                 || message.Contains("two factor")
                 || message.Contains("2fa")
                 || message.Contains("请输入验证码")
-                || message.Contains("authentication code");
+                || message.Contains("authentication code")
+                || message.Contains("something went wrong");
         }
 
         private static bool DetectInvalidCredential(string message)

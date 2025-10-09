@@ -122,6 +122,14 @@ namespace IPAbuyer.Views
 
             if (sender is TextBox && PasswordInput != null)
             {
+                var accountText = EmailTextBox?.Text.Trim() ?? string.Empty;
+                if (string.IsNullOrEmpty(accountText))
+                {
+                    ShowError("邮箱不能为空");
+                    EmailTextBox?.Focus(FocusState.Programmatic);
+                    return;
+                }
+
                 PasswordInput.Focus(FocusState.Programmatic);
             }
             else if (sender is PasswordBox)
@@ -194,7 +202,7 @@ namespace IPAbuyer.Views
 
             if (result.Status == LoginStatus.AuthCodeInvalid)
             {
-                ShowAuthError(result.Message);
+                ShowAuthError("验证码错误，请重新输入。");
                 CodeTextBox.Text = string.Empty;
                 CodeTextBox.Focus(FocusState.Programmatic);
                 return false;
@@ -202,7 +210,8 @@ namespace IPAbuyer.Views
 
             if (result.Status == LoginStatus.Timeout)
             {
-                ShowAuthError(result.Message);
+                ShowAuthError("验证码错误，请重新输入。");
+                CodeTextBox.Focus(FocusState.Programmatic);
                 return false;
             }
 
@@ -341,6 +350,15 @@ namespace IPAbuyer.Views
             }
         }
 
+        private void ShowSuccess(string message)
+        {
+            if (ResultTextBlock != null)
+            {
+                ResultTextBlock.Text = message;
+                ResultTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.ForestGreen);
+            }
+        }
+
         private void ShowAuthError(string message)
         {
             if (CodeErrorTextBlock != null)
@@ -380,7 +398,7 @@ namespace IPAbuyer.Views
 
             SessionState.SetLoginState(_account, true);
             DisposeCurrentOperation();
-            ShowInfo("登录成功，正在跳转...");
+            ShowSuccess("登录成功，正在跳转...");
 
             await Task.Delay(400);
             Frame.Navigate(typeof(MainPage), _account);

@@ -20,6 +20,10 @@ namespace IPAbuyer.Data
             _dbDirectory = Path.Combine(AppContext.BaseDirectory, "db");
             _dbPath = Path.Combine(_dbDirectory, "PurchasedAppDb.db");
             _connectionString = $"Data Source={_dbPath}";
+            if (!Directory.Exists(_dbDirectory))
+            {
+                Directory.CreateDirectory(_dbDirectory);
+            }
             using (var conn = new SqliteConnection(_connectionString))
             {
                 conn.Open();

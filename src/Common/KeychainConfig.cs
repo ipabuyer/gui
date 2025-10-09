@@ -110,11 +110,23 @@ namespace IPAbuyer.Common
 
             try
             {
-                var secretKey = GenerateRandomKey();
 
                 using var connection = new SqliteConnection(_connectionString);
                 connection.Open();
 
+                // 先尝试读取已有密钥，避免重复生成导致登录状态失效
+                var selectCmd = connection.CreateCommand();
+                selectCmd.CommandText = "SELECT SecretKey FROM Users WHERE Username = @username";
+                selectCmd.Parameters.AddWithValue("@username", username);
+
+                var existingKey = selectCmd.ExecuteScalar()?.ToString();
+                if (!string.IsNullOrEmpty(existingKey))
+                {
+                    SaveLastLoginUsername(username);
+                    return existingKey;
+                }
+
+                var secretKey = GenerateRandomKey();
                 // 使用 INSERT OR REPLACE 来处理用户已存在的情况
                 var insertCmd = connection.CreateCommand();
                 insertCmd.CommandText = @"

@@ -613,7 +613,7 @@ namespace IPAbuyer.Views
                 try
                 {
                     UpdateStatusBar("正在退出登录...");
-                    await ipatoolExecution.AuthLogoutAsync(account, _pageCts.Token).ConfigureAwait(false);
+                    await ipatoolExecution.AuthLogoutAsync(account, _pageCts.Token);
                 }
                 catch (OperationCanceledException)
                 {

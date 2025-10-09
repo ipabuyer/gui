@@ -88,5 +88,6 @@
     <PropertyGroup
         Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
         <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
+        <ApplicationIcon>Assets\Icon.ico</ApplicationIcon>
     </PropertyGroup>
 </Project>

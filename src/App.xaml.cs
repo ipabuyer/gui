@@ -20,8 +20,8 @@ namespace IPAbuyer
             try
             {
                 // 初始化数据库
-                KeychainConfig.InitializeDatabase();
                 PurchasedAppDb.InitDb();
+                KeychainConfig.InitializeDatabase();
                 
                 this.InitializeComponent();
             }
@@ -40,7 +40,7 @@ namespace IPAbuyer
             {
                 _window = new Window
                 {
-                    Title = "IPAbuyer"
+                    Title = "IPAbuyer - 快速购买AppStore中的应用",
                 };
 
                 // 创建 Frame 用于页面导航
