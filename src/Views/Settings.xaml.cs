@@ -1,6 +1,7 @@
 using IPAbuyer.Views;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using System; // 添加此行
 
 namespace IPAbuyer.Views
 {
@@ -19,7 +20,7 @@ namespace IPAbuyer.Views
 
         // 明暗模式 ComboBox 改变时触发(已删除)
         // 跳转到开发者官网
-        private async void GithubButton(object sender, RoutedEventArgs e)
+        private void GithubButton(object sender, RoutedEventArgs e)
         {
             var url = "https://github.com/ipabuyer/";
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
@@ -45,7 +46,7 @@ namespace IPAbuyer.Views
             {
                 try
                 {
-                    IPAbuyer.Data.PurchasedAppDb.ClearAllPurchasedApps();
+                    IPAbuyer.Data.PurchasedAppDb.ClearPurchasedApps();
                     var successDialog = new ContentDialog
                     {
                         Title = "操作成功",

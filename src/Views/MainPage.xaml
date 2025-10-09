@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:IPAbuyer"
+    xmlns:models="using:IPAbuyer.Models"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
     <Page.Content>
@@ -63,19 +64,19 @@
                     Click="BatchPurchaseButton_Click" MinHeight="30" MinWidth="100">
                     购买
                 </Button>
-                <Button Grid.Column="2" Margin="10,0,0,0" x:Name="PrevPageButton"
+                <Button Grid.Column="1" Margin="10,0,0,0" x:Name="PrevPageButton"
                     Click="PrevPageButton_Click" MinHeight="30" MinWidth="100">
                     上一页
                 </Button>
-                <Button Grid.Column="3" Margin="10,0,0,0" x:Name="NextPageButton"
+                <Button Grid.Column="2" Margin="10,0,0,0" x:Name="NextPageButton"
                     Click="NextPageButton_Click" MinHeight="30" MinWidth="100">
                     下一页
                 </Button>
                 <ComboBox Grid.Column="4" Margin="10,0,0,0" x:Name="ScreeningComboBox" SelectedIndex="0" SelectionChanged="ScreeningComboBox_SelectionChanged" MinHeight="30" MinWidth="120">
-                    <ComboBoxItem>筛选</ComboBoxItem>
-                    <ComboBoxItem>仅未购买</ComboBoxItem>
-                    <ComboBoxItem>仅已购买</ComboBoxItem>
-                    <ComboBoxItem>仅已拥有</ComboBoxItem>
+                    <ComboBoxItem x:Name="All" Tag="All">筛选</ComboBoxItem>
+                    <ComboBoxItem x:Name="OnlyNotPurchased" Tag="OnlyNotPurchased">仅未购买</ComboBoxItem>
+                    <ComboBoxItem x:Name="OnlyPurchased" Tag="OnlyPurchased">仅已购买</ComboBoxItem>
+                    <ComboBoxItem x:Name="OnlyHad" Tag="OnlyHad">仅已拥有</ComboBoxItem>
                 </ComboBox>
             </Grid>
             <!-- 表格区 -->
@@ -107,7 +108,7 @@
                         </Grid>
                     </ListView.Header>
                     <ListView.ItemTemplate>
-                        <DataTemplate>
+                        <DataTemplate x:DataType="models:AppResult">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="2*" />
@@ -117,26 +118,26 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding name}"
+                                <TextBlock Grid.Column="0" Text="{x:Bind name}"
                                     TextTrimming="CharacterEllipsis"
-                                    ToolTipService.ToolTip="{Binding name}"
+                                    ToolTipService.ToolTip="{x:Bind name}"
                                     HorizontalAlignment="Left">
                                 </TextBlock>
-                                <TextBlock Grid.Column="1" Text="{Binding id}"
+                                <TextBlock Grid.Column="1" Text="{x:Bind id}"
                                     HorizontalAlignment="Center">
                                 </TextBlock>
-                                <TextBlock Grid.Column="2" Text="{Binding bundleID}"
+                                <TextBlock Grid.Column="2" Text="{x:Bind bundleID}"
                                     TextTrimming="CharacterEllipsis"
-                                    ToolTipService.ToolTip="{Binding bundleID}"
+                                    ToolTipService.ToolTip="{x:Bind bundleID}"
                                     HorizontalAlignment="Center">
                                 </TextBlock>
-                                <TextBlock Grid.Column="3" Text="{Binding version}"
+                                <TextBlock Grid.Column="3" Text="{x:Bind version}"
                                     HorizontalAlignment="Center">
                                 </TextBlock>
-                                <TextBlock Grid.Column="4" Text="{Binding price}"
+                                <TextBlock Grid.Column="4" Text="{x:Bind price}"
                                     HorizontalAlignment="Center">
                                 </TextBlock>
-                                <TextBlock Grid.Column="5" Text="{Binding purchased}"
+                                <TextBlock Grid.Column="5" Text="{x:Bind purchased}"
                                     HorizontalAlignment="Center">
                                 </TextBlock>
                             </Grid>

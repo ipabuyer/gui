@@ -1,93 +1,53 @@
-using System;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using IPAbuyer.Data;
+using IPAbuyer.Common;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using System;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace IPAbuyer.Views
 {
     public sealed partial class LoginPage : Page
     {
-        private string _email;
-        private string _password;
-        private const string KeychainPassphrase = "12345678";
-        private string _ipatoolPath;
+        private static readonly string? LastLoginUsername = KeychainConfig.GetLastLoginUsername();
+
+        private readonly CancellationTokenSource _pageCts = new();
+        private CancellationTokenSource? _currentOperationCts;
+
+        private string _account = string.IsNullOrEmpty(LastLoginUsername) ? "example@icloud.com" : LastLoginUsername;
+        private string _password = string.Empty;
 
         public LoginPage()
         {
             this.InitializeComponent();
-            InitializePage();
-        }
-
-        /// <summary>
-        /// 初始化页面
-        /// </summary>
-        private void InitializePage()
-        {
-            // 查找ipatool.exe路径
-            _ipatoolPath = FindIpatoolPath();
-
-            // 加载账号历史
             LoadAccountHistory();
+            Unloaded += LoginPage_Unloaded;
         }
 
-        /// <summary>
-        /// 查找ipatool.exe的路径，优先使用Include文件夹中的
-        /// </summary>
-        private string FindIpatoolPath()
+        private void LoginPage_Unloaded(object sender, RoutedEventArgs e)
         {
-            try
+            CancelCurrentOperation();
+            if (!_pageCts.IsCancellationRequested)
             {
-                // 获取当前应用程序的基础目录
-                string baseDirectory = AppContext.BaseDirectory;
-
-                // 优先查找项目根目录下的Include文件夹中的ipatool.exe
-                string includePath = Path.Combine(baseDirectory, "Include", "ipatool.exe");
-                if (File.Exists(includePath))
-                {
-                    Debug.WriteLine($"找到Include文件夹中的ipatool.exe: {includePath}");
-                    return includePath;
-                }
-
-                // 如果Include文件夹中没有，查找当前目录下的ipatool.exe
-                string currentDirPath = Path.Combine(baseDirectory, "ipatool.exe");
-                if (File.Exists(currentDirPath))
-                {
-                    Debug.WriteLine($"找到当前目录下的ipatool.exe: {currentDirPath}");
-                    return currentDirPath;
-                }
-
-                // 如果都找不到，返回默认的ipatool.exe（保持原有行为）
-                Debug.WriteLine("未找到ipatool.exe，使用默认路径");
-                return "ipatool.exe";
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"查找ipatool.exe路径时出错: {ex.Message}");
-                return "ipatool.exe";
+                _pageCts.Cancel();
             }
         }
 
-        /// <summary>
-        /// 加载账号历史记录
-        /// </summary>
+        private async void NextButton_Click(object sender, RoutedEventArgs e)
+        {
+            await TriggerLoginAsync();
+        }
+
         private void LoadAccountHistory()
         {
             try
             {
-                var accounts = AccountHistoryDb.GetAccounts();
-                if (accounts != null && accounts.Any())
+                if (!string.IsNullOrEmpty(LastLoginUsername) && EmailTextBox != null)
                 {
-                    // 获取最后一个账号（最近使用的）
-                    var lastAccount = accounts.LastOrDefault();
-                    if (!string.IsNullOrEmpty(lastAccount.email))
-                    {
-                        EmailComboBox.Text = lastAccount.email;
-                    }
+                    EmailTextBox.Text = LastLoginUsername;
                 }
             }
             catch (Exception ex)
@@ -96,285 +56,390 @@ namespace IPAbuyer.Views
             }
         }
 
-        /// <summary>
-        /// 登录按钮点击事件
-        /// </summary>
-        private async void NextButton_Click(object sender, RoutedEventArgs e)
-        {
-            await LoginAsync();
-        }
-
-        /// <summary>
-        /// 验证码输入框文本变化事件
-        /// </summary>
         private void CodeBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            // 隐藏错误提示
-            CodeErrorText.Visibility = Visibility.Collapsed;
-
-            // 只允许输入数字
-            var textBox = sender as TextBox;
-            if (textBox != null)
+            if (CodeErrorTextBlock != null)
             {
-                string text = textBox.Text;
-                string filteredText = new string(text.Where(c => char.IsDigit(c)).ToArray());
-                if (text != filteredText)
+                CodeErrorTextBlock.Visibility = Visibility.Collapsed;
+            }
+
+            if (sender is TextBox textBox)
+            {
+                string filtered = new string(textBox.Text.Where(char.IsDigit).ToArray());
+                if (!string.Equals(filtered, textBox.Text, StringComparison.Ordinal))
                 {
                     int selectionStart = textBox.SelectionStart;
-                    textBox.Text = filteredText;
-                    textBox.SelectionStart = Math.Min(selectionStart, filteredText.Length);
+                    textBox.Text = filtered;
+                    textBox.SelectionStart = Math.Min(selectionStart, filtered.Length);
                 }
             }
         }
 
-        /// <summary>
-        /// 验证码弹窗取消按钮点击事件
-        /// </summary>
-        private void AuthCodeDialog_CloseButtonClick(
-            ContentDialog sender,
-            ContentDialogButtonClickEventArgs args
-        )
+        private void AuthCodeDialog_CloseButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
-            // 重置UI状态
+            CancelCurrentOperation();
+            ResetAuthDialogUI();
             SetInputControlsEnabled(true);
-            NextButton.IsEnabled = true;
-            CodeBox.Text = "";
-            CodeErrorText.Visibility = Visibility.Collapsed;
-            ResultText.Text = "登录已取消";
-            ResultText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                Microsoft.UI.Colors.Gray
-            );
+            SetBusyState(false, string.Empty);
+            ShowInfo("登录已取消");
         }
 
-        /// <summary>
-        /// 验证输入
-        /// </summary>
-        private bool ValidateInput(string email, string password)
+        private async void AuthCodeDialog_PrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
-            return !string.IsNullOrWhiteSpace(email) && !string.IsNullOrWhiteSpace(password);
+            var deferral = args.GetDeferral();
+            args.Cancel = true;
+
+            bool success = await ValidateAuthCodeAsync();
+            if (success)
+            {
+                AuthCodeDialogControl?.Hide();
+            }
+
+            deferral.Complete();
         }
 
-        /// <summary>
-        /// 设置输入控件的启用状态
-        /// </summary>
+        private async void CodeBox_KeyUp(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key != Windows.System.VirtualKey.Enter)
+            {
+                return;
+            }
+
+            e.Handled = true;
+            bool success = await ValidateAuthCodeAsync();
+            if (success)
+            {
+                AuthCodeDialogControl?.Hide();
+            }
+        }
+
+        private async void Input_KeyUp(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key != Windows.System.VirtualKey.Enter)
+            {
+                return;
+            }
+
+            if (sender is TextBox && PasswordInput != null)
+            {
+                var accountText = EmailTextBox?.Text.Trim() ?? string.Empty;
+                if (string.IsNullOrEmpty(accountText))
+                {
+                    ShowError("邮箱不能为空");
+                    EmailTextBox?.Focus(FocusState.Programmatic);
+                    return;
+                }
+
+                PasswordInput.Focus(FocusState.Programmatic);
+            }
+            else if (sender is PasswordBox)
+            {
+                await TriggerLoginAsync();
+            }
+        }
+
+        private async Task TriggerLoginAsync()
+        {
+            CancelCurrentOperation();
+            _currentOperationCts = CancellationTokenSource.CreateLinkedTokenSource(_pageCts.Token);
+
+            _account = EmailTextBox?.Text.Trim() ?? string.Empty;
+            _password = PasswordInput?.Password ?? string.Empty;
+
+            if (!ValidateInput(_account, _password))
+            {
+                ShowError("邮箱和密码不能为空");
+                if (string.IsNullOrWhiteSpace(_account))
+                {
+                    EmailTextBox?.Focus(FocusState.Programmatic);
+                }
+                else if (string.IsNullOrWhiteSpace(_password))
+                {
+                    PasswordInput?.Focus(FocusState.Programmatic);
+                }
+                return;
+            }
+
+            SetInputControlsEnabled(false);
+            SetBusyState(true, "正在登录...");
+
+            var result = await LoginService.LoginAsync(_account, _password, _currentOperationCts.Token);
+            DisposeCurrentOperation();
+            await HandleLoginResultAsync(result, isTwoFactorStep: false);
+        }
+
+        private async Task<bool> ValidateAuthCodeAsync()
+        {
+            if (CodeTextBox == null)
+            {
+                return false;
+            }
+
+            string authCode = CodeTextBox.Text.Trim();
+            if (authCode.Length != 6)
+            {
+                ShowAuthError("请输入六位验证码");
+                CodeTextBox.Focus(FocusState.Programmatic);
+                return false;
+            }
+
+            HideAuthMessage();
+
+            CancelCurrentOperation();
+            _currentOperationCts = CancellationTokenSource.CreateLinkedTokenSource(_pageCts.Token);
+
+            if (AuthCodeDialogControl != null)
+            {
+                AuthCodeDialogControl.IsPrimaryButtonEnabled = false;
+            }
+
+            ShowAuthWarning("正在验证...");
+
+            var result = await LoginService.VerifyAuthCodeAsync(_account, _password, authCode, _currentOperationCts.Token);
+            DisposeCurrentOperation();
+
+            if (AuthCodeDialogControl != null)
+            {
+                AuthCodeDialogControl.IsPrimaryButtonEnabled = true;
+            }
+
+            if (result.Status == LoginStatus.AuthCodeInvalid)
+            {
+                ShowAuthError("验证码错误，请重新输入。");
+                CodeTextBox.Text = string.Empty;
+                CodeTextBox.Focus(FocusState.Programmatic);
+                return false;
+            }
+
+            if (result.Status == LoginStatus.Timeout)
+            {
+                CodeTextBox.Focus(FocusState.Programmatic);
+                return false;
+            }
+
+            if (!result.IsSuccess)
+            {
+                ShowAuthError(result.Message);
+                return false;
+            }
+
+            ShowAuthSuccess("验证成功，正在完成登录...");
+            await OnLoginSuccessAsync();
+            return true;
+        }
+
+        private async Task HandleLoginResultAsync(LoginResult result, bool isTwoFactorStep)
+        {
+            switch (result.Status)
+            {
+                case LoginStatus.Success:
+                    await OnLoginSuccessAsync();
+                    break;
+
+                case LoginStatus.RequiresTwoFactor:
+                    await ShowAuthCodeDialogAsync(result.Message);
+                    break;
+
+                case LoginStatus.InvalidCredential:
+                    ShowError(result.Message);
+                    RestoreIdleState();
+                    break;
+
+                case LoginStatus.NetworkError:
+                case LoginStatus.UnknownError:
+                    ShowError(result.Message);
+                    RestoreIdleState();
+                    break;
+
+                case LoginStatus.Timeout:
+                    ShowError(result.Message);
+                    RestoreIdleState();
+                    break;
+
+                case LoginStatus.AuthCodeInvalid:
+                    if (isTwoFactorStep)
+                    {
+                        ShowAuthError(result.Message);
+                    }
+                    else
+                    {
+                        ShowError(result.Message);
+                    }
+                    RestoreIdleState();
+                    break;
+            }
+        }
+
+        private async Task ShowAuthCodeDialogAsync(string message)
+        {
+            ResetAuthDialogUI();
+
+            if (CodeErrorTextBlock != null)
+            {
+                CodeErrorTextBlock.Text = message;
+                CodeErrorTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.OrangeRed);
+                CodeErrorTextBlock.Visibility = Visibility.Visible;
+            }
+
+            CodeTextBox?.Focus(FocusState.Programmatic);
+
+            if (AuthCodeDialogControl != null)
+            {
+                AuthCodeDialogControl.XamlRoot = this.XamlRoot;
+                await AuthCodeDialogControl.ShowAsync();
+            }
+        }
+
+        private void ResetAuthDialogUI()
+        {
+            if (CodeTextBox != null)
+            {
+                CodeTextBox.Text = string.Empty;
+            }
+
+            HideAuthMessage();
+        }
+
+        private bool ValidateInput(string account, string password)
+        {
+            return !string.IsNullOrWhiteSpace(account) && !string.IsNullOrWhiteSpace(password);
+        }
+
         private void SetInputControlsEnabled(bool enabled)
         {
-            EmailComboBox.IsEnabled = enabled;
-            PasswordBox.IsEnabled = enabled;
-        }
-
-        /// <summary>
-        /// 处理登录结果
-        /// </summary>
-        private async Task HandleLoginResult(string result, bool isWithAuthCode)
-        {
-            // 检查是否登录成功
-            if (IsLoginSuccess(result))
+            if (EmailTextBox != null)
             {
-                await OnLoginSuccess();
-                return;
+                EmailTextBox.IsEnabled = enabled;
             }
 
-            // 检查是否需要验证码
-            if (!isWithAuthCode && RequiresAuthCode(result))
+            if (PasswordInput != null)
             {
-                // 显示验证码弹窗
-                await ShowAuthCodeDialog();
-                return;
+                PasswordInput.IsEnabled = enabled;
+            }
+        }
+
+        private void SetBusyState(bool isBusy, string message)
+        {
+            if (NextButtonControl != null)
+            {
+                NextButtonControl.IsEnabled = !isBusy;
             }
 
-            // 登录失败
-            OnLoginFailed(result);
+            if (!string.IsNullOrEmpty(message))
+            {
+                ShowInfo(message);
+            }
         }
 
-        /// <summary>
-        /// 显示验证码弹窗
-        /// </summary>
-        private async Task ShowAuthCodeDialog()
+        private void ShowInfo(string message)
         {
-            // 重置弹窗状态
-            CodeBox.Text = "";
-            CodeErrorText.Visibility = Visibility.Collapsed;
-            CodeErrorText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                Microsoft.UI.Colors.Red
-            );
-
-            // 设置弹窗的 XamlRoot
-            AuthCodeDialog.XamlRoot = this.XamlRoot;
-
-            // 显示弹窗
-            await AuthCodeDialog.ShowAsync();
+            if (ResultTextBlock != null)
+            {
+                ResultTextBlock.Text = message;
+                ResultTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray);
+            }
         }
 
-        /// <summary>
-        /// 判断是否登录成功
-        /// </summary>
-        private bool IsLoginSuccess(string result)
+        private void ShowError(string message)
         {
-            return result.Contains("success=true")
-                || result.Contains("[36msuccess=[0mtrue")
-                || (result.Contains("success") && result.Contains("true"));
+            if (ResultTextBlock != null)
+            {
+                ResultTextBlock.Text = message;
+                ResultTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
+            }
         }
 
-        /// <summary>
-        /// 判断是否需要验证码
-        /// </summary>
-        private bool RequiresAuthCode(string result)
+        private void ShowSuccess(string message)
         {
-            return result.Contains("请输入验证码")
-                || result.Contains("auth code")
-                || result.Contains("2FA code is required")
-                || result.Contains("authentication code");
+            if (ResultTextBlock != null)
+            {
+                ResultTextBlock.Text = message;
+                ResultTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.ForestGreen);
+            }
         }
 
-        /// <summary>
-        /// 登录成功处理
-        /// </summary>
-        private async Task OnLoginSuccess()
+        private void ShowAuthError(string message)
         {
-            // 保存账号信息
-            SaveAccountToHistory();
-
-            // 清除退出标记
-            AccountHistoryDb.ClearLogoutFlag();
-
-            // 显示成功消息
-            ResultText.Text = "登录成功，正在跳转...";
-            ResultText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                Microsoft.UI.Colors.Green
-            );
-
-            // 延迟跳转，让用户看到成功提示
-            await Task.Delay(500);
-
-            // 导航到搜索页面，并传递登录状态
-            Frame.Navigate(typeof(MainPage), true); // 传递 true 表示登录成功
+            if (CodeErrorTextBlock != null)
+            {
+                CodeErrorTextBlock.Text = message;
+                CodeErrorTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
+                CodeErrorTextBlock.Visibility = Visibility.Visible;
+            }
         }
 
-        /// <summary>
-        /// 登录失败处理
-        /// </summary>
-        private void OnLoginFailed(string result)
+        private void ShowAuthWarning(string message)
         {
-            ResultText.Text = ParseErrorMessage(result);
-            ResultText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                Microsoft.UI.Colors.Red
-            );
+            if (CodeErrorTextBlock != null)
+            {
+                CodeErrorTextBlock.Text = message;
+                CodeErrorTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray);
+                CodeErrorTextBlock.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void ShowAuthSuccess(string message)
+        {
+            if (CodeErrorTextBlock != null)
+            {
+                CodeErrorTextBlock.Text = message;
+                CodeErrorTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.ForestGreen);
+                CodeErrorTextBlock.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void HideAuthMessage()
+        {
+            if (CodeErrorTextBlock != null)
+            {
+                CodeErrorTextBlock.Visibility = Visibility.Collapsed;
+                CodeErrorTextBlock.Text = string.Empty;
+            }
+        }
+
+        private void RestoreIdleState()
+        {
             SetInputControlsEnabled(true);
-            NextButton.IsEnabled = true;
+            SetBusyState(false, string.Empty);
         }
 
-        /// <summary>
-        /// 解析错误消息
-        /// </summary>
-        private string ParseErrorMessage(string result)
-        {
-            if (result.Contains("invalid credentials") || result.Contains("incorrect"))
-                return "用户名或密码错误";
-            if (result.Contains("network") || result.Contains("timeout"))
-                return "网络连接失败，请检查网络";
-            if (result.Contains("invalid auth code") || result.Contains("验证码错误"))
-                return "验证码错误，请重新输入";
-
-            return result.Length > 200 ? result.Substring(0, 200) + "..." : result;
-        }
-
-        /// <summary>
-        /// 保存账号到历史记录
-        /// </summary>
-        private void SaveAccountToHistory()
+        private async Task OnLoginSuccessAsync()
         {
             try
             {
-                // 直接保存，数据库会自动处理重复情况
-                AccountHistoryDb.SaveAccount(_email, _password);
+                KeychainConfig.GenerateAndSaveSecretKey(_account);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"保存账号历史失败: {ex.Message}");
+                Debug.WriteLine($"保存账户信息失败: {ex.Message}");
             }
+
+            SessionState.SetLoginState(_account, true);
+            DisposeCurrentOperation();
+            ShowSuccess("登录成功，正在跳转...");
+
+            await Task.Delay(400);
+            Frame.Navigate(typeof(MainPage), _account);
         }
 
-        /// <summary>
-        /// 执行命令行命令 - 修复版本
-        /// </summary>
-        private async Task<string> RunCommandAsync(string command)
+        private void CancelCurrentOperation()
         {
-            try
+            if (_currentOperationCts != null)
             {
-                // 使用cmd.exe而不是powershell，因为cmd对路径中的空格处理更好
-                var psi = new ProcessStartInfo
+                if (!_currentOperationCts.IsCancellationRequested)
                 {
-                    FileName = "cmd.exe",
-                    Arguments = $"/c \"{command}\"",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = System.Text.Encoding.UTF8,
-                    StandardErrorEncoding = System.Text.Encoding.UTF8,
-                };
-
-                using (var process = Process.Start(psi))
-                {
-                    if (process == null)
-                    {
-                        return "无法启动进程";
-                    }
-
-                    string output = await process.StandardOutput.ReadToEndAsync();
-                    string error = await process.StandardError.ReadToEndAsync();
-
-                    await process.WaitForExitAsync();
-
-                    return string.IsNullOrWhiteSpace(error) ? output : error;
+                    _currentOperationCts.Cancel();
                 }
-            }
-            catch (Exception ex)
-            {
-                return $"命令执行失败: {ex.Message}";
+                DisposeCurrentOperation();
             }
         }
 
-        /// <summary>
-        /// 执行ipatool命令 - 专门处理路径问题
-        /// </summary>
-        private async Task<string> RunIpatoolCommandAsync(string arguments)
+        private void DisposeCurrentOperation()
         {
-            try
+            if (_currentOperationCts != null)
             {
-                // 直接执行ipatool.exe，而不是通过powershell或cmd
-                var psi = new ProcessStartInfo
-                {
-                    FileName = _ipatoolPath,
-                    Arguments = arguments,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = System.Text.Encoding.UTF8,
-                    StandardErrorEncoding = System.Text.Encoding.UTF8,
-                    WorkingDirectory = Path.GetDirectoryName(_ipatoolPath) // 设置工作目录为ipatool所在目录
-                };
-
-                using (var process = Process.Start(psi))
-                {
-                    if (process == null)
-                    {
-                        return "无法启动进程";
-                    }
-
-                    string output = await process.StandardOutput.ReadToEndAsync();
-                    string error = await process.StandardError.ReadToEndAsync();
-
-                    await process.WaitForExitAsync();
-
-                    return string.IsNullOrWhiteSpace(error) ? output : error;
-                }
-            }
-            catch (Exception ex)
-            {
-                return $"命令执行失败: {ex.Message}";
+                _currentOperationCts.Dispose();
+                _currentOperationCts = null;
             }
         }
 
@@ -383,225 +448,18 @@ namespace IPAbuyer.Views
             Frame.Navigate(typeof(MainPage));
         }
 
-        /// <summary>
-        /// 回车键功能设置
-        /// </summary>
-        private async void Input_KeyUp(object sender, KeyRoutedEventArgs e)
+        private TextBox? EmailTextBox => GetControl<TextBox>("EmailComboBox");
+        private PasswordBox? PasswordInput => GetControl<PasswordBox>("PasswordBox");
+        private Button? NextButtonControl => GetControl<Button>("NextButton");
+        private TextBlock? ResultTextBlock => GetControl<TextBlock>("ResultText");
+        private ContentDialog? AuthCodeDialogControl => GetControl<ContentDialog>("AuthCodeDialog");
+        private TextBox? CodeTextBox => GetControl<TextBox>("CodeBox");
+        private TextBlock? CodeErrorTextBlock => GetControl<TextBlock>("CodeErrorText");
+
+        private T? GetControl<T>(string name)
+            where T : class
         {
-            if (e.Key == Windows.System.VirtualKey.Enter)
-            {
-                if (sender == EmailComboBox)
-                {
-                    PasswordBox.Focus(FocusState.Programmatic);
-                }
-                else if (sender == PasswordBox)
-                {
-                    await LoginAsync();
-                }
-            }
-        }
-
-        private async Task LoginAsync()
-        {
-            // 获取输入的邮箱和密码
-            _email = EmailComboBox.Text.Trim();
-            _password = PasswordBox.Password;
-
-            // 清空结果提示
-            ResultText.Text = "";
-
-            // 验证输入
-            if (!ValidateInput(_email, _password))
-            {
-                ResultText.Text = "邮箱和密码不能为空";
-                ResultText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                    Microsoft.UI.Colors.Red
-                );
-
-                // 聚焦到空的输入框
-                if (string.IsNullOrWhiteSpace(_email))
-                {
-                    EmailComboBox.Focus(FocusState.Programmatic);
-                }
-                else if (string.IsNullOrWhiteSpace(_password))
-                {
-                    PasswordBox.Focus(FocusState.Programmatic);
-                }
-                return;
-            }
-
-            // 禁用输入控件
-            SetInputControlsEnabled(false);
-            NextButton.IsEnabled = false;
-            ResultText.Text = "正在登录...";
-            ResultText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                Microsoft.UI.Colors.Gray
-            );
-
-            try
-            {
-                // 执行登录命令，初始验证码000000，json格式，verbose日志
-                string arguments = $"auth login --email {_email} --password \"{_password}\" --keychain-passphrase {KeychainPassphrase} --non-interactive --auth-code 000000 --format json --verbose";
-                var result = await RunIpatoolCommandAsync(arguments);
-
-                // 判断是否需要2FA
-                if (
-                    result.Contains("2FA required")
-                    || result.Contains("auth code")
-                    || result.Contains("authentication code")
-                    || result.Contains("error") && result.Contains("something went wrong")
-                    || result.Contains("\"success\":false")
-                )
-                {
-                    await ShowAuthCodeDialog();
-                    return;
-                }
-                // 登录成功
-                if (result.Contains("\"success\":true"))
-                {
-                    await OnLoginSuccess();
-                    return;
-                }
-                // 其它情况
-                await HandleLoginResult(result, false);
-            }
-            catch (Exception ex)
-            {
-                ResultText.Text = $"登录失败: {ex.Message}";
-                ResultText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                    Microsoft.UI.Colors.Red
-                );
-                SetInputControlsEnabled(true);
-                NextButton.IsEnabled = true;
-            }
-        }
-
-        private async void CodeBox_KeyUp(object sender, KeyRoutedEventArgs e)
-        {
-            if (e.Key == Windows.System.VirtualKey.Enter)
-            {
-                // 阻止默认行为
-                e.Handled = true;
-
-                bool isSuccess = await ValidateAuthCodeAsync();
-                if (isSuccess)
-                {
-                    AuthCodeDialog.Hide();
-                }
-            }
-        }
-
-        private async Task<bool> ValidateAuthCodeAsync()
-        {
-            string code = CodeBox.Text.Trim();
-
-            // 验证验证码格式
-            if (code.Length != 6)
-            {
-                CodeErrorText.Text = "验证码必须为6位数字";
-                CodeErrorText.Visibility = Visibility.Visible;
-                return false;
-            }
-
-            try
-            {
-                // 显示加载状态
-                AuthCodeDialog.IsPrimaryButtonEnabled = false;
-                CodeErrorText.Text = "正在验证...";
-                CodeErrorText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                    Microsoft.UI.Colors.Gray
-                );
-                CodeErrorText.Visibility = Visibility.Visible;
-
-                // 执行带验证码的登录命令，json格式，verbose日志
-                string arguments = $"auth login --email {_email} --password \"{_password}\" --keychain-passphrase {KeychainPassphrase} --non-interactive --auth-code {code} --format json --verbose";
-                var result = await RunIpatoolCommandAsync(arguments);
-
-                // 检查是否登录成功
-                if (result.Contains("\"success\":true"))
-                {
-                    await OnLoginSuccess();
-                    return true;
-                }
-                // 账号或密码错误（json结果）
-                if (
-                    (result.Contains("error") && result.Contains("something went wrong"))
-                    || (result.Contains("invalid credentials"))
-                    || (result.Contains("incorrect"))
-                )
-                {
-                    var dialog = new ContentDialog
-                    {
-                        Title = "登录失败",
-                        Content = "Apple ID或密码错误，请检查后重试。",
-                        CloseButtonText = "确定",
-                        XamlRoot = this.XamlRoot,
-                    };
-                    await dialog.ShowAsync();
-                    ResultText.Text = "登录失败，Apple ID或密码错误";
-                    ResultText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                        Microsoft.UI.Colors.Red
-                    );
-                    SetInputControlsEnabled(true);
-                    NextButton.IsEnabled = true;
-                    return false;
-                }
-                // 验证码错误
-                if (result.Contains("invalid auth code") || result.Contains("验证码错误"))
-                {
-                    CodeErrorText.Text = "验证码错误，请重新输入。";
-                    CodeErrorText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                        Microsoft.UI.Colors.Red
-                    );
-                    CodeErrorText.Visibility = Visibility.Visible;
-                    CodeBox.Text = "";
-                    CodeBox.Focus(FocusState.Programmatic);
-                    return false;
-                }
-                // 其它情况
-                CodeErrorText.Text = ParseErrorMessage(result);
-                CodeErrorText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                    Microsoft.UI.Colors.Red
-                );
-                CodeErrorText.Visibility = Visibility.Visible;
-                CodeBox.Text = "";
-                CodeBox.Focus(FocusState.Programmatic);
-                return false;
-            }
-            catch (Exception ex)
-            {
-                CodeErrorText.Text = $"验证失败: {ex.Message}";
-                CodeErrorText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                    Microsoft.UI.Colors.Red
-                );
-                CodeErrorText.Visibility = Visibility.Visible;
-                return false;
-            }
-            finally
-            {
-                AuthCodeDialog.IsPrimaryButtonEnabled = true;
-            }
-        }
-
-        private async void AuthCodeDialog_PrimaryButtonClick(
-            ContentDialog sender,
-            ContentDialogButtonClickEventArgs args
-        )
-        {
-            // 获取延迟对象，以便异步操作
-            var deferral = args.GetDeferral();
-
-            // 取消默认关闭行为，我们根据验证结果决定是否关闭
-            args.Cancel = true;
-
-            bool isSuccess = await ValidateAuthCodeAsync();
-            if (isSuccess)
-            {
-                // 验证成功，隐藏对话框
-                AuthCodeDialog.Hide();
-            }
-
-            deferral.Complete();
+            return FindName(name) as T;
         }
     }
 }

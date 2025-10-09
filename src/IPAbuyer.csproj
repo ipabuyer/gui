@@ -28,9 +28,6 @@
             Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &lt; 8">
             win10-x64;win10-arm64</RuntimeIdentifiers>
     </PropertyGroup>
-    <ItemGroup>
-        <None Remove="Views\Settings.xaml" />
-    </ItemGroup>
 
     <ItemGroup>
         <Content Include="Assets\SplashScreen.scale-200.png" />
@@ -40,6 +37,9 @@
         <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
         <Content Include="Assets\StoreLogo.png" />
         <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+        <Content Include="Assets\Icon.ico">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
 
     <ItemGroup>
@@ -75,7 +75,7 @@
         <ProjectCapability Include="Msix" />
     </ItemGroup>
     <ItemGroup>
-        <Page Update="Views\Settings.xaml">
+        <Page Update="Views\*.xaml">
             <Generator>MSBuild:Compile</Generator>
         </Page>
     </ItemGroup>
@@ -88,5 +88,6 @@
     <PropertyGroup
         Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
         <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
+        <ApplicationIcon>Assets\Icon.ico</ApplicationIcon>
     </PropertyGroup>
 </Project>

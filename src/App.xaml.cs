@@ -1,11 +1,16 @@
+using IPAbuyer.Common;
 using IPAbuyer.Data;
 using IPAbuyer.Views;
 using Microsoft.UI;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using System;
+using System.Diagnostics;
+using System.IO;
+using WinRT.Interop;
 
 namespace IPAbuyer
 {
@@ -15,32 +20,54 @@ namespace IPAbuyer
 
         public App()
         {
-            // 初始化数据库
-            PurchasedAppDb.InitDb();
-            AccountHistoryDb.InitDb();
-            
-            this.InitializeComponent();
+            try
+            {
+                // 初始化数据库
+                PurchasedAppDb.InitDb();
+                KeychainConfig.InitializeDatabase();
+                
+                this.InitializeComponent();
+            }
+            catch (Exception ex)
+            {
+                // 记录错误到文件
+                var errorPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "IPAbuyer_Error.txt");
+                File.WriteAllText(errorPath, $"启动错误: {ex.ToString()}");
+                throw;
+            }
         }
 
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
-            _window = new Window
+            try
             {
-                Title = "IPAbuyer"
-            };
+                _window = new Window
+                {
+                    Title = "IPAbuyer - 快速购买AppStore中的应用",
+                };
 
-            // 创建 Frame 用于页面导航
-            Frame rootFrame = new Frame();
-            rootFrame.NavigationFailed += OnNavigationFailed;
+                SetWindowIcon(_window);
 
-            // 导航到登录页
-            rootFrame.Navigate(typeof(MainPage));
+                // 创建 Frame 用于页面导航
+                Frame rootFrame = new Frame();
+                rootFrame.NavigationFailed += OnNavigationFailed;
 
-            // 将 Frame 设置为窗口内容
-            _window.Content = rootFrame;
+                // 导航到主页
+                rootFrame.Navigate(typeof(MainPage));
 
-            // 激活窗口
-            _window.Activate();
+                // 将 Frame 设置为窗口内容
+                _window.Content = rootFrame;
+
+                // 激活窗口
+                _window.Activate();
+            }
+            catch (Exception ex)
+            {
+                // 记录错误到文件
+                var errorPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "IPAbuyer_LaunchError.txt");
+                //File.WriteAllText(errorPath, $"启动错误: {ex.ToString()}");
+                throw;
+            }
         }
 
         /// <summary>
@@ -49,6 +76,30 @@ namespace IPAbuyer
         void OnNavigationFailed(object sender, NavigationFailedEventArgs e)
         {
             throw new Exception($"Failed to load Page {e.SourcePageType.FullName}");
+        }
+
+        private static void SetWindowIcon(Window window)
+        {
+            try
+            {
+                IntPtr hwnd = WindowNative.GetWindowHandle(window);
+                var windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
+                AppWindow appWindow = AppWindow.GetFromWindowId(windowId);
+
+                string iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Icon.ico");
+                if (File.Exists(iconPath))
+                {
+                    appWindow?.SetIcon(iconPath);
+                }
+                else
+                {
+                    Debug.WriteLine($"App icon not found at {iconPath}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to set window icon: {ex.Message}");
+            }
         }
     }
 }
