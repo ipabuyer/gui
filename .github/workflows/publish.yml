@@ -1,9 +1,6 @@
-name: IPAbuyer Development Workflow
+name: IPAbuyer Publish Workflow
 
 on:
-  push:
-    branches:
-    - beta
   workflow_dispatch:
 
 
@@ -15,7 +12,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        platform: [ x64 ]
+        platform: [ x64, ARM64 ]
 
     steps:
     - name: Checkout code
@@ -63,7 +60,7 @@ jobs:
       with:
         name: IPAbuyer_${{ matrix.platform }}
         path: |
-          **\AppPackages\**\*.msix
+          **\AppPackages\**\IPAbuyer_*.msix
 
     - name: Cleanup Certificate
       shell: pwsh
