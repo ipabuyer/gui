@@ -1,24 +1,34 @@
 using Microsoft.Data.Sqlite;
+using System;
+using System.IO;
+using System.Security.Cryptography;
+using System.Threading.Tasks;
+using Windows.ApplicationModel;
+using Windows.Storage;
 using System.Diagnostics;
 
 namespace IPAbuyer.Data
 {
     public class PurchasedAppDb
     {
-        private static string dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "purchased_apps.db");
-        private static string connStr = $"Data Source={dbPath}";
+        private static string _dbDirectory = string.Empty;
+        private static string _dbPath = string.Empty;
+        private static string _connectionString = string.Empty;
 
         public static void InitDb()
         {
-            using (var conn = new SqliteConnection(connStr))
+            _dbDirectory = Path.Combine(AppContext.BaseDirectory, "db");
+            _dbPath = Path.Combine(_dbDirectory, "PurchasedAppDb.db");
+            _connectionString = $"Data Source={_dbPath}";
+            using (var conn = new SqliteConnection(_connectionString))
             {
                 conn.Open();
-                
+
                 // 检查旧表是否存在，如果存在则直接删除
                 var checkCmd = conn.CreateCommand();
                 checkCmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='PurchasedApp'";
                 var exists = checkCmd.ExecuteScalar();
-                
+
                 if (exists != null)
                 {
                     try
@@ -69,7 +79,7 @@ namespace IPAbuyer.Data
                 return;
             }
 
-            using (var conn = new SqliteConnection(connStr))
+            using (var conn = new SqliteConnection(_connectionString))
             {
                 conn.Open();
                 var cmd = conn.CreateCommand();
@@ -93,19 +103,19 @@ namespace IPAbuyer.Data
         public static List<(string appID, string status)> GetPurchasedApps(string account)
         {
             var list = new List<(string, string)>();
-            
+
             if (string.IsNullOrWhiteSpace(account))
             {
                 return list;
             }
 
-            using (var conn = new SqliteConnection(connStr))
+            using (var conn = new SqliteConnection(_connectionString))
             {
                 conn.Open();
                 var cmd = conn.CreateCommand();
                 cmd.CommandText = "SELECT AppID, Status FROM PurchasedApp WHERE Account = $account";
                 cmd.Parameters.AddWithValue("$account", account);
-                
+
                 using (var reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
@@ -132,14 +142,14 @@ namespace IPAbuyer.Data
                 return null;
             }
 
-            using (var conn = new SqliteConnection(connStr))
+            using (var conn = new SqliteConnection(_connectionString))
             {
                 conn.Open();
                 var cmd = conn.CreateCommand();
                 cmd.CommandText = "SELECT Status FROM PurchasedApp WHERE AppID = $appid AND Account = $account";
                 cmd.Parameters.AddWithValue("$appid", appID);
                 cmd.Parameters.AddWithValue("$account", account);
-                
+
                 var result = cmd.ExecuteScalar();
                 return result?.ToString();
             }
@@ -151,11 +161,11 @@ namespace IPAbuyer.Data
         /// <param name="account">账户名，如果为空则清除所有记录</param>
         public static void ClearPurchasedApps(string? account = null)
         {
-            using (var conn = new SqliteConnection(connStr))
+            using (var conn = new SqliteConnection(_connectionString))
             {
                 conn.Open();
                 var cmd = conn.CreateCommand();
-                
+
                 if (string.IsNullOrWhiteSpace(account))
                 {
                     cmd.CommandText = "DELETE FROM PurchasedApp";
@@ -165,7 +175,7 @@ namespace IPAbuyer.Data
                     cmd.CommandText = "DELETE FROM PurchasedApp WHERE Account = $account";
                     cmd.Parameters.AddWithValue("$account", account);
                 }
-                
+
                 cmd.ExecuteNonQuery();
             }
         }
@@ -175,11 +185,11 @@ namespace IPAbuyer.Data
         /// </summary>
         public static int GetTotalCount(string? account = null)
         {
-            using (var conn = new SqliteConnection(connStr))
+            using (var conn = new SqliteConnection(_connectionString))
             {
                 conn.Open();
                 var cmd = conn.CreateCommand();
-                
+
                 if (string.IsNullOrWhiteSpace(account))
                 {
                     cmd.CommandText = "SELECT COUNT(*) FROM PurchasedApp";
@@ -189,7 +199,7 @@ namespace IPAbuyer.Data
                     cmd.CommandText = "SELECT COUNT(*) FROM PurchasedApp WHERE Account = $account";
                     cmd.Parameters.AddWithValue("$account", account);
                 }
-                
+
                 var result = cmd.ExecuteScalar();
                 return result != null ? Convert.ToInt32(result) : 0;
             }
