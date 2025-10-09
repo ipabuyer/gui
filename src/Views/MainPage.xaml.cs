@@ -138,8 +138,16 @@ namespace IPAbuyer.Views
             }
             catch (JsonException)
             {
-                _isLoggedIn = false;
-                UpdateStatusBar("无法解析登录状态响应，请重新登录", true);
+                if (IsAuthenticationError(payload))
+                {
+                    _isLoggedIn = false;
+                    SessionState.Reset();
+                    UpdateLoginButton();
+                    UpdateStatusBar("登录状态已失效，请重新登录", true);
+                    return;
+                }
+
+                UpdateStatusBar("未能确认登录状态，将维持当前登录状态", false);
             }
         }
 
