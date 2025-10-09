@@ -11,7 +11,10 @@ namespace IPAbuyer.Views
 {
     public sealed partial class MainPage : Page
     {
-        private string _email = KeychainConfig.GetLastLoginUsername();
+        public static string LastLoginUsername = KeychainConfig.GetLastLoginUsername();
+        public static string _account = string.IsNullOrEmpty(LastLoginUsername) ? "example@icloud.com" : LastLoginUsername;
+        public static string _password = "examplePassword";
+        public static string _authcode = "000000";
 
         // 搜索范围限制
         public int SearchLimitNum { get; set; } = 5;
@@ -91,12 +94,12 @@ namespace IPAbuyer.Views
             // 尝试验证登录状态
             try
             {
-                var result = ipatoolExecution.searchApp("test", 1, KeychainConfig.GetSecretKey(_email ?? string.Empty));
+                var result = ipatoolExecution.searchApp("test", 1, _account);
 
                 if (result.Contains("apps") || result.Contains("success"))
                 {
                     isLoggedIn = true;
-                    UpdateStatusBar($"已登录账户: {_email}");
+                    UpdateStatusBar($"已登录账户: {_account}");
                 }
                 else
                 {
@@ -229,7 +232,7 @@ namespace IPAbuyer.Views
 
                     UpdateStatusBar($"正在购买: {app.name}...");
 
-                    var result = ipatoolExecution.purchaseApp(app.name ?? string.Empty, KeychainConfig.GetSecretKey(_email ?? string.Empty));
+                    var result = ipatoolExecution.purchaseApp(app.bundleID ?? string.Empty, _account);
 
                     if (
                         (result.Contains("success") && result.Contains("true"))
@@ -449,7 +452,7 @@ namespace IPAbuyer.Views
             SearchButton.IsEnabled = false;
             UpdateStatusBar($"正在搜索 \"{appName}\"...");
 
-            var result = ipatoolExecution.searchApp(appName, SearchLimitNum, KeychainConfig.GetSecretKey(_email ?? string.Empty));
+            var result = ipatoolExecution.searchApp(appName, SearchLimitNum, _account);
             SearchButton.IsEnabled = true;
 
             allResults.Clear();

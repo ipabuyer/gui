@@ -13,28 +13,16 @@ namespace IPAbuyer.Views
 {
     public sealed partial class LoginPage : Page
     {
-        private string? _email;
-        private string? _password;
-        // ipatool path and execution now centralized in IPAbuyer.Common.IpatoolRunner
+        public static string LastLoginUsername = KeychainConfig.GetLastLoginUsername();
+        public static string _account = string.IsNullOrEmpty(LastLoginUsername) ? "example@icloud.com" : LastLoginUsername;
+        public static string _password = "examplePassword";
+        public static string _authcode = "000000";
 
         public LoginPage()
         {
             this.InitializeComponent();
-            InitializePage();
-        }
-
-        /// <summary>
-        /// 初始化页面
-        /// </summary>
-        private void InitializePage()
-        {
-            // 查找/缓存由 IpatoolRunner 管理，无需本地保存
-
-            // 加载账号历史
             LoadAccountHistory();
         }
-
-        // ipatool 路径与执行由 Common.IpatoolRunner 管理
 
         /// <summary>
         /// 加载账号历史记录
@@ -43,10 +31,9 @@ namespace IPAbuyer.Views
         {
             try
             {
-                string lastAccount = KeychainConfig.GetLastLoginUsername();
-                if (!string.IsNullOrEmpty(lastAccount))
+                if (!string.IsNullOrEmpty(LastLoginUsername))
                 {
-                    EmailComboBox.Text = lastAccount;
+                    EmailComboBox.Text = LastLoginUsername;
                 }
             }
             catch (Exception ex)
@@ -108,9 +95,9 @@ namespace IPAbuyer.Views
         /// <summary>
         /// 验证输入
         /// </summary>
-        private bool ValidateInput(string email, string password)
+        private bool ValidateInput(string account, string password)
         {
-            return !string.IsNullOrWhiteSpace(email) && !string.IsNullOrWhiteSpace(password);
+            return !string.IsNullOrWhiteSpace(account) && !string.IsNullOrWhiteSpace(password);
         }
 
         /// <summary>
@@ -170,9 +157,7 @@ namespace IPAbuyer.Views
         /// </summary>
         private bool IsLoginSuccess(string result)
         {
-            return result.Contains("success=true")
-                || result.Contains("[36msuccess=[0mtrue")
-                || (result.Contains("success") && result.Contains("true"));
+            return result.Contains("success") && result.Contains("true");
         }
 
         /// <summary>
@@ -258,14 +243,14 @@ namespace IPAbuyer.Views
         private async Task LoginAsync()
         {
             // 获取输入的邮箱和密码
-            _email = EmailComboBox.Text.Trim();
+            _account = EmailComboBox.Text.Trim();
             _password = PasswordBox.Password;
 
             // 清空结果提示
             ResultText.Text = "";
 
             // 验证输入
-            if (!ValidateInput(_email, _password))
+            if (!ValidateInput(_account, _password))
             {
                 ResultText.Text = "邮箱和密码不能为空";
                 ResultText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
@@ -273,7 +258,7 @@ namespace IPAbuyer.Views
                 );
 
                 // 聚焦到空的输入框
-                if (string.IsNullOrWhiteSpace(_email))
+                if (string.IsNullOrWhiteSpace(_account))
                 {
                     EmailComboBox.Focus(FocusState.Programmatic);
                 }
@@ -295,10 +280,9 @@ namespace IPAbuyer.Views
             try
             {
                 // 执行登录命令，初始验证码000000
-                _email = _email ?? string.Empty;
+                _account = _account ?? string.Empty;
                 _password = _password ?? string.Empty;
-                var secretKey = KeychainConfig.GenerateAndSaveSecretKey(_email ?? string.Empty);
-                var result = ipatoolExecution.authLogin(_email, _password, "000000", secretKey);
+                var result = ipatoolExecution.authLogin(_account, _password, "000000");
 
                 // 判断是否需要2FA
                 if (
@@ -349,10 +333,10 @@ namespace IPAbuyer.Views
 
         private async Task<bool> ValidateAuthCodeAsync()
         {
-            string code = CodeBox.Text.Trim();
+            string _authcode = CodeBox.Text.Trim();
 
             // 验证验证码格式
-            if (code.Length != 6)
+            if (_authcode.Length != 6)
             {
                 CodeErrorText.Text = "验证码必须为6位数字";
                 CodeErrorText.Visibility = Visibility.Visible;
@@ -370,10 +354,9 @@ namespace IPAbuyer.Views
                 CodeErrorText.Visibility = Visibility.Visible;
 
                 // 执行带验证码的登录命令
-                _email = _email ?? string.Empty;
+                _account = _account ?? string.Empty;
                 _password = _password ?? string.Empty;
-                var secretKey = KeychainConfig.GenerateAndSaveSecretKey(_email ?? string.Empty);
-                var result = ipatoolExecution.authLogin(_email, _password, code, secretKey);
+                var result = ipatoolExecution.authLogin(_account, _password, _authcode);
 
                 // 检查是否登录成功
                 if (result.Contains("\"success\":true"))
