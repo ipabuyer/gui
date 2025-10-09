@@ -13,7 +13,7 @@ namespace IPAbuyer.Views
 {
     public sealed partial class LoginPage : Page
     {
-        public static string LastLoginUsername = KeychainConfig.GetLastLoginUsername();
+        public static string? LastLoginUsername = KeychainConfig.GetLastLoginUsername();
         public static string _account = string.IsNullOrEmpty(LastLoginUsername) ? "example@icloud.com" : LastLoginUsername;
         public static string _password = "examplePassword";
         public static string _authcode = "000000";

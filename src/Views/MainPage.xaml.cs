@@ -11,7 +11,7 @@ namespace IPAbuyer.Views
 {
     public sealed partial class MainPage : Page
     {
-        public static string LastLoginUsername = KeychainConfig.GetLastLoginUsername();
+        public static string? LastLoginUsername = KeychainConfig.GetLastLoginUsername();
         public static string _account = string.IsNullOrEmpty(LastLoginUsername) ? "example@icloud.com" : LastLoginUsername;
         public static string _password = "examplePassword";
         public static string _authcode = "000000";
@@ -48,7 +48,7 @@ namespace IPAbuyer.Views
         private int totalPages = 1;
         private bool isLoggedIn = false;
         private bool isPageLoaded = false;
-        private string selectedValue;
+        private string selectedValue = string.Empty;
 
         public MainPage()
         {
@@ -87,7 +87,7 @@ namespace IPAbuyer.Views
         /// <summary>
         /// 检查登录状态
         /// </summary>
-        private async Task CheckLoginStatus()
+        private Task CheckLoginStatus()
         {
             UpdateStatusBar("正在检查登录状态...");
 
@@ -112,6 +112,8 @@ namespace IPAbuyer.Views
                 isLoggedIn = false;
                 UpdateStatusBar($"登录状态检查失败: {ex.Message}");
             }
+            
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -301,37 +303,6 @@ namespace IPAbuyer.Views
             UpdatePage();
         }
 
-        // 将数据库中的 status 映射为界面上显示的状态
-        private string MapDbStatusToUi(string? dbStatus)
-        {
-            if (string.IsNullOrEmpty(dbStatus))
-                return "已拥有"; // 兼容旧数据或空值
-
-            // 按照你的要求：数据库中保存为 "已拥有"，但界面上需要显示为 "已购买"
-            if (dbStatus == "已拥有")
-                return "已拥有";
-            return dbStatus;
-        }
-
-        /// <summary>
-        /// 根据筛选条件计算总页数
-        /// </summary>
-        private void ScreeningComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (ScreeningComboBox.SelectedItem is ComboBoxItem selectedItem)
-            {
-                selectedValue = selectedItem.Tag?.ToString() ?? "All";
-
-                // 根据筛选条件计算总页数
-                List<AppResult> displayList = GetFilteredResults();
-                totalPages = displayList.Count > 0 ? (displayList.Count + pageSize - 1) / pageSize : 1;
-                
-                // 重置分页并刷新页面
-                currentPage = 1;
-                UpdatePage();
-            }
-        }
-
         /// <summary>
         /// 获取筛选后的结果列表
         /// </summary>
@@ -347,6 +318,25 @@ namespace IPAbuyer.Views
                     return allResults.Where(a => a.purchased == "已拥有").ToList();
                 default:
                     return allResults.ToList();
+            }
+        }
+
+        /// <summary>
+        /// 筛选条件变更事件
+        /// </summary>
+        private void ScreeningComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ScreeningComboBox.SelectedItem is ComboBoxItem selectedItem)
+            {
+                selectedValue = selectedItem.Tag?.ToString() ?? "All";
+
+                // 根据筛选条件计算总页数
+                List<AppResult> displayList = GetFilteredResults();
+                totalPages = displayList.Count > 0 ? (displayList.Count + pageSize - 1) / pageSize : 1;
+                
+                // 重置分页并刷新页面
+                currentPage = 1;
+                UpdatePage();
             }
         }
 
@@ -376,22 +366,6 @@ namespace IPAbuyer.Views
                 PrevPageButton.IsEnabled = currentPage > 1;
             if (NextPageButton != null)
                 NextPageButton.IsEnabled = currentPage < totalPages;
-        }
-
-        private void ScreeningComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (ScreeningComboBox.SelectedItem is ComboBoxItem selectedItem)
-            {
-                selectedValue = selectedItem.Tag?.ToString() ?? "All";
-
-                // 根据筛选条件计算总页数
-                List<AppResult> displayList = GetFilteredResults();
-                totalPages = displayList.Count > 0 ? (displayList.Count + pageSize - 1) / pageSize : 1;
-                
-                // 重置分页并刷新页面
-                currentPage = 1;
-                UpdatePage();
-            }
         }
 
         /// <summary>
@@ -455,12 +429,12 @@ namespace IPAbuyer.Views
         /// <summary>
         /// 统一的搜索方法
         /// </summary>
-        private async Task PerformSearchAsync()
+        private Task PerformSearchAsync()
         {
             if (!isLoggedIn)
             {
                 UpdateStatusBar("请先登录账户", true);
-                return;
+                return Task.CompletedTask;
             }
 
             string appName = AppNameBox.Text.Trim();
@@ -468,7 +442,7 @@ namespace IPAbuyer.Views
             {
                 UpdateStatusBar("请输入应用名称", true);
                 AppNameBox.Focus(FocusState.Programmatic);
-                return;
+                return Task.CompletedTask;
             }
 
             SearchButton.IsEnabled = false;
@@ -532,13 +506,13 @@ namespace IPAbuyer.Views
                 else
                 {
                     UpdateStatusBar("搜索结果为空或格式错误", true);
-                    return;
+                    return Task.CompletedTask;
                 }
             }
             catch (Exception ex)
             {
                 UpdateStatusBar($"解析搜索结果失败: {ex.Message}", true);
-                return;
+                return Task.CompletedTask;
             }
 
             totalPages = (allResults.Count + pageSize - 1) / pageSize;
@@ -548,6 +522,8 @@ namespace IPAbuyer.Views
             UpdateStatusBar(
                 $"搜索完成 - 请求: {SearchLimitNum}, 找到 {allResults.Count} 个应用 (成功: {successCount}, 失败: {failCount})"
             );
+            
+            return Task.CompletedTask;
         }
 
         /// <summary>

@@ -1,3 +1,4 @@
+using IPAbuyer.Common;
 using IPAbuyer.Data;
 using IPAbuyer.Views;
 using Microsoft.UI;

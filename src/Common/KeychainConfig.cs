@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.Storage;
 
-namespace IPAbuyer.Data
+namespace IPAbuyer.Common
 {
     /// <summary>
     /// SQLite 数据库交互帮助类
@@ -75,7 +75,7 @@ namespace IPAbuyer.Data
         /// </summary>
         /// <param name="username">用户名</param>
         /// <returns>密钥，如果用户不存在则返回 null</returns>
-        public static string GetSecretKey(string username)
+        public static string? GetSecretKey(string username)
         {
             if (string.IsNullOrWhiteSpace(username))
                 return null;
@@ -90,7 +90,7 @@ namespace IPAbuyer.Data
                 selectCmd.Parameters.AddWithValue("@username", username);
 
                 var result = selectCmd.ExecuteScalar();
-                return result.ToString();
+                return result?.ToString(); // 添加 ? 操作符以安全处理 null
             }
             catch (Exception ex)
             {
@@ -142,7 +142,7 @@ namespace IPAbuyer.Data
         /// 3. 查找最后一次登录用户名
         /// </summary>
         /// <returns>最后登录的用户名，如果不存在则返回 null</returns>
-        public static string GetLastLoginUsername()
+        public static string? GetLastLoginUsername()
         {
             try
             {

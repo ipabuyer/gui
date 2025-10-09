@@ -8,7 +8,6 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace IPAbuyer.Common
 {
@@ -100,8 +99,13 @@ namespace IPAbuyer.Common
                 // 使用异步读取避免死锁
                 Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
                 Task<string> errorTask = process.StandardError.ReadToEndAsync();
-                string error = errorTask.Result;
+                
+                // 等待两个任务完成，避免使用 .Result 导致的死锁
+                Task.WaitAll(outputTask, errorTask);
+                
                 string output = outputTask.Result;
+                string error = errorTask.Result;
+                
                 process.WaitForExit();
                 Debug.WriteLine($"ipatool output: {output}");
                 Debug.WriteLine($"ipatool stderr: {error}");
