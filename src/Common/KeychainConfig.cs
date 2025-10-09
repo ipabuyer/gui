@@ -90,7 +90,7 @@ namespace IPAbuyer.Data
                 selectCmd.Parameters.AddWithValue("@username", username);
 
                 var result = selectCmd.ExecuteScalar();
-                return string.IsNullOrEmpty(result.ToString()) ? result.ToString() : string.Empty;
+                return result.ToString();
             }
             catch (Exception ex)
             {

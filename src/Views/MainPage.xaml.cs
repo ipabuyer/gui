@@ -191,7 +191,7 @@ namespace IPAbuyer.Views
         /// <summary>
         /// 批量购买事件
         /// </summary>
-        private async void BatchPurchaseButton_Click(object sender, RoutedEventArgs e)
+        private void BatchPurchaseButton_Click(object sender, RoutedEventArgs e)
         {
             if (!isLoggedIn)
             {
