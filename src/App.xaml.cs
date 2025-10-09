@@ -65,7 +65,7 @@ namespace IPAbuyer
             {
                 // 记录错误到文件
                 var errorPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "IPAbuyer_LaunchError.txt");
-                File.WriteAllText(errorPath, $"启动错误: {ex.ToString()}");
+                //File.WriteAllText(errorPath, $"启动错误: {ex.ToString()}");
                 throw;
             }
         }
