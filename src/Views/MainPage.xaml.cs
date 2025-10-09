@@ -467,6 +467,13 @@ namespace IPAbuyer.Views
                 .GetPurchasedApps(_account)
                 .ToDictionary(x => x.appID, x => x.status);
 
+            // 检查结果是否为空
+            if (string.IsNullOrWhiteSpace(result))
+            {
+                UpdateStatusBar("搜索失败: 未收到响应", true);
+                return Task.CompletedTask;
+            }
+
             try
             {
                 var root = System.Text.Json.JsonDocument.Parse(result).RootElement;
@@ -519,7 +526,21 @@ namespace IPAbuyer.Views
             }
             catch (Exception ex)
             {
-                UpdateStatusBar($"解析搜索结果失败: {ex.Message}", true);
+                Debug.WriteLine($"JSON解析失败: {ex.Message}");
+                Debug.WriteLine($"原始结果: {result}");
+                
+                // 显示更详细的错误信息
+                string errorMsg = $"解析搜索结果失败: {ex.Message}";
+                if (result.Length > 100)
+                {
+                    errorMsg += $" (结果前100字符: {result.Substring(0, 100)}...)";
+                }
+                else
+                {
+                    errorMsg += $" (完整结果: {result})";
+                }
+                
+                UpdateStatusBar(errorMsg, true);
                 return Task.CompletedTask;
             }
 

@@ -109,9 +109,53 @@ namespace IPAbuyer.Common
                 process.WaitForExit();
                 Debug.WriteLine($"ipatool output: {output}");
                 Debug.WriteLine($"ipatool stderr: {error}");
-                // 合并输出和错误流
-                string result = output + error;
-                return result;
+                
+                // 只返回标准输出,stderr通常包含日志信息
+                // 如果输出为空,则返回错误信息
+                if (string.IsNullOrWhiteSpace(output))
+                {
+                    return error;
+                }
+                
+                // 尝试清理输出,只保留有效的JSON部分
+                output = output.Trim();
+                
+                // 如果输出中有多个JSON对象(用换行分隔),需要过滤掉日志行
+                var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                
+                // 优先查找包含 "apps" 或 "success" 的有效JSON响应
+                foreach (var line in lines)
+                {
+                    var trimmedLine = line.Trim();
+                    if ((trimmedLine.StartsWith("{") || trimmedLine.StartsWith("[")) 
+                        && !trimmedLine.Contains("\"level\":\"debug\"")
+                        && !trimmedLine.Contains("\"level\":\"info\"")
+                        && !trimmedLine.Contains("\"level\":\"warning\""))
+                    {
+                        // 这看起来是一个有效的响应JSON,不是日志
+                        if (trimmedLine.Contains("\"apps\"") 
+                            || trimmedLine.Contains("\"success\"") 
+                            || trimmedLine.Contains("\"error\"")
+                            || trimmedLine.Contains("\"message\""))
+                        {
+                            return trimmedLine;
+                        }
+                    }
+                }
+                
+                // 如果没有找到明确的响应,返回第一个非日志的JSON行
+                foreach (var line in lines)
+                {
+                    var trimmedLine = line.Trim();
+                    if ((trimmedLine.StartsWith("{") || trimmedLine.StartsWith("["))
+                        && !trimmedLine.Contains("\"level\":"))
+                    {
+                        return trimmedLine;
+                    }
+                }
+                
+                // 最后的备选:返回原始输出
+                return output;
             }
         }
     }
