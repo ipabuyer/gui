@@ -119,7 +119,7 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="{Binding name}"
                                     TextTrimming="CharacterEllipsis"
-                                    ToolTipService.ToolTip="{Binding name}"
+                                 
                                     HorizontalAlignment="Left">
                                 </TextBlock>
                                 <TextBlock Grid.Column="1" Text="{Binding id}"
@@ -127,7 +127,7 @@
                                 </TextBlock>
                                 <TextBlock Grid.Column="2" Text="{Binding bundleID}"
                                     TextTrimming="CharacterEllipsis"
-                                    ToolTipService.ToolTip="{Binding bundleID}"
+                          
                                     HorizontalAlignment="Center">
                                 </TextBlock>
                                 <TextBlock Grid.Column="3" Text="{Binding version}"
