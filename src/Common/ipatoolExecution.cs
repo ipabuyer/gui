@@ -40,18 +40,17 @@ namespace IPAbuyer.Common
         public static string ExecuteIpatool(string arguments)
         {
             // 查找当前目录下的ipatool.exe
-            string currentDirPath = Path.Combine(Package.Current.InstalledLocation.Path, "ipatool.exe");
-            string ipatoolPath;
+            string currentDirPath = AppContext.BaseDirectory;
+            string ipatoolPath = Path.Combine(currentDirPath, "ipatool.exe");
 
-            if (!File.Exists(currentDirPath))
+            if (!File.Exists(ipatoolPath))
             {
                 Debug.WriteLine($"查找ipatool.exe路径时出错");
-                ipatoolPath = Path.Combine(Environment.CurrentDirectory, "ipatool.exe");
+                ipatoolPath = "ipatool.exe";
             }
             else
             {
                 Debug.WriteLine($"找到当前目录下的ipatool.exe");
-                ipatoolPath = currentDirPath;
             }
 
             ProcessStartInfo psi = new ProcessStartInfo
@@ -73,10 +72,10 @@ namespace IPAbuyer.Common
                     return $"无法启动进程";
                 }
 
-                var output = process.StandardOutput.ToString();
-                var error = process.StandardError.ToString();
+                var output = process.StandardOutput.ReadToEnd();
+                var error = process.StandardError.ReadToEnd();
 
-                process.WaitForExitAsync();
+                process.WaitForExit();
 
                 return string.IsNullOrWhiteSpace(error) ? output : error;
             }

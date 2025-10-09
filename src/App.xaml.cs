@@ -33,7 +33,7 @@ namespace IPAbuyer
             Frame rootFrame = new Frame();
             rootFrame.NavigationFailed += OnNavigationFailed;
 
-            // 导航到登录页
+            // 导航到主页
             rootFrame.Navigate(typeof(MainPage));
 
             // 将 Frame 设置为窗口内容

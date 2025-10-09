@@ -360,7 +360,7 @@ namespace IPAbuyer.Views
         {
             if (ScreeningComboBox.SelectedItem is ComboBoxItem selectedItem)
             {
-                selectedValue = ScreeningComboBox.Name;
+                selectedValue = selectedItem.Tag?.ToString() ?? "All";
 
                 // 重置分页并刷新页面
                 currentPage = 1;

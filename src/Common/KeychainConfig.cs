@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
+using Windows.ApplicationModel;
 using Windows.Storage;
 
 namespace IPAbuyer.Data
@@ -12,17 +13,21 @@ namespace IPAbuyer.Data
     /// </summary>
     public static class KeychainConfig
     {
-        private static string _dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IPAbuyer", "KeychainConfig.db");
-        private static string _connectionString = $"Data Source={_dbPath}";
+        private static string _dbDirectory = string.Empty;
+        private static string _dbPath = string.Empty;
+        private static string _connectionString = string.Empty;
 
         /// <summary>
         /// 初始化数据库
         /// </summary>
         public static void InitializeDatabase()
         {
-            if (!Directory.Exists(_dbPath))
+            _dbDirectory = Path.Combine(AppContext.BaseDirectory, "db");
+            _dbPath = Path.Combine(_dbDirectory, "KeychainConfig.db");
+            _connectionString = $"Data Source={_dbPath}";
+            if (!Directory.Exists(_dbDirectory))
             {
-                Directory.CreateDirectory(_dbPath);
+                Directory.CreateDirectory(_dbDirectory);
             }
 
             using var connection = new SqliteConnection(_connectionString);
@@ -85,7 +90,7 @@ namespace IPAbuyer.Data
                 selectCmd.Parameters.AddWithValue("@username", username);
 
                 var result = selectCmd.ExecuteScalar();
-                return result?.ToString();
+                return string.IsNullOrEmpty(result.ToString()) ? result.ToString() : string.Empty;
             }
             catch (Exception ex)
             {

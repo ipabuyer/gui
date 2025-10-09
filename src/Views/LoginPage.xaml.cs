@@ -13,9 +13,9 @@ namespace IPAbuyer.Views
 {
     public sealed partial class LoginPage : Page
     {
-    private string? _email;
-    private string? _password;
-    // ipatool path and execution now centralized in IPAbuyer.Common.IpatoolRunner
+        private string? _email;
+        private string? _password;
+        // ipatool path and execution now centralized in IPAbuyer.Common.IpatoolRunner
 
         public LoginPage()
         {
@@ -45,9 +45,9 @@ namespace IPAbuyer.Views
             {
                 string lastAccount = KeychainConfig.GetLastLoginUsername();
                 if (!string.IsNullOrEmpty(lastAccount))
-                    {
-                        EmailComboBox.Text = lastAccount;
-                    }
+                {
+                    EmailComboBox.Text = lastAccount;
+                }
             }
             catch (Exception ex)
             {
@@ -294,8 +294,11 @@ namespace IPAbuyer.Views
 
             try
             {
-                // 执行登录命令，初始验证码000000，json格式，verbose日志
-                var result = ipatoolExecution.authLogin(_email ?? string.Empty, _password ?? string.Empty, "000000",KeychainConfig.GenerateAndSaveSecretKey(_email ?? string.Empty));
+                // 执行登录命令，初始验证码000000
+                _email = _email ?? string.Empty;
+                _password = _password ?? string.Empty;
+                var secretKey = KeychainConfig.GenerateAndSaveSecretKey(_email ?? string.Empty);
+                var result = ipatoolExecution.authLogin(_email, _password, "000000", secretKey);
 
                 // 判断是否需要2FA
                 if (
@@ -366,8 +369,11 @@ namespace IPAbuyer.Views
                 );
                 CodeErrorText.Visibility = Visibility.Visible;
 
-                // 执行带验证码的登录命令，json格式，verbose日志
-                var result = ipatoolExecution.authLogin(_email ?? string.Empty, _password ?? string.Empty, code,KeychainConfig.GetSecretKey(_email ?? string.Empty));
+                // 执行带验证码的登录命令
+                _email = _email ?? string.Empty;
+                _password = _password ?? string.Empty;
+                var secretKey = KeychainConfig.GenerateAndSaveSecretKey(_email ?? string.Empty);
+                var result = ipatoolExecution.authLogin(_email, _password, code, secretKey);
 
                 // 检查是否登录成功
                 if (result.Contains("\"success\":true"))
