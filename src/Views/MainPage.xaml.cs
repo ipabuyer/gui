@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using IPAbuyer.Common;
 using IPAbuyer.Data;
+using IPAbuyer.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -270,16 +271,6 @@ namespace IPAbuyer.Views
                 searchLimitText.Text = SearchLimitNum.ToString();
             }
             UpdateStatusBar("已调整搜索范围");
-        }
-
-        public sealed class AppResult
-        {
-            public string? bundleID { get; set; }
-            public string? id { get; set; }
-            public string? name { get; set; }
-            public string? price { get; set; }
-            public string? version { get; set; }
-            public string? purchased { get; set; }
         }
 
         private void UpdateLoginButton()

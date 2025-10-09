@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:IPAbuyer"
+    xmlns:models="using:IPAbuyer.Models"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
     <Page.Content>
@@ -107,7 +108,7 @@
                         </Grid>
                     </ListView.Header>
                     <ListView.ItemTemplate>
-                        <DataTemplate>
+                        <DataTemplate x:DataType="models:AppResult">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="2*" />
@@ -117,26 +118,26 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding name}"
+                                <TextBlock Grid.Column="0" Text="{x:Bind name}"
                                     TextTrimming="CharacterEllipsis"
-                                 
+                                    ToolTipService.ToolTip="{x:Bind name}"
                                     HorizontalAlignment="Left">
                                 </TextBlock>
-                                <TextBlock Grid.Column="1" Text="{Binding id}"
+                                <TextBlock Grid.Column="1" Text="{x:Bind id}"
                                     HorizontalAlignment="Center">
                                 </TextBlock>
-                                <TextBlock Grid.Column="2" Text="{Binding bundleID}"
+                                <TextBlock Grid.Column="2" Text="{x:Bind bundleID}"
                                     TextTrimming="CharacterEllipsis"
-                          
+                                    ToolTipService.ToolTip="{x:Bind bundleID}"
                                     HorizontalAlignment="Center">
                                 </TextBlock>
-                                <TextBlock Grid.Column="3" Text="{Binding version}"
+                                <TextBlock Grid.Column="3" Text="{x:Bind version}"
                                     HorizontalAlignment="Center">
                                 </TextBlock>
-                                <TextBlock Grid.Column="4" Text="{Binding price}"
+                                <TextBlock Grid.Column="4" Text="{x:Bind price}"
                                     HorizontalAlignment="Center">
                                 </TextBlock>
-                                <TextBlock Grid.Column="5" Text="{Binding purchased}"
+                                <TextBlock Grid.Column="5" Text="{x:Bind purchased}"
                                     HorizontalAlignment="Center">
                                 </TextBlock>
                             </Grid>
