@@ -24,27 +24,7 @@ namespace IPAbuyer.Data
             {
                 conn.Open();
 
-                // 检查旧表是否存在，如果存在则直接删除
-                var checkCmd = conn.CreateCommand();
-                checkCmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='PurchasedApp'";
-                var exists = checkCmd.ExecuteScalar();
-
-                if (exists != null)
-                {
-                    try
-                    {
-                        var dropCmd = conn.CreateCommand();
-                        dropCmd.CommandText = "DROP TABLE IF EXISTS PurchasedApp";
-                        dropCmd.ExecuteNonQuery();
-                        Debug.WriteLine("已删除旧表 PurchasedApp");
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"删除旧表失败: {ex.Message}");
-                    }
-                }
-
-                // 创建新表结构
+                // 创建新表结构（如果不存在）
                 var cmd = conn.CreateCommand();
                 cmd.CommandText = @"
                     CREATE TABLE IF NOT EXISTS PurchasedApp (
