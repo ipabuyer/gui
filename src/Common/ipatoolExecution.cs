@@ -57,6 +57,16 @@ namespace IPAbuyer.Common
             return ExecuteIpatoolAsync(arguments, account, cancellationToken);
         }
 
+        public static Task<IpatoolResult> AuthInfoAsync(string account, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                throw new ArgumentException("account 不能为空", nameof(account));
+            }
+
+            return ExecuteIpatoolAsync("auth info", account, cancellationToken);
+        }
+
         public static Task<IpatoolResult> PurchaseAppAsync(string bundleId, string account, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(account))

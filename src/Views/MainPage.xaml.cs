@@ -71,7 +71,7 @@ namespace IPAbuyer.Views
 
             try
             {
-                var result = await ipatoolExecution.SearchAppAsync("test", 1, account, cancellationToken);
+                var result = await ipatoolExecution.AuthInfoAsync(account, cancellationToken);
                 string payload = result.OutputOrError;
 
                 if (result.TimedOut)
@@ -109,18 +109,30 @@ namespace IPAbuyer.Views
                 using var doc = JsonDocument.Parse(payload);
                 var root = doc.RootElement;
 
-                if (root.TryGetProperty("apps", out var appsElement) && appsElement.ValueKind == JsonValueKind.Array)
-                {
-                    _isLoggedIn = true;
-                    SessionState.SetLoginState(account, true);
-                    UpdateStatusBar($"已登录账户: {account}");
-                    return;
-                }
-
                 if (root.TryGetProperty("success", out var successElement))
                 {
                     bool success = successElement.ValueKind == JsonValueKind.True && successElement.GetBoolean();
-                    if (!success)
+                    if (success)
+                    {
+                        _isLoggedIn = true;
+                        SessionState.SetLoginState(account, true);
+
+                        string? displayAccount = account;
+                        if (root.TryGetProperty("data", out var dataElement) && dataElement.ValueKind == JsonValueKind.Object)
+                        {
+                            if (dataElement.TryGetProperty("account", out var accountElement) && accountElement.ValueKind == JsonValueKind.Object)
+                            {
+                                if (accountElement.TryGetProperty("email", out var emailElement) && emailElement.ValueKind == JsonValueKind.String)
+                                {
+                                    displayAccount = emailElement.GetString() ?? displayAccount;
+                                }
+                            }
+                        }
+
+                        UpdateStatusBar($"已登录账户: {displayAccount}");
+                        return;
+                    }
+                    else
                     {
                         _isLoggedIn = false;
                         SessionState.Reset();
@@ -130,6 +142,15 @@ namespace IPAbuyer.Views
                         UpdateStatusBar($"未登录: {errorMessage}", true);
                         return;
                     }
+                }
+
+                if (IsAuthenticationError(payload))
+                {
+                    _isLoggedIn = false;
+                    SessionState.Reset();
+                    UpdateLoginButton();
+                    UpdateStatusBar("登录状态已失效，请重新登录", true);
+                    return;
                 }
 
                 _isLoggedIn = true;
