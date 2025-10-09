@@ -2,12 +2,15 @@ using IPAbuyer.Common;
 using IPAbuyer.Data;
 using IPAbuyer.Views;
 using Microsoft.UI;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using System;
+using System.Diagnostics;
 using System.IO;
+using WinRT.Interop;
 
 namespace IPAbuyer
 {
@@ -43,6 +46,8 @@ namespace IPAbuyer
                     Title = "IPAbuyer - 快速购买AppStore中的应用",
                 };
 
+                SetWindowIcon(_window);
+
                 // 创建 Frame 用于页面导航
                 Frame rootFrame = new Frame();
                 rootFrame.NavigationFailed += OnNavigationFailed;
@@ -71,6 +76,30 @@ namespace IPAbuyer
         void OnNavigationFailed(object sender, NavigationFailedEventArgs e)
         {
             throw new Exception($"Failed to load Page {e.SourcePageType.FullName}");
+        }
+
+        private static void SetWindowIcon(Window window)
+        {
+            try
+            {
+                IntPtr hwnd = WindowNative.GetWindowHandle(window);
+                var windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
+                AppWindow appWindow = AppWindow.GetFromWindowId(windowId);
+
+                string iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Icon.ico");
+                if (File.Exists(iconPath))
+                {
+                    appWindow?.SetIcon(iconPath);
+                }
+                else
+                {
+                    Debug.WriteLine($"App icon not found at {iconPath}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to set window icon: {ex.Message}");
+            }
         }
     }
 }
