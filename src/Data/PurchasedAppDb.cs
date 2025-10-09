@@ -1,4 +1,5 @@
 using Microsoft.Data.Sqlite;
+using System.Diagnostics;
 
 namespace IPAbuyer.Data
 {
@@ -12,76 +13,187 @@ namespace IPAbuyer.Data
             using (var conn = new SqliteConnection(connStr))
             {
                 conn.Open();
+                
+                // 检查旧表是否存在，如果存在则直接删除
+                var checkCmd = conn.CreateCommand();
+                checkCmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' AND name='PurchasedApp'";
+                var exists = checkCmd.ExecuteScalar();
+                
+                if (exists != null)
+                {
+                    try
+                    {
+                        var dropCmd = conn.CreateCommand();
+                        dropCmd.CommandText = "DROP TABLE IF EXISTS PurchasedApp";
+                        dropCmd.ExecuteNonQuery();
+                        Debug.WriteLine("已删除旧表 PurchasedApp");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"删除旧表失败: {ex.Message}");
+                    }
+                }
+
+                // 创建新表结构
                 var cmd = conn.CreateCommand();
                 cmd.CommandText = @"
                     CREATE TABLE IF NOT EXISTS PurchasedApp (
                         Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        BundleID TEXT,
-                        Name TEXT,
-                        Version TEXT,
-                        Status TEXT
+                        AppID TEXT NOT NULL,
+                        Account TEXT NOT NULL,
+                        Status TEXT NOT NULL,
+                        UNIQUE(AppID, Account)
                     )";
                 cmd.ExecuteNonQuery();
 
-                // 向后兼容：如果旧表没有 Status 列，尝试添加（SQLite 不支持 ALTER ADD COLUMN IF NOT EXISTS 旧版本，
-                // 但这个语句在多数环境下可行；如果失败则忽略）
-                try
-                {
-                    var alter = conn.CreateCommand();
-                    alter.CommandText = "ALTER TABLE PurchasedApp ADD COLUMN Status TEXT";
-                    alter.ExecuteNonQuery();
-                }
-                catch { }
+                // 创建索引以提高查询性能
+                var indexCmd = conn.CreateCommand();
+                indexCmd.CommandText = @"
+                    CREATE INDEX IF NOT EXISTS idx_appid_account 
+                    ON PurchasedApp(AppID, Account)";
+                indexCmd.ExecuteNonQuery();
             }
         }
 
-        public static void SavePurchasedApp(string bundleID, string name, string version, string status = "已购买")
+        /// <summary>
+        /// 保存已购买的应用
+        /// </summary>
+        /// <param name="appID">应用ID (bundleID)</param>
+        /// <param name="account">购买账户</param>
+        /// <param name="status">状态：已购买 或 已拥有</param>
+        public static void SavePurchasedApp(string appID, string account, string status = "已购买")
         {
+            if (string.IsNullOrWhiteSpace(appID) || string.IsNullOrWhiteSpace(account))
+            {
+                Debug.WriteLine("AppID 或 Account 不能为空");
+                return;
+            }
+
             using (var conn = new SqliteConnection(connStr))
             {
                 conn.Open();
                 var cmd = conn.CreateCommand();
-                cmd.CommandText = "INSERT INTO PurchasedApp (BundleID, Name, Version, Status) VALUES ($bid, $name, $ver, $status)";
-                cmd.Parameters.AddWithValue("$bid", bundleID);
-                cmd.Parameters.AddWithValue("$name", name);
-                cmd.Parameters.AddWithValue("$ver", version);
+                cmd.CommandText = @"
+                    INSERT INTO PurchasedApp (AppID, Account, Status) 
+                    VALUES ($appid, $account, $status)
+                    ON CONFLICT(AppID, Account) 
+                    DO UPDATE SET Status = $status";
+                cmd.Parameters.AddWithValue("$appid", appID);
+                cmd.Parameters.AddWithValue("$account", account);
                 cmd.Parameters.AddWithValue("$status", status);
                 cmd.ExecuteNonQuery();
             }
         }
 
-        public static List<(string bundleID, string name, string version, string status)> GetPurchasedApps()
+        /// <summary>
+        /// 获取指定账户的所有已购买应用
+        /// </summary>
+        /// <param name="account">账户名</param>
+        /// <returns>应用列表 (AppID, Status)</returns>
+        public static List<(string appID, string status)> GetPurchasedApps(string account)
         {
-            var list = new List<(string, string, string, string)>();
+            var list = new List<(string, string)>();
+            
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                return list;
+            }
+
             using (var conn = new SqliteConnection(connStr))
             {
                 conn.Open();
                 var cmd = conn.CreateCommand();
-                cmd.CommandText = "SELECT BundleID, Name, Version, COALESCE(Status, '') FROM PurchasedApp";
+                cmd.CommandText = "SELECT AppID, Status FROM PurchasedApp WHERE Account = $account";
+                cmd.Parameters.AddWithValue("$account", account);
+                
                 using (var reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        var b = reader.IsDBNull(0) ? string.Empty : reader.GetString(0);
-                        var n = reader.IsDBNull(1) ? string.Empty : reader.GetString(1);
-                        var v = reader.IsDBNull(2) ? string.Empty : reader.GetString(2);
-                        var s = reader.IsDBNull(3) ? string.Empty : reader.GetString(3);
-                        list.Add((b, n, v, s));
+                        var appId = reader.IsDBNull(0) ? string.Empty : reader.GetString(0);
+                        var status = reader.IsDBNull(1) ? "已购买" : reader.GetString(1);
+                        list.Add((appId, status));
                     }
                 }
             }
             return list;
         }
 
-        public static void ClearAllPurchasedApps()
+        /// <summary>
+        /// 检查应用是否已购买
+        /// </summary>
+        /// <param name="appID">应用ID</param>
+        /// <param name="account">账户名</param>
+        /// <returns>状态：null(未购买), "已购买", "已拥有"</returns>
+        public static string? GetAppStatus(string appID, string account)
+        {
+            if (string.IsNullOrWhiteSpace(appID) || string.IsNullOrWhiteSpace(account))
+            {
+                return null;
+            }
+
+            using (var conn = new SqliteConnection(connStr))
+            {
+                conn.Open();
+                var cmd = conn.CreateCommand();
+                cmd.CommandText = "SELECT Status FROM PurchasedApp WHERE AppID = $appid AND Account = $account";
+                cmd.Parameters.AddWithValue("$appid", appID);
+                cmd.Parameters.AddWithValue("$account", account);
+                
+                var result = cmd.ExecuteScalar();
+                return result?.ToString();
+            }
+        }
+
+        /// <summary>
+        /// 清除指定账户的所有已购买记录
+        /// </summary>
+        /// <param name="account">账户名，如果为空则清除所有记录</param>
+        public static void ClearPurchasedApps(string? account = null)
         {
             using (var conn = new SqliteConnection(connStr))
             {
                 conn.Open();
                 var cmd = conn.CreateCommand();
-                cmd.CommandText = "DELETE FROM PurchasedApp";
+                
+                if (string.IsNullOrWhiteSpace(account))
+                {
+                    cmd.CommandText = "DELETE FROM PurchasedApp";
+                }
+                else
+                {
+                    cmd.CommandText = "DELETE FROM PurchasedApp WHERE Account = $account";
+                    cmd.Parameters.AddWithValue("$account", account);
+                }
+                
                 cmd.ExecuteNonQuery();
             }
         }
+
+        /// <summary>
+        /// 获取所有已购买应用数量
+        /// </summary>
+        public static int GetTotalCount(string? account = null)
+        {
+            using (var conn = new SqliteConnection(connStr))
+            {
+                conn.Open();
+                var cmd = conn.CreateCommand();
+                
+                if (string.IsNullOrWhiteSpace(account))
+                {
+                    cmd.CommandText = "SELECT COUNT(*) FROM PurchasedApp";
+                }
+                else
+                {
+                    cmd.CommandText = "SELECT COUNT(*) FROM PurchasedApp WHERE Account = $account";
+                    cmd.Parameters.AddWithValue("$account", account);
+                }
+                
+                var result = cmd.ExecuteScalar();
+                return result != null ? Convert.ToInt32(result) : 0;
+            }
+        }
     }
+}
 }

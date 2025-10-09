@@ -1,6 +1,7 @@
 using IPAbuyer.Views;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using System; // 添加此行
 
 namespace IPAbuyer.Views
 {
@@ -45,7 +46,7 @@ namespace IPAbuyer.Views
             {
                 try
                 {
-                    IPAbuyer.Data.PurchasedAppDb.ClearAllPurchasedApps();
+                    IPAbuyer.Data.PurchasedAppDb.ClearPurchasedApps();
                     var successDialog = new ContentDialog
                     {
                         Title = "操作成功",

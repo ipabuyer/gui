@@ -176,16 +176,26 @@ namespace IPAbuyer.Views
         /// </summary>
         private async Task OnLoginSuccess()
         {
+            // 保存账户信息到数据库
+            try
+            {
+                KeychainConfig.GenerateAndSaveSecretKey(_account);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"保存账户信息失败: {ex.Message}");
+            }
+
             // 显示成功消息
-            ResultText.Text = "登录成功，正在跳转...";
+            ResultText.Text = "登录成功,正在跳转...";
             ResultText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(
                 Microsoft.UI.Colors.Green
             );
 
-            // 延迟跳转，让用户看到成功提示
+            // 延迟跳转,让用户看到成功提示
             await Task.Delay(500);
 
-            // 导航到搜索页面，并传递登录状态
+            // 导航到搜索页面,并传递登录状态
             Frame.Navigate(typeof(MainPage), true); // 传递 true 表示登录成功
         }
 

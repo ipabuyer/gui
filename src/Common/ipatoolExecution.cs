@@ -65,9 +65,10 @@ namespace IPAbuyer.Common
                 ipatoolPath = "ipatool.exe";
             }
 
-            if (KeychainConfig.GetSecretKey(_account) != string.Empty)
+            var existingKey = KeychainConfig.GetSecretKey(_account);
+            if (!string.IsNullOrEmpty(existingKey))
             {
-                _Passphrase = KeychainConfig.GetSecretKey(_account);
+                _Passphrase = existingKey;
             }
             else
             {

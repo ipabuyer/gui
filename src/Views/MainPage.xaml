@@ -72,10 +72,10 @@
                     下一页
                 </Button>
                 <ComboBox Grid.Column="4" Margin="10,0,0,0" x:Name="ScreeningComboBox" SelectedIndex="0" SelectionChanged="ScreeningComboBox_SelectionChanged" MinHeight="30" MinWidth="120">
-                    <ComboBoxItem x:Name="All">筛选</ComboBoxItem>
-                    <ComboBoxItem x:Name="OnlyNotPurchased">仅未购买</ComboBoxItem>
-                    <ComboBoxItem x:Name="OnlyPurchased">仅已购买</ComboBoxItem>
-                    <ComboBoxItem x:Name="OnlyHad">仅已拥有</ComboBoxItem>
+                    <ComboBoxItem x:Name="All" Tag="All">筛选</ComboBoxItem>
+                    <ComboBoxItem x:Name="OnlyNotPurchased" Tag="OnlyNotPurchased">仅未购买</ComboBoxItem>
+                    <ComboBoxItem x:Name="OnlyPurchased" Tag="OnlyPurchased">仅已购买</ComboBoxItem>
+                    <ComboBoxItem x:Name="OnlyHad" Tag="OnlyHad">仅已拥有</ComboBoxItem>
                 </ComboBox>
             </Grid>
             <!-- 表格区 -->
