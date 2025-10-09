@@ -178,9 +178,12 @@ namespace IPAbuyer.Views
             string authCode = CodeTextBox.Text.Trim();
             if (authCode.Length != 6)
             {
-                ShowAuthError("验证码必须为6位数字");
+                ShowAuthError("请输入六位验证码");
+                CodeTextBox.Focus(FocusState.Programmatic);
                 return false;
             }
+
+            HideAuthMessage();
 
             CancelCurrentOperation();
             _currentOperationCts = CancellationTokenSource.CreateLinkedTokenSource(_pageCts.Token);
@@ -210,7 +213,6 @@ namespace IPAbuyer.Views
 
             if (result.Status == LoginStatus.Timeout)
             {
-                ShowAuthError("验证码错误，请重新输入。");
                 CodeTextBox.Focus(FocusState.Programmatic);
                 return false;
             }
@@ -221,6 +223,7 @@ namespace IPAbuyer.Views
                 return false;
             }
 
+            ShowAuthSuccess("验证成功，正在完成登录...");
             await OnLoginSuccessAsync();
             return true;
         }
@@ -294,14 +297,10 @@ namespace IPAbuyer.Views
                 CodeTextBox.Text = string.Empty;
             }
 
-            if (CodeErrorTextBlock != null)
-            {
-                CodeErrorTextBlock.Visibility = Visibility.Collapsed;
-                CodeErrorTextBlock.Text = string.Empty;
-            }
+            HideAuthMessage();
         }
 
-                private bool ValidateInput(string account, string password)
+        private bool ValidateInput(string account, string password)
         {
             return !string.IsNullOrWhiteSpace(account) && !string.IsNullOrWhiteSpace(password);
         }
@@ -376,6 +375,25 @@ namespace IPAbuyer.Views
                 CodeErrorTextBlock.Text = message;
                 CodeErrorTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray);
                 CodeErrorTextBlock.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void ShowAuthSuccess(string message)
+        {
+            if (CodeErrorTextBlock != null)
+            {
+                CodeErrorTextBlock.Text = message;
+                CodeErrorTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.ForestGreen);
+                CodeErrorTextBlock.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void HideAuthMessage()
+        {
+            if (CodeErrorTextBlock != null)
+            {
+                CodeErrorTextBlock.Visibility = Visibility.Collapsed;
+                CodeErrorTextBlock.Text = string.Empty;
             }
         }
 
