@@ -28,9 +28,6 @@
             Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &lt; 8">
             win10-x64;win10-arm64</RuntimeIdentifiers>
     </PropertyGroup>
-    <ItemGroup>
-        <None Remove="Views\Settings.xaml" />
-    </ItemGroup>
 
     <ItemGroup>
         <Content Include="Assets\SplashScreen.scale-200.png" />
@@ -78,7 +75,7 @@
         <ProjectCapability Include="Msix" />
     </ItemGroup>
     <ItemGroup>
-        <Page Update="Views\Settings.xaml">
+        <Page Update="Views\*.xaml">
             <Generator>MSBuild:Compile</Generator>
         </Page>
     </ItemGroup>
