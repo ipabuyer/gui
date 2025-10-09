@@ -104,72 +104,155 @@ namespace IPAbuyer.Views
 
         private void ParseLoginStatusResponse(string payload, string account)
         {
+            foreach (var segment in EnumerateJsonSegments(payload))
+            {
+                if (TryHandleAuthSegment(segment, account))
+                {
+                    return;
+                }
+            }
+
+            if (IsAuthenticationError(payload))
+            {
+                _isLoggedIn = false;
+                SessionState.Reset();
+                UpdateLoginButton();
+                UpdateStatusBar("登录状态已失效，请重新登录", true);
+                return;
+            }
+
+            UpdateStatusBar("未能确认登录状态，将维持当前登录状态", false);
+        }
+
+        private bool TryHandleAuthSegment(string segment, string account)
+        {
             try
             {
-                using var doc = JsonDocument.Parse(payload);
+                using var doc = JsonDocument.Parse(segment);
                 var root = doc.RootElement;
 
                 if (root.TryGetProperty("success", out var successElement))
                 {
-                    bool success = successElement.ValueKind == JsonValueKind.True && successElement.GetBoolean();
-                    if (success)
+                    bool? success = TryReadBoolean(successElement);
+                    if (success == true)
                     {
+                        string displayAccount = ExtractAccountEmail(root) ?? account;
                         _isLoggedIn = true;
                         SessionState.SetLoginState(account, true);
-
-                        string? displayAccount = account;
-                        if (root.TryGetProperty("data", out var dataElement) && dataElement.ValueKind == JsonValueKind.Object)
-                        {
-                            if (dataElement.TryGetProperty("account", out var accountElement) && accountElement.ValueKind == JsonValueKind.Object)
-                            {
-                                if (accountElement.TryGetProperty("email", out var emailElement) && emailElement.ValueKind == JsonValueKind.String)
-                                {
-                                    displayAccount = emailElement.GetString() ?? displayAccount;
-                                }
-                            }
-                        }
-
+                        UpdateLoginButton();
                         UpdateStatusBar($"已登录账户: {displayAccount}");
-                        return;
+                        return true;
                     }
-                    else
+
+                    if (success == false)
                     {
+                        string errorMessage = ExtractErrorMessage(root) ?? "登录状态无效";
                         _isLoggedIn = false;
                         SessionState.Reset();
-                        string errorMessage = root.TryGetProperty("error", out var errorElement)
-                            ? errorElement.GetString() ?? "登录状态无效"
-                            : "登录状态无效";
+                        UpdateLoginButton();
                         UpdateStatusBar($"未登录: {errorMessage}", true);
-                        return;
+                        return true;
                     }
                 }
 
-                if (IsAuthenticationError(payload))
+                string? message = ExtractErrorMessage(root);
+                if (!string.IsNullOrWhiteSpace(message) && IsAuthenticationError(message))
                 {
                     _isLoggedIn = false;
                     SessionState.Reset();
                     UpdateLoginButton();
                     UpdateStatusBar("登录状态已失效，请重新登录", true);
-                    return;
+                    return true;
                 }
-
-                _isLoggedIn = true;
-                SessionState.SetLoginState(account, true);
-                UpdateStatusBar($"已登录账户: {account}");
             }
             catch (JsonException)
             {
-                if (IsAuthenticationError(payload))
-                {
-                    _isLoggedIn = false;
-                    SessionState.Reset();
-                    UpdateLoginButton();
-                    UpdateStatusBar("登录状态已失效，请重新登录", true);
-                    return;
-                }
-
-                UpdateStatusBar("未能确认登录状态，将维持当前登录状态", false);
+                // 尝试解析下一个片段
             }
+
+            return false;
+        }
+
+        private static IEnumerable<string> EnumerateJsonSegments(string payload)
+        {
+            if (string.IsNullOrWhiteSpace(payload))
+            {
+                yield break;
+            }
+
+            string normalized = payload.Replace("}{", "}\n{");
+            string[] lines = normalized.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string line in lines)
+            {
+                string trimmed = line.Trim();
+                if (trimmed.StartsWith("{") || trimmed.StartsWith("["))
+                {
+                    yield return trimmed;
+                }
+            }
+
+            if (lines.Length == 0)
+            {
+                string trimmed = payload.Trim();
+                if (!string.IsNullOrEmpty(trimmed))
+                {
+                    yield return trimmed;
+                }
+            }
+        }
+
+        private static string? ExtractAccountEmail(JsonElement root)
+        {
+            if (root.TryGetProperty("data", out var dataElement) && dataElement.ValueKind == JsonValueKind.Object)
+            {
+                if (dataElement.TryGetProperty("account", out var accountElement) && accountElement.ValueKind == JsonValueKind.Object)
+                {
+                    if (accountElement.TryGetProperty("email", out var emailElement) && emailElement.ValueKind == JsonValueKind.String)
+                    {
+                        return emailElement.GetString();
+                    }
+                }
+            }
+
+            if (root.TryGetProperty("email", out var email) && email.ValueKind == JsonValueKind.String)
+            {
+                return email.GetString();
+            }
+
+            return null;
+        }
+
+        private static string? ExtractErrorMessage(JsonElement root)
+        {
+            if (root.TryGetProperty("error", out var errorElement))
+            {
+                return errorElement.GetString();
+            }
+
+            if (root.TryGetProperty("message", out var messageElement))
+            {
+                return messageElement.GetString();
+            }
+
+            if (root.TryGetProperty("reason", out var reasonElement))
+            {
+                return reasonElement.GetString();
+            }
+
+            return null;
+        }
+
+        private static bool? TryReadBoolean(JsonElement element)
+        {
+            return element.ValueKind switch
+            {
+                JsonValueKind.True => true,
+                JsonValueKind.False => false,
+                JsonValueKind.String when bool.TryParse(element.GetString(), out bool parsed) => parsed,
+                JsonValueKind.Number => element.TryGetInt32(out int value) ? value != 0 : (bool?)null,
+                _ => null,
+            };
         }
 
         private string? GetActiveAccount()
@@ -507,9 +590,19 @@ namespace IPAbuyer.Views
 
         private async void LogoutButton_Click(object sender, RoutedEventArgs e)
         {
+            var logoutButton = GetControl<Button>("LogoutButton");
+            if (logoutButton != null)
+            {
+                logoutButton.IsEnabled = false;
+            }
+
             if (!_isLoggedIn)
             {
                 UpdateStatusBar("正在跳转到登录页面...");
+                if (logoutButton != null)
+                {
+                    logoutButton.IsEnabled = true;
+                }
                 Frame.Navigate(typeof(LoginPage));
                 return;
             }
@@ -536,6 +629,10 @@ namespace IPAbuyer.Views
             SessionState.Reset();
             UpdateLoginButton();
             UpdateStatusBar("已退出登录");
+            if (logoutButton != null)
+            {
+                logoutButton.IsEnabled = true;
+            }
             Frame.Navigate(typeof(LoginPage));
         }
 
@@ -741,17 +838,27 @@ namespace IPAbuyer.Views
                 return false;
             }
 
-            return message.Contains("failed to get account", StringComparison.OrdinalIgnoreCase)
-                || message.Contains("keychain", StringComparison.OrdinalIgnoreCase)
-                || message.Contains("not running in interactive mode", StringComparison.OrdinalIgnoreCase)
-                || message.Contains("auth", StringComparison.OrdinalIgnoreCase);
+            string lower = message.ToLowerInvariant();
+            return lower.Contains("failed to get account")
+                || lower.Contains("session expired")
+                || lower.Contains("not logged in")
+                || lower.Contains("please log in")
+                || (lower.Contains("authentication") && (lower.Contains("fail") || lower.Contains("invalid")))
+                || (lower.Contains("keychain") && lower.Contains("passphrase"));
         }
 
         protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
 
-            if (e.Parameter is bool loginStatus)
+            if (e.Parameter is string accountParam && !string.IsNullOrWhiteSpace(accountParam))
+            {
+                _isLoggedIn = true;
+                SessionState.SetLoginState(accountParam, true);
+                UpdateLoginButton();
+                UpdateStatusBar($"登录成功，欢迎使用 {accountParam}");
+            }
+            else if (e.Parameter is bool loginStatus)
             {
                 _isLoggedIn = loginStatus;
                 if (_isLoggedIn)

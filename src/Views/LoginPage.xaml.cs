@@ -383,7 +383,7 @@ namespace IPAbuyer.Views
             ShowInfo("登录成功，正在跳转...");
 
             await Task.Delay(400);
-            Frame.Navigate(typeof(MainPage), true);
+            Frame.Navigate(typeof(MainPage), _account);
         }
 
         private void CancelCurrentOperation()

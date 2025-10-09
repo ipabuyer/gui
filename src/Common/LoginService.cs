@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -66,44 +67,91 @@ namespace IPAbuyer.Common
 
         private static LoginResult InterpretPayload(string payload, bool isTwoFactor)
         {
+            foreach (string segment in EnumerateJsonSegments(payload))
+            {
+                var result = InterpretJsonSegment(segment, isTwoFactor);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+
+            if (DetectTwoFactorRequirement(payload))
+            {
+                return new LoginResult(LoginStatus.RequiresTwoFactor, "需要输入两步验证码。", payload);
+            }
+
+            return ClassifyFailure(payload, payload, isTwoFactor);
+        }
+
+        private static LoginResult? InterpretJsonSegment(string segment, bool isTwoFactor)
+        {
             try
             {
-                using var document = JsonDocument.Parse(payload);
+                using var document = JsonDocument.Parse(segment);
                 var root = document.RootElement;
 
                 if (root.TryGetProperty("success", out var successElement))
                 {
-                    bool success = successElement.ValueKind switch
-                    {
-                        JsonValueKind.True => true,
-                        JsonValueKind.False => false,
-                        _ => false
-                    };
-
+                    bool success = successElement.ValueKind == JsonValueKind.True && successElement.GetBoolean();
                     if (success)
                     {
-                        return new LoginResult(LoginStatus.Success, "登录成功。", payload);
+                        return new LoginResult(LoginStatus.Success, "登录成功。", segment);
                     }
 
                     string error = ExtractErrorMessage(root);
-                    return ClassifyFailure(error, payload, isTwoFactor);
+                    return ClassifyFailure(error, segment, isTwoFactor);
                 }
 
-                if (DetectTwoFactorRequirement(payload))
+                string message = ExtractErrorMessage(root);
+                if (!string.IsNullOrWhiteSpace(message))
                 {
-                    return new LoginResult(LoginStatus.RequiresTwoFactor, "需要输入两步验证码。", payload);
+                    var failure = ClassifyFailure(message, segment, isTwoFactor);
+                    if (failure.Status != LoginStatus.UnknownError)
+                    {
+                        return failure;
+                    }
                 }
 
-                return new LoginResult(LoginStatus.Success, "登录成功。", payload);
+                if (DetectTwoFactorRequirement(segment))
+                {
+                    return new LoginResult(LoginStatus.RequiresTwoFactor, "需要输入两步验证码。", segment);
+                }
             }
             catch (JsonException)
             {
-                if (DetectTwoFactorRequirement(payload))
-                {
-                    return new LoginResult(LoginStatus.RequiresTwoFactor, "需要输入两步验证码。", payload);
-                }
+                // 忽略，尝试下一个片段
+            }
 
-                return ClassifyFailure(payload, payload, isTwoFactor);
+            return null;
+        }
+
+        private static IEnumerable<string> EnumerateJsonSegments(string payload)
+        {
+            if (string.IsNullOrWhiteSpace(payload))
+            {
+                yield break;
+            }
+
+            string normalized = payload.Replace("}{", "}\n{");
+            string[] lines = normalized.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string line in lines)
+            {
+                string trimmed = line.Trim();
+                if (trimmed.StartsWith("{") || trimmed.StartsWith("["))
+                {
+                    yield return trimmed;
+                }
+            }
+
+            if (lines.Length == 0)
+            {
+                string trimmed = payload.Trim();
+                if (!string.IsNullOrEmpty(trimmed))
+                {
+                    yield return trimmed;
+                }
             }
         }
 
