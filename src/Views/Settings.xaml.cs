@@ -1,8 +1,9 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
-using System.Collections.ObjectModel;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -20,6 +21,17 @@ namespace IPAbuyer.Views
             this.InitializeComponent();
             DataContext = this;
             Loaded += Settings_Loaded;
+        }
+
+        private void OpenAppleAccountLink(object sender, RoutedEventArgs e)
+        {
+            const string url = "https://account.apple.com";
+            var psi = new ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            };
+            Process.Start(psi);
         }
 
         // 返回首页

@@ -54,17 +54,58 @@
                 <TextBlock Margin="20,20,0,0" FontSize="20">
                     常见问题
                 </TextBlock>
-                <ItemsControl x:Name="FaqItemsControl" Margin="0" ItemsSource="{x:Bind FaqItems, Mode=OneWay}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Margin="40,20,40,0">
-                                <TextBlock FontSize="16" TextWrapping="Wrap" Text="{Binding Question}"/>
-                                <TextBlock Margin="20,6,0,0" FontSize="16" FontWeight="Light" TextWrapping="Wrap" Text="{Binding Answer}"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                <TextBlock x:Name="FaqStatusText" Margin="40,20,40,0" FontSize="16" FontWeight="Light" Foreground="Red" TextWrapping="Wrap" Visibility="Collapsed"/>
+                <TextBlock Margin="40,20,40,0" FontSize="16" TextWrapping="Wrap">
+                    无法获取双重验证码？
+                </TextBlock>
+                <TextBlock Margin="60,20,40,0" FontWeight="Light" FontSize="16" TextWrapping="Wrap">
+                    对于登录在苹果设备，而不是仅使用手机号作为双重验证手段的账户，无法获取双重验证码是本软件的可预见的问题。请使用
+                    <Hyperlink Click="OpenAppleAccountLink">
+                        https://account.apple.com/
+                    </Hyperlink>
+                    获取双重验证码并填入本软件中。
+                </TextBlock>
+                <TextBlock Margin="40,20,40,0" FontSize="16" TextWrapping="Wrap">
+                    账户、密码和双重验证码都正确，但无法登入？
+                </TextBlock>
+                <TextBlock Margin="60,20,40,0" FontWeight="Light" FontSize="16" TextWrapping="Wrap">
+                    受限于苹果的账户政策，要正常使用IPAbuyer，您的苹果账户需要登录过iCloud和AppStore，并在AppStore中进行过一次有效的购买。
+                </TextBlock>
+                <TextBlock Margin="40,20,40,0" FontSize="16" TextWrapping="Wrap">
+                    为什么已购买的App在iPhone上仍然显示未购买？
+                </TextBlock>
+                <TextBlock Margin="60,20,40,0" FontWeight="Light" FontSize="16" TextWrapping="Wrap">
+                    这是因为iPhone未对已购买App列表进行刷新，在iPhone上对任意App进行一次购买即可刷新整个列表。
+                </TextBlock>
+                <TextBlock Margin="40,20,40,0" FontSize="16" TextWrapping="Wrap">
+                    为什么iPhone上已购买的App在软件内显示未购买？
+                </TextBlock>
+                <TextBlock Margin="60,20,40,0" FontWeight="Light" FontSize="16" TextWrapping="Wrap">
+                    对于App是否购买，软件会以购买App的形式，向Apple服务器查询，这个过程受限于软件策略，只有用户手动点击购买后，才能获取软件的购买状态，所以软件内显示已购买的软件数量必然≤账户已购买的软件数量。
+                </TextBlock>
+                <TextBlock Margin="40,20,40,0" FontSize="16" TextWrapping="Wrap">
+                    什么是“已购买”和“已拥有”？
+                </TextBlock>
+                <TextBlock Margin="60,20,40,0" FontWeight="Light" FontSize="16" TextWrapping="Wrap">
+                    “已购买”是指通过本软件购买的App，“已拥有”是指未通过本软件购买的App。清空软件数据库会丢失“已购买”状态，在下一次查询后变为“已拥有”。
+                </TextBlock>
+                <TextBlock Margin="40,20,40,0" FontSize="16" TextWrapping="Wrap">
+                    为什么不购买App，只是查询，也要登录账户？
+                </TextBlock>
+                <TextBlock Margin="60,20,40,0" FontWeight="Light" FontSize="16" TextWrapping="Wrap">
+                    受限于本软件上游软件ipatool的策略，无论是下载、购买还是查询软件，都需要进行Apple账户的登录。
+                </TextBlock>
+                <TextBlock Margin="40,20,40,0" FontSize="16" TextWrapping="Wrap">
+                    登录账户安全吗？
+                </TextBlock>
+                <TextBlock Margin="60,20,40,0" FontWeight="Light" FontSize="16" TextWrapping="Wrap">
+                    本软件将所有的登录信息保存于本地，不会对任何敏感信息进行上传，同时使用存储于软件数据库的随机密钥进行加密。
+                </TextBlock>
+                <TextBlock Margin="40,20,40,0" FontSize="16" TextWrapping="Wrap">
+                    为什么不能进行付费购买？
+                </TextBlock>
+                <TextBlock Margin="60,20,40,0" FontWeight="Light" FontSize="16" TextWrapping="Wrap">
+                    为了保证账户安全性，本软件将进行App购买检查，只允许购买价格为0的App。
+                </TextBlock>
 
             </StackPanel>
         </ScrollViewer>
