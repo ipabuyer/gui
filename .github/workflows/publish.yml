@@ -1,6 +1,9 @@
 name: IPAbuyer Publish Workflow
 
 on:
+  push:
+    branches:
+    - main
   workflow_dispatch:
 
 
