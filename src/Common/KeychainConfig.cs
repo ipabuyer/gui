@@ -198,7 +198,7 @@ namespace IPAbuyer.Common
             {
                 if (ApplicationData.Current != null)
                 {
-                    string localPath = Path.Combine(ApplicationData.Current.LocalFolder.Path, "IPAbuyer");
+                    string localPath = ApplicationData.Current.LocalFolder.Path;
                     Directory.CreateDirectory(localPath);
                     return localPath;
                 }
@@ -208,7 +208,7 @@ namespace IPAbuyer.Common
                 // ignore and fall back
             }
 
-            string fallback = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IPAbuyer");
+            string fallback = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             Directory.CreateDirectory(fallback);
             return fallback;
         }

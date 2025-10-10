@@ -12,17 +12,21 @@ namespace IPAbuyer.Views
 {
     public sealed partial class LoginPage : Page
     {
-        private static readonly string? LastLoginUsername = KeychainConfig.GetLastLoginUsername();
-
         private readonly CancellationTokenSource _pageCts = new();
         private CancellationTokenSource? _currentOperationCts;
 
-        private string _account = string.IsNullOrEmpty(LastLoginUsername) ? "example@icloud.com" : LastLoginUsername;
+        private string? _lastLoginUsername;
+        private string _account = "example@icloud.com";
         private string _password = string.Empty;
 
         public LoginPage()
         {
             this.InitializeComponent();
+            _lastLoginUsername = KeychainConfig.GetLastLoginUsername();
+            if (!string.IsNullOrWhiteSpace(_lastLoginUsername))
+            {
+                _account = _lastLoginUsername;
+            }
             LoadAccountHistory();
             Unloaded += LoginPage_Unloaded;
         }
@@ -41,13 +45,27 @@ namespace IPAbuyer.Views
             await TriggerLoginAsync();
         }
 
+        private void OpenAppleAccountLink(object sender, RoutedEventArgs e)
+        {
+            const string url = "https://account.apple.com";
+            var psi = new ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            };
+            Process.Start(psi);
+        }
+
         private void LoadAccountHistory()
         {
             try
             {
-                if (!string.IsNullOrEmpty(LastLoginUsername) && EmailTextBox != null)
+                _lastLoginUsername = KeychainConfig.GetLastLoginUsername();
+
+                if (!string.IsNullOrEmpty(_lastLoginUsername) && EmailTextBox != null)
                 {
-                    EmailTextBox.Text = LastLoginUsername;
+                    EmailTextBox.Text = _lastLoginUsername;
+                    _account = _lastLoginUsername;
                 }
             }
             catch (Exception ex)
@@ -146,6 +164,8 @@ namespace IPAbuyer.Views
             _account = EmailTextBox?.Text.Trim() ?? string.Empty;
             _password = PasswordInput?.Password ?? string.Empty;
 
+            await EnsurePreviousSessionRevokedAsync(_currentOperationCts.Token);
+
             bool hasAccount = !string.IsNullOrWhiteSpace(_account);
             bool hasPassword = !string.IsNullOrWhiteSpace(_password);
 
@@ -171,6 +191,33 @@ namespace IPAbuyer.Views
             var result = await LoginService.LoginAsync(_account, _password, _currentOperationCts.Token);
             DisposeCurrentOperation();
             await HandleLoginResultAsync(result, isTwoFactorStep: false);
+        }
+
+        private async Task EnsurePreviousSessionRevokedAsync(CancellationToken token)
+        {
+            string previousAccount = SessionState.CurrentAccount;
+            if (string.IsNullOrWhiteSpace(previousAccount))
+            {
+                return;
+            }
+
+            if (string.Equals(previousAccount, _account, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            try
+            {
+                await ipatoolExecution.AuthLogoutAsync(previousAccount, token);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"注销旧会话失败: {ex.Message}");
+            }
+            finally
+            {
+                SessionState.Reset();
+            }
         }
 
         private async Task<bool> ValidateAuthCodeAsync()
@@ -224,7 +271,8 @@ namespace IPAbuyer.Views
 
             if (!result.IsSuccess)
             {
-                ShowAuthError(result.Message);
+                Debug.WriteLine($"验证码验证失败: {result.Message}");
+                ShowAuthError("请检查验证码或密码是否有误");
                 return false;
             }
 
@@ -413,6 +461,11 @@ namespace IPAbuyer.Views
             try
             {
                 KeychainConfig.GenerateAndSaveSecretKey(_account);
+                _lastLoginUsername = _account;
+                if (EmailTextBox != null)
+                {
+                    EmailTextBox.Text = _account;
+                }
             }
             catch (Exception ex)
             {

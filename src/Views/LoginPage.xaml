@@ -39,6 +39,7 @@
             <TextBox Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left"
                 VerticalAlignment="Center" x:Name="EmailComboBox"
                 PlaceholderText="example@icloud.com" MinWidth="300" MinHeight="30"
+                IsSpellCheckEnabled="False" InputScope="EmailSmtpAddress"
                 KeyUp="Input_KeyUp">
             </TextBox>
 
@@ -76,7 +77,7 @@
                     您的账户已启用两步验证，请输入发送到您信任设备上的6位验证码。
                     <LineBreak/>
                     若未收到验证码，请打开
-                    <Hyperlink NavigateUri="https://account.apple.com" RequestNavigate="iCloud_RequestNavigate">
+                    <Hyperlink Click="OpenAppleAccountLink">
                         此链接
                     </Hyperlink>
                     ，输入账户与密码以收取验证码。

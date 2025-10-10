@@ -137,7 +137,7 @@ namespace IPAbuyer.Views
                     bool? success = TryReadBoolean(successElement);
                     if (success == true)
                     {
-                        string displayAccount = ExtractAccountEmail(root) ?? account;
+                        string displayAccount = KeychainConfig.GetLastLoginUsername() ?? account;
                         _isLoggedIn = true;
                         SessionState.SetLoginState(account, true);
                         UpdateLoginButton();
