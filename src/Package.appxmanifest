@@ -10,7 +10,7 @@
   <Identity
     Name="IPAbuyer.IPAbuyer"
     Publisher="CN=68F867E4-B304-4B5D-9818-31B1910E0771"
-    Version="2025.10.10.1" />
+    Version="0.0.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="f164b0ab-cad6-4a07-af52-3028e80a86e3"
     PhonePublisherId="00000000-0000-0000-0000-000000000000" />
@@ -47,7 +47,6 @@
       </uap:VisualElements>
     </Application>
   </Applications>
-
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
   </Capabilities>
