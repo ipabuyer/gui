@@ -63,7 +63,7 @@ jobs:
       with:
         name: IPAbuyer_${{ matrix.platform }}
         path: |
-          **\AppPackages\**\*.msix
+          **\AppPackages\**\IPAbuyer_*.msix
 
     - name: Cleanup Certificate
       shell: pwsh
