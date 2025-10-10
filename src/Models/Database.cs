@@ -1,5 +1,6 @@
-﻿using Windows.Storage;
+﻿using System.Diagnostics;
 using System.IO;
+using Windows.Storage;
 
 namespace IPAbuyer.Models
 {
@@ -28,8 +29,9 @@ namespace IPAbuyer.Models
                     File.Create(AccountDB).Close();
                 }
             }
-            catch
+            catch(Exception ex)
             {
+                Debug.WriteLine($"数据库错误: {ex.Message}");
                 appdatapath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IPAbuyer");
                 if (!Directory.Exists(appdatapath))
                     Directory.CreateDirectory(appdatapath);
@@ -43,7 +45,6 @@ namespace IPAbuyer.Models
                 {
                     File.Create(AccountDB).Close();
                 }
-
             }
         }
     }
