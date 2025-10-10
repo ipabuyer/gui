@@ -21,11 +21,9 @@
         <Platforms>x64;ARM64</Platforms>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <PublishProfile>win-$(Platform).pubxml</PublishProfile>
-        <RuntimeIdentifiers
-            Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &gt;= 8">
+        <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &gt;= 8">
             win-x64;win-arm64</RuntimeIdentifiers>
-        <RuntimeIdentifiers
-            Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &lt; 8">
+        <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &lt; 8">
             win10-x64;win10-arm64</RuntimeIdentifiers>
     </PropertyGroup>
 
@@ -50,15 +48,13 @@
 
         <Manifest Include="$(ApplicationManifest)" />
 
-        <Content Include="Include\ipatool-2.2.0-windows-amd64.exe"
-            Condition="'$(Platform)' == 'x64'">
+        <Content Include="Include\ipatool-2.2.0-windows-amd64.exe" Condition="'$(Platform)' == 'x64'">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <TargetPath>ipatool.exe</TargetPath>
             <IncludeInPackage>true</IncludeInPackage>
         </Content>
 
-        <Content Include="Include\ipatool-2.2.0-windows-arm64.exe"
-            Condition="'$(Platform)' == 'ARM64'">
+        <Content Include="Include\ipatool-2.2.0-windows-arm64.exe" Condition="'$(Platform)' == 'ARM64'">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <TargetPath>ipatool.exe</TargetPath>
             <IncludeInPackage>true</IncludeInPackage>
@@ -70,8 +66,7 @@
         Tools extension to be activated for this project even if the Windows App SDK Nuget
         package has not yet been restored.
     -->
-    <ItemGroup
-        Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
         <ProjectCapability Include="Msix" />
     </ItemGroup>
     <ItemGroup>
@@ -85,8 +80,7 @@
         Explorer "Package and Publish" context menu entry to be enabled for this project even if 
         the Windows App SDK Nuget package has not yet been restored.
     -->
-    <PropertyGroup
-        Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
         <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
         <ApplicationIcon>Assets\Icon.ico</ApplicationIcon>
     </PropertyGroup>

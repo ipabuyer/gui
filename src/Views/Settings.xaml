@@ -55,6 +55,22 @@
                     常见问题
                 </TextBlock>
                 <TextBlock Margin="40,20,40,0" FontSize="16" TextWrapping="Wrap">
+                    无法获取双重验证码？
+                </TextBlock>
+                <TextBlock Margin="60,20,40,0" FontWeight="Light" FontSize="16" TextWrapping="Wrap">
+                    对于登录在苹果设备，而不是仅使用手机号作为双重验证手段的账户，无法获取双重验证码是本软件的可预见的问题。请使用
+                    <Hyperlink Click="OpenAppleAccountLink">
+                        https://account.apple.com/
+                    </Hyperlink>
+                    获取双重验证码并填入本软件中。
+                </TextBlock>
+                <TextBlock Margin="40,20,40,0" FontSize="16" TextWrapping="Wrap">
+                    账户、密码和双重验证码都正确，但无法登入？
+                </TextBlock>
+                <TextBlock Margin="60,20,40,0" FontWeight="Light" FontSize="16" TextWrapping="Wrap">
+                    受限于苹果的账户政策，要正常使用IPAbuyer，您的苹果账户需要登录过iCloud和AppStore，并在AppStore中进行过一次有效的购买。
+                </TextBlock>
+                <TextBlock Margin="40,20,40,0" FontSize="16" TextWrapping="Wrap">
                     为什么已购买的App在iPhone上仍然显示未购买？
                 </TextBlock>
                 <TextBlock Margin="60,20,40,0" FontWeight="Light" FontSize="16" TextWrapping="Wrap">

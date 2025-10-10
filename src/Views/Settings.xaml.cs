@@ -1,15 +1,30 @@
-using IPAbuyer.Views;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using System; // 添加此行
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace IPAbuyer.Views
 {
     public sealed partial class Settings : Page
     {
+
         public Settings()
         {
             this.InitializeComponent();
+        }
+
+        private void OpenAppleAccountLink(object sender, RoutedEventArgs e)
+        {
+            var url = "https://account.apple.com";
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            });
         }
 
         // 返回首页

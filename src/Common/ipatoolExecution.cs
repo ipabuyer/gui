@@ -85,6 +85,8 @@ namespace IPAbuyer.Common
 
         private static async Task<IpatoolResult> ExecuteIpatoolAsync(string arguments, string account, CancellationToken cancellationToken)
         {
+            bool isLogout = arguments.TrimStart().StartsWith("auth revoke", StringComparison.OrdinalIgnoreCase);
+
             string ipatoolPath = ResolveIpatoolPath();
             string workingDirectory = Path.GetDirectoryName(ipatoolPath) ?? AppContext.BaseDirectory;
 
@@ -106,10 +108,17 @@ namespace IPAbuyer.Common
             psi.EnvironmentVariables["NO_COLOR"] = "1";
             psi.EnvironmentVariables["TERM"] = "dumb";
 
-            using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
+            Process? process = null;
 
             try
             {
+                if (isLogout)
+                {
+                    DeleteCookieLockFile();
+                }
+
+                process = new Process { StartInfo = psi, EnableRaisingEvents = true };
+
                 if (!process.Start())
                 {
                     return new IpatoolResult(null, "无法启动 ipatool 进程", ExitCode: -1, TimedOut: false);
@@ -150,8 +159,20 @@ namespace IPAbuyer.Common
             }
             catch (Exception ex)
             {
-                TryTerminateProcess(process);
+                if (process != null)
+                {
+                    TryTerminateProcess(process);
+                }
                 return new IpatoolResult(null, ex.Message, -1, TimedOut: false);
+            }
+            finally
+            {
+                process?.Dispose();
+
+                if (isLogout)
+                {
+                    DeleteCookieLockFile();
+                }
             }
         }
 
@@ -245,6 +266,23 @@ namespace IPAbuyer.Common
             }
 
             return value.Length <= MaxPreviewLength ? value : value.Substring(0, MaxPreviewLength) + "...";
+        }
+
+        private static void DeleteCookieLockFile()
+        {
+            try
+            {
+                string lockPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".ipatool", "cookies.lock");
+                if (File.Exists(lockPath))
+                {
+                    File.Delete(lockPath);
+                    Debug.WriteLine($"删除 ipatool cookies.lock: {lockPath}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"删除 ipatool cookies.lock 失败: {ex.Message}");
+            }
         }
     }
 }

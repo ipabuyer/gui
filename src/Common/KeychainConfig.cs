@@ -1,3 +1,4 @@
+using IPAbuyer.Models;
 using Microsoft.Data.Sqlite;
 using System;
 using System.IO;
@@ -13,7 +14,6 @@ namespace IPAbuyer.Common
     /// </summary>
     public static class KeychainConfig
     {
-        private static string _dbDirectory = string.Empty;
         private static string _dbPath = string.Empty;
         private static string _connectionString = string.Empty;
 
@@ -22,13 +22,9 @@ namespace IPAbuyer.Common
         /// </summary>
         public static void InitializeDatabase()
         {
-            _dbDirectory = Path.Combine(ResolveDataDirectory(), "db");
-            _dbPath = Path.Combine(_dbDirectory, "KeychainConfig.db");
+            Database database = new Database();
+            _dbPath = database.AccountDB;
             _connectionString = $"Data Source={_dbPath}";
-            if (!Directory.Exists(_dbDirectory))
-            {
-                Directory.CreateDirectory(_dbDirectory);
-            }
 
             using var connection = new SqliteConnection(_connectionString);
             connection.Open();
@@ -198,7 +194,7 @@ namespace IPAbuyer.Common
             {
                 if (ApplicationData.Current != null)
                 {
-                    string localPath = Path.Combine(ApplicationData.Current.LocalFolder.Path, "IPAbuyer");
+                    string localPath = ApplicationData.Current.LocalFolder.Path;
                     Directory.CreateDirectory(localPath);
                     return localPath;
                 }
@@ -208,7 +204,7 @@ namespace IPAbuyer.Common
                 // ignore and fall back
             }
 
-            string fallback = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IPAbuyer");
+            string fallback = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             Directory.CreateDirectory(fallback);
             return fallback;
         }

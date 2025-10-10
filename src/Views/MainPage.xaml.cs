@@ -49,9 +49,9 @@ namespace IPAbuyer.Views
             _isLoggedIn = SessionState.IsLoggedIn;
             UpdateLoginButton();
 
-            if (_isLoggedIn && !string.IsNullOrWhiteSpace(SessionState.CurrentAccount))
+            if (_isLoggedIn && !string.IsNullOrWhiteSpace(KeychainConfig.GetLastLoginUsername()))
             {
-                UpdateStatusBar($"欢迎回来，{SessionState.CurrentAccount}");
+                UpdateStatusBar($"欢迎回来，{KeychainConfig.GetLastLoginUsername()}");
             }
 
             await RefreshLoginStatusAsync(_pageCts.Token);
@@ -137,7 +137,7 @@ namespace IPAbuyer.Views
                     bool? success = TryReadBoolean(successElement);
                     if (success == true)
                     {
-                        string displayAccount = ExtractAccountEmail(root) ?? account;
+                        string displayAccount = KeychainConfig.GetLastLoginUsername() ?? account;
                         _isLoggedIn = true;
                         SessionState.SetLoginState(account, true);
                         UpdateLoginButton();
@@ -258,7 +258,7 @@ namespace IPAbuyer.Views
 
         private string? GetActiveAccount()
         {
-            var account = SessionState.CurrentAccount;
+            var account = KeychainConfig.GetLastLoginUsername();
             return string.IsNullOrWhiteSpace(account) ? null : account;
         }
 

@@ -6,24 +6,20 @@ using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.Storage;
 using System.Diagnostics;
+using IPAbuyer.Models;
 
 namespace IPAbuyer.Data
 {
     public class PurchasedAppDb
     {
-        private static string _dbDirectory = string.Empty;
         private static string _dbPath = string.Empty;
         private static string _connectionString = string.Empty;
 
         public static void InitDb()
         {
-            _dbDirectory = Path.Combine(ResolveDataDirectory(), "db");
-            _dbPath = Path.Combine(_dbDirectory, "PurchasedAppDb.db");
+            Database database = new Database();
+            _dbPath = database.AppDB;
             _connectionString = $"Data Source={_dbPath}";
-            if (!Directory.Exists(_dbDirectory))
-            {
-                Directory.CreateDirectory(_dbDirectory);
-            }
             using (var conn = new SqliteConnection(_connectionString))
             {
                 conn.Open();
