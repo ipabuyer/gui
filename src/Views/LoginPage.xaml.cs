@@ -164,7 +164,6 @@ namespace IPAbuyer.Views
             _account = EmailTextBox?.Text.Trim() ?? string.Empty;
             _password = PasswordInput?.Password ?? string.Empty;
 
-            await EnsurePreviousSessionRevokedAsync(_currentOperationCts.Token);
 
             bool hasAccount = !string.IsNullOrWhiteSpace(_account);
             bool hasPassword = !string.IsNullOrWhiteSpace(_password);
@@ -191,33 +190,6 @@ namespace IPAbuyer.Views
             var result = await LoginService.LoginAsync(_account, _password, _currentOperationCts.Token);
             DisposeCurrentOperation();
             await HandleLoginResultAsync(result, isTwoFactorStep: false);
-        }
-
-        private async Task EnsurePreviousSessionRevokedAsync(CancellationToken token)
-        {
-            string previousAccount = SessionState.CurrentAccount;
-            if (string.IsNullOrWhiteSpace(previousAccount))
-            {
-                return;
-            }
-
-            if (string.Equals(previousAccount, _account, StringComparison.OrdinalIgnoreCase))
-            {
-                return;
-            }
-
-            try
-            {
-                await ipatoolExecution.AuthLogoutAsync(previousAccount, token);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"注销旧会话失败: {ex.Message}");
-            }
-            finally
-            {
-                SessionState.Reset();
-            }
         }
 
         private async Task<bool> ValidateAuthCodeAsync()
