@@ -30,9 +30,7 @@ namespace IPAbuyer
             }
             catch (Exception ex)
             {
-                // 记录错误到文件
-                var errorPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "IPAbuyer_Error.txt");
-                File.WriteAllText(errorPath, $"启动错误: {ex.ToString()}");
+                Debug.WriteLine($"启动错误: {ex.Message}");
                 throw;
             }
         }
@@ -63,9 +61,7 @@ namespace IPAbuyer
             }
             catch (Exception ex)
             {
-                // 记录错误到文件
-                var errorPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "IPAbuyer_LaunchError.txt");
-                File.WriteAllText(errorPath, $"启动错误: {ex.ToString()}");
+                Debug.WriteLine($"启动错误: {ex.Message}");
                 throw;
             }
         }
