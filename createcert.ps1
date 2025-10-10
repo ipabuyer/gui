@@ -1,6 +1,6 @@
 $cert = New-SelfSignedCertificate `
     -Type Custom `
-    -Subject "CN=IPAbuyer Publisher" `
+    -Subject "CN=68F867E4-B304-4B5D-9818-31B1910E0771" `
     -KeyUsage DigitalSignature `
     -FriendlyName "IPAbuyer Signing Certificate" `
     -CertStoreLocation "Cert:\CurrentUser\My" `
