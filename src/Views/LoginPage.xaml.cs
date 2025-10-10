@@ -146,22 +146,27 @@ namespace IPAbuyer.Views
             _account = EmailTextBox?.Text.Trim() ?? string.Empty;
             _password = PasswordInput?.Password ?? string.Empty;
 
-            if (!ValidateInput(_account, _password))
+            bool hasAccount = !string.IsNullOrWhiteSpace(_account);
+            bool hasPassword = !string.IsNullOrWhiteSpace(_password);
+
+            bool hasLocalValidationIssue = false;
+            if (!hasAccount || !hasPassword)
             {
+                hasLocalValidationIssue = true;
                 ShowError("邮箱和密码不能为空");
-                if (string.IsNullOrWhiteSpace(_account))
+
+                if (!hasAccount)
                 {
                     EmailTextBox?.Focus(FocusState.Programmatic);
                 }
-                else if (string.IsNullOrWhiteSpace(_password))
+                else if (!hasPassword)
                 {
                     PasswordInput?.Focus(FocusState.Programmatic);
                 }
-                return;
             }
 
             SetInputControlsEnabled(false);
-            SetBusyState(true, "正在登录...");
+            SetBusyState(true, hasLocalValidationIssue ? string.Empty : "正在登录...");
 
             var result = await LoginService.LoginAsync(_account, _password, _currentOperationCts.Token);
             DisposeCurrentOperation();
