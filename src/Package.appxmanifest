@@ -47,5 +47,6 @@
       </uap:VisualElements>
     </Application>
   </Applications>
-
+  <Capabilities>
+  </Capabilities>
 </Package>
