@@ -47,13 +47,12 @@ namespace IPAbuyer.Views
 
         private void OpenAppleAccountLink(object sender, RoutedEventArgs e)
         {
-            const string url = "https://account.apple.com";
-            var psi = new ProcessStartInfo
+            var url = "https://account.apple.com";
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
             {
                 FileName = url,
                 UseShellExecute = true
-            };
-            Process.Start(psi);
+            });
         }
 
         private void LoadAccountHistory()
