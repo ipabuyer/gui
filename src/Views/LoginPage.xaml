@@ -73,7 +73,13 @@
             CloseButtonClick="AuthCodeDialog_CloseButtonClick">
             <StackPanel Spacing="12">
                 <TextBlock TextWrapping="Wrap" Margin="0,0,0,12">
-                    您的账户已启用两步验证，请输入发送到您信任设备上的6位验证码。若未收到验证码，请检查ID和密码是否正确。请勿多次输入错误验证码，以免账户被锁定。
+                    您的账户已启用两步验证，请输入发送到您信任设备上的6位验证码。
+                    <LineBreak/>
+                    若未收到验证码，请打开
+                    <Hyperlink NavigateUri="https://account.apple.com" RequestNavigate="iCloud_RequestNavigate">
+                        此链接
+                    </Hyperlink>
+                    ，输入账户与密码以收取验证码。
                 </TextBlock>
                 <TextBox x:Name="CodeBox"
                     Header="验证码"
