@@ -18,7 +18,7 @@ namespace IPAbuyer.Views
         private string? _lastLoginUsername;
         private string _account = "example@icloud.com";
         private string _password = string.Empty;
-    private const string TestCredential = "test";
+        private const string TestCredential = "test";
 
         public LoginPage()
         {

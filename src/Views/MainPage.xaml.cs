@@ -25,8 +25,8 @@ namespace IPAbuyer.Views
         private bool _isPageLoaded;
         private bool _isLoggedIn;
         private string _selectedFilter = "All";
-    private const string TestAccountName = "test";
-    private static readonly TimeSpan TestPurchaseDelay = TimeSpan.FromMilliseconds(1000);
+        private const string TestAccountName = "test";
+        private static readonly TimeSpan TestPurchaseDelay = TimeSpan.FromMilliseconds(1000);
 
         public int SearchLimitNum { get; set; } = 5;
 
