@@ -419,7 +419,7 @@ namespace IPAbuyer.Views
                     app.purchased = "已购买";
                     if (!string.IsNullOrWhiteSpace(app.bundleID))
                     {
-                        PurchasedAppDb.SavePurchasedApp(app.bundleID, normalizedAccount, "已拥有");
+                        PurchasedAppDb.SavePurchasedApp(app.bundleID, normalizedAccount, "已购买");
                     }
                     UpdateStatusBar($"成功购买: {app.name}");
                     continue;
