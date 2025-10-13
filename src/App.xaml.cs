@@ -25,7 +25,7 @@ namespace IPAbuyer
                 // 初始化数据库
                 PurchasedAppDb.InitDb();
                 KeychainConfig.InitializeDatabase();
-                
+
                 this.InitializeComponent();
             }
             catch (Exception ex)

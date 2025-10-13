@@ -18,6 +18,7 @@ namespace IPAbuyer.Views
         private string? _lastLoginUsername;
         private string _account = "example@icloud.com";
         private string _password = string.Empty;
+        private const string TestCredential = "test";
 
         public LoginPage()
         {
@@ -161,7 +162,13 @@ namespace IPAbuyer.Views
             _currentOperationCts = CancellationTokenSource.CreateLinkedTokenSource(_pageCts.Token);
 
             _account = EmailTextBox?.Text.Trim() ?? string.Empty;
-            _password = PasswordInput?.Password ?? string.Empty;
+            _password = PasswordInput?.Password?.Trim() ?? string.Empty;
+
+            if (IsTestCredential(_account, _password))
+            {
+                _account = TestCredential;
+                _password = TestCredential;
+            }
 
 
             bool hasAccount = !string.IsNullOrWhiteSpace(_account);
@@ -475,6 +482,17 @@ namespace IPAbuyer.Views
         private void BackToMainpage(object sender, RoutedEventArgs e)
         {
             Frame.Navigate(typeof(MainPage));
+        }
+
+        private static bool IsTestCredential(string account, string password)
+        {
+            if (string.IsNullOrWhiteSpace(account) || string.IsNullOrWhiteSpace(password))
+            {
+                return false;
+            }
+
+            return account.Equals(TestCredential, StringComparison.OrdinalIgnoreCase)
+                && password.Equals(TestCredential, StringComparison.OrdinalIgnoreCase);
         }
 
         private TextBox? EmailTextBox => GetControl<TextBox>("EmailComboBox");

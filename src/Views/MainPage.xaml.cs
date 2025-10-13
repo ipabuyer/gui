@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
@@ -24,6 +25,8 @@ namespace IPAbuyer.Views
         private bool _isPageLoaded;
         private bool _isLoggedIn;
         private string _selectedFilter = "All";
+        private const string TestAccountName = "test";
+        private static readonly TimeSpan TestPurchaseDelay = TimeSpan.FromMilliseconds(1000);
 
         public int SearchLimitNum { get; set; } = 5;
 
@@ -60,11 +63,20 @@ namespace IPAbuyer.Views
         private async Task RefreshLoginStatusAsync(CancellationToken cancellationToken)
         {
             var account = GetActiveAccount();
-            if (string.IsNullOrWhiteSpace(account))
+            if (!SessionState.IsLoggedIn || string.IsNullOrWhiteSpace(account))
             {
                 _isLoggedIn = false;
                 UpdateLoginButton();
-                UpdateStatusBar("未检测到已登录账户，请先登录", true);
+                UpdateStatusBar("当前未登录", false);
+                return;
+            }
+
+            if (IsTestAccount(account))
+            {
+                _isLoggedIn = true;
+                SessionState.SetLoginState(TestAccountName, true);
+                UpdateLoginButton();
+                UpdateStatusBar("已登录账号名为: test");
                 return;
             }
 
@@ -258,8 +270,14 @@ namespace IPAbuyer.Views
 
         private string? GetActiveAccount()
         {
+            if (!SessionState.IsLoggedIn)
+            {
+                return null;
+            }
+
             var account = KeychainConfig.GetLastLoginUsername();
-            return string.IsNullOrWhiteSpace(account) ? null : account;
+            var normalized = NormalizeAccount(account);
+            return string.IsNullOrEmpty(normalized) ? null : normalized;
         }
 
         private void SearchLimit_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
@@ -354,11 +372,14 @@ namespace IPAbuyer.Views
             }
 
             var account = GetActiveAccount();
-            if (string.IsNullOrWhiteSpace(account))
+            var normalizedAccount = NormalizeAccount(account);
+            if (string.IsNullOrWhiteSpace(normalizedAccount))
             {
                 UpdateStatusBar("无法获取当前账户，请重新登录", true);
                 return;
             }
+
+            bool isTestAccount = IsTestAccount(normalizedAccount);
 
             var appsToPurchase = resultList.SelectedItems.OfType<AppResult>().ToList();
             if (appsToPurchase.Count == 0)
@@ -389,7 +410,22 @@ namespace IPAbuyer.Views
                     continue;
                 }
 
-                if (!string.Equals(app.price, "0", StringComparison.OrdinalIgnoreCase))
+                bool isFreeApp = IsPriceFree(app.price);
+
+                if (isTestAccount)
+                {
+                    await Task.Delay(TestPurchaseDelay, _pageCts.Token);
+                    successCount++;
+                    app.purchased = "已拥有";
+                    if (!string.IsNullOrWhiteSpace(app.bundleID))
+                    {
+                        PurchasedAppDb.SavePurchasedApp(app.bundleID, normalizedAccount, "已拥有");
+                    }
+                    UpdateStatusBar($"成功购买: {app.name}");
+                    continue;
+                }
+
+                if (!isFreeApp)
                 {
                     failCount++;
                     pricedApps.Add(app);
@@ -401,23 +437,23 @@ namespace IPAbuyer.Views
 
                 try
                 {
-                    var result = await ipatoolExecution.PurchaseAppAsync(app.bundleID ?? string.Empty, account, _pageCts.Token);
+                    var result = await ipatoolExecution.PurchaseAppAsync(app.bundleID ?? string.Empty, normalizedAccount, _pageCts.Token);
                     string payload = result.OutputOrError;
 
                     if (IsPurchaseSuccess(payload))
                     {
                         successCount++;
                         app.purchased = "已购买";
-                        PurchasedAppDb.SavePurchasedApp(app.bundleID ?? string.Empty, account, "已购买");
+                        PurchasedAppDb.SavePurchasedApp(app.bundleID ?? string.Empty, normalizedAccount, "已购买");
                         UpdateStatusBar($"成功购买: {app.name}");
                     }
                     else
                     {
                         failCount++;
-                        if (string.Equals(app.price, "0", StringComparison.OrdinalIgnoreCase))
+                        if (isFreeApp)
                         {
                             app.purchased = "已拥有";
-                            PurchasedAppDb.SavePurchasedApp(app.bundleID ?? string.Empty, account, "已拥有");
+                            PurchasedAppDb.SavePurchasedApp(app.bundleID ?? string.Empty, normalizedAccount, "已拥有");
                             ownedButFailed.Add(app.name ?? string.Empty);
                             UpdateStatusBar($"购买失败但已拥有: {app.name}", true);
                         }
@@ -493,12 +529,13 @@ namespace IPAbuyer.Views
         private void RefreshPurchasedStatus()
         {
             var account = GetActiveAccount();
-            if (string.IsNullOrWhiteSpace(account))
+            var normalizedAccount = NormalizeAccount(account);
+            if (string.IsNullOrWhiteSpace(normalizedAccount))
             {
                 return;
             }
 
-            var purchasedDict = PurchasedAppDb.GetPurchasedApps(account).ToDictionary(x => x.appID, x => x.status);
+            var purchasedDict = PurchasedAppDb.GetPurchasedApps(normalizedAccount).ToDictionary(x => x.appID, x => x.status);
 
             foreach (var app in _allResults)
             {
@@ -614,12 +651,13 @@ namespace IPAbuyer.Views
             }
 
             var account = GetActiveAccount();
-            if (!string.IsNullOrWhiteSpace(account))
+            var normalizedAccount = NormalizeAccount(account);
+            if (!string.IsNullOrWhiteSpace(normalizedAccount) && !IsTestAccount(normalizedAccount))
             {
                 try
                 {
                     UpdateStatusBar("正在退出登录...");
-                    await ipatoolExecution.AuthLogoutAsync(account, _pageCts.Token);
+                    await ipatoolExecution.AuthLogoutAsync(normalizedAccount, _pageCts.Token);
                 }
                 catch (OperationCanceledException)
                 {
@@ -662,18 +700,8 @@ namespace IPAbuyer.Views
 
         private async Task PerformSearchAsync(CancellationToken cancellationToken)
         {
-            if (!_isLoggedIn)
-            {
-                UpdateStatusBar("请先登录账户", true);
-                return;
-            }
-
             var account = GetActiveAccount();
-            if (string.IsNullOrWhiteSpace(account))
-            {
-                UpdateStatusBar("无法获取当前账户，请重新登录", true);
-                return;
-            }
+            var normalizedAccount = NormalizeAccount(account);
 
             var appNameBox = GetControl<TextBox>("AppNameBox");
             string appName = appNameBox?.Text?.Trim() ?? string.Empty;
@@ -693,7 +721,7 @@ namespace IPAbuyer.Views
 
             try
             {
-                var result = await ipatoolExecution.SearchAppAsync(appName, SearchLimitNum, account, cancellationToken);
+                var result = await ipatoolExecution.SearchAppAsync(appName, SearchLimitNum, normalizedAccount, cancellationToken);
 
                 if (result.TimedOut)
                 {
@@ -708,7 +736,7 @@ namespace IPAbuyer.Views
                     return;
                 }
 
-                ParseSearchResponse(payload, account);
+                ParseSearchResponse(payload, normalizedAccount);
             }
             catch (OperationCanceledException)
             {
@@ -734,40 +762,21 @@ namespace IPAbuyer.Views
                 using var doc = JsonDocument.Parse(payload);
                 var root = doc.RootElement;
 
-                if (root.TryGetProperty("success", out var successElement) && successElement.ValueKind == JsonValueKind.False)
-                {
-                    string errorMessage = root.TryGetProperty("error", out var errorElement)
-                        ? errorElement.GetString() ?? "搜索失败"
-                        : "搜索失败";
-
-                    if (IsAuthenticationError(errorMessage))
-                    {
-                        _isLoggedIn = false;
-                        SessionState.Reset();
-                        UpdateLoginButton();
-                        UpdateStatusBar("认证失败，请重新登录", true);
-                    }
-                    else
-                    {
-                        UpdateStatusBar($"搜索失败: {errorMessage}", true);
-                    }
-
-                    return;
-                }
-
-                if (!root.TryGetProperty("apps", out var appsElement) || appsElement.ValueKind != JsonValueKind.Array)
+                if (!root.TryGetProperty("results", out var resultsElement) || resultsElement.ValueKind != JsonValueKind.Array)
                 {
                     UpdateStatusBar("搜索结果为空或格式错误", true);
                     return;
                 }
 
-                var purchasedDict = PurchasedAppDb.GetPurchasedApps(account).ToDictionary(x => x.appID, x => x.status);
+                var purchasedDict = string.IsNullOrEmpty(account)
+                    ? new Dictionary<string, string>()
+                    : PurchasedAppDb.GetPurchasedApps(account).ToDictionary(x => x.appID, x => x.status);
 
                 _allResults.Clear();
                 int successCount = 0;
                 int failCount = 0;
 
-                foreach (var appElement in appsElement.EnumerateArray())
+                foreach (var appElement in resultsElement.EnumerateArray())
                 {
                     try
                     {
@@ -775,9 +784,9 @@ namespace IPAbuyer.Views
                         var app = new AppResult
                         {
                             bundleID = bundleId,
-                            id = GetPropertyValue(appElement, "id"),
-                            name = GetPropertyValue(appElement, "name"),
-                            price = GetPropertyValue(appElement, "price"),
+                            id = GetPropertyValue(appElement, "trackId"),
+                            name = GetPropertyValue(appElement, "trackName"),
+                            price = GetPriceValue(appElement),
                             version = GetPropertyValue(appElement, "version"),
                             purchased = purchasedDict.TryGetValue(bundleId ?? string.Empty, out var status)
                                 ? status
@@ -797,7 +806,11 @@ namespace IPAbuyer.Views
                 _currentPage = 1;
                 UpdatePage();
 
-                UpdateStatusBar($"搜索完成 - 请求: {SearchLimitNum}, 找到 {_allResults.Count} 个应用 (成功: {successCount}, 失败: {failCount})");
+                int resultCount = root.TryGetProperty("resultCount", out var countElement) && countElement.TryGetInt32(out int countValue)
+                    ? countValue
+                    : _allResults.Count;
+
+                UpdateStatusBar($"搜索完成 - 找到 {_allResults.Count} 个应用 (成功: {successCount}, 失败: {failCount})");
             }
             catch (JsonException ex)
             {
@@ -818,6 +831,25 @@ namespace IPAbuyer.Views
             }
 
             return null;
+        }
+
+        private static string? GetPriceValue(JsonElement element)
+        {
+            if (!element.TryGetProperty("price", out var priceElement))
+            {
+                return null;
+            }
+
+            return priceElement.ValueKind switch
+            {
+                JsonValueKind.Number => priceElement.TryGetDecimal(out var decimalValue)
+                    ? decimalValue.ToString("0.00")
+                    : priceElement.GetRawText(),
+                JsonValueKind.String => priceElement.GetString(),
+                JsonValueKind.True => "true",
+                JsonValueKind.False => "false",
+                _ => priceElement.GetRawText()
+            };
         }
 
         private static string? GetPropertyValue(JsonElement element, string propertyName)
@@ -859,10 +891,11 @@ namespace IPAbuyer.Views
 
             if (e.Parameter is string accountParam && !string.IsNullOrWhiteSpace(accountParam))
             {
+                string normalizedAccount = NormalizeAccount(accountParam);
                 _isLoggedIn = true;
-                SessionState.SetLoginState(accountParam, true);
+                SessionState.SetLoginState(normalizedAccount, true);
                 UpdateLoginButton();
-                UpdateStatusBar($"登录成功，欢迎使用 {accountParam}");
+                UpdateStatusBar($"登录成功，欢迎使用 {normalizedAccount}");
             }
             else if (e.Parameter is bool loginStatus)
             {
@@ -881,6 +914,37 @@ namespace IPAbuyer.Views
             }
 
             await RefreshLoginStatusAsync(_pageCts.Token);
+        }
+
+        private static string NormalizeAccount(string? account)
+        {
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                return string.Empty;
+            }
+
+            string trimmed = account.Trim();
+            return trimmed.Equals(TestAccountName, StringComparison.OrdinalIgnoreCase) ? TestAccountName : trimmed;
+        }
+
+        private static bool IsTestAccount(string? account)
+        {
+            return NormalizeAccount(account) == TestAccountName;
+        }
+
+        private static bool IsPriceFree(string? price)
+        {
+            if (string.IsNullOrWhiteSpace(price))
+            {
+                return false;
+            }
+
+            if (decimal.TryParse(price, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal value))
+            {
+                return value <= 0m;
+            }
+
+            return price.Trim().Equals("free", StringComparison.OrdinalIgnoreCase);
         }
 
         private T? GetControl<T>(string name)

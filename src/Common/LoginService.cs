@@ -26,6 +26,9 @@ namespace IPAbuyer.Common
 
     public static class LoginService
     {
+        private const string TestCredential = "test";
+        private static readonly TimeSpan TestLoginDelay = TimeSpan.FromMilliseconds(1000);
+
         public static Task<LoginResult> LoginAsync(string account, string password, CancellationToken cancellationToken)
         {
             return ExecuteLoginAsync(account, password, "000000", cancellationToken, isTwoFactor: false);
@@ -38,6 +41,20 @@ namespace IPAbuyer.Common
 
         private static async Task<LoginResult> ExecuteLoginAsync(string account, string password, string authCode, CancellationToken cancellationToken, bool isTwoFactor)
         {
+            if (IsTestCredential(account, password))
+            {
+                try
+                {
+                    await Task.Delay(TestLoginDelay, cancellationToken).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    return new LoginResult(LoginStatus.UnknownError, "登录已取消。");
+                }
+
+                return new LoginResult(LoginStatus.Success, "登录成功。");
+            }
+
             try
             {
                 var response = await ipatoolExecution.AuthLoginAsync(account, password, authCode, cancellationToken).ConfigureAwait(false);
@@ -261,6 +278,15 @@ namespace IPAbuyer.Common
                 || message.Contains("timed out")
                 || message.Contains("connection")
                 || message.Contains("ssl");
+        }
+
+        private static bool IsTestCredential(string account, string password)
+        {
+            string normalizedAccount = account?.Trim() ?? string.Empty;
+            string normalizedPassword = password?.Trim() ?? string.Empty;
+
+            return normalizedAccount.Equals(TestCredential, StringComparison.OrdinalIgnoreCase)
+                && normalizedPassword.Equals(TestCredential, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

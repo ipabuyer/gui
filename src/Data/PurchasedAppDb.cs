@@ -18,7 +18,7 @@ namespace IPAbuyer.Data
         public static void InitDb()
         {
             Database database = new Database();
-            _dbPath = database.AppDB;
+            _dbPath = database.AppDB ?? throw new InvalidOperationException("App 数据库路径未初始化");
             _connectionString = $"Data Source={_dbPath}";
             using (var conn = new SqliteConnection(_connectionString))
             {
