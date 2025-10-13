@@ -23,7 +23,7 @@ namespace IPAbuyer.Common
         public static void InitializeDatabase()
         {
             Database database = new Database();
-            _dbPath = database.AccountDB;
+            _dbPath = database.AccountDB ?? throw new InvalidOperationException("账户数据库路径未初始化");
             _connectionString = $"Data Source={_dbPath}";
 
             using var connection = new SqliteConnection(_connectionString);

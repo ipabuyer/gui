@@ -1,1 +1,1 @@
-.\src\bin\x64\Debug\net9.0-windows10.0.19041.0\win-x64\IPAbuyer.exe
+dotnet run --project .\src\IPAbuyer.csproj /p:Platform=x64

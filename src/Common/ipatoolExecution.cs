@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -12,6 +13,7 @@ namespace IPAbuyer.Common
     {
         private const int MaxPreviewLength = 200;
         private static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(2);
+    private static readonly HttpClient HttpClient = new();
 
         public sealed record IpatoolResult(string? Output, string? Error, int ExitCode, bool TimedOut)
         {
@@ -40,21 +42,48 @@ namespace IPAbuyer.Common
             return ExecuteIpatoolAsync("auth revoke", account, cancellationToken);
         }
 
-        public static Task<IpatoolResult> SearchAppAsync(string name, int limit, string account, CancellationToken cancellationToken = default)
+        public static async Task<IpatoolResult> SearchAppAsync(string name, int limit, string account, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(account))
-            {
-                throw new ArgumentException("account 不能为空", nameof(account));
-            }
-
             string safeName = name?.Trim() ?? string.Empty;
             if (safeName.Length == 0)
             {
                 throw new ArgumentException("应用名称不能为空", nameof(name));
             }
 
-            string arguments = $"search \"{safeName}\" --limit {Math.Max(1, limit)}";
-            return ExecuteIpatoolAsync(arguments, account, cancellationToken);
+            int cappedLimit = Math.Max(1, limit);
+            string requestUri = $"https://itunes.apple.com/search?term={Uri.EscapeDataString(safeName)}&entity=software&limit={cappedLimit}";
+
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            linkedCts.CancelAfter(DefaultTimeout);
+
+            try
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+                request.Headers.TryAddWithoutValidation("User-Agent", "IPAbuyer/1.0");
+
+                using HttpResponseMessage response = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, linkedCts.Token).ConfigureAwait(false);
+                string content = await response.Content.ReadAsStringAsync(linkedCts.Token).ConfigureAwait(false);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    string errorMessage = $"请求失败: {(int)response.StatusCode} {response.ReasonPhrase}";
+                    return new IpatoolResult(null, string.IsNullOrWhiteSpace(content) ? errorMessage : content, (int)response.StatusCode, TimedOut: false);
+                }
+
+                return new IpatoolResult(content, null, ExitCode: 0, TimedOut: false);
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                return new IpatoolResult(null, $"执行超时: {requestUri}", ExitCode: -1, TimedOut: true);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                return new IpatoolResult(null, ex.Message, ExitCode: -1, TimedOut: false);
+            }
         }
 
         public static Task<IpatoolResult> AuthInfoAsync(string account, CancellationToken cancellationToken = default)
