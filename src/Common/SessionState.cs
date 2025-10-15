@@ -54,6 +54,7 @@ namespace IPAbuyer.Common
             {
                 EnsureInitialized();
                 _isLoggedIn = false;
+                _currentAccount = string.Empty;
             }
         }
 

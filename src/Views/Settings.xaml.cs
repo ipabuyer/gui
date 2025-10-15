@@ -1,11 +1,11 @@
+using IPAbuyer.Common;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.IO;
 using System.Threading.Tasks;
+using Windows.System;
 
 namespace IPAbuyer.Views
 {
@@ -15,6 +15,7 @@ namespace IPAbuyer.Views
         public Settings()
         {
             this.InitializeComponent();
+            InitializeCountryCode();
         }
 
         private void OpenAppleAccountLink(object sender, RoutedEventArgs e)
@@ -83,6 +84,110 @@ namespace IPAbuyer.Views
                     await errorDialog.ShowAsync();
                 }
             }
+        }
+
+        private void InitializeCountryCode()
+        {
+            try
+            {
+                string? account = GetAccountForCountryCode();
+                string currentCode = KeychainConfig.GetCountryCode(account);
+                var textBox = CountryCodeTextBoxControl;
+                if (textBox != null)
+                {
+                    textBox.Text = currentCode;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"初始化国家/地区代码失败: {ex.Message}");
+            }
+        }
+
+        private async void CountryCodeButton(object sender, RoutedEventArgs e)
+        {
+            await HandleCountryCodeSubmissionAsync();
+        }
+
+        private async void CountryCodeTextBox_KeyUp(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key != VirtualKey.Enter)
+            {
+                return;
+            }
+
+            e.Handled = true;
+            await HandleCountryCodeSubmissionAsync();
+        }
+
+        private async Task HandleCountryCodeSubmissionAsync()
+        {
+            var textBox = CountryCodeTextBoxControl;
+            if (textBox == null)
+            {
+                return;
+            }
+
+            string rawInput = textBox.Text?.Trim() ?? string.Empty;
+            string normalizedInput = string.IsNullOrWhiteSpace(rawInput) ? "cn" : rawInput;
+
+            if (!IsValidCountryCode(normalizedInput))
+            {
+                await ShowCountryCodeDialogAsync("请输入合法的 ISO 3166-1 Alpha-2 国家/地区代码（两位英文字母）", isError: true);
+                return;
+            }
+
+            string normalized = normalizedInput.ToLowerInvariant();
+            string? account = GetAccountForCountryCode();
+
+            try
+            {
+                KeychainConfig.SaveCountryCode(normalized, account);
+                textBox.Text = normalized;
+                string message = string.Equals(normalized, "cn", StringComparison.OrdinalIgnoreCase)
+                    ? "国家/地区代码为空，已恢复为默认值 cn"
+                    : $"国家/地区代码已更新为 {normalized}";
+                await ShowCountryCodeDialogAsync(message, isError: false);
+            }
+            catch (Exception ex)
+            {
+                await ShowCountryCodeDialogAsync($"保存失败：{ex.Message}", isError: true);
+            }
+        }
+
+        private static bool IsValidCountryCode(string code)
+        {
+            return KeychainConfig.IsValidCountryCode(code);
+        }
+
+        private async Task ShowCountryCodeDialogAsync(string message, bool isError)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = isError ? "操作失败" : "操作成功",
+                Content = message,
+                CloseButtonText = "确定",
+                XamlRoot = this.XamlRoot
+            };
+
+            await dialog.ShowAsync();
+        }
+
+        private TextBox? CountryCodeTextBoxControl => FindName("CountryCodeTextBox") as TextBox;
+
+        private static string? GetAccountForCountryCode()
+        {
+            if (SessionState.IsLoggedIn)
+            {
+                string account = SessionState.CurrentAccount;
+                if (!string.IsNullOrWhiteSpace(account))
+                {
+                    return account;
+                }
+            }
+
+            string? lastLogin = KeychainConfig.GetLastLoginUsername();
+            return string.IsNullOrWhiteSpace(lastLogin) ? null : lastLogin;
         }
     }
 }
