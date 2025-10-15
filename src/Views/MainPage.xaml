@@ -48,6 +48,7 @@
                          MinWidth="300"
                          MinHeight="20"
                          PlaceholderText="请输入App名称"
+                         IsSpellCheckEnabled="False"
                          KeyUp="Search_KeyUp">
                 </TextBox>
                 <Button Grid.Column="1"

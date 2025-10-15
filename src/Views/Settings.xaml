@@ -59,7 +59,8 @@
                                  HorizontalAlignment="Right"
                                  MinWidth="120"
                                  FontSize="14"
-                                 PlaceholderText="cn"/>
+                                 PlaceholderText="cn"
+                                 KeyUp="CountryCodeTextBox_KeyUp"/>
                         <Button Grid.Column="1"
                                 HorizontalAlignment="Right"
                                 Width="40"

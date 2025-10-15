@@ -1,9 +1,11 @@
 using IPAbuyer.Common;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Windows.System;
 
 namespace IPAbuyer.Views
 {
@@ -88,7 +90,8 @@ namespace IPAbuyer.Views
         {
             try
             {
-                string currentCode = KeychainConfig.GetCountryCode();
+                string? account = GetAccountForCountryCode();
+                string currentCode = KeychainConfig.GetCountryCode(account);
                 var textBox = CountryCodeTextBoxControl;
                 if (textBox != null)
                 {
@@ -103,32 +106,48 @@ namespace IPAbuyer.Views
 
         private async void CountryCodeButton(object sender, RoutedEventArgs e)
         {
+            await HandleCountryCodeSubmissionAsync();
+        }
+
+        private async void CountryCodeTextBox_KeyUp(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key != VirtualKey.Enter)
+            {
+                return;
+            }
+
+            e.Handled = true;
+            await HandleCountryCodeSubmissionAsync();
+        }
+
+        private async Task HandleCountryCodeSubmissionAsync()
+        {
             var textBox = CountryCodeTextBoxControl;
             if (textBox == null)
             {
                 return;
             }
 
-            string input = textBox.Text.Trim();
-            if (string.IsNullOrWhiteSpace(input))
-            {
-                await ShowCountryCodeDialogAsync("请输入国家或地区代码", isError: true);
-                return;
-            }
+            string rawInput = textBox.Text?.Trim() ?? string.Empty;
+            string normalizedInput = string.IsNullOrWhiteSpace(rawInput) ? "cn" : rawInput;
 
-            if (!IsValidCountryCode(input))
+            if (!IsValidCountryCode(normalizedInput))
             {
                 await ShowCountryCodeDialogAsync("请输入合法的 ISO 3166-1 Alpha-2 国家/地区代码（两位英文字母）", isError: true);
                 return;
             }
 
-            string normalized = input.ToLowerInvariant();
+            string normalized = normalizedInput.ToLowerInvariant();
+            string? account = GetAccountForCountryCode();
 
             try
             {
-                KeychainConfig.SaveCountryCode(normalized);
+                KeychainConfig.SaveCountryCode(normalized, account);
                 textBox.Text = normalized;
-                await ShowCountryCodeDialogAsync($"国家/地区代码已更新为 {normalized}", isError: false);
+                string message = string.Equals(normalized, "cn", StringComparison.OrdinalIgnoreCase)
+                    ? "国家/地区代码为空，已恢复为默认值 cn"
+                    : $"国家/地区代码已更新为 {normalized}";
+                await ShowCountryCodeDialogAsync(message, isError: false);
             }
             catch (Exception ex)
             {
@@ -155,5 +174,20 @@ namespace IPAbuyer.Views
         }
 
         private TextBox? CountryCodeTextBoxControl => FindName("CountryCodeTextBox") as TextBox;
+
+        private static string? GetAccountForCountryCode()
+        {
+            if (SessionState.IsLoggedIn)
+            {
+                string account = SessionState.CurrentAccount;
+                if (!string.IsNullOrWhiteSpace(account))
+                {
+                    return account;
+                }
+            }
+
+            string? lastLogin = KeychainConfig.GetLastLoginUsername();
+            return string.IsNullOrWhiteSpace(lastLogin) ? null : lastLogin;
+        }
     }
 }

@@ -74,6 +74,8 @@ namespace IPAbuyer.Common
                     Value TEXT NOT NULL
                 );";
             createTableCmd.ExecuteNonQuery();
+
+            EnsureCountryCodeColumn(connection);
         }
 
         /// <summary>
@@ -112,6 +114,8 @@ namespace IPAbuyer.Common
             {
                 using var connection = new SqliteConnection(_connectionString);
                 connection.Open();
+
+                EnsureCountryCodeColumn(connection);
 
                 var selectCmd = connection.CreateCommand();
                 selectCmd.CommandText = "SELECT SecretKey FROM Users WHERE Username = @username";
@@ -155,16 +159,19 @@ namespace IPAbuyer.Common
                 }
 
                 var secretKey = GenerateRandomKey();
+                EnsureCountryCodeColumn(connection);
+
                 // 使用 INSERT OR REPLACE 来处理用户已存在的情况
                 var insertCmd = connection.CreateCommand();
                 insertCmd.CommandText = @"
-                    INSERT INTO Users (Username, SecretKey) 
-                    VALUES (@username, @secretKey)
+                    INSERT INTO Users (Username, SecretKey, CountryCode) 
+                    VALUES (@username, @secretKey, @countryCode)
                     ON CONFLICT(Username) 
                     DO UPDATE SET SecretKey = @secretKey";
 
                 insertCmd.Parameters.AddWithValue("@username", username);
                 insertCmd.Parameters.AddWithValue("@secretKey", secretKey);
+                insertCmd.Parameters.AddWithValue("@countryCode", DefaultCountryCode);
                 insertCmd.ExecuteNonQuery();
 
                 // 更新最后登录用户
@@ -207,7 +214,7 @@ namespace IPAbuyer.Common
             }
         }
 
-        public static string GetCountryCode()
+        public static void ClearLastLoginUsername()
         {
             try
             {
@@ -219,19 +226,54 @@ namespace IPAbuyer.Common
                 using var connection = new SqliteConnection(_connectionString);
                 connection.Open();
 
-                var selectCmd = connection.CreateCommand();
-                selectCmd.CommandText = "SELECT Value FROM Settings WHERE Key = @key";
-                selectCmd.Parameters.AddWithValue("@key", CountryCodeKey);
+                var deleteCmd = connection.CreateCommand();
+                deleteCmd.CommandText = "DELETE FROM Settings WHERE Key = @key";
+                deleteCmd.Parameters.AddWithValue("@key", LastLoginKey);
+                deleteCmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"清除最后登录用户失败: {ex.Message}", ex);
+            }
+        }
 
-                var result = selectCmd.ExecuteScalar();
-                string? stored = result?.ToString();
-                if (string.IsNullOrWhiteSpace(stored))
+        public static string GetCountryCode(string? account = null)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(_connectionString))
                 {
-                    return DefaultCountryCode;
+                    InitializeDatabase();
                 }
 
-                string normalized = stored.Trim().ToLowerInvariant();
-                return IsValidCountryCode(normalized) ? normalized : DefaultCountryCode;
+                using var connection = new SqliteConnection(_connectionString);
+                connection.Open();
+
+                EnsureCountryCodeColumn(connection);
+
+                string normalizedAccount = NormalizeAccount(account);
+
+                if (!string.IsNullOrEmpty(normalizedAccount))
+                {
+                    string? userCode = GetUserCountryCode(connection, normalizedAccount);
+                    if (TryNormalizeCountryCode(userCode, out string normalizedUserCode))
+                    {
+                        return normalizedUserCode;
+                    }
+
+                    if (TryMigrateLegacyCountryCode(connection, normalizedAccount, out string migratedCode))
+                    {
+                        return migratedCode;
+                    }
+                }
+
+                string? defaultValue = ReadSettingValue(connection, CountryCodeKey);
+                if (TryNormalizeCountryCode(defaultValue, out string normalizedDefaultValue))
+                {
+                    return normalizedDefaultValue;
+                }
+
+                return DefaultCountryCode;
             }
             catch (Exception ex)
             {
@@ -239,7 +281,7 @@ namespace IPAbuyer.Common
             }
         }
 
-        public static void SaveCountryCode(string countryCode)
+        public static void SaveCountryCode(string countryCode, string? account = null)
         {
             if (string.IsNullOrWhiteSpace(countryCode))
             {
@@ -263,16 +305,19 @@ namespace IPAbuyer.Common
                 using var connection = new SqliteConnection(_connectionString);
                 connection.Open();
 
-                var insertCmd = connection.CreateCommand();
-                insertCmd.CommandText = @"
-                INSERT INTO Settings (Key, Value)
-                VALUES (@key, @value)
-                ON CONFLICT(Key)
-                DO UPDATE SET Value = @value";
+                EnsureCountryCodeColumn(connection);
 
-                insertCmd.Parameters.AddWithValue("@key", CountryCodeKey);
-                insertCmd.Parameters.AddWithValue("@value", normalized);
-                insertCmd.ExecuteNonQuery();
+                string normalizedAccount = NormalizeAccount(account);
+
+                if (!string.IsNullOrEmpty(normalizedAccount))
+                {
+                    SaveUserCountryCode(connection, normalizedAccount, normalized);
+                    DeleteSettingKey(connection, $"{CountryCodeKey}:{normalizedAccount}");
+                }
+                else
+                {
+                    SaveGlobalCountryCode(connection, normalized);
+                }
             }
             catch (Exception ex)
             {
@@ -315,6 +360,24 @@ namespace IPAbuyer.Common
             return ValidCountryCodes.Contains(code.Trim().ToLowerInvariant());
         }
 
+        private static bool TryNormalizeCountryCode(string? value, out string normalized)
+        {
+            normalized = string.Empty;
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            string candidate = value.Trim().ToLowerInvariant();
+            if (!IsValidCountryCode(candidate))
+            {
+                return false;
+            }
+
+            normalized = candidate;
+            return true;
+        }
+
         private static string ResolveDataDirectory()
         {
             try
@@ -334,6 +397,115 @@ namespace IPAbuyer.Common
             string fallback = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             Directory.CreateDirectory(fallback);
             return fallback;
+        }
+
+        private static string? ReadSettingValue(SqliteConnection connection, string key)
+        {
+            using var selectCmd = connection.CreateCommand();
+            selectCmd.CommandText = "SELECT Value FROM Settings WHERE Key = @key";
+            selectCmd.Parameters.AddWithValue("@key", key);
+            var result = selectCmd.ExecuteScalar();
+            return result?.ToString();
+        }
+
+        private static void SaveGlobalCountryCode(SqliteConnection connection, string normalized)
+        {
+            var insertCmd = connection.CreateCommand();
+            insertCmd.CommandText = @"
+                INSERT INTO Settings (Key, Value)
+                VALUES (@key, @value)
+                ON CONFLICT(Key)
+                DO UPDATE SET Value = @value";
+
+            insertCmd.Parameters.AddWithValue("@key", CountryCodeKey);
+            insertCmd.Parameters.AddWithValue("@value", normalized);
+            insertCmd.ExecuteNonQuery();
+        }
+
+        private static void SaveUserCountryCode(SqliteConnection connection, string normalizedAccount, string countryCode)
+        {
+            var updateCmd = connection.CreateCommand();
+            updateCmd.CommandText = "UPDATE Users SET CountryCode = @code WHERE LOWER(Username) = @username";
+            updateCmd.Parameters.AddWithValue("@code", countryCode);
+            updateCmd.Parameters.AddWithValue("@username", normalizedAccount);
+
+            int affected = updateCmd.ExecuteNonQuery();
+            if (affected == 0)
+            {
+                SaveGlobalCountryCode(connection, countryCode);
+            }
+        }
+
+        private static string? GetUserCountryCode(SqliteConnection connection, string normalizedAccount)
+        {
+            var selectCmd = connection.CreateCommand();
+            selectCmd.CommandText = "SELECT CountryCode FROM Users WHERE LOWER(Username) = @username";
+            selectCmd.Parameters.AddWithValue("@username", normalizedAccount);
+            var result = selectCmd.ExecuteScalar();
+            return result?.ToString();
+        }
+
+        private static bool TryMigrateLegacyCountryCode(SqliteConnection connection, string normalizedAccount, out string normalized)
+        {
+            string legacyKey = $"{CountryCodeKey}:{normalizedAccount}";
+            string? legacyValue = ReadSettingValue(connection, legacyKey);
+
+            if (TryNormalizeCountryCode(legacyValue, out normalized))
+            {
+                SaveUserCountryCode(connection, normalizedAccount, normalized);
+                DeleteSettingKey(connection, legacyKey);
+                return true;
+            }
+
+            normalized = string.Empty;
+            return false;
+        }
+
+        private static void DeleteSettingKey(SqliteConnection connection, string key)
+        {
+            var deleteCmd = connection.CreateCommand();
+            deleteCmd.CommandText = "DELETE FROM Settings WHERE Key = @key";
+            deleteCmd.Parameters.AddWithValue("@key", key);
+            deleteCmd.ExecuteNonQuery();
+        }
+
+        private static string NormalizeAccount(string? account)
+        {
+            return string.IsNullOrWhiteSpace(account)
+                ? string.Empty
+                : account.Trim().ToLowerInvariant();
+        }
+
+        private static void EnsureCountryCodeColumn(SqliteConnection connection)
+        {
+            var pragmaCmd = connection.CreateCommand();
+            pragmaCmd.CommandText = "PRAGMA table_info(Users);";
+
+            bool hasColumn = false;
+            using (var reader = pragmaCmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    string? columnName = reader["name"]?.ToString();
+                    if (string.Equals(columnName, "CountryCode", StringComparison.OrdinalIgnoreCase))
+                    {
+                        hasColumn = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!hasColumn)
+            {
+                var alterCmd = connection.CreateCommand();
+                alterCmd.CommandText = "ALTER TABLE Users ADD COLUMN CountryCode TEXT";
+                alterCmd.ExecuteNonQuery();
+
+                var updateCmd = connection.CreateCommand();
+                updateCmd.CommandText = "UPDATE Users SET CountryCode = @default WHERE CountryCode IS NULL OR CountryCode = ''";
+                updateCmd.Parameters.AddWithValue("@default", DefaultCountryCode);
+                updateCmd.ExecuteNonQuery();
+            }
         }
     }
 }
