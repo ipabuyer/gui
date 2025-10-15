@@ -207,7 +207,7 @@ namespace IPAbuyer.Common
             }
         }
 
-        public static string GetCountryCode()
+        public static void ClearLastLoginUsername()
         {
             try
             {
@@ -219,19 +219,47 @@ namespace IPAbuyer.Common
                 using var connection = new SqliteConnection(_connectionString);
                 connection.Open();
 
-                var selectCmd = connection.CreateCommand();
-                selectCmd.CommandText = "SELECT Value FROM Settings WHERE Key = @key";
-                selectCmd.Parameters.AddWithValue("@key", CountryCodeKey);
+                var deleteCmd = connection.CreateCommand();
+                deleteCmd.CommandText = "DELETE FROM Settings WHERE Key = @key";
+                deleteCmd.Parameters.AddWithValue("@key", LastLoginKey);
+                deleteCmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"清除最后登录用户失败: {ex.Message}", ex);
+            }
+        }
 
-                var result = selectCmd.ExecuteScalar();
-                string? stored = result?.ToString();
-                if (string.IsNullOrWhiteSpace(stored))
+        public static string GetCountryCode(string? account = null)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(_connectionString))
                 {
-                    return DefaultCountryCode;
+                    InitializeDatabase();
                 }
 
-                string normalized = stored.Trim().ToLowerInvariant();
-                return IsValidCountryCode(normalized) ? normalized : DefaultCountryCode;
+                using var connection = new SqliteConnection(_connectionString);
+                connection.Open();
+
+                string primaryKey = BuildCountryCodeKey(account);
+                string? primaryValue = ReadSettingValue(connection, primaryKey);
+
+                if (TryNormalizeCountryCode(primaryValue, out string normalizedPrimary))
+                {
+                    return normalizedPrimary;
+                }
+
+                if (!string.IsNullOrWhiteSpace(account))
+                {
+                    string? defaultValue = ReadSettingValue(connection, CountryCodeKey);
+                    if (TryNormalizeCountryCode(defaultValue, out string normalizedDefault))
+                    {
+                        return normalizedDefault;
+                    }
+                }
+
+                return DefaultCountryCode;
             }
             catch (Exception ex)
             {
@@ -239,7 +267,7 @@ namespace IPAbuyer.Common
             }
         }
 
-        public static void SaveCountryCode(string countryCode)
+        public static void SaveCountryCode(string countryCode, string? account = null)
         {
             if (string.IsNullOrWhiteSpace(countryCode))
             {
@@ -270,7 +298,7 @@ namespace IPAbuyer.Common
                 ON CONFLICT(Key)
                 DO UPDATE SET Value = @value";
 
-                insertCmd.Parameters.AddWithValue("@key", CountryCodeKey);
+                insertCmd.Parameters.AddWithValue("@key", BuildCountryCodeKey(account));
                 insertCmd.Parameters.AddWithValue("@value", normalized);
                 insertCmd.ExecuteNonQuery();
             }
@@ -313,6 +341,51 @@ namespace IPAbuyer.Common
             }
 
             return ValidCountryCodes.Contains(code.Trim().ToLowerInvariant());
+        }
+
+        private static string? ReadSettingValue(SqliteConnection connection, string key)
+        {
+            using var selectCmd = connection.CreateCommand();
+            selectCmd.CommandText = "SELECT Value FROM Settings WHERE Key = @key";
+            selectCmd.Parameters.AddWithValue("@key", key);
+            var result = selectCmd.ExecuteScalar();
+            return result?.ToString();
+        }
+
+        private static bool TryNormalizeCountryCode(string? value, out string normalized)
+        {
+            normalized = string.Empty;
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            string candidate = value.Trim().ToLowerInvariant();
+            if (!IsValidCountryCode(candidate))
+            {
+                return false;
+            }
+
+            normalized = candidate;
+            return true;
+        }
+
+        private static string BuildCountryCodeKey(string? account)
+        {
+            string normalizedAccount = NormalizeAccountForKey(account);
+            return string.IsNullOrEmpty(normalizedAccount)
+                ? CountryCodeKey
+                : $"{CountryCodeKey}:{normalizedAccount}";
+        }
+
+        private static string NormalizeAccountForKey(string? account)
+        {
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                return string.Empty;
+            }
+
+            return account.Trim().ToLowerInvariant();
         }
 
         private static string ResolveDataDirectory()

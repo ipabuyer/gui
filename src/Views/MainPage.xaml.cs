@@ -64,12 +64,13 @@ namespace IPAbuyer.Views
 
         private async Task RefreshLoginStatusAsync(CancellationToken cancellationToken)
         {
-            var account = GetActiveAccount();
-            if (!SessionState.IsLoggedIn || string.IsNullOrWhiteSpace(account))
+            string? account = SessionState.IsLoggedIn ? GetActiveAccount() : GetLastKnownAccount();
+            if (string.IsNullOrWhiteSpace(account))
             {
                 _isLoggedIn = false;
                 UpdateLoginButton();
                 UpdateStatusBar("当前未登录", false);
+                RefreshCountryCodeDisplay();
                 return;
             }
 
@@ -79,6 +80,7 @@ namespace IPAbuyer.Views
                 SessionState.SetLoginState(TestAccountName, true);
                 UpdateLoginButton();
                 UpdateStatusBar("已登录账号名为: test");
+                RefreshCountryCodeDisplay();
                 return;
             }
 
@@ -115,6 +117,7 @@ namespace IPAbuyer.Views
             }
 
             UpdateLoginButton();
+            RefreshCountryCodeDisplay();
         }
 
         private void ParseLoginStatusResponse(string payload, string account)
@@ -133,6 +136,7 @@ namespace IPAbuyer.Views
                 SessionState.Reset();
                 UpdateLoginButton();
                 UpdateStatusBar("登录状态已失效，请重新登录", true);
+                RefreshCountryCodeDisplay();
                 return;
             }
 
@@ -156,6 +160,7 @@ namespace IPAbuyer.Views
                         SessionState.SetLoginState(account, true);
                         UpdateLoginButton();
                         UpdateStatusBar($"已登录账户: {displayAccount}");
+                        RefreshCountryCodeDisplay();
                         return true;
                     }
 
@@ -166,6 +171,7 @@ namespace IPAbuyer.Views
                         SessionState.Reset();
                         UpdateLoginButton();
                         UpdateStatusBar($"未登录: {errorMessage}", true);
+                        RefreshCountryCodeDisplay();
                         return true;
                     }
                 }
@@ -177,6 +183,7 @@ namespace IPAbuyer.Views
                     SessionState.Reset();
                     UpdateLoginButton();
                     UpdateStatusBar("登录状态已失效，请重新登录", true);
+                    RefreshCountryCodeDisplay();
                     return true;
                 }
             }
@@ -277,8 +284,20 @@ namespace IPAbuyer.Views
                 return null;
             }
 
-            var account = KeychainConfig.GetLastLoginUsername();
-            var normalized = NormalizeAccount(account);
+            string account = SessionState.CurrentAccount;
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                account = KeychainConfig.GetLastLoginUsername() ?? string.Empty;
+            }
+
+            string normalized = NormalizeAccount(account);
+            return string.IsNullOrEmpty(normalized) ? null : normalized;
+        }
+
+        private string? GetLastKnownAccount()
+        {
+            string? account = KeychainConfig.GetLastLoginUsername();
+            string normalized = NormalizeAccount(account);
             return string.IsNullOrEmpty(normalized) ? null : normalized;
         }
 
@@ -673,6 +692,9 @@ namespace IPAbuyer.Views
 
             _isLoggedIn = false;
             SessionState.Reset();
+            KeychainConfig.ClearLastLoginUsername();
+            _countryCode = KeychainConfig.GetCountryCode();
+            RefreshCountryCodeDisplay();
             UpdateLoginButton();
             UpdateStatusBar("已退出登录");
             if (logoutButton != null)
@@ -720,7 +742,7 @@ namespace IPAbuyer.Views
             {
                 searchButton.IsEnabled = false;
             }
-            UpdateStatusBar($"正在搜索 \"{appName}\" (国家/地区: {countryCode})...");
+            UpdateStatusBar($"正在搜索 \"{appName}\"");
 
             try
             {
@@ -948,7 +970,13 @@ namespace IPAbuyer.Views
 
         private string GetCurrentCountryCode()
         {
-            string stored = NormalizeCountryCode(KeychainConfig.GetCountryCode());
+            string? account = GetActiveAccount();
+            if (string.IsNullOrEmpty(account))
+            {
+                account = GetLastKnownAccount();
+            }
+
+            string stored = NormalizeCountryCode(KeychainConfig.GetCountryCode(account));
             _countryCode = stored;
             return stored;
         }
