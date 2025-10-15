@@ -42,7 +42,7 @@ namespace IPAbuyer.Common
             return ExecuteIpatoolAsync("auth revoke", account, cancellationToken);
         }
 
-        public static async Task<IpatoolResult> SearchAppAsync(string name, int limit, string account, CancellationToken cancellationToken = default)
+        public static async Task<IpatoolResult> SearchAppAsync(string name, int limit, string account, string countryCode, CancellationToken cancellationToken = default)
         {
             string safeName = name?.Trim() ?? string.Empty;
             if (safeName.Length == 0)
@@ -51,7 +51,11 @@ namespace IPAbuyer.Common
             }
 
             int cappedLimit = Math.Max(1, limit);
-            string requestUri = $"https://itunes.apple.com/search?term={Uri.EscapeDataString(safeName)}&entity=software&limit={cappedLimit}";
+            string normalizedCountry = string.IsNullOrWhiteSpace(countryCode)
+                ? "cn"
+                : countryCode.Trim().ToLowerInvariant();
+
+            string requestUri = $"https://itunes.apple.com/search?term={Uri.EscapeDataString(safeName)}&entity=software&limit={cappedLimit}&country={Uri.EscapeDataString(normalizedCountry)}";
 
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             linkedCts.CancelAfter(DefaultTimeout);

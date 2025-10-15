@@ -1,10 +1,8 @@
+using IPAbuyer.Common;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.IO;
 using System.Threading.Tasks;
 
 namespace IPAbuyer.Views
@@ -15,6 +13,7 @@ namespace IPAbuyer.Views
         public Settings()
         {
             this.InitializeComponent();
+            InitializeCountryCode();
         }
 
         private void OpenAppleAccountLink(object sender, RoutedEventArgs e)
@@ -84,5 +83,77 @@ namespace IPAbuyer.Views
                 }
             }
         }
+
+        private void InitializeCountryCode()
+        {
+            try
+            {
+                string currentCode = KeychainConfig.GetCountryCode();
+                var textBox = CountryCodeTextBoxControl;
+                if (textBox != null)
+                {
+                    textBox.Text = currentCode;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"初始化国家/地区代码失败: {ex.Message}");
+            }
+        }
+
+        private async void CountryCodeButton(object sender, RoutedEventArgs e)
+        {
+            var textBox = CountryCodeTextBoxControl;
+            if (textBox == null)
+            {
+                return;
+            }
+
+            string input = textBox.Text.Trim();
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                await ShowCountryCodeDialogAsync("请输入国家或地区代码", isError: true);
+                return;
+            }
+
+            if (!IsValidCountryCode(input))
+            {
+                await ShowCountryCodeDialogAsync("请输入合法的 ISO 3166-1 Alpha-2 国家/地区代码（两位英文字母）", isError: true);
+                return;
+            }
+
+            string normalized = input.ToLowerInvariant();
+
+            try
+            {
+                KeychainConfig.SaveCountryCode(normalized);
+                textBox.Text = normalized;
+                await ShowCountryCodeDialogAsync($"国家/地区代码已更新为 {normalized}", isError: false);
+            }
+            catch (Exception ex)
+            {
+                await ShowCountryCodeDialogAsync($"保存失败：{ex.Message}", isError: true);
+            }
+        }
+
+        private static bool IsValidCountryCode(string code)
+        {
+            return KeychainConfig.IsValidCountryCode(code);
+        }
+
+        private async Task ShowCountryCodeDialogAsync(string message, bool isError)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = isError ? "操作失败" : "操作成功",
+                Content = message,
+                CloseButtonText = "确定",
+                XamlRoot = this.XamlRoot
+            };
+
+            await dialog.ShowAsync();
+        }
+
+        private TextBox? CountryCodeTextBoxControl => FindName("CountryCodeTextBox") as TextBox;
     }
 }

@@ -26,6 +26,7 @@ namespace IPAbuyer.Views
         private bool _isLoggedIn;
         private string _selectedFilter = "All";
         private const string TestAccountName = "test";
+    private string _countryCode = "cn";
         private static readonly TimeSpan TestPurchaseDelay = TimeSpan.FromMilliseconds(1000);
 
         public int SearchLimitNum { get; set; } = 5;
@@ -51,6 +52,7 @@ namespace IPAbuyer.Views
             _isPageLoaded = true;
             _isLoggedIn = SessionState.IsLoggedIn;
             UpdateLoginButton();
+            RefreshCountryCodeDisplay();
 
             if (_isLoggedIn && !string.IsNullOrWhiteSpace(KeychainConfig.GetLastLoginUsername()))
             {
@@ -702,6 +704,7 @@ namespace IPAbuyer.Views
         {
             var account = GetActiveAccount();
             var normalizedAccount = NormalizeAccount(account);
+            var countryCode = GetCurrentCountryCode();
 
             var appNameBox = GetControl<TextBox>("AppNameBox");
             string appName = appNameBox?.Text?.Trim() ?? string.Empty;
@@ -717,11 +720,11 @@ namespace IPAbuyer.Views
             {
                 searchButton.IsEnabled = false;
             }
-            UpdateStatusBar($"正在搜索 \"{appName}\"...");
+            UpdateStatusBar($"正在搜索 \"{appName}\" (国家/地区: {countryCode})...");
 
             try
             {
-                var result = await ipatoolExecution.SearchAppAsync(appName, SearchLimitNum, normalizedAccount, cancellationToken);
+                var result = await ipatoolExecution.SearchAppAsync(appName, SearchLimitNum, normalizedAccount, countryCode, cancellationToken);
 
                 if (result.TimedOut)
                 {
@@ -913,6 +916,7 @@ namespace IPAbuyer.Views
                 UpdateLoginButton();
             }
 
+            RefreshCountryCodeDisplay();
             await RefreshLoginStatusAsync(_pageCts.Token);
         }
 
@@ -930,6 +934,34 @@ namespace IPAbuyer.Views
         private static bool IsTestAccount(string? account)
         {
             return NormalizeAccount(account) == TestAccountName;
+        }
+
+        private void RefreshCountryCodeDisplay()
+        {
+            string code = GetCurrentCountryCode();
+            var textBlock = GetControl<TextBlock>("CountryCodeShowTextBlock");
+            if (textBlock != null)
+            {
+                textBlock.Text = $"国家/地区代码：{code}";
+            }
+        }
+
+        private string GetCurrentCountryCode()
+        {
+            string stored = NormalizeCountryCode(KeychainConfig.GetCountryCode());
+            _countryCode = stored;
+            return stored;
+        }
+
+        private static string NormalizeCountryCode(string? code)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                return "cn";
+            }
+
+            string normalized = code.Trim().ToLowerInvariant();
+            return KeychainConfig.IsValidCountryCode(normalized) ? normalized : "cn";
         }
 
         private static bool IsPriceFree(string? price)
