@@ -11,8 +11,8 @@
         <Grid Margin="100,20,100,20">
             <!-- 顶部右侧按钮区 -->
             <Grid HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
-                    Margin="0">
+                  VerticalAlignment="Top"
+                  Margin="0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
@@ -36,18 +36,19 @@
             </Grid>
             <!-- 搜索区 -->
             <Grid HorizontalAlignment="Left"
-                    VerticalAlignment="Top"
-                    Margin="0,40,0,0">
+                  VerticalAlignment="Top"
+                  Margin="0,40,0,0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="6*"/>
+                    <ColumnDefinition Width="3*"/>
+                    <ColumnDefinition Width="2*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <TextBox Grid.Column="0"
-                        x:Name="AppNameBox"
-                        MinWidth="300"
-                        MinHeight="20"
+                         x:Name="AppNameBox"
+                         MinWidth="300"
+                         MinHeight="20"
                          PlaceholderText="请输入App名称"
-                        KeyUp="Search_KeyUp">
+                         KeyUp="Search_KeyUp">
                 </TextBox>
                 <Button Grid.Column="1"
                         x:Name="SearchButton"
@@ -57,14 +58,22 @@
                         Margin="16,0,0,0">
                     开始查询
                 </Button>
+                <TextBlock Grid.Column="2"
+                           x:Name="CountryCodeShowTextBlock"
+                           VerticalAlignment="Center"
+                           FontSize="14"
+                           Foreground="Gray"
+                           Margin="16,0,0,0"
+                           Text="国家/地区代码：cn"/>
             </Grid>
+
             <Grid HorizontalAlignment="Left"
-                    VerticalAlignment="Top"
-                    Margin="0,90,0,0"
-                    Width="350">
+                  VerticalAlignment="Top"
+                  Margin="0,90,0,0"
+                  Width="400">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="6*"/>
-                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="2*"/>
                 </Grid.ColumnDefinitions>
                 <Slider Grid.Column="0"
                         x:Name="SearchLimit"
@@ -75,18 +84,18 @@
                         IsThumbToolTipEnabled="True"
                         ValueChanged="SearchLimit_ValueChanged"/>
                 <TextBlock x:Name="SearchLimitNumText"
-                        Text="5"
-                        Grid.Column="1"
-                        FontSize="14"
+                           Text="5"
+                           Grid.Column="1"
+                           FontSize="14"
                            Foreground="Gray"
-                        Margin="16,0,0,0"
-                        VerticalAlignment="Center"/>
+                           Margin="16,0,0,0"
+                           VerticalAlignment="Center"/>
             </Grid>
 
             <!-- 操作按钮区 -->
             <Grid HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
-                    Margin="0,90,0,0">
+                  VerticalAlignment="Top"
+                  Margin="0,90,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
@@ -120,20 +129,20 @@
                     下一页
                 </Button>
                 <ComboBox Grid.Column="4"
-                        Margin="10,0,0,0"
-                        x:Name="ScreeningComboBox"
-                        SelectedIndex="0"
-                        SelectionChanged="ScreeningComboBox_SelectionChanged"
-                        MinHeight="30"
-                        MinWidth="120">
+                          Margin="10,0,0,0"
+                          x:Name="ScreeningComboBox"
+                          SelectedIndex="0"
+                          SelectionChanged="ScreeningComboBox_SelectionChanged"
+                          MinHeight="30"
+                          MinWidth="120">
                     <ComboBoxItem x:Name="All"
-                            Tag="All">筛选</ComboBoxItem>
+                                  Tag="All">筛选</ComboBoxItem>
                     <ComboBoxItem x:Name="OnlyNotPurchased"
-                            Tag="OnlyNotPurchased">仅未购买</ComboBoxItem>
+                                  Tag="OnlyNotPurchased">仅未购买</ComboBoxItem>
                     <ComboBoxItem x:Name="OnlyPurchased"
-                            Tag="OnlyPurchased">仅已购买</ComboBoxItem>
+                                  Tag="OnlyPurchased">仅已购买</ComboBoxItem>
                     <ComboBoxItem x:Name="OnlyHad"
-                            Tag="OnlyHad">仅已拥有</ComboBoxItem>
+                                  Tag="OnlyHad">仅已拥有</ComboBoxItem>
                 </ComboBox>
             </Grid>
             <!-- 表格区 -->
@@ -143,8 +152,8 @@
                     BorderThickness="1"
                     Margin="0,150,0,20">
                 <ListView x:Name="ResultList"
-                        Margin="10,10,10,10"
-                        SelectionMode="Multiple">
+                          Margin="10,10,10,10"
+                          SelectionMode="Multiple">
                     <ListView.Header>
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -156,28 +165,28 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="App名称"
-                                    Grid.Column="0"
-                                    HorizontalAlignment="Center">
+                                       Grid.Column="0"
+                                       HorizontalAlignment="Center">
                             </TextBlock>
                             <TextBlock Text="AppID"
-                                    Grid.Column="1"
-                                    HorizontalAlignment="Center">
+                                       Grid.Column="1"
+                                       HorizontalAlignment="Center">
                             </TextBlock>
                             <TextBlock Text="包名"
-                                    Grid.Column="2"
-                                    HorizontalAlignment="Center">
+                                       Grid.Column="2"
+                                       HorizontalAlignment="Center">
                             </TextBlock>
                             <TextBlock Text="版本"
-                                    Grid.Column="3"
-                                    HorizontalAlignment="Center">
+                                       Grid.Column="3"
+                                       HorizontalAlignment="Center">
                             </TextBlock>
                             <TextBlock Text="价格"
-                                    Grid.Column="4"
-                                    HorizontalAlignment="Center">
+                                       Grid.Column="4"
+                                       HorizontalAlignment="Center">
                             </TextBlock>
                             <TextBlock Text="状态"
-                                    Grid.Column="5"
-                                    HorizontalAlignment="Center">
+                                       Grid.Column="5"
+                                       HorizontalAlignment="Center">
                             </TextBlock>
                         </Grid>
                     </ListView.Header>
@@ -193,31 +202,31 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0"
-                                        Text="{x:Bind name}"
+                                           Text="{x:Bind name}"
                                            TextTrimming="CharacterEllipsis"
                                            ToolTipService.ToolTip="{x:Bind name}"
                                            HorizontalAlignment="Left">
                                 </TextBlock>
                                 <TextBlock Grid.Column="1"
-                                        Text="{x:Bind id}"
+                                           Text="{x:Bind id}"
                                            HorizontalAlignment="Center">
                                 </TextBlock>
                                 <TextBlock Grid.Column="2"
-                                        Text="{x:Bind bundleID}"
+                                           Text="{x:Bind bundleID}"
                                            TextTrimming="CharacterEllipsis"
                                            ToolTipService.ToolTip="{x:Bind bundleID}"
                                            HorizontalAlignment="Center">
                                 </TextBlock>
                                 <TextBlock Grid.Column="3"
-                                        Text="{x:Bind version}"
+                                           Text="{x:Bind version}"
                                            HorizontalAlignment="Center">
                                 </TextBlock>
                                 <TextBlock Grid.Column="4"
-                                        Text="{x:Bind price}"
+                                           Text="{x:Bind price}"
                                            HorizontalAlignment="Center">
                                 </TextBlock>
                                 <TextBlock Grid.Column="5"
-                                        Text="{x:Bind purchased}"
+                                           Text="{x:Bind purchased}"
                                            HorizontalAlignment="Center">
                                 </TextBlock>
                             </Grid>
@@ -226,11 +235,11 @@
                 </ListView>
             </Border>
             <TextBlock Foreground="Gray"
-                    VerticalAlignment="Bottom"
-                    x:Name="ResultText"
-                    Text="状态栏"
+                       VerticalAlignment="Bottom"
+                       x:Name="ResultText"
+                       Text="状态栏"
                        TextWrapping="Wrap"
-                    Margin="0,0,0,0">
+                       Margin="0,0,0,0">
             </TextBlock>
         </Grid>
     </Page.Content>
