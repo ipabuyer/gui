@@ -49,7 +49,8 @@
                          MinHeight="20"
                          PlaceholderText="请输入App名称"
                          IsSpellCheckEnabled="False"
-                         KeyUp="Search_KeyUp">
+                         KeyUp="Search_KeyUp"
+                         TextChanged="AppNameBox_TextChanged">
                 </TextBox>
                 <Button Grid.Column="1"
                         x:Name="SearchButton"

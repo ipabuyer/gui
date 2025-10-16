@@ -18,10 +18,10 @@ namespace IPAbuyer.Views
             InitializeCountryCode();
         }
 
-        private void OpenAppleAccountLink(object sender, RoutedEventArgs e)
+        private void AppleAccountButton(object sender, RoutedEventArgs e)
         {
-            var url = "https://account.apple.com";
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            var url = "https://account.apple.com/";
+            Process.Start(new ProcessStartInfo
             {
                 FileName = url,
                 UseShellExecute = true
@@ -38,8 +38,8 @@ namespace IPAbuyer.Views
         // 跳转到开发者官网
         private void GithubButton(object sender, RoutedEventArgs e)
         {
-            var url = "https://github.com/ipabuyer/";
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            var url = "https://ipa.blazesnow.com/";
+            Process.Start(new ProcessStartInfo
             {
                 FileName = url,
                 UseShellExecute = true
@@ -129,7 +129,8 @@ namespace IPAbuyer.Views
             }
 
             string rawInput = textBox.Text?.Trim() ?? string.Empty;
-            string normalizedInput = string.IsNullOrWhiteSpace(rawInput) ? "cn" : rawInput;
+            bool inputWasEmpty = string.IsNullOrWhiteSpace(rawInput);
+            string normalizedInput = inputWasEmpty ? "cn" : rawInput;
 
             if (!IsValidCountryCode(normalizedInput))
             {
@@ -144,9 +145,21 @@ namespace IPAbuyer.Views
             {
                 KeychainConfig.SaveCountryCode(normalized, account);
                 textBox.Text = normalized;
-                string message = string.Equals(normalized, "cn", StringComparison.OrdinalIgnoreCase)
-                    ? "国家/地区代码为空，已恢复为默认值 cn"
-                    : $"国家/地区代码已更新为 {normalized}";
+
+                string message;
+                if (inputWasEmpty)
+                {
+                    message = "国家/地区代码为空，已恢复为默认值 cn";
+                }
+                else if (string.Equals(normalized, "cn", StringComparison.OrdinalIgnoreCase))
+                {
+                    message = "国家/地区代码已更新为 cn";
+                }
+                else
+                {
+                    message = $"国家/地区代码已更新为 {normalized}";
+                }
+
                 await ShowCountryCodeDialogAsync(message, isError: false);
             }
             catch (Exception ex)
