@@ -1,9 +1,6 @@
 name: IPAbuyer Development Workflow
 
 on:
-  push:
-    branches:
-    - beta
   workflow_dispatch:
 
 
