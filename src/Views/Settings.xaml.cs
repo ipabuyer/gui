@@ -129,7 +129,8 @@ namespace IPAbuyer.Views
             }
 
             string rawInput = textBox.Text?.Trim() ?? string.Empty;
-            string normalizedInput = string.IsNullOrWhiteSpace(rawInput) ? "cn" : rawInput;
+            bool inputWasEmpty = string.IsNullOrWhiteSpace(rawInput);
+            string normalizedInput = inputWasEmpty ? "cn" : rawInput;
 
             if (!IsValidCountryCode(normalizedInput))
             {
@@ -144,9 +145,21 @@ namespace IPAbuyer.Views
             {
                 KeychainConfig.SaveCountryCode(normalized, account);
                 textBox.Text = normalized;
-                string message = string.Equals(normalized, "cn", StringComparison.OrdinalIgnoreCase)
-                    ? "国家/地区代码为空，已恢复为默认值 cn"
-                    : $"国家/地区代码已更新为 {normalized}";
+
+                string message;
+                if (inputWasEmpty)
+                {
+                    message = "国家/地区代码为空，已恢复为默认值 cn";
+                }
+                else if (string.Equals(normalized, "cn", StringComparison.OrdinalIgnoreCase))
+                {
+                    message = "国家/地区代码已更新为 cn";
+                }
+                else
+                {
+                    message = $"国家/地区代码已更新为 {normalized}";
+                }
+
                 await ShowCountryCodeDialogAsync(message, isError: false);
             }
             catch (Exception ex)

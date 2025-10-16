@@ -53,6 +53,7 @@ namespace IPAbuyer.Views
             _isLoggedIn = SessionState.IsLoggedIn;
             UpdateLoginButton();
             RefreshCountryCodeDisplay();
+            UpdatePagingButtons();
 
             if (_isLoggedIn && !string.IsNullOrWhiteSpace(KeychainConfig.GetLastLoginUsername()))
             {
@@ -497,13 +498,29 @@ namespace IPAbuyer.Views
             }
 
             string extra = ownedButFailed.Count > 0 ? $"，购买失败但已拥有: {ownedButFailed.Count} 个" : string.Empty;
-            UpdateStatusBar($"批量购买完成 - 成功: {successCount}, 失败: {failCount}, 跳过: {skipCount}{extra}");
 
             if (batchPurchaseButton != null)
             {
                 batchPurchaseButton.IsEnabled = true;
             }
             RefreshPurchasedStatus();
+
+            var displayList = GetFilteredResults();
+            _totalPages = displayList.Count > 0 ? (displayList.Count + _pageSize - 1) / _pageSize : 1;
+            if (_currentPage > _totalPages)
+            {
+                _currentPage = _totalPages;
+            }
+            UpdatePage();
+
+            if (displayList.Count == 0)
+            {
+                UpdateStatusBar("购买后筛选结果为空", false);
+            }
+            else
+            {
+                UpdateStatusBar($"批量购买完成 - 成功: {successCount}, 失败: {failCount}, 跳过: {skipCount}{extra}。当前第 {_currentPage}/{_totalPages} 页 (共 {displayList.Count} 条)");
+            }
 
             if (pricedApps.Count > 0)
             {
@@ -593,6 +610,15 @@ namespace IPAbuyer.Views
             _totalPages = displayList.Count > 0 ? (displayList.Count + _pageSize - 1) / _pageSize : 1;
             _currentPage = 1;
             UpdatePage();
+
+            if (displayList.Count == 0)
+            {
+                UpdateStatusBar("筛选结果为空，请先输入App名称进行查询", false);
+            }
+            else
+            {
+                UpdateStatusBar($"筛选已更新，当前第 {_currentPage}/{_totalPages} 页 (共 {displayList.Count} 条)");
+            }
         }
 
         private void UpdatePage()
@@ -624,6 +650,7 @@ namespace IPAbuyer.Views
                 {
                     nextPageButton.IsEnabled = false;
                 }
+                UpdatePagingButtons(displayList);
                 return;
             }
 
@@ -640,11 +667,36 @@ namespace IPAbuyer.Views
             {
                 nextPageButton.IsEnabled = _currentPage < _totalPages;
             }
+
+            UpdatePagingButtons(displayList);
+        }
+
+        private void UpdatePagingButtons(List<AppResult>? currentDisplay = null)
+        {
+            var prevPageButton = GetControl<Button>("PrevPageButton");
+            var nextPageButton = GetControl<Button>("NextPageButton");
+            var displayList = currentDisplay ?? GetFilteredResults();
+            bool hasResults = displayList.Count > 0;
+
+            if (prevPageButton != null)
+            {
+                prevPageButton.IsEnabled = hasResults && _currentPage > 1;
+            }
+
+            if (nextPageButton != null)
+            {
+                nextPageButton.IsEnabled = hasResults && _currentPage < _totalPages;
+            }
         }
 
         private async void SearchButton_Click(object sender, RoutedEventArgs e)
         {
             await PerformSearchAsync(_pageCts.Token);
+        }
+
+        private void AppNameBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            UpdatePagingButtons();
         }
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
