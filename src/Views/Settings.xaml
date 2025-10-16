@@ -8,6 +8,14 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Resources/QAData.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Page.Resources>
+
     <Grid>
         <ScrollViewer>
             <StackPanel Margin="100,20,100,20">
@@ -19,24 +27,21 @@
                     <TextBlock Grid.Column="0"
                                Margin="0"
                                FontSize="40"
-                               FontWeight="Bold">
-                        设置
-                    </TextBlock>
+                               FontWeight="Bold"
+                               Text="设置"/>
                     <Button Grid.Column="1"
                             Margin="0,0,0,0"
                             VerticalAlignment="Top"
                             HorizontalAlignment="Right"
                             MinWidth="120"
                             FontSize="14"
-                            Click="BackToMainpage">
-                        返回首页
-                    </Button>
+                            Click="BackToMainpage"
+                            Content="返回首页"/>
                 </Grid>
 
                 <TextBlock Margin="20,20,0,0"
-                           FontSize="20">
-                    软件相关
-                </TextBlock>
+                           FontSize="20"
+                           Text="软件相关"/>
 
                 <Grid Margin="40,20,40,0">
                     <Grid.ColumnDefinitions>
@@ -46,9 +51,8 @@
                     <TextBlock VerticalAlignment="Center"
                                Grid.Column="0"
                                FontSize="16"
-                               TextWrapping="Wrap">
-                        输入国家或地区代码，以便访问对应国家或地区的App Store（默认为cn）
-                    </TextBlock>
+                               TextWrapping="Wrap"
+                               Text="输入国家或地区代码，以便访问对应国家或地区的App Store（默认为cn）"/>
                     <Grid Grid.Column="1">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="2*"/>
@@ -78,16 +82,14 @@
                     <TextBlock VerticalAlignment="Center"
                                Grid.Column="0"
                                FontSize="16"
-                               TextWrapping="Wrap">
-                        点击跳转按钮以了解本软件开发者的更多信息
-                    </TextBlock>
+                               TextWrapping="Wrap"
+                               Text="点击跳转按钮以了解本软件开发者的更多信息"/>
                     <Button HorizontalAlignment="Right"
                             Grid.Column="1"
                             MinWidth="120"
                             FontSize="14"
-                            Click="GithubButton">
-                        访问官方网站
-                    </Button>
+                            Click="GithubButton"
+                            Content="访问官方网站"/>
                 </Grid>
 
                 <Grid Margin="40,20,40,0">
@@ -98,115 +100,103 @@
                     <TextBlock VerticalAlignment="Center"
                                Grid.Column="0"
                                FontSize="16"
-                               TextWrapping="Wrap">
-                        本地数据库保存了已购买的App列表，以便展示App是否已购买
-                    </TextBlock>
+                               TextWrapping="Wrap"
+                               Text="本地数据库保存了已购买的App列表，以便展示App是否已购买"/>
                     <Button Foreground="White"
                             Background="Red"
                             HorizontalAlignment="Right"
                             Grid.Column="1"
                             MinWidth="120"
                             FontSize="14"
-                            Click="DeleteDataBase">
-                        清除本地数据库
-                    </Button>
+                            Click="DeleteDataBase"
+                            Content="清除本地数据库"/>
                 </Grid>
+
                 <TextBlock Margin="20,20,0,0"
-                           FontSize="20">
-                    常见问题
-                </TextBlock>
+                           FontSize="20"
+                           Text="常见问题"/>
+
+
                 <TextBlock Margin="40,20,40,0"
                            FontSize="16"
-                           TextWrapping="Wrap">
-                    无法获取双重验证码？
-                </TextBlock>
+                           TextWrapping="Wrap"
+                           Text="{StaticResource Q1}"/>
+                <Grid Margin="60,20,40,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="5*"/>
+                        <ColumnDefinition Width="2*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               FontWeight="Light"
+                               FontSize="16"
+                               TextWrapping="Wrap"
+                               Text="{StaticResource A1}"/>
+
+                    <Button Grid.Row="1"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Top"
+                            Grid.Column="1"
+                            MinWidth="120"
+                            FontSize="14"
+                            Click="AppleAccountButton"
+                            Content="打开苹果账户官网"/>
+                </Grid>
+
+
+                <TextBlock Margin="40,20,40,0"
+                           FontSize="16"
+                           TextWrapping="Wrap"
+                           Text="{StaticResource Q2}"/>
                 <TextBlock Margin="60,20,40,0"
                            FontWeight="Light"
                            FontSize="16"
-                           TextWrapping="Wrap">
-                    对于登录在苹果设备，而不是仅使用手机号作为双重验证手段的账户，无法获取双重验证码是本软件的可预见的问题。请使用
-                    <Hyperlink Click="OpenAppleAccountLink">
-                        https://account.apple.com/
-                    </Hyperlink>
-                    获取双重验证码并填入本软件中。
-                </TextBlock>
+                           TextWrapping="Wrap"
+                           Text="{StaticResource A2}"/>
                 <TextBlock Margin="40,20,40,0"
                            FontSize="16"
-                           TextWrapping="Wrap">
-                    账户、密码和双重验证码都正确，但无法登入？
-                </TextBlock>
+                           TextWrapping="Wrap"
+                           Text="{StaticResource Q3}"/>
                 <TextBlock Margin="60,20,40,0"
                            FontWeight="Light"
                            FontSize="16"
-                           TextWrapping="Wrap">
-                    受限于苹果的账户政策，要正常使用IPAbuyer，您的苹果账户需要登录过iCloud和AppStore，并在AppStore中进行过一次有效的购买。
-                </TextBlock>
+                           TextWrapping="Wrap"
+                           Text="{StaticResource A3}"/>
                 <TextBlock Margin="40,20,40,0"
                            FontSize="16"
-                           TextWrapping="Wrap">
-                    为什么已购买的App在iPhone上仍然显示未购买？
-                </TextBlock>
+                           TextWrapping="Wrap"
+                           Text="{StaticResource Q4}"/>
                 <TextBlock Margin="60,20,40,0"
                            FontWeight="Light"
                            FontSize="16"
-                           TextWrapping="Wrap">
-                    这是因为iPhone未对已购买App列表进行刷新，在iPhone上对任意App进行一次购买即可刷新整个列表。
-                </TextBlock>
+                           TextWrapping="Wrap"
+                           Text="{StaticResource A4}"/>
                 <TextBlock Margin="40,20,40,0"
                            FontSize="16"
-                           TextWrapping="Wrap">
-                    为什么iPhone上已购买的App在软件内显示未购买？
-                </TextBlock>
+                           TextWrapping="Wrap"
+                           Text="{StaticResource Q5}"/>
                 <TextBlock Margin="60,20,40,0"
                            FontWeight="Light"
                            FontSize="16"
-                           TextWrapping="Wrap">
-                    对于App是否购买，软件会以购买App的形式，向Apple服务器查询，这个过程受限于软件策略，只有用户手动点击购买后，才能获取软件的购买状态，所以软件内显示已购买的软件数量必然≤账户已购买的软件数量。
-                </TextBlock>
+                           TextWrapping="Wrap"
+                           Text="{StaticResource A5}"/>
                 <TextBlock Margin="40,20,40,0"
                            FontSize="16"
-                           TextWrapping="Wrap">
-                    什么是“已购买”和“已拥有”？
-                </TextBlock>
+                           TextWrapping="Wrap"
+                           Text="{StaticResource Q6}"/>
                 <TextBlock Margin="60,20,40,0"
                            FontWeight="Light"
                            FontSize="16"
-                           TextWrapping="Wrap">
-                    “已购买”是指通过本软件购买的App，“已拥有”是指未通过本软件购买的App。清空软件数据库会丢失“已购买”状态，在下一次查询后变为“已拥有”。
-                </TextBlock>
+                           TextWrapping="Wrap"
+                           Text="{StaticResource A6}"/>
                 <TextBlock Margin="40,20,40,0"
                            FontSize="16"
-                           TextWrapping="Wrap">
-                    为什么不购买App，只是查询，也要登录账户？
-                </TextBlock>
+                           TextWrapping="Wrap"
+                           Text="{StaticResource Q7}"/>
                 <TextBlock Margin="60,20,40,0"
                            FontWeight="Light"
                            FontSize="16"
-                           TextWrapping="Wrap">
-                    受限于本软件上游软件ipatool的策略，无论是下载、购买还是查询软件，都需要进行Apple账户的登录。
-                </TextBlock>
-                <TextBlock Margin="40,20,40,0"
-                           FontSize="16"
-                           TextWrapping="Wrap">
-                    登录账户安全吗？
-                </TextBlock>
-                <TextBlock Margin="60,20,40,0"
-                           FontWeight="Light"
-                           FontSize="16"
-                           TextWrapping="Wrap">
-                    本软件将所有的登录信息保存于本地，不会对任何敏感信息进行上传，同时使用存储于软件数据库的随机密钥进行加密。
-                </TextBlock>
-                <TextBlock Margin="40,20,40,0"
-                           FontSize="16"
-                           TextWrapping="Wrap">
-                    为什么不能进行付费购买？
-                </TextBlock>
-                <TextBlock Margin="60,20,40,0"
-                           FontWeight="Light"
-                           FontSize="16"
-                           TextWrapping="Wrap">
-                    为了保证账户安全性，本软件将进行App购买检查，只允许购买价格为0的App。
-                </TextBlock>
+                           TextWrapping="Wrap"
+                           Text="{StaticResource A7}"/>
 
             </StackPanel>
         </ScrollViewer>

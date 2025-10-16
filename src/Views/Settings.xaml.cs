@@ -18,10 +18,10 @@ namespace IPAbuyer.Views
             InitializeCountryCode();
         }
 
-        private void OpenAppleAccountLink(object sender, RoutedEventArgs e)
+        private void AppleAccountButton(object sender, RoutedEventArgs e)
         {
-            var url = "https://account.apple.com";
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            var url = "https://account.apple.com/";
+            Process.Start(new ProcessStartInfo
             {
                 FileName = url,
                 UseShellExecute = true
@@ -38,8 +38,8 @@ namespace IPAbuyer.Views
         // 跳转到开发者官网
         private void GithubButton(object sender, RoutedEventArgs e)
         {
-            var url = "https://github.com/ipabuyer/";
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            var url = "https://ipa.blazesnow.com/";
+            Process.Start(new ProcessStartInfo
             {
                 FileName = url,
                 UseShellExecute = true
