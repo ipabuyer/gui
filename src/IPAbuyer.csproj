@@ -10,6 +10,10 @@
         <EnableMsixTooling>true</EnableMsixTooling>
         <WindowsPackageType>None</WindowsPackageType>
 
+        <!-- 版本号配置 -->
+        <ApplicationManifest>Package.appxmanifest</ApplicationManifest>
+        <Version>0.0.0.0</Version>
+
         <!-- Project Options -->
         <Nullable>enable</Nullable>
         <LangVersion>latest</LangVersion>
@@ -19,7 +23,6 @@
         <!-- App Options -->
         <UseRidGraph>true</UseRidGraph>
         <Platforms>x64;ARM64</Platforms>
-        <ApplicationManifest>app.manifest</ApplicationManifest>
         <PublishProfile>win-$(Platform).pubxml</PublishProfile>
         <RuntimeIdentifiers
             Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &gt;= 8">
@@ -27,6 +30,9 @@
         <RuntimeIdentifiers
             Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &lt; 8">
             win10-x64;win10-arm64</RuntimeIdentifiers>
+
+        <!-- 应用图标 -->
+        <ApplicationIcon>Assets\Icon.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>
@@ -48,8 +54,6 @@
         <PackageReference Include="Microsoft.Web.WebView2" Version="1.*" />
         <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.*" />
 
-        <Manifest Include="$(ApplicationManifest)" />
-
         <Content Include="Include\ipatool-2.2.0-windows-amd64.exe"
             Condition="'$(Platform)' == 'x64'">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -65,29 +69,19 @@
         </Content>
     </ItemGroup>
 
-    <!-- 
-        Defining the "Msix" ProjectCapability here allows the Single-project MSIX Packaging
-        Tools extension to be activated for this project even if the Windows App SDK Nuget
-        package has not yet been restored.
-    -->
     <ItemGroup
         Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
         <ProjectCapability Include="Msix" />
     </ItemGroup>
+
     <ItemGroup>
         <Page Update="Views\*.xaml">
             <Generator>MSBuild:Compile</Generator>
         </Page>
     </ItemGroup>
 
-    <!-- 
-        Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution 
-        Explorer "Package and Publish" context menu entry to be enabled for this project even if 
-        the Windows App SDK Nuget package has not yet been restored.
-    -->
     <PropertyGroup
         Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
         <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
-        <ApplicationIcon>Assets\Icon.ico</ApplicationIcon>
     </PropertyGroup>
 </Project>
