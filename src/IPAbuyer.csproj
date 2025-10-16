@@ -12,7 +12,7 @@
 
         <!-- 版本号配置 -->
         <ApplicationManifest>Package.appxmanifest</ApplicationManifest>
-        <Version>0.0.0.0</Version>
+        <Version>2025.10.16.1</Version>
 
         <!-- Project Options -->
         <Nullable>enable</Nullable>
