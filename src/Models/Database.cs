@@ -7,7 +7,7 @@ namespace IPAbuyer.Models
     public class Database
     {
 
-        public string? path; // 文件根目录
+        public string? path { get; } // 存放数据库文件的根目录
         public string? AppDBname = "PurchasedAppDb.db"; // 已购买app数据库文件名
         public string? AccountDBname = "KeychainConfig.db"; // 账户数据库文件名
         public string? AppDB; // 已购买app数据库路径
