@@ -10,29 +10,26 @@
 
     <Grid>
         <ScrollViewer>
-            <StackPanel Margin="100,20,100,20">
+            <StackPanel Spacing="15" Margin="50,20,50,50">
                 <!-- 标题 -->
                 <TextBlock
-                    VerticalAlignment="Top"
-                    Grid.Column="0"
-                    Margin="0"
-                    FontSize="40"
-                    FontWeight="Bold"
+                    Style="{ThemeResource TitleLargeTextBlockStyle}"
                     x:Uid="/SettingPage/Title" />
                 <!-- 关于软件 -->
-                <TextBlock Margin="20,20,0,0"
-                    FontSize="20"
+                <TextBlock
+                    Style="{ThemeResource SubtitleTextBlockStyle}"
                     x:Uid="/SettingPage/About" />
-                <Grid Margin="40,20,40,0">
+                <MenuFlyoutSeparator />
+                <!-- 国家地区代码 -->
+                <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="5*" />
                         <ColumnDefinition Width="3*" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <!-- 国家地区代码 -->
-                    <TextBlock VerticalAlignment="Center"
+                    <TextBlock
                         Grid.Column="0"
-                        FontSize="16"
                         TextWrapping="Wrap"
+                        Style="{ThemeResource BodyTextBlockStyle}"
                         x:Uid="/SettingPage/About_Country_Code" />
                     <Grid Grid.Column="1">
                         <Grid.ColumnDefinitions>
@@ -42,143 +39,131 @@
                         <TextBox Grid.Column="0"
                             x:Name="CountryCodeTextBox"
                             HorizontalAlignment="Right"
-                            MinWidth="80"
-                            FontSize="14"
                             PlaceholderText="cn"
                             KeyUp="CountryCodeTextBox_KeyUp" />
                         <Button Grid.Column="1"
                             HorizontalAlignment="Right"
-                            MinWidth="80"
-                            FontSize="14"
                             Click="CountryCodeButton"
                             x:Uid="/SettingPage/About_Country_Code_Button" />
                     </Grid>
                 </Grid>
+                <MenuFlyoutSeparator />
                 <!-- 开发者信息 -->
-                <Grid Margin="40,20,40,0">
+                <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="5*" />
                         <ColumnDefinition Width="3*" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock VerticalAlignment="Center"
+                    <TextBlock
                         Grid.Column="0"
-                        FontSize="16"
                         TextWrapping="Wrap"
+                        Style="{ThemeResource BodyTextBlockStyle}"
                         x:Uid="/SettingPage/About_Developer" />
-                    <Button HorizontalAlignment="Right"
+                    <Button
+                        HorizontalAlignment="Right"
                         Grid.Column="1"
-                        MinWidth="120"
-                        FontSize="14"
                         Click="GithubButton"
                         x:Uid="/SettingPage/About_Developer_Button" />
                 </Grid>
-
-                <Grid Margin="40,20,40,0">
+                <MenuFlyoutSeparator />
+                <!-- 清除数据库 -->
+                <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="5*" />
                         <ColumnDefinition Width="3*" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock VerticalAlignment="Center"
+                    <TextBlock
                         Grid.Column="0"
-                        FontSize="16"
                         TextWrapping="Wrap"
+                        Style="{ThemeResource BodyTextBlockStyle}"
                         x:Uid="/SettingPage/About_Remove_Database" />
                     <Button Foreground="White"
                         Background="Red"
                         HorizontalAlignment="Right"
                         Grid.Column="1"
-                        MinWidth="120"
-                        FontSize="14"
                         Click="DeleteDataBase"
                         x:Uid="/SettingPage/About_Remove_Database_Button" />
                 </Grid>
-
-                <TextBlock Margin="20,20,0,0"
-                    FontSize="20"
+                <!-- 常见问题 -->
+                <MenuFlyoutSeparator />
+                <TextBlock
+                    Style="{ThemeResource SubtitleTextBlockStyle}"
                     x:Uid="/QA/Title" />
-
-
-                <TextBlock Margin="40,20,40,0"
-                    FontSize="16"
+                <MenuFlyoutSeparator />
+                <TextBlock
                     TextWrapping="Wrap"
+                    Style="{ThemeResource BodyStrongTextBlockStyle}"
                     x:Uid="/QA/Q1" />
-                <Grid Margin="60,20,40,0">
+                <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="5*" />
-                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="3*" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0"
-                        FontWeight="Light"
-                        FontSize="16"
                         TextWrapping="Wrap"
+                        Style="{ThemeResource BodyTextBlockStyle}"
                         x:Uid="/QA/A1" />
-
                     <Button Grid.Row="1"
                         HorizontalAlignment="Right"
-                        VerticalAlignment="Top"
+                        VerticalAlignment="Center"
                         Grid.Column="1"
-                        MinWidth="120"
-                        FontSize="14"
                         Click="AppleAccountButton"
                         x:Uid="/QA/Apple_Account_Button" />
                 </Grid>
-
-
-                <TextBlock Margin="40,20,40,0"
-                    FontSize="16"
+                <MenuFlyoutSeparator />
+                <TextBlock
                     TextWrapping="Wrap"
+                    Style="{ThemeResource BodyStrongTextBlockStyle}"
                     x:Uid="/QA/Q2" />
-                <TextBlock Margin="60,20,40,0"
-                    FontWeight="Light"
-                    FontSize="16"
+                <TextBlock
                     TextWrapping="Wrap"
+                    Style="{ThemeResource BodyTextBlockStyle}"
                     x:Uid="/QA/A2" />
-                <TextBlock Margin="40,20,40,0"
-                    FontSize="16"
+                <MenuFlyoutSeparator />
+                <TextBlock
                     TextWrapping="Wrap"
+                    Style="{ThemeResource BodyStrongTextBlockStyle}"
                     x:Uid="/QA/Q3" />
-                <TextBlock Margin="60,20,40,0"
-                    FontWeight="Light"
-                    FontSize="16"
+                <TextBlock
                     TextWrapping="Wrap"
+                    Style="{ThemeResource BodyTextBlockStyle}"
                     x:Uid="/QA/A3" />
-                <TextBlock Margin="40,20,40,0"
-                    FontSize="16"
+                <MenuFlyoutSeparator />
+                <TextBlock
                     TextWrapping="Wrap"
+                    Style="{ThemeResource BodyStrongTextBlockStyle}"
                     x:Uid="/QA/Q4" />
-                <TextBlock Margin="60,20,40,0"
-                    FontWeight="Light"
-                    FontSize="16"
+                <TextBlock
                     TextWrapping="Wrap"
+                    Style="{ThemeResource BodyTextBlockStyle}"
                     x:Uid="/QA/A4" />
-                <TextBlock Margin="40,20,40,0"
-                    FontSize="16"
+                <MenuFlyoutSeparator />
+                <TextBlock
                     TextWrapping="Wrap"
+                    Style="{ThemeResource BodyStrongTextBlockStyle}"
                     x:Uid="/QA/Q5" />
-                <TextBlock Margin="60,20,40,0"
-                    FontWeight="Light"
-                    FontSize="16"
+                <TextBlock
                     TextWrapping="Wrap"
+                    Style="{ThemeResource BodyTextBlockStyle}"
                     x:Uid="/QA/A5" />
-                <TextBlock Margin="40,20,40,0"
-                    FontSize="16"
+                <MenuFlyoutSeparator />
+                <TextBlock
                     TextWrapping="Wrap"
+                    Style="{ThemeResource BodyStrongTextBlockStyle}"
                     x:Uid="/QA/Q6" />
-                <TextBlock Margin="60,20,40,0"
-                    FontWeight="Light"
-                    FontSize="16"
+                <TextBlock
                     TextWrapping="Wrap"
+                    Style="{ThemeResource BodyTextBlockStyle}"
                     x:Uid="/QA/A6" />
-                <TextBlock Margin="40,20,40,0"
-                    FontSize="16"
+                <MenuFlyoutSeparator />
+                <TextBlock
                     TextWrapping="Wrap"
+                    Style="{ThemeResource BodyStrongTextBlockStyle}"
                     x:Uid="/QA/Q7" />
-                <TextBlock Margin="60,20,40,0"
-                    FontWeight="Light"
-                    FontSize="16"
+                <TextBlock
                     TextWrapping="Wrap"
+                    Style="{ThemeResource BodyTextBlockStyle}"
                     x:Uid="/QA/A7" />
-
             </StackPanel>
         </ScrollViewer>
     </Grid>
