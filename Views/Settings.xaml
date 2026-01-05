@@ -11,7 +11,7 @@
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Resources/QAData.xaml"/>
+                <ResourceDictionary Source="/Resources/QAData.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Page.Resources>
@@ -19,172 +19,173 @@
     <Grid>
         <ScrollViewer>
             <StackPanel Margin="100,20,100,20">
+                <!-- 标题 -->
                 <TextBlock
                     VerticalAlignment="Top"
                     Grid.Column="0"
                     Margin="0"
                     FontSize="40"
                     FontWeight="Bold"
-                    Text="设置"/>
-
+                    x:Uid="/SettingPage/Title" />
+                <!-- 关于软件 -->
                 <TextBlock Margin="20,20,0,0"
-                           FontSize="20"
-                           Text="软件相关"/>
-
+                    FontSize="20"
+                    x:Uid="/SettingPage/About" />
                 <Grid Margin="40,20,40,0">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="5*"/>
-                        <ColumnDefinition Width="3*"/>
+                        <ColumnDefinition Width="5*" />
+                        <ColumnDefinition Width="3*" />
                     </Grid.ColumnDefinitions>
+                    <!-- 国家地区代码 -->
                     <TextBlock VerticalAlignment="Center"
-                               Grid.Column="0"
-                               FontSize="16"
-                               TextWrapping="Wrap"
-                               Text="输入国家或地区代码，以便访问对应国家或地区的App Store（默认为cn）"/>
+                        Grid.Column="0"
+                        FontSize="16"
+                        TextWrapping="Wrap"
+                        x:Uid="/SettingPage/About_Country_Code" />
                     <Grid Grid.Column="1">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="2*"/>
-                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <TextBox Grid.Column="0"
-                                 x:Name="CountryCodeTextBox"
-                                 HorizontalAlignment="Right"
-                                 MinWidth="120"
-                                 FontSize="14"
-                                 PlaceholderText="cn"
-                                 KeyUp="CountryCodeTextBox_KeyUp"/>
+                            x:Name="CountryCodeTextBox"
+                            HorizontalAlignment="Right"
+                            MinWidth="120"
+                            FontSize="14"
+                            PlaceholderText="cn"
+                            KeyUp="CountryCodeTextBox_KeyUp" />
                         <Button Grid.Column="1"
-                                HorizontalAlignment="Right"
-                                Width="40"
-                                FontSize="14"
-                                Click="CountryCodeButton"
-                                Content="✓"/>
+                            HorizontalAlignment="Right"
+                            Width="40"
+                            FontSize="14"
+                            Click="CountryCodeButton"
+                            x:Uid="/SettingPage/About_Country_Code_Button" />
                     </Grid>
                 </Grid>
-
+                <!-- 开发者信息 -->
                 <Grid Margin="40,20,40,0">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="5*"/>
-                        <ColumnDefinition Width="3*"/>
+                        <ColumnDefinition Width="5*" />
+                        <ColumnDefinition Width="3*" />
                     </Grid.ColumnDefinitions>
                     <TextBlock VerticalAlignment="Center"
-                               Grid.Column="0"
-                               FontSize="16"
-                               TextWrapping="Wrap"
-                               Text="点击跳转按钮以了解本软件开发者的更多信息"/>
+                        Grid.Column="0"
+                        FontSize="16"
+                        TextWrapping="Wrap"
+                        x:Uid="/SettingPage/About_Developer" />
                     <Button HorizontalAlignment="Right"
-                            Grid.Column="1"
-                            MinWidth="120"
-                            FontSize="14"
-                            Click="GithubButton"
-                            Content="访问官方网站"/>
+                        Grid.Column="1"
+                        MinWidth="120"
+                        FontSize="14"
+                        Click="GithubButton"
+                        x:Uid="/SettingPage/About_Developer_Button" />
                 </Grid>
 
                 <Grid Margin="40,20,40,0">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="5*"/>
-                        <ColumnDefinition Width="3*"/>
+                        <ColumnDefinition Width="5*" />
+                        <ColumnDefinition Width="3*" />
                     </Grid.ColumnDefinitions>
                     <TextBlock VerticalAlignment="Center"
-                               Grid.Column="0"
-                               FontSize="16"
-                               TextWrapping="Wrap"
-                               Text="本地数据库保存了已购买的App列表，以便展示App是否已购买"/>
+                        Grid.Column="0"
+                        FontSize="16"
+                        TextWrapping="Wrap"
+                        x:Uid="/SettingPage/About_Remove_Database" />
                     <Button Foreground="White"
-                            Background="Red"
-                            HorizontalAlignment="Right"
-                            Grid.Column="1"
-                            MinWidth="120"
-                            FontSize="14"
-                            Click="DeleteDataBase"
-                            Content="清除本地数据库"/>
+                        Background="Red"
+                        HorizontalAlignment="Right"
+                        Grid.Column="1"
+                        MinWidth="120"
+                        FontSize="14"
+                        Click="DeleteDataBase"
+                        x:Uid="/SettingPage/About_Remove_Database_Button" />
                 </Grid>
 
                 <TextBlock Margin="20,20,0,0"
-                           FontSize="20"
-                           Text="常见问题"/>
+                    FontSize="20"
+                    x:Uid="/QA/Title" />
 
 
                 <TextBlock Margin="40,20,40,0"
-                           FontSize="16"
-                           TextWrapping="Wrap"
-                           Text="{StaticResource Q1}"/>
+                    FontSize="16"
+                    TextWrapping="Wrap"
+                    x:Uid="/QA/Q1" />
                 <Grid Margin="60,20,40,0">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="5*"/>
-                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="5*" />
+                        <ColumnDefinition Width="2*" />
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0"
-                               FontWeight="Light"
-                               FontSize="16"
-                               TextWrapping="Wrap"
-                               Text="{StaticResource A1}"/>
+                        FontWeight="Light"
+                        FontSize="16"
+                        TextWrapping="Wrap"
+                        x:Uid="/QA/A1" />
 
                     <Button Grid.Row="1"
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Top"
-                            Grid.Column="1"
-                            MinWidth="120"
-                            FontSize="14"
-                            Click="AppleAccountButton"
-                            Content="打开苹果账户官网"/>
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Grid.Column="1"
+                        MinWidth="120"
+                        FontSize="14"
+                        Click="AppleAccountButton"
+                        x:Uid="/QA/Apple_Account_Button" />
                 </Grid>
 
 
                 <TextBlock Margin="40,20,40,0"
-                           FontSize="16"
-                           TextWrapping="Wrap"
-                           Text="{StaticResource Q2}"/>
+                    FontSize="16"
+                    TextWrapping="Wrap"
+                    x:Uid="/QA/Q2" />
                 <TextBlock Margin="60,20,40,0"
-                           FontWeight="Light"
-                           FontSize="16"
-                           TextWrapping="Wrap"
-                           Text="{StaticResource A2}"/>
+                    FontWeight="Light"
+                    FontSize="16"
+                    TextWrapping="Wrap"
+                    x:Uid="/QA/A2" />
                 <TextBlock Margin="40,20,40,0"
-                           FontSize="16"
-                           TextWrapping="Wrap"
-                           Text="{StaticResource Q3}"/>
+                    FontSize="16"
+                    TextWrapping="Wrap"
+                    x:Uid="/QA/Q3" />
                 <TextBlock Margin="60,20,40,0"
-                           FontWeight="Light"
-                           FontSize="16"
-                           TextWrapping="Wrap"
-                           Text="{StaticResource A3}"/>
+                    FontWeight="Light"
+                    FontSize="16"
+                    TextWrapping="Wrap"
+                    x:Uid="/QA/A3" />
                 <TextBlock Margin="40,20,40,0"
-                           FontSize="16"
-                           TextWrapping="Wrap"
-                           Text="{StaticResource Q4}"/>
+                    FontSize="16"
+                    TextWrapping="Wrap"
+                    x:Uid="/QA/Q4" />
                 <TextBlock Margin="60,20,40,0"
-                           FontWeight="Light"
-                           FontSize="16"
-                           TextWrapping="Wrap"
-                           Text="{StaticResource A4}"/>
+                    FontWeight="Light"
+                    FontSize="16"
+                    TextWrapping="Wrap"
+                    x:Uid="/QA/A4" />
                 <TextBlock Margin="40,20,40,0"
-                           FontSize="16"
-                           TextWrapping="Wrap"
-                           Text="{StaticResource Q5}"/>
+                    FontSize="16"
+                    TextWrapping="Wrap"
+                    x:Uid="/QA/Q5" />
                 <TextBlock Margin="60,20,40,0"
-                           FontWeight="Light"
-                           FontSize="16"
-                           TextWrapping="Wrap"
-                           Text="{StaticResource A5}"/>
+                    FontWeight="Light"
+                    FontSize="16"
+                    TextWrapping="Wrap"
+                    x:Uid="/QA/A5" />
                 <TextBlock Margin="40,20,40,0"
-                           FontSize="16"
-                           TextWrapping="Wrap"
-                           Text="{StaticResource Q6}"/>
+                    FontSize="16"
+                    TextWrapping="Wrap"
+                    x:Uid="/QA/Q6" />
                 <TextBlock Margin="60,20,40,0"
-                           FontWeight="Light"
-                           FontSize="16"
-                           TextWrapping="Wrap"
-                           Text="{StaticResource A6}"/>
+                    FontWeight="Light"
+                    FontSize="16"
+                    TextWrapping="Wrap"
+                    x:Uid="/QA/A6" />
                 <TextBlock Margin="40,20,40,0"
-                           FontSize="16"
-                           TextWrapping="Wrap"
-                           Text="{StaticResource Q7}"/>
+                    FontSize="16"
+                    TextWrapping="Wrap"
+                    x:Uid="/QA/Q7" />
                 <TextBlock Margin="60,20,40,0"
-                           FontWeight="Light"
-                           FontSize="16"
-                           TextWrapping="Wrap"
-                           Text="{StaticResource A7}"/>
+                    FontWeight="Light"
+                    FontSize="16"
+                    TextWrapping="Wrap"
+                    x:Uid="/QA/A7" />
 
             </StackPanel>
         </ScrollViewer>

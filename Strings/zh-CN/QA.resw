@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0"
+                  msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0"
+                  msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required"
+                msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0"
+                  msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0,
+      Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0,
+      Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <data name="Title.Text" xml:space="preserve">
+    <value>常见问题</value>
+  </data>
+
+  <data name="Q1.Text" xml:space="preserve">
+    <value>无法获取双重验证码？</value>
+  </data>
+  <data name="A1.Text" xml:space="preserve">
+    <value>对于登录在苹果设备，而不是仅使用手机号作为双重验证手段的账户，无法获取双重验证码是本软件的可预见的问题。请使用https://account.apple.com/获取双重验证码并填入本软件中。</value>
+  </data>
+  <data name="Apple_Account_Button.Content" xml:space="preserve">
+    <value>打开苹果账户官网</value>
+  </data>
+
+  <data name="Q2.Text" xml:space="preserve">
+    <value>账户、密码和双重验证码都正确，但无法登入？</value>
+  </data>
+  <data name="A2.Text" xml:space="preserve">
+    <value>受限于苹果的账户政策，要正常使用IPAbuyer，您的苹果账户需要登录过iCloud和AppStore，并在AppStore中进行过一次有效的购买。</value>
+  </data>
+
+  <data name="Q3.Text" xml:space="preserve">
+    <value>为什么已购买的App在iPhone上仍然显示未购买？</value>
+  </data>
+  <data name="A3.Text" xml:space="preserve">
+    <value>这是因为iPhone未对已购买App列表进行刷新，在iPhone上对任意App进行一次购买即可刷新整个列表。</value>
+  </data>
+
+  <data name="Q4.Text" xml:space="preserve">
+    <value>为什么iPhone上已购买的App在软件内显示未购买？</value>
+  </data>
+  <data name="A4.Text" xml:space="preserve">
+    <value>对于App是否购买，软件会以购买App的形式，向Apple服务器查询，这个过程受限于软件策略，只有用户手动点击购买后，才能获取软件的购买状态，所以软件内显示已购买的软件数量必然≤账户已购买的软件数量。</value>
+  </data>
+
+  <data name="Q5.Text" xml:space="preserve">
+    <value>什么是“已购买”和“已拥有”？</value>
+  </data>
+  <data name="A5.Text" xml:space="preserve">
+    <value>“已购买”是指通过本软件购买的App，“已拥有”是指未通过本软件购买的App。清空软件数据库会丢失“已购买”状态，在下一次查询后变为“已拥有”。</value>
+  </data>
+
+  <data name="Q6.Text" xml:space="preserve">
+    <value>登录账户安全吗？</value>
+  </data>
+  <data name="A6.Text" xml:space="preserve">
+    <value>本软件将所有的登录信息保存于本地，不会对任何敏感信息进行上传，同时使用存储于软件数据库的随机密钥进行加密。</value>
+  </data>
+
+  <data name="Q7.Text" xml:space="preserve">
+    <value>为什么不能进行付费购买？</value>
+  </data>
+  <data name="A7.Text" xml:space="preserve">
+    <value>为了保证账户安全性，本软件将进行App购买检查，只允许购买价格为0的App。</value>
+  </data>
+</root>
