@@ -699,11 +699,6 @@ namespace IPAbuyer.Views
             UpdatePagingButtons();
         }
 
-        private void SettingsButton_Click(object sender, RoutedEventArgs e)
-        {
-            Frame.Navigate(typeof(Settings));
-        }
-
         private async void LogoutButton_Click(object sender, RoutedEventArgs e)
         {
             var logoutButton = GetControl<Button>("LogoutButton");

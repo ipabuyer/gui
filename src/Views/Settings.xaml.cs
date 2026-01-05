@@ -28,13 +28,6 @@ namespace IPAbuyer.Views
             });
         }
 
-        // 返回首页
-        private void BackToMainpage(object sender, RoutedEventArgs e)
-        {
-            Frame.Navigate(typeof(MainPage));
-        }
-
-        // 明暗模式 ComboBox 改变时触发(已删除)
         // 跳转到开发者官网
         private void GithubButton(object sender, RoutedEventArgs e)
         {
