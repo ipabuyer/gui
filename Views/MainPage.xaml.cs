@@ -26,7 +26,7 @@ namespace IPAbuyer.Views
         private bool _isLoggedIn;
         private string _selectedFilter = "All";
         private const string TestAccountName = "test";
-    private string _countryCode = "cn";
+        private string _countryCode = "cn";
         private static readonly TimeSpan TestPurchaseDelay = TimeSpan.FromMilliseconds(1000);
 
         public int SearchLimitNum { get; set; } = 5;
@@ -697,11 +697,6 @@ namespace IPAbuyer.Views
         private void AppNameBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             UpdatePagingButtons();
-        }
-
-        private void SettingsButton_Click(object sender, RoutedEventArgs e)
-        {
-            Frame.Navigate(typeof(Settings));
         }
 
         private async void LogoutButton_Click(object sender, RoutedEventArgs e)

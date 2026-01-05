@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="IPAbuyer.Views.Settings"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:IPAbuyer"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid>
+        <ScrollViewer>
+            <StackPanel Spacing="15" Margin="50,20,50,50">
+                <!-- 标题 -->
+                <TextBlock
+                    Style="{ThemeResource TitleLargeTextBlockStyle}"
+                    x:Uid="/SettingPage/Title" />
+                <!-- 关于软件 -->
+                <TextBlock
+                    Style="{ThemeResource SubtitleTextBlockStyle}"
+                    x:Uid="/SettingPage/About" />
+                <MenuFlyoutSeparator />
+                <!-- 国家地区代码 -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="3*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        Grid.Column="0"
+                        TextWrapping="Wrap"
+                        Style="{ThemeResource BodyTextBlockStyle}"
+                        x:Uid="/SettingPage/About_Country_Code" />
+                    <Grid Grid.Column="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0"
+                            x:Name="CountryCodeTextBox"
+                            HorizontalAlignment="Right"
+                            PlaceholderText="cn"
+                            KeyUp="CountryCodeTextBox_KeyUp" />
+                        <Button Grid.Column="1"
+                            HorizontalAlignment="Right"
+                            Click="CountryCodeButton"
+                            x:Uid="/SettingPage/About_Country_Code_Button" />
+                    </Grid>
+                </Grid>
+                <MenuFlyoutSeparator />
+                <!-- 开发者信息 -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="3*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        Grid.Column="0"
+                        TextWrapping="Wrap"
+                        Style="{ThemeResource BodyTextBlockStyle}"
+                        x:Uid="/SettingPage/About_Developer" />
+                    <Button
+                        HorizontalAlignment="Right"
+                        Grid.Column="1"
+                        Click="GithubButton"
+                        x:Uid="/SettingPage/About_Developer_Button" />
+                </Grid>
+                <MenuFlyoutSeparator />
+                <!-- 清除数据库 -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="3*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        Grid.Column="0"
+                        TextWrapping="Wrap"
+                        Style="{ThemeResource BodyTextBlockStyle}"
+                        x:Uid="/SettingPage/About_Remove_Database" />
+                    <Button Foreground="White"
+                        Background="Red"
+                        HorizontalAlignment="Right"
+                        Grid.Column="1"
+                        Click="DeleteDataBase"
+                        x:Uid="/SettingPage/About_Remove_Database_Button" />
+                </Grid>
+                <!-- 常见问题 -->
+                <MenuFlyoutSeparator />
+                <TextBlock
+                    Style="{ThemeResource SubtitleTextBlockStyle}"
+                    x:Uid="/QA/Title" />
+                <MenuFlyoutSeparator />
+                <TextBlock
+                    TextWrapping="Wrap"
+                    Style="{ThemeResource BodyStrongTextBlockStyle}"
+                    x:Uid="/QA/Q1" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="3*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                        TextWrapping="Wrap"
+                        Style="{ThemeResource BodyTextBlockStyle}"
+                        x:Uid="/QA/A1" />
+                    <Button Grid.Row="1"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Grid.Column="1"
+                        Click="AppleAccountButton"
+                        x:Uid="/QA/Apple_Account_Button" />
+                </Grid>
+                <MenuFlyoutSeparator />
+                <TextBlock
+                    TextWrapping="Wrap"
+                    Style="{ThemeResource BodyStrongTextBlockStyle}"
+                    x:Uid="/QA/Q2" />
+                <TextBlock
+                    TextWrapping="Wrap"
+                    Style="{ThemeResource BodyTextBlockStyle}"
+                    x:Uid="/QA/A2" />
+                <MenuFlyoutSeparator />
+                <TextBlock
+                    TextWrapping="Wrap"
+                    Style="{ThemeResource BodyStrongTextBlockStyle}"
+                    x:Uid="/QA/Q3" />
+                <TextBlock
+                    TextWrapping="Wrap"
+                    Style="{ThemeResource BodyTextBlockStyle}"
+                    x:Uid="/QA/A3" />
+                <MenuFlyoutSeparator />
+                <TextBlock
+                    TextWrapping="Wrap"
+                    Style="{ThemeResource BodyStrongTextBlockStyle}"
+                    x:Uid="/QA/Q4" />
+                <TextBlock
+                    TextWrapping="Wrap"
+                    Style="{ThemeResource BodyTextBlockStyle}"
+                    x:Uid="/QA/A4" />
+                <MenuFlyoutSeparator />
+                <TextBlock
+                    TextWrapping="Wrap"
+                    Style="{ThemeResource BodyStrongTextBlockStyle}"
+                    x:Uid="/QA/Q5" />
+                <TextBlock
+                    TextWrapping="Wrap"
+                    Style="{ThemeResource BodyTextBlockStyle}"
+                    x:Uid="/QA/A5" />
+                <MenuFlyoutSeparator />
+                <TextBlock
+                    TextWrapping="Wrap"
+                    Style="{ThemeResource BodyStrongTextBlockStyle}"
+                    x:Uid="/QA/Q6" />
+                <TextBlock
+                    TextWrapping="Wrap"
+                    Style="{ThemeResource BodyTextBlockStyle}"
+                    x:Uid="/QA/A6" />
+                <MenuFlyoutSeparator />
+                <TextBlock
+                    TextWrapping="Wrap"
+                    Style="{ThemeResource BodyStrongTextBlockStyle}"
+                    x:Uid="/QA/Q7" />
+                <TextBlock
+                    TextWrapping="Wrap"
+                    Style="{ThemeResource BodyTextBlockStyle}"
+                    x:Uid="/QA/A7" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

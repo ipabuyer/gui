@@ -30,14 +30,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Content Include="Assets\SplashScreen.scale-200.png" />
-        <Content Include="Assets\LockScreenLogo.scale-200.png" />
-        <Content Include="Assets\Square150x150Logo.scale-200.png" />
-        <Content Include="Assets\Square44x44Logo.scale-200.png" />
-        <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
-        <Content Include="Assets\StoreLogo.png" />
-        <Content Include="Assets\Wide310x150Logo.scale-200.png" />
-        <Content Include="Assets\Icon.ico">
+        <Content Include="Assets\*.png" />
+        <Content Include="Assets\*.ico">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
     </ItemGroup>
@@ -50,15 +44,13 @@
 
         <Manifest Include="$(ApplicationManifest)" />
 
-        <Content Include="Include\ipatool-2.2.0-windows-amd64.exe"
-            Condition="'$(Platform)' == 'x64'">
+        <Content Include="Include\*amd64.exe" Condition="'$(Platform)' == 'x64'">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <TargetPath>ipatool.exe</TargetPath>
             <IncludeInPackage>true</IncludeInPackage>
         </Content>
 
-        <Content Include="Include\ipatool-2.2.0-windows-arm64.exe"
-            Condition="'$(Platform)' == 'ARM64'">
+        <Content Include="Include\*arm64.exe" Condition="'$(Platform)' == 'ARM64'">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <TargetPath>ipatool.exe</TargetPath>
             <IncludeInPackage>true</IncludeInPackage>
