@@ -8,21 +8,21 @@
   mc:Ignorable="d">
 
   <NavigationView x:Name="NavView"
-                  PaneDisplayMode="Left"
-                  IsSettingsVisible="False"
-                  ItemInvoked="NavView_ItemInvoked"
-                  OpenPaneLength="180">
+    PaneDisplayMode="Left"
+    IsSettingsVisible="False"
+    ItemInvoked="NavView_ItemInvoked"
+    OpenPaneLength="180">
     <NavigationView.MenuItems>
       <NavigationViewItem Content="主页"
-          Icon="Home"
-          Tag="MainPage"/>
+        Icon="Home"
+        Tag="MainPage" />
       <NavigationViewItem Content="登录"
-          Icon="Contact"
-          Tag="LoginPage"/>
+        Icon="Contact"
+        Tag="LoginPage" />
       <NavigationViewItem Content="设置"
-          Icon="Setting"
-          Tag="SettingsPage"/>
+        Icon="Setting"
+        Tag="SettingsPage" />
     </NavigationView.MenuItems>
-    <Frame x:Name="ContentFrame"/>
+    <Frame x:Name="ContentFrame" />
   </NavigationView>
 </Window>
