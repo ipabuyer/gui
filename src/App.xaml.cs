@@ -18,6 +18,7 @@ namespace IPAbuyer
     {
         private Window? _window;
 
+        // 构造函数
         public App()
         {
             try
@@ -35,26 +36,17 @@ namespace IPAbuyer
             }
         }
 
+        // 应用启动时调用
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
             try
             {
-                _window = new Window
+                _window = new MainWindow()
                 {
-                    Title = "IPAbuyer - 快速购买AppStore中的应用",
+                    Title = "IPAbuyer - 快速购买 AppStore 中的应用",
                 };
 
                 SetWindowIcon(_window);
-
-                // 创建 Frame 用于页面导航
-                Frame rootFrame = new Frame();
-                rootFrame.NavigationFailed += OnNavigationFailed;
-
-                // 导航到主页
-                rootFrame.Navigate(typeof(MainPage));
-
-                // 将 Frame 设置为窗口内容
-                _window.Content = rootFrame;
 
                 // 激活窗口
                 _window.Activate();
@@ -66,14 +58,13 @@ namespace IPAbuyer
             }
         }
 
-        /// <summary>
-        /// 导航失败时的处理
-        /// </summary>
+        // 导航失败时的处理
         void OnNavigationFailed(object sender, NavigationFailedEventArgs e)
         {
             throw new Exception($"Failed to load Page {e.SourcePageType.FullName}");
         }
 
+        // 设置窗口图标
         private static void SetWindowIcon(Window window)
         {
             try
@@ -89,12 +80,12 @@ namespace IPAbuyer
                 }
                 else
                 {
-                    Debug.WriteLine($"App icon not found at {iconPath}");
+                    Debug.WriteLine($"应用图标未找到，路径为 {iconPath}");
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Failed to set window icon: {ex.Message}");
+                Debug.WriteLine($"加载图标失败 {ex.Message}");
             }
         }
     }

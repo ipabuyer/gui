@@ -26,7 +26,7 @@ namespace IPAbuyer.Views
         private bool _isLoggedIn;
         private string _selectedFilter = "All";
         private const string TestAccountName = "test";
-    private string _countryCode = "cn";
+        private string _countryCode = "cn";
         private static readonly TimeSpan TestPurchaseDelay = TimeSpan.FromMilliseconds(1000);
 
         public int SearchLimitNum { get; set; } = 5;
