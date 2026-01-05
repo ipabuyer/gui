@@ -1,1 +1,1 @@
-dotnet run --project .\src\IPAbuyer.csproj /p:Platform=x64
+dotnet run --project .\IPAbuyer.csproj /p:Platform=x64

@@ -1,7 +1,7 @@
 # VS和其他IDE的隐藏文件
 .vs/
 .config/
-src/AppPackages/
+AppPackages/
 *.suo
 
 # 证书和密钥
@@ -32,4 +32,4 @@ obj/
 *.runtimeconfig.json
 
 # 不忽略上游exe
-!src/Include/*.exe
+!Include/*.exe

@@ -5,7 +5,7 @@ on:
 
 
 env:
-  PROJECTCSPROJ: .\src\IPAbuyer.csproj
+  PROJECTCSPROJ: .\IPAbuyer.csproj
 
 jobs:
   build:
