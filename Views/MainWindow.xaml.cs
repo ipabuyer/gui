@@ -12,7 +12,11 @@ namespace IPAbuyer.Views
         {
             this.InitializeComponent();
 
-            // 恢复系统标题栏，设置窗口标题和图标
+            // 设置自定义标题栏
+            this.ExtendsContentIntoTitleBar = true;
+            this.SetTitleBar(CustomTitleBar);
+
+            // 设置窗口标题和图标
             this.Title = "IPAbuyer - 快速购买 AppStore 中的应用";
             SetWindowIcon(this);
 
@@ -26,6 +30,22 @@ namespace IPAbuyer.Views
                     NavView.SelectedItem = nvi;
                     break;
                 }
+            }
+        }
+        // 侧边栏展开按钮事件
+        private void PaneToggleButton_Click(object sender, RoutedEventArgs e)
+        {
+            NavView.IsPaneOpen = !NavView.IsPaneOpen;
+        }
+
+        // 搜索按钮事件
+        private void SearchButton_Click(object sender, RoutedEventArgs e)
+        {
+            // 获取搜索框内容并传递到MainPage
+            var appName = AppNameBox.Text?.Trim() ?? string.Empty;
+            if (ContentFrame.Content is MainPage mainPage)
+            {
+                mainPage.PerformSearchFromMainWindow(appName);
             }
         }
 

@@ -36,6 +36,17 @@ namespace IPAbuyer.Views
             Unloaded += MainPage_Unloaded;
         }
 
+        // 供主窗口调用的搜索入口
+        public async void PerformSearchFromMainWindow(string appName)
+        {
+            if (string.IsNullOrWhiteSpace(appName))
+            {
+                UpdateStatusBar("请输入应用名称", true);
+                return;
+            }
+            await PerformSearchAsync(_pageCts.Token, appName);
+        }
+
         private void MainPage_Unloaded(object sender, RoutedEventArgs e)
         {
             if (!_pageCts.IsCancellationRequested)
@@ -502,6 +513,46 @@ namespace IPAbuyer.Views
                 };
 
                 _ = dialog.ShowAsync();
+            }
+        }
+
+        // 已移除本地搜索按钮和输入框事件，统一由主窗口处理
+
+        // 正确位置：PerformSearchAsync 方法
+        private async Task PerformSearchAsync(CancellationToken cancellationToken, string appName)
+        {
+            var account = GetActiveAccount();
+            var normalizedAccount = NormalizeAccount(account);
+            var countryCode = GetCurrentCountryCode();
+
+            UpdateStatusBar($"正在搜索 \"{appName}\"");
+
+            try
+            {
+                var result = await ipatoolExecution.SearchAppAsync(appName, SearchLimitNum, normalizedAccount, countryCode, cancellationToken);
+
+                if (result.TimedOut)
+                {
+                    UpdateStatusBar("搜索超时，请稍后再试", true);
+                    return;
+                }
+
+                string payload = result.OutputOrError;
+                if (string.IsNullOrWhiteSpace(payload))
+                {
+                    UpdateStatusBar("搜索失败：未收到有效响应", true);
+                    return;
+                }
+
+                ParseSearchResponse(payload, normalizedAccount);
+            }
+            catch (OperationCanceledException)
+            {
+                UpdateStatusBar("搜索已取消", true);
+            }
+            catch (Exception ex)
+            {
+                UpdateStatusBar($"搜索失败: {ex.Message}", true);
             }
         }
 
