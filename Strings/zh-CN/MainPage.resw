@@ -143,7 +143,10 @@
   <data name="ListView_Status" xml:space="preserve">
     <value>状态</value>
   </data>
-  <data name="Purchase_Button" xml:space="preserve">
+  <data name="Download_Button.Content" xml:space="preserve">
+    <value>下载</value>
+  </data>
+  <data name="Purchase_Button.Content" xml:space="preserve">
     <value>购买</value>
   </data>
   <data name="Search_Button.Content" xml:space="preserve">

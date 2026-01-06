@@ -8,75 +8,41 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
     <Page.Content>
-        <Grid Margin="100,20,100,20">
+        <Grid Margin="50,50,50,20">
             <!-- 搜索区 -->
-            <Grid HorizontalAlignment="Left"
-                VerticalAlignment="Top"
-                Margin="0,40,0,0">
+            <Grid HorizontalAlignment="Center"
+                VerticalAlignment="Top">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="3*" />
-                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <TextBox Grid.Column="0"
                     x:Name="AppNameBox"
-                    MinWidth="300"
-                    MinHeight="20"
+                    Width="300"
+                    Height="20"
                     PlaceholderText="请输入App名称"
                     IsSpellCheckEnabled="False"
                     KeyUp="Search_KeyUp"
-                    TextChanged="AppNameBox_TextChanged">
-                </TextBox>
+                    TextChanged="AppNameBox_TextChanged" />
                 <Button Grid.Column="1"
                     x:Name="SearchButton"
                     Click="SearchButton_Click"
-                    MinHeight="30"
-                    MinWidth="100"
-                    Margin="16,0,0,0">
-                    开始查询
-                </Button>
+                    Margin="16,0,0,0"
+                    x:Uid="/MainPage/Search_Button" />
                 <TextBlock Grid.Column="2"
                     x:Name="CountryCodeShowTextBlock"
                     VerticalAlignment="Center"
-                    FontSize="14"
-                    Foreground="Gray"
+                    Style="{ThemeResource CaptionTextBlockStyle}"
                     Margin="16,0,0,0"
                     Text="国家/地区代码：cn" />
             </Grid>
 
-            <Grid HorizontalAlignment="Left"
-                VerticalAlignment="Top"
-                Margin="0,90,0,0"
-                Width="400">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="6*" />
-                    <ColumnDefinition Width="2*" />
-                </Grid.ColumnDefinitions>
-                <Slider Grid.Column="0"
-                    x:Name="SearchLimit"
-                    Minimum="1"
-                    Maximum="100"
-                    Value="5"
-                    MinWidth="300"
-                    IsThumbToolTipEnabled="True"
-                    ValueChanged="SearchLimit_ValueChanged" />
-                <TextBlock x:Name="SearchLimitNumText"
-                    Text="5"
-                    Grid.Column="1"
-                    FontSize="14"
-                    Foreground="Gray"
-                    Margin="16,0,0,0"
-                    VerticalAlignment="Center" />
-            </Grid>
-
             <!-- 操作按钮区 -->
-            <Grid HorizontalAlignment="Right"
+            <Grid HorizontalAlignment="Left"
                 VerticalAlignment="Top"
                 Margin="0,90,0,0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
@@ -85,33 +51,17 @@
                     Margin="0,0,0,0"
                     x:Name="BatchPurchaseButton"
                     Click="BatchPurchaseButton_Click"
-                    MinHeight="30"
-                    MinWidth="100">
-                    购买
-                </Button>
-                <Button Grid.Column="1"
+                    x:Uid="/MainPage/Purchase_Button" />
+                <!-- <Button Grid.Column="1"
                     Margin="10,0,0,0"
-                    x:Name="PrevPageButton"
-                    Click="PrevPageButton_Click"
-                    MinHeight="30"
-                    MinWidth="100">
-                    上一页
-                </Button>
-                <Button Grid.Column="2"
-                    Margin="10,0,0,0"
-                    x:Name="NextPageButton"
-                    Click="NextPageButton_Click"
-                    MinHeight="30"
-                    MinWidth="100">
-                    下一页
-                </Button>
-                <ComboBox Grid.Column="4"
+                    x:Name="BatchDownloadButton"
+                    Click="BatchDownloadButton_Click"
+                    x:Uid="/MainPage/Download_Button" /> -->
+                <ComboBox Grid.Column="1"
                     Margin="10,0,0,0"
                     x:Name="ScreeningComboBox"
                     SelectedIndex="0"
-                    SelectionChanged="ScreeningComboBox_SelectionChanged"
-                    MinHeight="30"
-                    MinWidth="120">
+                    SelectionChanged="ScreeningComboBox_SelectionChanged">
                     <ComboBoxItem x:Name="All"
                         Tag="All">筛选</ComboBoxItem>
                     <ComboBoxItem x:Name="OnlyNotPurchased"
@@ -122,6 +72,7 @@
                         Tag="OnlyHad">仅已拥有</ComboBoxItem>
                 </ComboBox>
             </Grid>
+
             <!-- 表格区 -->
             <Border CornerRadius="2"
                 Background="#80F0F8FF"
@@ -129,7 +80,7 @@
                 BorderThickness="1"
                 Margin="0,150,0,20">
                 <ListView x:Name="ResultList"
-                    Margin="10,10,10,10"
+                    Margin="0,10,0,10"
                     SelectionMode="Multiple">
                     <ListView.Header>
                         <Grid>
@@ -211,13 +162,7 @@
                     </ListView.ItemTemplate>
                 </ListView>
             </Border>
-            <TextBlock Foreground="Gray"
-                VerticalAlignment="Bottom"
-                x:Name="ResultText"
-                Text="状态栏"
-                TextWrapping="Wrap"
-                Margin="0,0,0,0">
-            </TextBlock>
+
         </Grid>
     </Page.Content>
 </Page>
