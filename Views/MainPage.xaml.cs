@@ -19,9 +19,7 @@ namespace IPAbuyer.Views
     {
         private readonly List<AppResult> _allResults = new();
         private readonly CancellationTokenSource _pageCts = new();
-        private int _currentPage = 1;
-        private int _pageSize = 10;
-        private int _totalPages = 1;
+        // 已移除翻页相关字段
         private bool _isPageLoaded;
         private bool _isLoggedIn;
         private string _selectedFilter = "All";
@@ -29,7 +27,7 @@ namespace IPAbuyer.Views
         private string _countryCode = "cn";
         private static readonly TimeSpan TestPurchaseDelay = TimeSpan.FromMilliseconds(1000);
 
-        public int SearchLimitNum { get; set; } = 5;
+        public int SearchLimitNum { get; set; } = 100;
 
         public MainPage()
         {
@@ -53,7 +51,7 @@ namespace IPAbuyer.Views
             _isLoggedIn = SessionState.IsLoggedIn;
             UpdateLoginButton();
             RefreshCountryCodeDisplay();
-            UpdatePagingButtons();
+            // 已移除翻页按钮更新
 
             if (_isLoggedIn && !string.IsNullOrWhiteSpace(KeychainConfig.GetLastLoginUsername()))
             {
@@ -353,31 +351,7 @@ namespace IPAbuyer.Views
             }
         }
 
-        private void PrevPageButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (_currentPage <= 1)
-            {
-                UpdateStatusBar("已经是第一页了", true);
-                return;
-            }
-
-            _currentPage--;
-            UpdatePage();
-            UpdateStatusBar($"已切换到第 {_currentPage}/{_totalPages} 页");
-        }
-
-        private void NextPageButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (_currentPage >= _totalPages)
-            {
-                UpdateStatusBar("已经是最后一页了", true);
-                return;
-            }
-
-            _currentPage++;
-            UpdatePage();
-            UpdateStatusBar($"已切换到第 {_currentPage}/{_totalPages} 页");
-        }
+        // 已移除翻页相关方法
 
         private async void BatchPurchaseButton_Click(object sender, RoutedEventArgs e)
         {
@@ -506,12 +480,7 @@ namespace IPAbuyer.Views
             RefreshPurchasedStatus();
 
             var displayList = GetFilteredResults();
-            _totalPages = displayList.Count > 0 ? (displayList.Count + _pageSize - 1) / _pageSize : 1;
-            if (_currentPage > _totalPages)
-            {
-                _currentPage = _totalPages;
-            }
-            UpdatePage();
+            // 已移除翻页相关逻辑
 
             if (displayList.Count == 0)
             {
@@ -519,7 +488,7 @@ namespace IPAbuyer.Views
             }
             else
             {
-                UpdateStatusBar($"批量购买完成 - 成功: {successCount}, 失败: {failCount}, 跳过: {skipCount}{extra}。当前第 {_currentPage}/{_totalPages} 页 (共 {displayList.Count} 条)");
+                UpdateStatusBar($"批量购买完成 - 成功: {successCount}, 失败: {failCount}, 跳过: {skipCount}{extra}。共 {displayList.Count} 条");
             }
 
             if (pricedApps.Count > 0)
@@ -584,7 +553,7 @@ namespace IPAbuyer.Views
                 }
             }
 
-            UpdatePage();
+            // 已移除翻页相关逻辑
         }
 
         private List<AppResult> GetFilteredResults()
@@ -607,87 +576,24 @@ namespace IPAbuyer.Views
 
             _selectedFilter = selectedItem.Tag?.ToString() ?? "All";
             var displayList = GetFilteredResults();
-            _totalPages = displayList.Count > 0 ? (displayList.Count + _pageSize - 1) / _pageSize : 1;
-            _currentPage = 1;
-            UpdatePage();
+            // 已移除翻页相关逻辑
 
+            var resultList = GetControl<ListView>("ResultList");
+            if (resultList != null)
+            {
+                resultList.ItemsSource = displayList;
+            }
             if (displayList.Count == 0)
             {
                 UpdateStatusBar("筛选结果为空，请先输入App名称进行查询", false);
             }
             else
             {
-                UpdateStatusBar($"筛选已更新，当前第 {_currentPage}/{_totalPages} 页 (共 {displayList.Count} 条)");
+                UpdateStatusBar($"筛选已更新，共 {displayList.Count} 条");
             }
         }
 
-        private void UpdatePage()
-        {
-            if (!_isPageLoaded)
-            {
-                return;
-            }
-
-            var resultList = GetControl<ListView>("ResultList");
-            var prevPageButton = GetControl<Button>("PrevPageButton");
-            var nextPageButton = GetControl<Button>("NextPageButton");
-
-            if (resultList == null)
-            {
-                return;
-            }
-
-            var displayList = GetFilteredResults();
-
-            if (displayList.Count == 0)
-            {
-                resultList.ItemsSource = null;
-                if (prevPageButton != null)
-                {
-                    prevPageButton.IsEnabled = false;
-                }
-                if (nextPageButton != null)
-                {
-                    nextPageButton.IsEnabled = false;
-                }
-                UpdatePagingButtons(displayList);
-                return;
-            }
-
-            int start = (_currentPage - 1) * _pageSize;
-            int end = Math.Min(start + _pageSize, displayList.Count);
-            resultList.ItemsSource = displayList.GetRange(start, end - start);
-
-            if (prevPageButton != null)
-            {
-                prevPageButton.IsEnabled = _currentPage > 1;
-            }
-
-            if (nextPageButton != null)
-            {
-                nextPageButton.IsEnabled = _currentPage < _totalPages;
-            }
-
-            UpdatePagingButtons(displayList);
-        }
-
-        private void UpdatePagingButtons(List<AppResult>? currentDisplay = null)
-        {
-            var prevPageButton = GetControl<Button>("PrevPageButton");
-            var nextPageButton = GetControl<Button>("NextPageButton");
-            var displayList = currentDisplay ?? GetFilteredResults();
-            bool hasResults = displayList.Count > 0;
-
-            if (prevPageButton != null)
-            {
-                prevPageButton.IsEnabled = hasResults && _currentPage > 1;
-            }
-
-            if (nextPageButton != null)
-            {
-                nextPageButton.IsEnabled = hasResults && _currentPage < _totalPages;
-            }
-        }
+        // 已移除翻页相关方法
 
         private async void SearchButton_Click(object sender, RoutedEventArgs e)
         {
@@ -696,7 +602,7 @@ namespace IPAbuyer.Views
 
         private void AppNameBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            UpdatePagingButtons();
+            // 已移除翻页按钮更新
         }
 
         private async void LogoutButton_Click(object sender, RoutedEventArgs e)
@@ -874,9 +780,14 @@ namespace IPAbuyer.Views
                     }
                 }
 
-                _totalPages = _allResults.Count > 0 ? (_allResults.Count + _pageSize - 1) / _pageSize : 1;
-                _currentPage = 1;
-                UpdatePage();
+                // 搜索完成后刷新筛选并显示所有结果
+                var resultList = GetControl<ListView>("ResultList");
+                _selectedFilter = "All";
+                var displayList = GetFilteredResults();
+                if (resultList != null)
+                {
+                    resultList.ItemsSource = displayList;
+                }
 
                 int resultCount = root.TryGetProperty("resultCount", out var countElement) && countElement.TryGetInt32(out int countValue)
                     ? countValue
