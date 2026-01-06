@@ -41,13 +41,7 @@ namespace IPAbuyer
         {
             try
             {
-                _window = new MainWindow()
-                {
-                    Title = "IPAbuyer - 快速购买 AppStore 中的应用",
-                };
-
-                SetWindowIcon(_window);
-
+                _window = new MainWindow();
                 // 激活窗口
                 _window.Activate();
             }

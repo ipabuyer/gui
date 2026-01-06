@@ -6,23 +6,40 @@
   xmlns:local="using:IPAbuyer"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   mc:Ignorable="d">
-
-  <NavigationView x:Name="NavView"
-    PaneDisplayMode="Left"
-    IsSettingsVisible="False"
-    ItemInvoked="NavView_ItemInvoked"
-    OpenPaneLength="180">
-    <NavigationView.MenuItems>
-      <NavigationViewItem Content="主页"
-        Icon="Home"
-        Tag="MainPage" />
-      <NavigationViewItem Content="登录"
-        Icon="Contact"
-        Tag="LoginPage" />
-      <NavigationViewItem Content="设置"
-        Icon="Setting"
-        Tag="SettingsPage" />
-    </NavigationView.MenuItems>
-    <Frame x:Name="ContentFrame" />
-  </NavigationView>
+  <Grid>
+    <!-- 自定义标题栏区域，包含图标和标题 -->
+    <Grid x:Name="CustomTitleBar" Height="40" VerticalAlignment="Top" Background="Transparent">
+      <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left">
+        <Button x:Name="HamburgerButton" Width="40" Height="32" Click="HamburgerButton_Click"
+          Background="Transparent" BorderThickness="0">
+          <SymbolIcon Symbol="GlobalNavigationButton" />
+        </Button>
+        <Image x:Name="WindowIcon" Width="24" Height="24" Margin="8,0,4,0" Source="/Assets/Icon.ico" />
+        <TextBlock x:Name="WindowTitle" Text="IPAbuyer - 快速购买 AppStore 中的应用"
+          VerticalAlignment="Center" Margin="4,0,0,0" />
+      </StackPanel>
+    </Grid>
+    <!-- 主内容区域 -->
+    <NavigationView x:Name="NavView"
+      Margin="0,32,0,0"
+      PaneDisplayMode="Left"
+      IsSettingsVisible="False"
+      ItemInvoked="NavView_ItemInvoked"
+      OpenPaneLength="180"
+      IsPaneToggleButtonVisible="False"
+      IsBackButtonVisible="Collapsed">
+      <NavigationView.MenuItems>
+        <NavigationViewItem Content="主页"
+          Icon="Home"
+          Tag="MainPage" />
+        <NavigationViewItem Content="登录"
+          Icon="Contact"
+          Tag="LoginPage" />
+        <NavigationViewItem Content="设置"
+          Icon="Setting"
+          Tag="SettingsPage" />
+      </NavigationView.MenuItems>
+      <Frame x:Name="ContentFrame" />
+    </NavigationView>
+  </Grid>
 </Window>
