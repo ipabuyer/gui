@@ -1,169 +1,168 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <Page
     x:Class="IPAbuyer.Views.Settings"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:IPAbuyer"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:IPAbuyer"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
     <Grid>
         <ScrollViewer>
-            <StackPanel Spacing="15" Margin="50,20,50,50">
-                <!-- 标题 -->
-                <TextBlock
-                    Style="{ThemeResource TitleLargeTextBlockStyle}"
-                    x:Uid="/SettingPage/Title" />
-                <!-- 关于软件 -->
-                <TextBlock
-                    Style="{ThemeResource SubtitleTextBlockStyle}"
-                    x:Uid="/SettingPage/About" />
+            <StackPanel Margin="50,20,50,50" Spacing="15">
+                <!--  标题  -->
+                <TextBlock x:Uid="/SettingPage/Title" Style="{ThemeResource TitleLargeTextBlockStyle}" />
+                <!--  关于软件  -->
+                <TextBlock x:Uid="/SettingPage/About" Style="{ThemeResource SubtitleTextBlockStyle}" />
                 <MenuFlyoutSeparator />
-                <!-- 国家地区代码 -->
+                <!--  国家地区代码  -->
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="3*" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <TextBlock
+                        x:Uid="/SettingPage/About_Country_Code"
                         Grid.Column="0"
-                        TextWrapping="Wrap"
                         Style="{ThemeResource BodyTextBlockStyle}"
-                        x:Uid="/SettingPage/About_Country_Code" />
+                        TextWrapping="Wrap" />
                     <Grid Grid.Column="1">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <TextBox Grid.Column="0"
+                        <TextBox
                             x:Name="CountryCodeTextBox"
+                            Grid.Column="0"
                             HorizontalAlignment="Right"
-                            PlaceholderText="cn"
-                            KeyUp="CountryCodeTextBox_KeyUp" />
-                        <Button Grid.Column="1"
+                            KeyUp="CountryCodeTextBox_KeyUp"
+                            PlaceholderText="cn" />
+                        <Button
+                            x:Uid="/SettingPage/About_Country_Code_Button"
+                            Grid.Column="1"
                             HorizontalAlignment="Right"
-                            Click="CountryCodeButton"
-                            x:Uid="/SettingPage/About_Country_Code_Button" />
+                            Click="CountryCodeButton" />
                     </Grid>
                 </Grid>
                 <MenuFlyoutSeparator />
-                <!-- 开发者信息 -->
+                <!--  开发者信息  -->
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="3*" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <TextBlock
+                        x:Uid="/SettingPage/About_Developer"
                         Grid.Column="0"
-                        TextWrapping="Wrap"
                         Style="{ThemeResource BodyTextBlockStyle}"
-                        x:Uid="/SettingPage/About_Developer" />
+                        TextWrapping="Wrap" />
                     <Button
-                        HorizontalAlignment="Right"
+                        x:Uid="/SettingPage/About_Developer_Button"
                         Grid.Column="1"
-                        Click="GithubButton"
-                        x:Uid="/SettingPage/About_Developer_Button" />
+                        HorizontalAlignment="Right"
+                        Click="GithubButton" />
                 </Grid>
                 <MenuFlyoutSeparator />
-                <!-- 清除数据库 -->
+                <!--  清除数据库  -->
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="3*" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <TextBlock
+                        x:Uid="/SettingPage/About_Remove_Database"
                         Grid.Column="0"
-                        TextWrapping="Wrap"
                         Style="{ThemeResource BodyTextBlockStyle}"
-                        x:Uid="/SettingPage/About_Remove_Database" />
-                    <Button Foreground="White"
-                        Background="Red"
-                        HorizontalAlignment="Right"
+                        TextWrapping="Wrap" />
+                    <Button
+                        x:Uid="/SettingPage/About_Remove_Database_Button"
                         Grid.Column="1"
+                        HorizontalAlignment="Right"
+                        Background="Red"
                         Click="DeleteDataBase"
-                        x:Uid="/SettingPage/About_Remove_Database_Button" />
+                        Foreground="White" />
                 </Grid>
-                <!-- 常见问题 -->
+                <!--  常见问题  -->
+                <MenuFlyoutSeparator />
+                <TextBlock x:Uid="/QA/Title" Style="{ThemeResource SubtitleTextBlockStyle}" />
                 <MenuFlyoutSeparator />
                 <TextBlock
-                    Style="{ThemeResource SubtitleTextBlockStyle}"
-                    x:Uid="/QA/Title" />
-                <MenuFlyoutSeparator />
-                <TextBlock
-                    TextWrapping="Wrap"
+                    x:Uid="/QA/Q1"
                     Style="{ThemeResource BodyStrongTextBlockStyle}"
-                    x:Uid="/QA/Q1" />
+                    TextWrapping="Wrap" />
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="3*" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0"
-                        TextWrapping="Wrap"
+                    <TextBlock
+                        x:Uid="/QA/A1"
+                        Grid.Column="0"
                         Style="{ThemeResource BodyTextBlockStyle}"
-                        x:Uid="/QA/A1" />
-                    <Button Grid.Row="1"
+                        TextWrapping="Wrap" />
+                    <Button
+                        x:Uid="/QA/Apple_Account_Button"
+                        Grid.Row="1"
+                        Grid.Column="1"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Center"
-                        Grid.Column="1"
-                        Click="AppleAccountButton"
-                        x:Uid="/QA/Apple_Account_Button" />
+                        Click="AppleAccountButton" />
                 </Grid>
                 <MenuFlyoutSeparator />
                 <TextBlock
-                    TextWrapping="Wrap"
+                    x:Uid="/QA/Q2"
                     Style="{ThemeResource BodyStrongTextBlockStyle}"
-                    x:Uid="/QA/Q2" />
+                    TextWrapping="Wrap" />
                 <TextBlock
-                    TextWrapping="Wrap"
+                    x:Uid="/QA/A2"
                     Style="{ThemeResource BodyTextBlockStyle}"
-                    x:Uid="/QA/A2" />
+                    TextWrapping="Wrap" />
                 <MenuFlyoutSeparator />
                 <TextBlock
-                    TextWrapping="Wrap"
+                    x:Uid="/QA/Q3"
                     Style="{ThemeResource BodyStrongTextBlockStyle}"
-                    x:Uid="/QA/Q3" />
+                    TextWrapping="Wrap" />
                 <TextBlock
-                    TextWrapping="Wrap"
+                    x:Uid="/QA/A3"
                     Style="{ThemeResource BodyTextBlockStyle}"
-                    x:Uid="/QA/A3" />
+                    TextWrapping="Wrap" />
                 <MenuFlyoutSeparator />
                 <TextBlock
-                    TextWrapping="Wrap"
+                    x:Uid="/QA/Q4"
                     Style="{ThemeResource BodyStrongTextBlockStyle}"
-                    x:Uid="/QA/Q4" />
+                    TextWrapping="Wrap" />
                 <TextBlock
-                    TextWrapping="Wrap"
+                    x:Uid="/QA/A4"
                     Style="{ThemeResource BodyTextBlockStyle}"
-                    x:Uid="/QA/A4" />
+                    TextWrapping="Wrap" />
                 <MenuFlyoutSeparator />
                 <TextBlock
-                    TextWrapping="Wrap"
+                    x:Uid="/QA/Q5"
                     Style="{ThemeResource BodyStrongTextBlockStyle}"
-                    x:Uid="/QA/Q5" />
+                    TextWrapping="Wrap" />
                 <TextBlock
-                    TextWrapping="Wrap"
+                    x:Uid="/QA/A5"
                     Style="{ThemeResource BodyTextBlockStyle}"
-                    x:Uid="/QA/A5" />
+                    TextWrapping="Wrap" />
                 <MenuFlyoutSeparator />
                 <TextBlock
-                    TextWrapping="Wrap"
+                    x:Uid="/QA/Q6"
                     Style="{ThemeResource BodyStrongTextBlockStyle}"
-                    x:Uid="/QA/Q6" />
+                    TextWrapping="Wrap" />
                 <TextBlock
-                    TextWrapping="Wrap"
+                    x:Uid="/QA/A6"
                     Style="{ThemeResource BodyTextBlockStyle}"
-                    x:Uid="/QA/A6" />
+                    TextWrapping="Wrap" />
                 <MenuFlyoutSeparator />
                 <TextBlock
-                    TextWrapping="Wrap"
+                    x:Uid="/QA/Q7"
                     Style="{ThemeResource BodyStrongTextBlockStyle}"
-                    x:Uid="/QA/Q7" />
+                    TextWrapping="Wrap" />
                 <TextBlock
-                    TextWrapping="Wrap"
+                    x:Uid="/QA/A7"
                     Style="{ThemeResource BodyTextBlockStyle}"
-                    x:Uid="/QA/A7" />
+                    TextWrapping="Wrap" />
             </StackPanel>
         </ScrollViewer>
     </Grid>

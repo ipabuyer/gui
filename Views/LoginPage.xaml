@@ -8,32 +8,36 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0"
+            <TextBlock
+                Grid.Column="0"
                 Margin="0"
                 VerticalAlignment="Top"
                 FontSize="40"
                 FontWeight="Bold">
                 登录
             </TextBlock>
-            <Button Grid.Column="1"
-                Margin="0,0,0,0"
-                VerticalAlignment="Top"
-                HorizontalAlignment="Right"
+            <Button
+                Grid.Column="1"
                 MinWidth="120"
-                FontSize="14"
-                Click="BackToMainpage">
+                Margin="0,0,0,0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Click="BackToMainpage"
+                FontSize="14">
                 返回首页
             </Button>
         </Grid>
-        <TextBlock HorizontalAlignment="Center"
-            VerticalAlignment="Top"
+        <TextBlock
             Grid.Column="0"
-            FontSize="16"
-            Margin="0,100,0,0">
+            Margin="0,100,0,0"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Top"
+            FontSize="16">
             输入您的Apple ID与密码以登录
         </TextBlock>
-        <Grid Margin="40,150,40,0"
+        <Grid
             Height="250"
+            Margin="40,150,40,0"
             HorizontalAlignment="Center"
             VerticalAlignment="Top">
             <Grid.RowDefinitions>
@@ -46,91 +50,101 @@
                 <ColumnDefinition Width="5*" />
             </Grid.ColumnDefinitions>
 
-            <TextBlock Grid.Row="0"
+            <TextBlock
+                Grid.Row="0"
                 Grid.Column="0"
+                Margin="0,0,10,0"
                 HorizontalAlignment="Right"
-                VerticalAlignment="Center"
-                Margin="0,0,10,0">
+                VerticalAlignment="Center">
                 电子邮件地址
             </TextBlock>
-            <TextBox Grid.Row="0"
-                Grid.Column="1"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Center"
+            <TextBox
                 x:Name="EmailComboBox"
-                PlaceholderText="example@icloud.com"
+                Grid.Row="0"
+                Grid.Column="1"
                 MinWidth="300"
                 MinHeight="30"
-                IsSpellCheckEnabled="False"
-                InputScope="EmailSmtpAddress"
-                KeyUp="Input_KeyUp">
-            </TextBox>
-
-            <TextBlock Grid.Row="1"
-                Grid.Column="0"
-                HorizontalAlignment="Right"
+                HorizontalAlignment="Left"
                 VerticalAlignment="Center"
-                Margin="0,0,10,0">
+                InputScope="EmailSmtpAddress"
+                IsSpellCheckEnabled="False"
+                KeyUp="Input_KeyUp"
+                PlaceholderText="example@icloud.com" />
+
+            <TextBlock
+                Grid.Row="1"
+                Grid.Column="0"
+                Margin="0,0,10,0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center">
                 密码
             </TextBlock>
-            <PasswordBox Grid.Row="1"
-                Grid.Column="1"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Center"
+            <PasswordBox
                 x:Name="PasswordBox"
-                PlaceholderText="请输入密码"
+                Grid.Row="1"
+                Grid.Column="1"
                 MinWidth="300"
                 MinHeight="30"
-                KeyUp="Input_KeyUp" />
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                KeyUp="Input_KeyUp"
+                PlaceholderText="请输入密码" />
         </Grid>
 
-        <Button VerticalAlignment="Center"
-            HorizontalAlignment="Center"
+        <Button
             x:Name="NextButton"
-            Content="登录"
-            Margin="0,140,0,0"
             MinWidth="120"
-            Click="NextButton_Click" />
+            Margin="0,140,0,0"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Click="NextButton_Click"
+            Content="登录" />
 
-        <TextBlock x:Name="ResultText"
+        <TextBlock
+            x:Name="ResultText"
+            Margin="0,0,0,0"
             HorizontalAlignment="Center"
             VerticalAlignment="Bottom"
             Foreground="Gray"
-            TextWrapping="Wrap"
-            Margin="0,0,0,0" />
+            TextWrapping="Wrap" />
 
-        <!-- 警告弹窗 -->
-        <ContentDialog x:Name="WarningDialog"
+        <!--  警告弹窗  -->
+        <ContentDialog
+            x:Name="WarningDialog"
             Title="警告"
             CloseButtonText="确认"
             DefaultButton="Primary" />
 
-        <!-- 验证码弹窗 -->
-        <ContentDialog x:Name="AuthCodeDialog"
+        <!--  验证码弹窗  -->
+        <ContentDialog
+            x:Name="AuthCodeDialog"
             Title="两步验证"
-            PrimaryButtonText="验证"
+            CloseButtonClick="AuthCodeDialog_CloseButtonClick"
             CloseButtonText="取消"
             DefaultButton="Primary"
             PrimaryButtonClick="AuthCodeDialog_PrimaryButtonClick"
-            CloseButtonClick="AuthCodeDialog_CloseButtonClick">
+            PrimaryButtonText="验证">
             <StackPanel Spacing="12">
-                <TextBlock TextWrapping="Wrap"
-                    Margin="0,0,0,12"> 您的账户已启用两步验证，请输入发送到您信任设备上的6位验证码。 <LineBreak /> 若未收到验证码，请打开 <Hyperlink
-                        Click="OpenAppleAccountLink">
+                <TextBlock Margin="0,0,0,12" TextWrapping="Wrap">
+                    您的账户已启用两步验证，请输入发送到您信任设备上的6位验证码。<LineBreak />
+                    若未收到验证码，请打开<Hyperlink Click="OpenAppleAccountLink">
                         此链接
-                    </Hyperlink> ，输入账户与密码以收取验证码。 </TextBlock>
-                <TextBox x:Name="CodeBox"
-                    Header="验证码"
-                    PlaceholderText="请输入6位验证码"
-                    MaxLength="6"
+                    </Hyperlink>
+                    ，输入账户与密码以收取验证码。</TextBlock>
+                <TextBox
+                    x:Name="CodeBox"
                     MinWidth="200"
+                    Header="验证码"
                     InputScope="Number"
-                    TextChanged="CodeBox_TextChanged"
-                    KeyUp="CodeBox_KeyUp" />
-                <TextBlock x:Name="CodeErrorText"
+                    KeyUp="CodeBox_KeyUp"
+                    MaxLength="6"
+                    PlaceholderText="请输入6位验证码"
+                    TextChanged="CodeBox_TextChanged" />
+                <TextBlock
+                    x:Name="CodeErrorText"
                     Foreground="Red"
-                    Visibility="Collapsed"
-                    TextWrapping="Wrap" />
+                    TextWrapping="Wrap"
+                    Visibility="Collapsed" />
             </StackPanel>
         </ContentDialog>
     </Grid>
