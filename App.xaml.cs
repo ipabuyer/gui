@@ -51,36 +51,5 @@ namespace IPAbuyer
                 throw;
             }
         }
-
-        // 导航失败时的处理
-        void OnNavigationFailed(object sender, NavigationFailedEventArgs e)
-        {
-            throw new Exception($"Failed to load Page {e.SourcePageType.FullName}");
-        }
-
-        // 设置窗口图标
-        private static void SetWindowIcon(Window window)
-        {
-            try
-            {
-                IntPtr hwnd = WindowNative.GetWindowHandle(window);
-                var windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
-                AppWindow appWindow = AppWindow.GetFromWindowId(windowId);
-
-                string iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Icon.ico");
-                if (File.Exists(iconPath))
-                {
-                    appWindow?.SetIcon(iconPath);
-                }
-                else
-                {
-                    Debug.WriteLine($"应用图标未找到，路径为 {iconPath}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"加载图标失败 {ex.Message}");
-            }
-        }
     }
 }
