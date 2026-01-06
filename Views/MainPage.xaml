@@ -41,7 +41,7 @@
             <!-- 操作按钮区 -->
             <Grid HorizontalAlignment="Left"
                 VerticalAlignment="Top"
-                Margin="0,90,0,0">
+                Margin="0,60,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
@@ -78,7 +78,7 @@
                 Background="#80F0F8FF"
                 BorderBrush="White"
                 BorderThickness="1"
-                Margin="0,150,0,20">
+                Margin="0,110,0,20">
                 <ListView x:Name="ResultList"
                     Margin="0,10,0,10"
                     SelectionMode="Multiple">
