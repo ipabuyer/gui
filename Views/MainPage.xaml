@@ -92,7 +92,7 @@
                         </Grid>
                     </ListView.Header>
                     <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="models:AppResult">
+                        <DataTemplate x:DataType="models:SearchResult">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="2*" />

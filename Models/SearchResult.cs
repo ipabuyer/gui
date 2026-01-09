@@ -1,6 +1,6 @@
 namespace IPAbuyer.Models
 {
-    public class AppResult
+    public class SearchResult
     {
         public string? bundleID { get; set; }
         public string? id { get; set; }

@@ -17,7 +17,7 @@ namespace IPAbuyer.Views
 {
     public sealed partial class MainPage : Page
     {
-        private readonly List<AppResult> _allResults = new();
+        private readonly List<SearchResult> _allResults = new();
         private readonly CancellationTokenSource _pageCts = new();
         // 已移除翻页相关字段
         private bool _isPageLoaded;
@@ -388,7 +388,7 @@ namespace IPAbuyer.Views
 
             bool isTestAccount = IsTestAccount(normalizedAccount);
 
-            var appsToPurchase = resultList.SelectedItems.OfType<AppResult>().ToList();
+            var appsToPurchase = resultList.SelectedItems.OfType<SearchResult>().ToList();
             if (appsToPurchase.Count == 0)
             {
                 UpdateStatusBar("未选择有效的应用条目", true);
@@ -405,7 +405,7 @@ namespace IPAbuyer.Views
             int failCount = 0;
             int skipCount = 0;
             List<string> ownedButFailed = new();
-            List<AppResult> pricedApps = new();
+            List<SearchResult> pricedApps = new();
 
             UpdateStatusBar($"开始购买 {appsToPurchase.Count} 个应用...");
 
@@ -607,7 +607,7 @@ namespace IPAbuyer.Views
             // 已移除翻页相关逻辑
         }
 
-        private List<AppResult> GetFilteredResults()
+        private List<SearchResult> GetFilteredResults()
         {
             return _selectedFilter switch
             {
@@ -810,7 +810,7 @@ namespace IPAbuyer.Views
                     try
                     {
                         var bundleId = GetBundleId(appElement);
-                        var app = new AppResult
+                        var app = new SearchResult
                         {
                             bundleID = bundleId,
                             id = GetPropertyValue(appElement, "trackId"),
