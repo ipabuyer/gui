@@ -13,7 +13,7 @@ namespace IPAbuyer.Common
     {
         private const int MaxPreviewLength = 200;
         private static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(2);
-    private static readonly HttpClient HttpClient = new();
+        private static readonly HttpClient HttpClient = new();
 
         public sealed record IpatoolResult(string? Output, string? Error, int ExitCode, bool TimedOut)
         {

@@ -4,10 +4,10 @@ namespace IPAbuyer.Common
 {
     public static class SessionState
     {
-    private static readonly object _syncRoot = new();
-    private static string _currentAccount = string.Empty;
-    private static bool _isLoggedIn;
-    private static bool _initialized;
+        private static readonly object _syncRoot = new();
+        private static string _currentAccount = string.Empty;
+        private static bool _isLoggedIn;
+        private static bool _initialized;
 
         public static string CurrentAccount
         {
