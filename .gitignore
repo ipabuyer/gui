@@ -33,3 +33,7 @@ obj/
 
 # 不忽略上游exe
 !Include/*.exe
+
+# 临时文件
+.dotnet/
+build.diag.log

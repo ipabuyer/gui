@@ -96,6 +96,10 @@
           Icon="Contact"
           Tag="LoginPage" />
         <NavigationViewItem
+          Content="下载"
+          Icon="Download"
+          Tag="DownloadsPage" />
+        <NavigationViewItem
           Content="设置"
           Icon="Setting"
           Tag="SettingsPage" />

@@ -1,0 +1,320 @@
+using System;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using IPAbuyer.Models;
+
+namespace IPAbuyer.Common
+{
+    public sealed class DownloadQueueService
+    {
+        private readonly ObservableCollection<DownloadQueueItem> _items = new();
+        private readonly SemaphoreSlim _runLock = new(1, 1);
+        private CancellationTokenSource? _queueCts;
+        private CancellationTokenSource? _currentItemCts;
+        private bool _isRunning;
+
+        private DownloadQueueService()
+        {
+        }
+
+        public static DownloadQueueService Instance { get; } = new();
+
+        public ObservableCollection<DownloadQueueItem> Items => _items;
+        public bool IsRunning => _isRunning;
+
+        public event Action<string>? LogReceived;
+        public event Action? QueueChanged;
+
+        public void AddOrUpdateFromSearchResult(SearchResult app)
+        {
+            if (app == null || string.IsNullOrWhiteSpace(app.bundleID))
+            {
+                return;
+            }
+
+            string bundleId = app.bundleID.Trim();
+            var existing = _items.FirstOrDefault(i => i.BundleId == bundleId);
+            if (existing != null)
+            {
+                existing.AppId = app.id ?? existing.AppId;
+                existing.Name = app.name ?? existing.Name;
+                existing.Developer = app.developer ?? existing.Developer;
+                existing.Version = app.version ?? existing.Version;
+
+                if (existing.Status is DownloadQueueStatus.Failed or DownloadQueueStatus.Canceled or DownloadQueueStatus.Success)
+                {
+                    existing.Status = DownloadQueueStatus.Pending;
+                    existing.LastMessage = "已重新加入下载队列";
+                }
+
+                EmitLog($"队列更新: {existing.Name} ({existing.BundleId})");
+                NotifyQueueChanged();
+                return;
+            }
+
+            var item = new DownloadQueueItem
+            {
+                BundleId = bundleId,
+                AppId = app.id ?? string.Empty,
+                Name = app.name ?? bundleId,
+                Developer = app.developer ?? string.Empty,
+                Version = app.version ?? string.Empty,
+                Status = DownloadQueueStatus.Pending,
+                LastMessage = "等待下载"
+            };
+
+            _items.Add(item);
+            EmitLog($"已加入下载队列: {item.Name} ({item.BundleId})");
+            NotifyQueueChanged();
+        }
+
+        public int RemoveItems(System.Collections.Generic.IEnumerable<DownloadQueueItem> items)
+        {
+            if (items == null)
+            {
+                return 0;
+            }
+
+            var removing = items.ToList();
+            int removed = 0;
+
+            foreach (var item in removing)
+            {
+                if (_isRunning && item.Status == DownloadQueueStatus.Downloading)
+                {
+                    continue;
+                }
+
+                if (_items.Remove(item))
+                {
+                    removed++;
+                }
+            }
+
+            if (removed > 0)
+            {
+                EmitLog($"已移出下载队列: {removed} 项");
+                NotifyQueueChanged();
+            }
+
+            return removed;
+        }
+
+        public async Task<int> StartQueueAsync()
+        {
+            await _runLock.WaitAsync();
+            try
+            {
+                if (_isRunning)
+                {
+                    EmitLog("下载队列已在运行");
+                    return 0;
+                }
+
+                var pending = _items.Where(i => i.Status == DownloadQueueStatus.Pending).ToList();
+                if (pending.Count == 0)
+                {
+                    EmitLog("没有待下载项目");
+                    return 0;
+                }
+
+                _isRunning = true;
+                _queueCts = new CancellationTokenSource();
+                NotifyQueueChanged();
+
+                string account = ResolveAccount();
+                string outputDirectory = KeychainConfig.GetDownloadDirectory();
+                Directory.CreateDirectory(outputDirectory);
+
+                EmitLog($"开始下载队列，共 {pending.Count} 项，输出目录: {outputDirectory}");
+
+                int completed = 0;
+                foreach (var item in pending)
+                {
+                    _queueCts.Token.ThrowIfCancellationRequested();
+
+                    item.Status = DownloadQueueStatus.Downloading;
+                    item.LastMessage = "下载中";
+                    NotifyQueueChanged();
+
+                    _currentItemCts = CancellationTokenSource.CreateLinkedTokenSource(_queueCts.Token);
+                    try
+                    {
+                        var result = await ipatoolExecution.DownloadAppAsync(item.BundleId, outputDirectory, account, _currentItemCts.Token);
+                        if (IsDownloadSuccess(result))
+                        {
+                            item.Status = DownloadQueueStatus.Success;
+                            item.LastMessage = "下载成功";
+                            completed++;
+                            EmitLog($"下载成功: {item.Name}");
+                        }
+                        else
+                        {
+                            string message = BuildErrorMessage(result);
+                            item.Status = DownloadQueueStatus.Failed;
+                            item.LastMessage = message;
+                            EmitLog($"下载失败: {item.Name} - {message}");
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        item.Status = DownloadQueueStatus.Canceled;
+                        item.LastMessage = "下载已终止";
+                        EmitLog($"下载已终止: {item.Name}");
+                    }
+                    catch (Exception ex)
+                    {
+                        item.Status = DownloadQueueStatus.Failed;
+                        item.LastMessage = ex.Message;
+                        EmitLog($"下载异常: {item.Name} - {ex.Message}");
+                    }
+                    finally
+                    {
+                        _currentItemCts?.Dispose();
+                        _currentItemCts = null;
+                        NotifyQueueChanged();
+                    }
+                }
+
+                EmitLog($"下载队列完成，成功 {completed}/{pending.Count}");
+                return completed;
+            }
+            catch (OperationCanceledException)
+            {
+                EmitLog("下载队列已终止");
+                return 0;
+            }
+            finally
+            {
+                _isRunning = false;
+                _queueCts?.Dispose();
+                _queueCts = null;
+                _currentItemCts?.Dispose();
+                _currentItemCts = null;
+                NotifyQueueChanged();
+                _runLock.Release();
+            }
+        }
+
+        public void CancelCurrent()
+        {
+            _currentItemCts?.Cancel();
+            EmitLog("已请求终止当前下载任务");
+        }
+
+        public void CancelAll()
+        {
+            _queueCts?.Cancel();
+            _currentItemCts?.Cancel();
+
+            foreach (var item in _items.Where(i => i.Status == DownloadQueueStatus.Pending))
+            {
+                item.Status = DownloadQueueStatus.Canceled;
+                item.LastMessage = "队列已终止";
+            }
+
+            EmitLog("已请求终止所有下载任务");
+            NotifyQueueChanged();
+        }
+
+        private static bool IsDownloadSuccess(ipatoolExecution.IpatoolResult result)
+        {
+            if (result.IsSuccessResponse)
+            {
+                return true;
+            }
+
+            string payload = result.OutputOrError;
+            if (string.IsNullOrWhiteSpace(payload))
+            {
+                return false;
+            }
+
+            if (payload.Contains("\"success\":true", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            try
+            {
+                using var doc = JsonDocument.Parse(payload);
+                if (doc.RootElement.TryGetProperty("success", out var success))
+                {
+                    return success.ValueKind == JsonValueKind.True || (success.ValueKind == JsonValueKind.String && success.GetString() == "true");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"下载结果 JSON 解析失败: {ex.Message}");
+            }
+
+            return false;
+        }
+
+        private static string BuildErrorMessage(ipatoolExecution.IpatoolResult result)
+        {
+            if (result.TimedOut)
+            {
+                return "下载超时";
+            }
+
+            string payload = result.OutputOrError;
+            if (string.IsNullOrWhiteSpace(payload))
+            {
+                return $"退出码 {result.ExitCode}";
+            }
+
+            try
+            {
+                using var doc = JsonDocument.Parse(payload);
+                if (doc.RootElement.TryGetProperty("error", out var error))
+                {
+                    return error.GetString() ?? payload;
+                }
+
+                if (doc.RootElement.TryGetProperty("message", out var message))
+                {
+                    return message.GetString() ?? payload;
+                }
+            }
+            catch (JsonException)
+            {
+                // fallback to raw payload
+            }
+
+            return payload.Length > 160 ? payload.Substring(0, 160) + "..." : payload;
+        }
+
+        private static string ResolveAccount()
+        {
+            string account = SessionState.IsLoggedIn ? SessionState.CurrentAccount : string.Empty;
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                account = KeychainConfig.GetLastLoginUsername() ?? string.Empty;
+            }
+
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                throw new InvalidOperationException("未找到可用账号，请先登录");
+            }
+
+            return account.Trim();
+        }
+
+        private void EmitLog(string message)
+        {
+            string log = $"[{DateTime.Now:HH:mm:ss}] {message}";
+            LogReceived?.Invoke(log);
+        }
+
+        private void NotifyQueueChanged()
+        {
+            QueueChanged?.Invoke();
+        }
+    }
+}

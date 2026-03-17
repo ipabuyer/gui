@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="IPAbuyer.Views.DownloadsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="7*" />
+            <RowDefinition Height="3*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
+                <Button x:Name="StartQueueButton" Content="开始下载队列" MinHeight="36" Click="StartQueueButton_Click" />
+                <Button x:Name="RemoveQueueButton" Content="移出下载队列" MinHeight="36" Click="RemoveQueueButton_Click" />
+                <Button Content="打开下载目录" MinHeight="36" Click="OpenDirectoryButton_Click" />
+                <Button x:Name="CancelAllButton" Content="终止所有下载" MinHeight="36" Click="CancelAllButton_Click" />
+            </StackPanel>
+            <ListView x:Name="QueueListView" Grid.Row="1" Margin="0,12,0,0" SelectionMode="Multiple" />
+        </Grid>
+
+        <Grid Grid.Row="1" Margin="0,12,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
+                <Button Content="复制" MinHeight="36" Click="CopyLogButton_Click" />
+                <Button Content="清空" MinHeight="36" Click="ClearLogButton_Click" />
+                <Button Content="终止当前 app 下载" MinHeight="36" Click="CancelCurrentButton_Click" />
+            </StackPanel>
+            <TextBox
+                x:Name="LogTextBox"
+                Grid.Row="1"
+                Margin="0,8,0,0"
+                AcceptsReturn="True"
+                IsReadOnly="True"
+                TextWrapping="Wrap"
+                VerticalScrollBarVisibility="Auto" />
+        </Grid>
+    </Grid>
+</Page>
