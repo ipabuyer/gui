@@ -76,6 +76,7 @@
                                 MinWidth="300"
                                 MinHeight="36"
                                 KeyUp="Input_KeyUp"
+                                PasswordRevealMode="Peek"
                                 PlaceholderText="用于 ipatool keychain-passphrase" />
                         </Grid>
                     </Border>
