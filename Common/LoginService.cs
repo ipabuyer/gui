@@ -57,7 +57,7 @@ namespace IPAbuyer.Common
 
             try
             {
-                var response = await ipatoolExecution.AuthLoginAsync(account, password, authCode, passphrase, cancellationToken).ConfigureAwait(false);
+                var response = await IpatoolExecution.AuthLoginAsync(account, password, authCode, passphrase, cancellationToken).ConfigureAwait(false);
 
                 if (response.TimedOut)
                 {

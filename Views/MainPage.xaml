@@ -47,8 +47,8 @@
 
             <Border
                 Grid.Row="1"
-                Background="#80F0F8FF"
-                BorderBrush="White"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 CornerRadius="4">
                 <ListView

@@ -145,7 +145,7 @@ namespace IPAbuyer.Common
                     _currentItemCts = CancellationTokenSource.CreateLinkedTokenSource(_queueCts.Token);
                     try
                     {
-                        var result = await ipatoolExecution.DownloadAppAsync(item.BundleId, outputDirectory, account, _currentItemCts.Token);
+                        var result = await IpatoolExecution.DownloadAppAsync(item.BundleId, outputDirectory, account, _currentItemCts.Token);
                         if (IsDownloadSuccess(result))
                         {
                             item.Status = DownloadQueueStatus.Success;
@@ -222,7 +222,7 @@ namespace IPAbuyer.Common
             NotifyQueueChanged();
         }
 
-        private static bool IsDownloadSuccess(ipatoolExecution.IpatoolResult result)
+        private static bool IsDownloadSuccess(IpatoolExecution.IpatoolResult result)
         {
             if (result.IsSuccessResponse)
             {
@@ -256,7 +256,7 @@ namespace IPAbuyer.Common
             return false;
         }
 
-        private static string BuildErrorMessage(ipatoolExecution.IpatoolResult result)
+        private static string BuildErrorMessage(IpatoolExecution.IpatoolResult result)
         {
             if (result.TimedOut)
             {

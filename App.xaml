@@ -13,6 +13,24 @@
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
 
+            <x:Double x:Key="StandardControlHeight">36</x:Double>
+
+            <Style TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+                <Setter Property="MinHeight" Value="{StaticResource StandardControlHeight}" />
+            </Style>
+
+            <Style TargetType="TextBox" BasedOn="{StaticResource DefaultTextBoxStyle}">
+                <Setter Property="MinHeight" Value="{StaticResource StandardControlHeight}" />
+            </Style>
+
+            <Style TargetType="PasswordBox" BasedOn="{StaticResource DefaultPasswordBoxStyle}">
+                <Setter Property="MinHeight" Value="{StaticResource StandardControlHeight}" />
+            </Style>
+
+            <Style TargetType="ComboBox" BasedOn="{StaticResource DefaultComboBoxStyle}">
+                <Setter Property="MinHeight" Value="{StaticResource StandardControlHeight}" />
+            </Style>
+
             <Style TargetType="TextBlock">
                 <Setter Property="FontFamily" Value="Microsoft YaHei UI, Microsoft YaHei, Segoe UI" />
             </Style>

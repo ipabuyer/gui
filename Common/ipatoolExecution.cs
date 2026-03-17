@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace IPAbuyer.Common
 {
-    public static class ipatoolExecution
+    public static class IpatoolExecution
     {
         private const int MaxPreviewLength = 200;
         private static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(2);

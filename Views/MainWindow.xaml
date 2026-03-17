@@ -11,7 +11,6 @@
       <RowDefinition Height="48" />
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
-    <!--  自定义标题栏  -->
     <Grid
       x:Name="CustomTitleBar"
       Grid.Row="0"
@@ -19,64 +18,65 @@
       Background="{ThemeResource SystemBaseLowColor}">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="48" />
-        <!--  侧边栏展开按钮  -->
         <ColumnDefinition Width="48" />
-        <!--  logo  -->
-        <ColumnDefinition Width="2*" />
-        <!--  标题  -->
-        <ColumnDefinition Width="3*" />
-        <!--  搜索框  -->
+        <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
-      <!--  侧边栏展开按钮  -->
       <Button
         x:Name="PaneToggleButton"
         Grid.Column="0"
         Width="40"
         Height="40"
-        Margin="4,4,4,4"
+        Margin="4"
         Click="PaneToggleButton_Click">
         <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE700;" />
       </Button>
-      <!--  logo  -->
       <Image
         Grid.Column="1"
         Width="32"
         Height="32"
         VerticalAlignment="Center"
         Source="/Assets/Icon.ico" />
-      <!--  标题  -->
-      <TextBlock
-        Grid.Column="2"
-        VerticalAlignment="Center"
-        FontSize="18"
-        FontWeight="SemiBold"
-        Text="IPAbuyer - 快速购买 AppStore 中的应用" />
-      <!--  搜索框  -->
       <Grid
-        Grid.Column="3"
-        HorizontalAlignment="Left"
-        VerticalAlignment="Center">
+        Grid.Column="2"
+        Margin="12,0,12,0">
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="260" />
+          <ColumnDefinition Width="*" />
           <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <TextBox
-          x:Name="AppNameBox"
-          Width="240"
-          Height="32"
-          Margin="0,0,8,0"
+        <TextBlock
+          Grid.Column="0"
+          Margin="0,0,16,0"
           VerticalAlignment="Center"
-          PlaceholderText="请输入App名称" />
-        <Button
-          x:Name="SearchButton"
+          FontSize="18"
+          FontWeight="SemiBold"
+          Text="IPAbuyer - 快速购买 AppStore 中的应用"
+          TextTrimming="CharacterEllipsis" />
+        <Grid
           Grid.Column="1"
-          Width="60"
-          Height="32"
-          Click="SearchButton_Click"
-          Content="搜索" />
+          Width="420"
+          MinWidth="220"
+          MaxWidth="520"
+          HorizontalAlignment="Center"
+          VerticalAlignment="Center">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <TextBox
+            x:Name="AppNameBox"
+            Grid.Column="0"
+            Margin="0,0,8,0"
+            PlaceholderText="请输入App名称" />
+          <Button
+            x:Name="SearchButton"
+            Grid.Column="1"
+            MinWidth="72"
+            Click="SearchButton_Click"
+            Content="搜索" />
+        </Grid>
       </Grid>
     </Grid>
-    <!--  主内容区域  -->
     <NavigationView
       x:Name="NavView"
       Grid.Row="1"

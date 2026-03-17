@@ -352,11 +352,6 @@ namespace IPAbuyer.Views
             HideAuthMessage();
         }
 
-        private bool ValidateInput(string account, string password)
-        {
-            return !string.IsNullOrWhiteSpace(account) && !string.IsNullOrWhiteSpace(password);
-        }
-
         private void SetInputControlsEnabled(bool enabled)
         {
             if (EmailTextBox != null)

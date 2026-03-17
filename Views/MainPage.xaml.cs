@@ -51,7 +51,7 @@ namespace IPAbuyer.Views
             string account = GetActiveAccount();
             string countryCode = NormalizeCountryCode(KeychainConfig.GetCountryCode(account));
 
-            var result = await ipatoolExecution.SearchAppAsync(appName, SearchLimitNum, account, countryCode, cancellationToken);
+            var result = await IpatoolExecution.SearchAppAsync(appName, SearchLimitNum, account, countryCode, cancellationToken);
             if (result.TimedOut || string.IsNullOrWhiteSpace(result.OutputOrError))
             {
                 if (ResultList != null)
@@ -290,7 +290,7 @@ namespace IPAbuyer.Views
                     continue;
                 }
 
-                var result = await ipatoolExecution.PurchaseAppAsync(app.bundleID, account, _pageCts.Token);
+                var result = await IpatoolExecution.PurchaseAppAsync(app.bundleID, account, _pageCts.Token);
                 if (IsPurchaseSuccess(result.OutputOrError))
                 {
                     app.purchased = StatusPurchased;
