@@ -46,7 +46,10 @@ namespace IPAbuyer.Views
             var result = await ipatoolExecution.SearchAppAsync(appName, SearchLimitNum, account, countryCode, cancellationToken);
             if (result.TimedOut || string.IsNullOrWhiteSpace(result.OutputOrError))
             {
-                ResultList.ItemsSource = null;
+                if (ResultList != null)
+                {
+                    ResultList.ItemsSource = null;
+                }
                 return;
             }
 
@@ -61,7 +64,10 @@ namespace IPAbuyer.Views
                 var root = doc.RootElement;
                 if (!root.TryGetProperty("results", out var resultsElement) || resultsElement.ValueKind != JsonValueKind.Array)
                 {
-                    ResultList.ItemsSource = null;
+                    if (ResultList != null)
+                    {
+                        ResultList.ItemsSource = null;
+                    }
                     return;
                 }
 
@@ -94,32 +100,51 @@ namespace IPAbuyer.Views
             }
             catch (JsonException)
             {
-                ResultList.ItemsSource = null;
+                if (ResultList != null)
+                {
+                    ResultList.ItemsSource = null;
+                }
             }
         }
 
         private async void BatchPurchaseButton_Click(object sender, RoutedEventArgs e)
         {
+            if (ResultList == null)
+            {
+                return;
+            }
+
             var selectedApps = ResultList.SelectedItems.OfType<SearchResult>().ToList();
             if (selectedApps.Count == 0)
             {
                 return;
             }
 
-            BatchPurchaseButton.IsEnabled = false;
+            if (BatchPurchaseButton != null)
+            {
+                BatchPurchaseButton.IsEnabled = false;
+            }
             try
             {
                 await PurchaseAppsAsync(selectedApps);
             }
             finally
             {
-                BatchPurchaseButton.IsEnabled = true;
+                if (BatchPurchaseButton != null)
+                {
+                    BatchPurchaseButton.IsEnabled = true;
+                }
                 ApplyFilterAndRefresh();
             }
         }
 
         private void AddToDownloadQueueButton_Click(object sender, RoutedEventArgs e)
         {
+            if (ResultList == null)
+            {
+                return;
+            }
+
             foreach (var app in ResultList.SelectedItems.OfType<SearchResult>())
             {
                 _downloadQueueService.AddOrUpdateFromSearchResult(app);
@@ -133,14 +158,20 @@ namespace IPAbuyer.Views
                 return;
             }
 
-            BatchPurchaseButton.IsEnabled = false;
+            if (BatchPurchaseButton != null)
+            {
+                BatchPurchaseButton.IsEnabled = false;
+            }
             try
             {
                 await PurchaseAppsAsync(new List<SearchResult> { app });
             }
             finally
             {
-                BatchPurchaseButton.IsEnabled = true;
+                if (BatchPurchaseButton != null)
+                {
+                    BatchPurchaseButton.IsEnabled = true;
+                }
                 ApplyFilterAndRefresh();
             }
         }
@@ -177,7 +208,7 @@ namespace IPAbuyer.Views
 
         private void ScreeningComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (ScreeningComboBox.SelectedItem is ComboBoxItem selected)
+            if (ScreeningComboBox != null && ScreeningComboBox.SelectedItem is ComboBoxItem selected)
             {
                 _selectedFilter = selected.Tag?.ToString() ?? "All";
                 ApplyFilterAndRefresh();
@@ -187,6 +218,11 @@ namespace IPAbuyer.Views
         private void ApplyFilterAndRefresh()
         {
             var filtered = GetFilteredResults();
+            if (ResultList == null)
+            {
+                return;
+            }
+
             ResultList.ItemsSource = null;
             ResultList.ItemsSource = filtered;
         }
