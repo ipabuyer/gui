@@ -20,15 +20,6 @@ namespace IPAbuyer.Views
             InitializeDownloadDirectory();
         }
 
-        private void AppleAccountButton(object sender, RoutedEventArgs e)
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = "https://account.apple.com/",
-                UseShellExecute = true
-            });
-        }
-
         private void GithubButton(object sender, RoutedEventArgs e)
         {
             Process.Start(new ProcessStartInfo
