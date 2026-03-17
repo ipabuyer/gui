@@ -501,11 +501,6 @@ namespace IPAbuyer.Views
             }
         }
 
-        private void BackToMainpage(object sender, RoutedEventArgs e)
-        {
-            Frame.Navigate(typeof(MainPage));
-        }
-
         private static bool IsTestCredential(string account, string password)
         {
             if (string.IsNullOrWhiteSpace(account) || string.IsNullOrWhiteSpace(password))
