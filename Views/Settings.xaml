@@ -144,6 +144,11 @@
                                 Click="DeleteDataBase"
                                 Foreground="White" />
                         </Grid>
+                        <TextBlock
+                            Margin="0,-8,0,0"
+                            Style="{ThemeResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Text="说明：仅清空本地已购买/已拥有记录，不会影响你的 Apple 账号购买历史。" />
                     </StackPanel>
                 </Border>
 

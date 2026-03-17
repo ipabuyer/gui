@@ -19,7 +19,15 @@ namespace IPAbuyer.Views
         private readonly DownloadQueueService _downloadQueueService = DownloadQueueService.Instance;
         private CancellationTokenSource _pageCts = new();
         private string _selectedFilter = "All";
+
         private const string TestAccountName = "test";
+        private const string StatusPurchased = "已购买";
+        private const string StatusOwned = "已拥有";
+        private const string StatusCanPurchase = "可购买";
+
+        private static readonly string[] PurchasedAliases = { "已购买", "宸茶喘涔?" };
+        private static readonly string[] OwnedAliases = { "已拥有", "宸叉嫢鏈?" };
+        private static readonly string[] CanPurchaseAliases = { "可购买", "未购买", "鍙喘涔?", "鏈喘涔?" };
 
         public int SearchLimitNum { get; set; } = 100;
 
@@ -50,6 +58,7 @@ namespace IPAbuyer.Views
                 {
                     ResultList.ItemsSource = null;
                 }
+
                 return;
             }
 
@@ -68,6 +77,7 @@ namespace IPAbuyer.Views
                     {
                         ResultList.ItemsSource = null;
                     }
+
                     return;
                 }
 
@@ -80,8 +90,8 @@ namespace IPAbuyer.Views
                 {
                     string bundleId = GetBundleId(appElement) ?? string.Empty;
                     string status = purchasedDict.TryGetValue(bundleId, out string? purchasedStatus)
-                        ? purchasedStatus
-                        : "可购买";
+                        ? NormalizePurchasedStatus(purchasedStatus)
+                        : StatusCanPurchase;
 
                     _allResults.Add(new SearchResult
                     {
@@ -124,6 +134,7 @@ namespace IPAbuyer.Views
             {
                 BatchPurchaseButton.IsEnabled = false;
             }
+
             try
             {
                 await PurchaseAppsAsync(selectedApps);
@@ -134,6 +145,7 @@ namespace IPAbuyer.Views
                 {
                     BatchPurchaseButton.IsEnabled = true;
                 }
+
                 ApplyFilterAndRefresh();
             }
         }
@@ -162,6 +174,7 @@ namespace IPAbuyer.Views
             {
                 BatchPurchaseButton.IsEnabled = false;
             }
+
             try
             {
                 await PurchaseAppsAsync(new List<SearchResult> { app });
@@ -172,6 +185,7 @@ namespace IPAbuyer.Views
                 {
                     BatchPurchaseButton.IsEnabled = true;
                 }
+
                 ApplyFilterAndRefresh();
             }
         }
@@ -193,14 +207,16 @@ namespace IPAbuyer.Views
                 return null;
             }
 
-            if (menuItem.DataContext is SearchResult result)
+            if (menuItem.DataContext is SearchResult direct)
             {
-                return result;
+                return direct;
             }
 
-            if (menuItem.Parent is MenuFlyout flyout && flyout.Target is FrameworkElement target && target.DataContext is SearchResult targetResult)
+            if (menuItem.Parent is MenuFlyout flyout &&
+                flyout.Target is FrameworkElement target &&
+                target.DataContext is SearchResult fromTarget)
             {
-                return targetResult;
+                return fromTarget;
             }
 
             return null;
@@ -217,12 +233,12 @@ namespace IPAbuyer.Views
 
         private void ApplyFilterAndRefresh()
         {
-            var filtered = GetFilteredResults();
             if (ResultList == null)
             {
                 return;
             }
 
+            var filtered = GetFilteredResults();
             ResultList.ItemsSource = null;
             ResultList.ItemsSource = filtered;
         }
@@ -231,9 +247,9 @@ namespace IPAbuyer.Views
         {
             return _selectedFilter switch
             {
-                "OnlyPurchased" => _allResults.Where(a => a.purchased == "已购买").ToList(),
-                "OnlyNotPurchased" => _allResults.Where(a => a.purchased == "未购买" || a.purchased == "可购买").ToList(),
-                "OnlyHad" => _allResults.Where(a => a.purchased == "已拥有").ToList(),
+                "OnlyPurchased" => _allResults.Where(a => IsPurchasedStatus(a.purchased)).ToList(),
+                "OnlyNotPurchased" => _allResults.Where(a => IsCanPurchaseStatus(a.purchased)).ToList(),
+                "OnlyHad" => _allResults.Where(a => IsOwnedStatus(a.purchased)).ToList(),
                 _ => _allResults.ToList(),
             };
         }
@@ -255,37 +271,82 @@ namespace IPAbuyer.Views
                     continue;
                 }
 
-                if (app.purchased is "已购买" or "已拥有")
+                if (IsPurchasedStatus(app.purchased) || IsOwnedStatus(app.purchased))
                 {
                     continue;
                 }
 
                 if (!IsPriceFree(app.price))
                 {
-                    app.purchased = "已拥有";
-                    PurchasedAppDb.SavePurchasedApp(app.bundleID, account, "已拥有");
+                    app.purchased = StatusOwned;
+                    PurchasedAppDb.SavePurchasedApp(app.bundleID, account, StatusOwned);
                     continue;
                 }
 
                 if (isTestAccount)
                 {
-                    app.purchased = "已购买";
-                    PurchasedAppDb.SavePurchasedApp(app.bundleID, account, "已购买");
+                    app.purchased = StatusPurchased;
+                    PurchasedAppDb.SavePurchasedApp(app.bundleID, account, StatusPurchased);
                     continue;
                 }
 
                 var result = await ipatoolExecution.PurchaseAppAsync(app.bundleID, account, _pageCts.Token);
                 if (IsPurchaseSuccess(result.OutputOrError))
                 {
-                    app.purchased = "已购买";
-                    PurchasedAppDb.SavePurchasedApp(app.bundleID, account, "已购买");
+                    app.purchased = StatusPurchased;
+                    PurchasedAppDb.SavePurchasedApp(app.bundleID, account, StatusPurchased);
                 }
                 else
                 {
-                    app.purchased = "已拥有";
-                    PurchasedAppDb.SavePurchasedApp(app.bundleID, account, "已拥有");
+                    app.purchased = StatusOwned;
+                    PurchasedAppDb.SavePurchasedApp(app.bundleID, account, StatusOwned);
                 }
             }
+        }
+
+        private static string NormalizePurchasedStatus(string? status)
+        {
+            if (IsPurchasedStatus(status))
+            {
+                return StatusPurchased;
+            }
+
+            if (IsOwnedStatus(status))
+            {
+                return StatusOwned;
+            }
+
+            return StatusCanPurchase;
+        }
+
+        private static bool IsPurchasedStatus(string? status)
+        {
+            if (string.IsNullOrWhiteSpace(status))
+            {
+                return false;
+            }
+
+            return PurchasedAliases.Any(alias => string.Equals(status, alias, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static bool IsOwnedStatus(string? status)
+        {
+            if (string.IsNullOrWhiteSpace(status))
+            {
+                return false;
+            }
+
+            return OwnedAliases.Any(alias => string.Equals(status, alias, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static bool IsCanPurchaseStatus(string? status)
+        {
+            if (string.IsNullOrWhiteSpace(status))
+            {
+                return true;
+            }
+
+            return CanPurchaseAliases.Any(alias => string.Equals(status, alias, StringComparison.OrdinalIgnoreCase));
         }
 
         private static bool IsPurchaseSuccess(string response)

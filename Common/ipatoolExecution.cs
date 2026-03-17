@@ -4,6 +4,7 @@ using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -205,16 +206,8 @@ namespace IPAbuyer.Common
                 Debug.WriteLine($"ipatool output: {Preview(output)}");
                 Debug.WriteLine($"ipatool stderr: {Preview(error)}");
 
-                string? normalizedOutput = ExtractMeaningfulJson(output);
-                string? normalizedError = ExtractMeaningfulJson(error) ?? error;
-
-                // 如果标准输出没有有用信息，返回标准错误中的内容
-                if (string.IsNullOrWhiteSpace(normalizedOutput) && !string.IsNullOrWhiteSpace(normalizedError))
-                {
-                    return new IpatoolResult(normalizedError, normalizedError, process.ExitCode, TimedOut: false);
-                }
-
-                return new IpatoolResult(normalizedOutput ?? output, normalizedError, process.ExitCode, TimedOut: false);
+                (string normalizedOutput, string normalizedError) = NormalizeIpatoolStreams(output, error, process.ExitCode);
+                return new IpatoolResult(normalizedOutput, normalizedError, process.ExitCode, TimedOut: false);
             }
             catch (Exception ex)
             {
@@ -327,6 +320,66 @@ namespace IPAbuyer.Common
             }
 
             return null;
+        }
+
+        private static (string Output, string Error) NormalizeIpatoolStreams(string? stdout, string? stderr, int exitCode)
+        {
+            string outputText = stdout?.Trim() ?? string.Empty;
+            string errorText = stderr?.Trim() ?? string.Empty;
+
+            string? outputJson = ExtractMeaningfulJson(outputText);
+            string? errorJson = ExtractMeaningfulJson(errorText);
+
+            string normalizedOutput = !string.IsNullOrWhiteSpace(outputJson) ? outputJson : outputText;
+            string normalizedError = !string.IsNullOrWhiteSpace(errorJson) ? errorJson : errorText;
+
+            if (string.IsNullOrWhiteSpace(normalizedError) && !string.IsNullOrWhiteSpace(errorText))
+            {
+                normalizedError = errorText;
+            }
+
+            if (string.IsNullOrWhiteSpace(normalizedOutput))
+            {
+                normalizedOutput = BuildReadableError(normalizedError, exitCode);
+            }
+
+            if (string.IsNullOrWhiteSpace(normalizedError) && exitCode != 0)
+            {
+                normalizedError = BuildReadableError(normalizedOutput, exitCode);
+            }
+
+            return (normalizedOutput, normalizedError);
+        }
+
+        private static string BuildReadableError(string? text, int exitCode)
+        {
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                string trimmed = text.Trim();
+                try
+                {
+                    using var doc = JsonDocument.Parse(trimmed);
+                    var root = doc.RootElement;
+
+                    if (root.TryGetProperty("error", out var error) && error.ValueKind == JsonValueKind.String)
+                    {
+                        return $"ipatool 错误: {error.GetString()} (exit: {exitCode})";
+                    }
+
+                    if (root.TryGetProperty("message", out var message) && message.ValueKind == JsonValueKind.String)
+                    {
+                        return $"ipatool 错误: {message.GetString()} (exit: {exitCode})";
+                    }
+                }
+                catch (JsonException)
+                {
+                    // ignore json parse failure and fallback to raw text
+                }
+
+                return trimmed;
+            }
+
+            return $"ipatool 执行失败 (exit: {exitCode})";
         }
 
         private static string Preview(string? value)
