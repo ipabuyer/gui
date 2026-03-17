@@ -32,12 +32,12 @@ namespace IPAbuyer.Common
 
         public void AddOrUpdateFromSearchResult(SearchResult app)
         {
-            if (app == null || string.IsNullOrWhiteSpace(app.bundleID))
+            if (app == null || string.IsNullOrWhiteSpace(app.bundleId))
             {
                 return;
             }
 
-            string bundleId = app.bundleID.Trim();
+            string bundleId = app.bundleId.Trim();
             var existing = _items.FirstOrDefault(i => i.BundleId == bundleId);
             if (existing != null)
             {
@@ -130,6 +130,9 @@ namespace IPAbuyer.Common
                 string account = ResolveAccount();
                 string outputDirectory = KeychainConfig.GetDownloadDirectory();
                 Directory.CreateDirectory(outputDirectory);
+                bool useMockFlow = SessionState.IsLoggedIn
+                    && SessionState.IsMockAccount
+                    && string.Equals(SessionState.CurrentAccount, account, StringComparison.OrdinalIgnoreCase);
 
                 EmitLog($"开始下载队列，共 {pending.Count} 项，输出目录: {outputDirectory}");
 
@@ -145,20 +148,30 @@ namespace IPAbuyer.Common
                     _currentItemCts = CancellationTokenSource.CreateLinkedTokenSource(_queueCts.Token);
                     try
                     {
-                        var result = await IpatoolExecution.DownloadAppAsync(item.BundleId, outputDirectory, account, _currentItemCts.Token);
-                        if (IsDownloadSuccess(result))
+                        if (useMockFlow)
                         {
                             item.Status = DownloadQueueStatus.Success;
                             item.LastMessage = "下载成功";
                             completed++;
-                            EmitLog($"下载成功: {item.Name}");
+                            EmitLog($"下载成功(测试账户): {item.Name}");
                         }
                         else
                         {
-                            string message = BuildErrorMessage(result);
-                            item.Status = DownloadQueueStatus.Failed;
-                            item.LastMessage = message;
-                            EmitLog($"下载失败: {item.Name} - {message}");
+                            var result = await IpatoolExecution.DownloadAppAsync(item.BundleId, outputDirectory, account, _currentItemCts.Token);
+                            if (IsDownloadSuccess(result))
+                            {
+                                item.Status = DownloadQueueStatus.Success;
+                                item.LastMessage = "下载成功";
+                                completed++;
+                                EmitLog($"下载成功: {item.Name}");
+                            }
+                            else
+                            {
+                                string message = BuildErrorMessage(result);
+                                item.Status = DownloadQueueStatus.Failed;
+                                item.LastMessage = message;
+                                EmitLog($"下载失败: {item.Name} - {message}");
+                            }
                         }
                     }
                     catch (OperationCanceledException)

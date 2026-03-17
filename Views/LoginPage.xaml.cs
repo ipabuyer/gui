@@ -21,8 +21,6 @@ namespace IPAbuyer.Views
         private string _passphrase = string.Empty;
         private bool _isTwoFactorPending;
 
-        private const string TestCredential = "test";
-
         public LoginPage()
         {
             InitializeComponent();
@@ -62,6 +60,92 @@ namespace IPAbuyer.Views
             }
 
             await TriggerLoginAsync();
+        }
+
+        private async void AuthInfoButton_Click(object sender, RoutedEventArgs e)
+        {
+            string account = (EmailTextBox?.Text ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                account = SessionState.CurrentAccount;
+            }
+
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                ShowError("请先输入邮箱或登录账户");
+                return;
+            }
+
+            try
+            {
+                CancelCurrentOperation();
+                _currentOperationCts = CancellationTokenSource.CreateLinkedTokenSource(_pageCts.Token);
+                SetBusyState(true, "正在查询登录状态...");
+
+                var result = await IpatoolExecution.AuthInfoAsync(account, _currentOperationCts.Token);
+                DisposeCurrentOperation();
+
+                if (result.IsSuccessResponse)
+                {
+                    ShowSuccess("登录状态正常");
+                }
+                else
+                {
+                    ShowError(string.IsNullOrWhiteSpace(result.OutputOrError) ? "登录状态异常" : result.OutputOrError);
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowError($"查询登录状态失败: {ex.Message}");
+            }
+            finally
+            {
+                RestoreIdleState();
+            }
+        }
+
+        private async void LogoutButton_Click(object sender, RoutedEventArgs e)
+        {
+            string account = SessionState.CurrentAccount;
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                account = (EmailTextBox?.Text ?? string.Empty).Trim();
+            }
+
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                ShowError("未找到可退出的账户");
+                return;
+            }
+
+            try
+            {
+                CancelCurrentOperation();
+                _currentOperationCts = CancellationTokenSource.CreateLinkedTokenSource(_pageCts.Token);
+                SetBusyState(true, "正在退出登录...");
+
+                var result = await IpatoolExecution.AuthLogoutAsync(account, _currentOperationCts.Token);
+                DisposeCurrentOperation();
+
+                if (result.IsSuccessResponse)
+                {
+                    SessionState.Reset();
+                    HideInlineTwoFactor();
+                    ShowSuccess("已退出登录");
+                }
+                else
+                {
+                    ShowError(string.IsNullOrWhiteSpace(result.OutputOrError) ? "退出登录失败" : result.OutputOrError);
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowError($"退出登录失败: {ex.Message}");
+            }
+            finally
+            {
+                RestoreIdleState();
+            }
         }
 
         private void LoadAccountHistory()
@@ -163,16 +247,6 @@ namespace IPAbuyer.Views
             _account = EmailTextBox?.Text.Trim() ?? string.Empty;
             _password = PasswordInput?.Password?.Trim() ?? string.Empty;
             _passphrase = PassphraseInput?.Text.Trim() ?? string.Empty;
-
-            if (IsTestCredential(_account, _password))
-            {
-                _account = TestCredential;
-                _password = TestCredential;
-                if (string.IsNullOrWhiteSpace(_passphrase))
-                {
-                    _passphrase = TestCredential;
-                }
-            }
 
             bool hasAccount = !string.IsNullOrWhiteSpace(_account);
             bool hasPassword = !string.IsNullOrWhiteSpace(_password);
@@ -309,7 +383,11 @@ namespace IPAbuyer.Views
                 NextButtonControl.Content = "验证并登录";
             }
 
-            ShowAuthWarning(string.IsNullOrWhiteSpace(message) ? "请输入两步验证码继续登录。" : message);
+            string fallbackMessage = "请输入两步验证码继续登录。如果未收到验证码，请打开 https://account.apple.com/ 获取后再输入。";
+            string finalMessage = string.IsNullOrWhiteSpace(message)
+                ? fallbackMessage
+                : $"{message} 如未收到验证码，请打开 https://account.apple.com/ 获取后再输入。";
+            ShowAuthWarning(finalMessage);
             CodeTextBox?.Focus(FocusState.Programmatic);
         }
 
@@ -355,6 +433,16 @@ namespace IPAbuyer.Views
             if (CodeTextBox != null)
             {
                 CodeTextBox.IsEnabled = enabled;
+            }
+
+            if (AuthInfoButtonControl != null)
+            {
+                AuthInfoButtonControl.IsEnabled = enabled;
+            }
+
+            if (LogoutButtonControl != null)
+            {
+                LogoutButtonControl.IsEnabled = enabled;
             }
         }
 
@@ -451,7 +539,8 @@ namespace IPAbuyer.Views
             }
 
             HideInlineTwoFactor();
-            SessionState.SetLoginState(_account, true);
+            bool isMockAccount = KeychainConfig.IsMockAccount(_account, _password);
+            SessionState.SetLoginState(_account, true, isMockAccount);
             DisposeCurrentOperation();
             ShowSuccess("登录成功");
             return Task.CompletedTask;
@@ -479,21 +568,12 @@ namespace IPAbuyer.Views
             }
         }
 
-        private static bool IsTestCredential(string account, string password)
-        {
-            if (string.IsNullOrWhiteSpace(account) || string.IsNullOrWhiteSpace(password))
-            {
-                return false;
-            }
-
-            return account.Equals(TestCredential, StringComparison.OrdinalIgnoreCase)
-                && password.Equals(TestCredential, StringComparison.OrdinalIgnoreCase);
-        }
-
         private TextBox? EmailTextBox => GetControl<TextBox>("EmailComboBox");
         private PasswordBox? PasswordInput => GetControl<PasswordBox>("PasswordBox");
         private TextBox? PassphraseInput => GetControl<TextBox>("PassphraseBox");
         private Button? NextButtonControl => GetControl<Button>("NextButton");
+        private Button? AuthInfoButtonControl => GetControl<Button>("AuthInfoButton");
+        private Button? LogoutButtonControl => GetControl<Button>("LogoutButton");
         private TextBlock? ResultTextBlock => GetControl<TextBlock>("ResultText");
         private TextBox? CodeTextBox => GetControl<TextBox>("CodeBox");
         private TextBlock? CodeErrorTextBlock => GetControl<TextBlock>("CodeErrorText");

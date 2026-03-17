@@ -14,7 +14,7 @@
                         TextWrapping="WrapWholeWords" />
                     <TextBlock
                         Foreground="Gray"
-                        Text="提示：新创建的 Apple 账号需要先在苹果设备 App Store 完成一次购买后，才可正常购买与下载。"
+                        Text="提示：新创建的 Apple 账号需先在苹果设备 App Store 完成一次购买后，才能正常购买与下载。"
                         TextWrapping="WrapWholeWords" />
 
                     <Border
@@ -79,7 +79,7 @@
                                 Visibility="Collapsed">
                                 <TextBlock
                                     Foreground="Gray"
-                                    Text="检测到账户需要两步验证，请输入 6 位验证码。"
+                                    Text="检测到账户需要双重验证，请输入 6 位验证码。"
                                     TextWrapping="WrapWholeWords" />
                                 <TextBox
                                     x:Name="CodeBox"
@@ -119,6 +119,26 @@
                         HorizontalAlignment="Left"
                         Click="NextButton_Click"
                         Content="登录" />
+
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button
+                            x:Name="AuthInfoButton"
+                            MinWidth="160"
+                            HorizontalAlignment="Left"
+                            Click="AuthInfoButton_Click"
+                            Content="查询登录状态" />
+                        <Button
+                            x:Name="LogoutButton"
+                            MinWidth="120"
+                            HorizontalAlignment="Left"
+                            Click="LogoutButton_Click"
+                            Content="退出登录" />
+                    </StackPanel>
+
+                    <TextBlock
+                        Foreground="Gray"
+                        Text="如果收不到双重验证码，请打开 https://account.apple.com/ 获取后再填入本软件。"
+                        TextWrapping="WrapWholeWords" />
 
                     <TextBlock
                         x:Name="ResultText"

@@ -2,7 +2,7 @@ namespace IPAbuyer.Models
 {
     public class SearchResult
     {
-        public string? bundleID { get; set; }
+        public string? bundleId { get; set; }
         public string? id { get; set; }
         public string? name { get; set; }
         public string? developer { get; set; }

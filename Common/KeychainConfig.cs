@@ -57,7 +57,7 @@ namespace IPAbuyer.Common
         public static void InitializeDatabase()
         {
             Database database = new Database();
-            _dbPath = database.AccountDB ?? throw new InvalidOperationException("账户数据库路径未初始化");
+            _dbPath = database.accountDb ?? throw new InvalidOperationException("账户数据库路径未初始化");
             _connectionString = $"Data Source={_dbPath}";
 
             using var connection = new SqliteConnection(_connectionString);
@@ -74,10 +74,17 @@ namespace IPAbuyer.Common
                 CREATE TABLE IF NOT EXISTS Settings (
                     Key TEXT PRIMARY KEY,
                     Value TEXT NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS MockAccounts (
+                    Username TEXT NOT NULL,
+                    Password TEXT NOT NULL,
+                    PRIMARY KEY (Username, Password)
                 );";
             createTableCmd.ExecuteNonQuery();
 
             EnsureCountryCodeColumn(connection);
+            EnsureMockAccountSeed(connection);
         }
 
         /// <summary>
@@ -480,6 +487,41 @@ namespace IPAbuyer.Common
             return ValidCountryCodes.Contains(code.Trim().ToLowerInvariant());
         }
 
+        public static bool IsMockAccount(string? username, string? password)
+        {
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            {
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(_connectionString))
+            {
+                InitializeDatabase();
+            }
+
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            EnsureMockAccountSeed(connection);
+
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = @"
+                SELECT COUNT(1)
+                FROM MockAccounts
+                WHERE LOWER(Username) = @username
+                  AND Password = @password";
+            cmd.Parameters.AddWithValue("@username", username.Trim().ToLowerInvariant());
+            cmd.Parameters.AddWithValue("@password", password.Trim());
+
+            var result = cmd.ExecuteScalar();
+            if (result == null)
+            {
+                return false;
+            }
+
+            return Convert.ToInt32(result) > 0;
+        }
+
         private static bool TryNormalizeCountryCode(string? value, out string normalized)
         {
             normalized = string.Empty;
@@ -619,6 +661,18 @@ namespace IPAbuyer.Common
             return string.IsNullOrWhiteSpace(account)
                 ? string.Empty
                 : account.Trim().ToLowerInvariant();
+        }
+
+        private static void EnsureMockAccountSeed(SqliteConnection connection)
+        {
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = @"
+                INSERT INTO MockAccounts (Username, Password)
+                VALUES (@username, @password)
+                ON CONFLICT(Username, Password) DO NOTHING";
+            cmd.Parameters.AddWithValue("@username", "test");
+            cmd.Parameters.AddWithValue("@password", "test");
+            cmd.ExecuteNonQuery();
         }
 
         private static void EnsureCountryCodeColumn(SqliteConnection connection)

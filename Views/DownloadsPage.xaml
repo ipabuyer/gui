@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="using:IPAbuyer.Models"
     mc:Ignorable="d">
     <Grid Margin="24">
         <Grid.RowDefinitions>
@@ -44,7 +45,45 @@
                 x:Name="QueueListView"
                 Grid.Row="1"
                 Margin="0,12,0,0"
-                SelectionMode="Multiple" />
+                SelectionMode="Multiple">
+                <ListView.Header>
+                    <Grid Padding="8,0,8,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" HorizontalAlignment="Center" Text="app名称" />
+                        <TextBlock Grid.Column="1" HorizontalAlignment="Center" Text="appid" />
+                        <TextBlock Grid.Column="2" HorizontalAlignment="Center" Text="下载状态" />
+                    </Grid>
+                </ListView.Header>
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="models:DownloadQueueItem">
+                        <Grid Padding="8,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                Grid.Column="0"
+                                HorizontalAlignment="Center"
+                                Text="{x:Bind Name}"
+                                TextTrimming="CharacterEllipsis" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Center"
+                                Text="{x:Bind AppId}"
+                                TextTrimming="CharacterEllipsis" />
+                            <TextBlock
+                                Grid.Column="2"
+                                HorizontalAlignment="Center"
+                                Text="{x:Bind Status}" />
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
         </Grid>
 
         <Grid Grid.Row="1" Margin="0,12,0,0">
@@ -64,7 +103,7 @@
                     Click="ClearLogButton_Click" />
                 <Button
                     MinHeight="36"
-                    Content="终止当前 app 下载"
+                    Content="终止当前app下载"
                     Click="CancelCurrentButton_Click" />
             </StackPanel>
 

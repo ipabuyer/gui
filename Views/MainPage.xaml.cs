@@ -20,7 +20,6 @@ namespace IPAbuyer.Views
         private CancellationTokenSource _pageCts = new();
         private string _selectedFilter = "All";
 
-        private const string TestAccountName = "test";
         private const string StatusPurchased = "已购买";
         private const string StatusOwned = "已拥有";
         private const string StatusCanPurchase = "可购买";
@@ -95,7 +94,7 @@ namespace IPAbuyer.Views
 
                     _allResults.Add(new SearchResult
                     {
-                        bundleID = bundleId,
+                        bundleId = bundleId,
                         id = GetPropertyValue(appElement, "trackId"),
                         name = GetPropertyValue(appElement, "trackName"),
                         developer = GetPropertyValue(appElement, "sellerName"),
@@ -262,11 +261,13 @@ namespace IPAbuyer.Views
                 return;
             }
 
-            bool isTestAccount = IsTestAccount(account);
+            bool isTestAccount = SessionState.IsLoggedIn
+                && SessionState.IsMockAccount
+                && string.Equals(SessionState.CurrentAccount, account, StringComparison.OrdinalIgnoreCase);
 
             foreach (var app in selectedApps)
             {
-                if (string.IsNullOrWhiteSpace(app.bundleID))
+                if (string.IsNullOrWhiteSpace(app.bundleId))
                 {
                     continue;
                 }
@@ -279,27 +280,27 @@ namespace IPAbuyer.Views
                 if (!IsPriceFree(app.price))
                 {
                     app.purchased = StatusOwned;
-                    PurchasedAppDb.SavePurchasedApp(app.bundleID, account, StatusOwned);
+                    PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusOwned);
                     continue;
                 }
 
                 if (isTestAccount)
                 {
                     app.purchased = StatusPurchased;
-                    PurchasedAppDb.SavePurchasedApp(app.bundleID, account, StatusPurchased);
+                    PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusPurchased);
                     continue;
                 }
 
-                var result = await IpatoolExecution.PurchaseAppAsync(app.bundleID, account, _pageCts.Token);
+                var result = await IpatoolExecution.PurchaseAppAsync(app.bundleId, account, _pageCts.Token);
                 if (IsPurchaseSuccess(result.OutputOrError))
                 {
                     app.purchased = StatusPurchased;
-                    PurchasedAppDb.SavePurchasedApp(app.bundleID, account, StatusPurchased);
+                    PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusPurchased);
                 }
                 else
                 {
                     app.purchased = StatusOwned;
-                    PurchasedAppDb.SavePurchasedApp(app.bundleID, account, StatusOwned);
+                    PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusOwned);
                 }
             }
         }
@@ -383,11 +384,6 @@ namespace IPAbuyer.Views
             }
 
             return account.Trim();
-        }
-
-        private static bool IsTestAccount(string? account)
-        {
-            return string.Equals(account?.Trim(), TestAccountName, StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool IsPriceFree(string? price)

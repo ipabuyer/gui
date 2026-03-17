@@ -29,7 +29,12 @@ namespace IPAbuyer.Common
                 throw new ArgumentException("account 不能为空", nameof(account));
             }
 
-            string arguments = $"auth login --email \"{account}\" --password \"{password}\" --auth-code \"{authCode}\"";
+            string arguments = $"auth login --email \"{account}\" --password \"{password}\"";
+            if (!string.IsNullOrWhiteSpace(authCode))
+            {
+                arguments += $" --auth-code \"{authCode}\"";
+            }
+
             return ExecuteIpatoolAsync(arguments, account, passphrase, cancellationToken);
         }
 
