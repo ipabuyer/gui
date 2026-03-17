@@ -19,6 +19,7 @@ namespace IPAbuyer.Views
         private readonly DownloadQueueService _downloadQueueService = DownloadQueueService.Instance;
         private CancellationTokenSource _pageCts = new();
         private string _selectedFilter = "All";
+        public event Action<bool>? SearchLoadingChanged;
 
         private const string StatusPurchased = "已购买";
         private const string StatusOwned = "已拥有";
@@ -42,7 +43,15 @@ namespace IPAbuyer.Views
                 return;
             }
 
-            await PerformSearchAsync(appName.Trim(), _pageCts.Token);
+            SearchLoadingChanged?.Invoke(true);
+            try
+            {
+                await PerformSearchAsync(appName.Trim(), _pageCts.Token);
+            }
+            finally
+            {
+                SearchLoadingChanged?.Invoke(false);
+            }
         }
 
         private async Task PerformSearchAsync(string appName, CancellationToken cancellationToken)

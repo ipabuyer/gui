@@ -66,6 +66,14 @@
             QuerySubmitted="AppNameBox_QuerySubmitted" />
         </Grid>
       </Grid>
+      <ProgressBar
+        x:Name="SearchLoadingBar"
+        Grid.ColumnSpan="3"
+        Height="2"
+        VerticalAlignment="Bottom"
+        IsIndeterminate="True"
+        IsHitTestVisible="False"
+        Visibility="Collapsed" />
     </Grid>
     <NavigationView
       x:Name="NavView"

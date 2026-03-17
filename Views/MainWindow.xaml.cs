@@ -7,6 +7,8 @@ namespace IPAbuyer.Views
 {
     public sealed partial class MainWindow : Window
     {
+        private MainPage? _currentMainPage;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -17,6 +19,7 @@ namespace IPAbuyer.Views
             Title = "IPAbuyer - 快速购买 AppStore 中的应用";
             SetWindowIcon(this);
 
+            ContentFrame.Navigated += ContentFrame_Navigated;
             ContentFrame.Navigate(typeof(MainPage));
             foreach (var menuItem in NavView.MenuItems)
             {
@@ -45,6 +48,32 @@ namespace IPAbuyer.Views
             {
                 mainPage.PerformSearchFromMainWindow(appName);
             }
+        }
+
+        private void ContentFrame_Navigated(object sender, Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+        {
+            if (_currentMainPage != null)
+            {
+                _currentMainPage.SearchLoadingChanged -= MainPage_SearchLoadingChanged;
+            }
+
+            _currentMainPage = ContentFrame.Content as MainPage;
+            if (_currentMainPage != null)
+            {
+                _currentMainPage.SearchLoadingChanged += MainPage_SearchLoadingChanged;
+            }
+            else
+            {
+                SearchLoadingBar.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void MainPage_SearchLoadingChanged(bool isLoading)
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                SearchLoadingBar.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
+            });
         }
 
         private static void SetWindowIcon(Window window)
