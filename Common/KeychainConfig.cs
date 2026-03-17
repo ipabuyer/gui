@@ -20,6 +20,7 @@ namespace IPAbuyer.Common
         private const string LastLoginKey = "LastLoginUsername";
         private const string CountryCodeKey = "CountryCode";
         private const string DownloadDirectoryKey = "DownloadDirectory";
+        private const string PassphraseFileName = "passphrase.txt";
         private const string DefaultCountryCode = "cn";
         private static readonly HashSet<string> ValidCountryCodes = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -355,6 +356,59 @@ namespace IPAbuyer.Common
             }
         }
 
+        public static void SavePassphrase(string account, string passphrase)
+        {
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                throw new ArgumentException("账号不能为空", nameof(account));
+            }
+
+            if (string.IsNullOrWhiteSpace(passphrase))
+            {
+                throw new ArgumentException("加密密钥不能为空", nameof(passphrase));
+            }
+
+            string path = GetPassphraseFilePath();
+            string content = $"{account.Trim()}{Environment.NewLine}{passphrase.Trim()}";
+            File.WriteAllText(path, content);
+        }
+
+        public static string? GetPassphrase(string? account)
+        {
+            string path = GetPassphraseFilePath();
+            if (!File.Exists(path))
+            {
+                return null;
+            }
+
+            string[] lines = File.ReadAllLines(path);
+            if (lines.Length == 0)
+            {
+                return null;
+            }
+
+            if (lines.Length == 1)
+            {
+                return lines[0].Trim();
+            }
+
+            string savedAccount = lines[0].Trim();
+            string savedPassphrase = lines[1].Trim();
+            if (string.IsNullOrWhiteSpace(savedPassphrase))
+            {
+                return null;
+            }
+
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                return savedPassphrase;
+            }
+
+            return string.Equals(savedAccount, account.Trim(), StringComparison.OrdinalIgnoreCase)
+                ? savedPassphrase
+                : null;
+        }
+
         public static void SaveDownloadDirectory(string directoryPath)
         {
             if (string.IsNullOrWhiteSpace(directoryPath))
@@ -450,6 +504,23 @@ namespace IPAbuyer.Common
             string downloadPath = Path.Combine(userProfile, "Downloads");
             Directory.CreateDirectory(downloadPath);
             return downloadPath;
+        }
+
+        private static string GetPassphraseFilePath()
+        {
+            if (string.IsNullOrEmpty(_dbPath))
+            {
+                InitializeDatabase();
+            }
+
+            string? directory = Path.GetDirectoryName(_dbPath);
+            if (string.IsNullOrWhiteSpace(directory))
+            {
+                directory = ResolveDataDirectory();
+            }
+
+            Directory.CreateDirectory(directory);
+            return Path.Combine(directory, PassphraseFileName);
         }
 
         private static string ResolveDataDirectory()

@@ -29,17 +29,17 @@ namespace IPAbuyer.Common
         private const string TestCredential = "test";
         private static readonly TimeSpan TestLoginDelay = TimeSpan.FromMilliseconds(1000);
 
-        public static Task<LoginResult> LoginAsync(string account, string password, CancellationToken cancellationToken)
+        public static Task<LoginResult> LoginAsync(string account, string password, string passphrase, CancellationToken cancellationToken)
         {
-            return ExecuteLoginAsync(account, password, "000000", cancellationToken, isTwoFactor: false);
+            return ExecuteLoginAsync(account, password, passphrase, "000000", cancellationToken, isTwoFactor: false);
         }
 
-        public static Task<LoginResult> VerifyAuthCodeAsync(string account, string password, string authCode, CancellationToken cancellationToken)
+        public static Task<LoginResult> VerifyAuthCodeAsync(string account, string password, string passphrase, string authCode, CancellationToken cancellationToken)
         {
-            return ExecuteLoginAsync(account, password, authCode, cancellationToken, isTwoFactor: true);
+            return ExecuteLoginAsync(account, password, passphrase, authCode, cancellationToken, isTwoFactor: true);
         }
 
-        private static async Task<LoginResult> ExecuteLoginAsync(string account, string password, string authCode, CancellationToken cancellationToken, bool isTwoFactor)
+        private static async Task<LoginResult> ExecuteLoginAsync(string account, string password, string passphrase, string authCode, CancellationToken cancellationToken, bool isTwoFactor)
         {
             if (IsTestCredential(account, password))
             {
@@ -57,7 +57,7 @@ namespace IPAbuyer.Common
 
             try
             {
-                var response = await ipatoolExecution.AuthLoginAsync(account, password, authCode, cancellationToken).ConfigureAwait(false);
+                var response = await ipatoolExecution.AuthLoginAsync(account, password, authCode, passphrase, cancellationToken).ConfigureAwait(false);
 
                 if (response.TimedOut)
                 {

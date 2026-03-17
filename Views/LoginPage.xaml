@@ -35,12 +35,27 @@
             FontSize="16">
             输入您的Apple ID与密码以登录
         </TextBlock>
+        <TextBlock
+            Margin="0,128,0,0"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Top"
+            Foreground="Gray"
+            Text="如需修改加密密钥，请先退出登录后重新登录并输入新的密钥。"
+            TextWrapping="WrapWholeWords" />
+        <TextBlock
+            Margin="0,152,0,0"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Top"
+            Foreground="Gray"
+            Text="提示：新创建的 Apple 账号需先在苹果设备登录 App Store 并完成一次购买后，才能正常购买/下载。"
+            TextWrapping="WrapWholeWords" />
         <Grid
-            Height="250"
+            Height="320"
             Margin="40,150,40,0"
             HorizontalAlignment="Center"
             VerticalAlignment="Top">
             <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="2*" />
@@ -89,6 +104,25 @@
                 VerticalAlignment="Center"
                 KeyUp="Input_KeyUp"
                 PlaceholderText="请输入密码" />
+
+            <TextBlock
+                Grid.Row="2"
+                Grid.Column="0"
+                Margin="0,0,10,0"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center">
+                加密密钥
+            </TextBlock>
+            <PasswordBox
+                x:Name="PassphraseBox"
+                Grid.Row="2"
+                Grid.Column="1"
+                MinWidth="300"
+                MinHeight="30"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                KeyUp="Input_KeyUp"
+                PlaceholderText="用于 ipatool keychain-passphrase" />
         </Grid>
 
         <Button

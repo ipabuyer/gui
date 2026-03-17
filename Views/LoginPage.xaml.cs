@@ -18,6 +18,7 @@ namespace IPAbuyer.Views
         private string? _lastLoginUsername;
         private string _account = "example@icloud.com";
         private string _password = string.Empty;
+        private string _passphrase = string.Empty;
         private const string TestCredential = "test";
 
         public LoginPage()
@@ -29,6 +30,12 @@ namespace IPAbuyer.Views
                 _account = _lastLoginUsername;
             }
             LoadAccountHistory();
+            string? savedPassphrase = KeychainConfig.GetPassphrase(_account);
+            if (!string.IsNullOrWhiteSpace(savedPassphrase) && PassphraseInput != null)
+            {
+                PassphraseInput.Password = savedPassphrase;
+                _passphrase = savedPassphrase;
+            }
             Unloaded += LoginPage_Unloaded;
         }
 
@@ -150,7 +157,11 @@ namespace IPAbuyer.Views
 
                 PasswordInput.Focus(FocusState.Programmatic);
             }
-            else if (sender is PasswordBox)
+            else if (ReferenceEquals(sender, PasswordInput) && PassphraseInput != null)
+            {
+                PassphraseInput.Focus(FocusState.Programmatic);
+            }
+            else if (ReferenceEquals(sender, PassphraseInput))
             {
                 await TriggerLoginAsync();
             }
@@ -163,22 +174,28 @@ namespace IPAbuyer.Views
 
             _account = EmailTextBox?.Text.Trim() ?? string.Empty;
             _password = PasswordInput?.Password?.Trim() ?? string.Empty;
+            _passphrase = PassphraseInput?.Password?.Trim() ?? string.Empty;
 
             if (IsTestCredential(_account, _password))
             {
                 _account = TestCredential;
                 _password = TestCredential;
+                if (string.IsNullOrWhiteSpace(_passphrase))
+                {
+                    _passphrase = TestCredential;
+                }
             }
 
 
             bool hasAccount = !string.IsNullOrWhiteSpace(_account);
             bool hasPassword = !string.IsNullOrWhiteSpace(_password);
+            bool hasPassphrase = !string.IsNullOrWhiteSpace(_passphrase);
 
             bool hasLocalValidationIssue = false;
-            if (!hasAccount || !hasPassword)
+            if (!hasAccount || !hasPassword || !hasPassphrase)
             {
                 hasLocalValidationIssue = true;
-                ShowError("邮箱和密码不能为空");
+                ShowError("邮箱、密码和加密密钥不能为空");
 
                 if (!hasAccount)
                 {
@@ -188,12 +205,16 @@ namespace IPAbuyer.Views
                 {
                     PasswordInput?.Focus(FocusState.Programmatic);
                 }
+                else if (!hasPassphrase)
+                {
+                    PassphraseInput?.Focus(FocusState.Programmatic);
+                }
             }
 
             SetInputControlsEnabled(false);
             SetBusyState(true, hasLocalValidationIssue ? string.Empty : "正在登录...");
 
-            var result = await LoginService.LoginAsync(_account, _password, _currentOperationCts.Token);
+            var result = await LoginService.LoginAsync(_account, _password, _passphrase, _currentOperationCts.Token);
             DisposeCurrentOperation();
             await HandleLoginResultAsync(result, isTwoFactorStep: false);
         }
@@ -225,7 +246,7 @@ namespace IPAbuyer.Views
 
             ShowAuthWarning("正在验证...");
 
-            var result = await LoginService.VerifyAuthCodeAsync(_account, _password, authCode, _currentOperationCts.Token);
+            var result = await LoginService.VerifyAuthCodeAsync(_account, _password, _passphrase, authCode, _currentOperationCts.Token);
             DisposeCurrentOperation();
 
             if (AuthCodeDialogControl != null)
@@ -347,6 +368,11 @@ namespace IPAbuyer.Views
             {
                 PasswordInput.IsEnabled = enabled;
             }
+
+            if (PassphraseInput != null)
+            {
+                PassphraseInput.IsEnabled = enabled;
+            }
         }
 
         private void SetBusyState(bool isBusy, string message)
@@ -439,6 +465,7 @@ namespace IPAbuyer.Views
             try
             {
                 KeychainConfig.GenerateAndSaveSecretKey(_account);
+                KeychainConfig.SavePassphrase(_account, _passphrase);
                 _lastLoginUsername = _account;
                 if (EmailTextBox != null)
                 {
@@ -497,6 +524,7 @@ namespace IPAbuyer.Views
 
         private TextBox? EmailTextBox => GetControl<TextBox>("EmailComboBox");
         private PasswordBox? PasswordInput => GetControl<PasswordBox>("PasswordBox");
+        private PasswordBox? PassphraseInput => GetControl<PasswordBox>("PassphraseBox");
         private Button? NextButtonControl => GetControl<Button>("NextButton");
         private TextBlock? ResultTextBlock => GetControl<TextBlock>("ResultText");
         private ContentDialog? AuthCodeDialogControl => GetControl<ContentDialog>("AuthCodeDialog");

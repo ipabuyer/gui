@@ -21,7 +21,7 @@ namespace IPAbuyer.Common
             public bool IsSuccessResponse => !TimedOut && ExitCode == 0;
         }
 
-        public static Task<IpatoolResult> AuthLoginAsync(string account, string password, string authCode, CancellationToken cancellationToken = default)
+        public static Task<IpatoolResult> AuthLoginAsync(string account, string password, string authCode, string passphrase, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(account))
             {
@@ -29,7 +29,7 @@ namespace IPAbuyer.Common
             }
 
             string arguments = $"auth login --email \"{account}\" --password \"{password}\" --auth-code \"{authCode}\"";
-            return ExecuteIpatoolAsync(arguments, account, cancellationToken);
+            return ExecuteIpatoolAsync(arguments, account, passphrase, cancellationToken);
         }
 
         public static Task<IpatoolResult> AuthLogoutAsync(string account, CancellationToken cancellationToken = default)
@@ -39,7 +39,7 @@ namespace IPAbuyer.Common
                 throw new ArgumentException("account 不能为空", nameof(account));
             }
 
-            return ExecuteIpatoolAsync("auth revoke", account, cancellationToken);
+            return ExecuteIpatoolAsync("auth revoke", account, null, cancellationToken);
         }
 
         public static async Task<IpatoolResult> SearchAppAsync(string name, int limit, string account, string countryCode, CancellationToken cancellationToken = default)
@@ -97,7 +97,7 @@ namespace IPAbuyer.Common
                 throw new ArgumentException("account 不能为空", nameof(account));
             }
 
-            return ExecuteIpatoolAsync("auth info", account, cancellationToken);
+            return ExecuteIpatoolAsync("auth info", account, null, cancellationToken);
         }
 
         public static Task<IpatoolResult> PurchaseAppAsync(string bundleId, string account, CancellationToken cancellationToken = default)
@@ -113,7 +113,7 @@ namespace IPAbuyer.Common
             }
 
             string arguments = $"purchase --bundle-identifier \"{bundleId}\"";
-            return ExecuteIpatoolAsync(arguments, account, cancellationToken);
+            return ExecuteIpatoolAsync(arguments, account, null, cancellationToken);
         }
 
         public static Task<IpatoolResult> DownloadAppAsync(string bundleId, string outputDirectory, string account, CancellationToken cancellationToken = default)
@@ -135,22 +135,26 @@ namespace IPAbuyer.Common
 
             Directory.CreateDirectory(outputDirectory);
             string arguments = $"download --output \"{outputDirectory}\" --bundle-identifier \"{bundleId}\"";
-            return ExecuteIpatoolAsync(arguments, account, cancellationToken);
+            return ExecuteIpatoolAsync(arguments, account, null, cancellationToken);
         }
 
-        private static async Task<IpatoolResult> ExecuteIpatoolAsync(string arguments, string account, CancellationToken cancellationToken)
+        private static async Task<IpatoolResult> ExecuteIpatoolAsync(string arguments, string account, string? passphrase, CancellationToken cancellationToken)
         {
             bool isLogout = arguments.TrimStart().StartsWith("auth revoke", StringComparison.OrdinalIgnoreCase);
 
             string ipatoolPath = ResolveIpatoolPath();
             string workingDirectory = Path.GetDirectoryName(ipatoolPath) ?? AppContext.BaseDirectory;
 
-            string passphrase = EnsurePassphrase(account);
+            string effectivePassphrase = EnsurePassphrase(account, passphrase);
+
+            string finalArguments = isLogout
+                ? $"{arguments} --format json --non-interactive --verbose"
+                : $"{arguments} --keychain-passphrase {effectivePassphrase} --format json --non-interactive --verbose";
 
             var psi = new ProcessStartInfo
             {
                 FileName = ipatoolPath,
-                Arguments = $"{arguments} --keychain-passphrase {passphrase} --format json --non-interactive --verbose",
+                Arguments = finalArguments,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -261,8 +265,20 @@ namespace IPAbuyer.Common
             return "ipatool.exe";
         }
 
-        private static string EnsurePassphrase(string account)
+        private static string EnsurePassphrase(string account, string? passphrase)
         {
+            if (!string.IsNullOrWhiteSpace(passphrase))
+            {
+                return passphrase.Trim();
+            }
+
+            string? filePassphrase = KeychainConfig.GetPassphrase(account);
+            if (!string.IsNullOrWhiteSpace(filePassphrase))
+            {
+                return filePassphrase;
+            }
+
+            // 兼容旧实现：若 passphrase.txt 不存在，回退到历史数据库密钥。
             string? existingKey = KeychainConfig.GetSecretKey(account);
             if (!string.IsNullOrEmpty(existingKey))
             {
