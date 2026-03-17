@@ -9,82 +9,144 @@
     mc:Ignorable="d">
 
     <Grid>
-        <ScrollViewer>
-            <StackPanel Margin="50,20,50,50" Spacing="15">
-                <!--  标题  -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="50,20,50,50" Spacing="16">
                 <TextBlock x:Uid="/SettingPage/Title" Style="{ThemeResource TitleLargeTextBlockStyle}" />
-                <!--  关于软件  -->
                 <TextBlock x:Uid="/SettingPage/About" Style="{ThemeResource SubtitleTextBlockStyle}" />
-                <MenuFlyoutSeparator />
-                <!--  国家地区代码  -->
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="3*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock
-                        x:Uid="/SettingPage/About_Country_Code"
-                        Grid.Column="0"
-                        Style="{ThemeResource BodyTextBlockStyle}"
-                        TextWrapping="Wrap" />
-                    <Grid Grid.Column="1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <TextBox
-                            x:Name="CountryCodeTextBox"
-                            Grid.Column="0"
-                            HorizontalAlignment="Right"
-                            KeyUp="CountryCodeTextBox_KeyUp"
-                            PlaceholderText="cn" />
-                        <Button
-                            x:Uid="/SettingPage/About_Country_Code_Button"
-                            Grid.Column="1"
-                            HorizontalAlignment="Right"
-                            Click="CountryCodeButton" />
-                    </Grid>
-                </Grid>
-                <MenuFlyoutSeparator />
-                <!--  开发者信息  -->
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="3*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock
-                        x:Uid="/SettingPage/About_Developer"
-                        Grid.Column="0"
-                        Style="{ThemeResource BodyTextBlockStyle}"
-                        TextWrapping="Wrap" />
-                    <Button
-                        x:Uid="/SettingPage/About_Developer_Button"
-                        Grid.Column="1"
-                        HorizontalAlignment="Right"
-                        Click="GithubButton" />
-                </Grid>
-                <MenuFlyoutSeparator />
-                <!--  清除数据库  -->
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="3*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock
-                        x:Uid="/SettingPage/About_Remove_Database"
-                        Grid.Column="0"
-                        Style="{ThemeResource BodyTextBlockStyle}"
-                        TextWrapping="Wrap" />
-                    <Button
-                        x:Uid="/SettingPage/About_Remove_Database_Button"
-                        Grid.Column="1"
-                        HorizontalAlignment="Right"
-                        Background="Red"
-                        Click="DeleteDataBase"
-                        Foreground="White" />
-                </Grid>
-                <!--  常见问题  -->
-                <MenuFlyoutSeparator />
+
+                <Border
+                    Padding="16"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                    <StackPanel Spacing="16">
+                        <Grid ColumnSpacing="12" RowSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3*" />
+                                <ColumnDefinition Width="2*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                x:Uid="/SettingPage/About_Country_Code"
+                                Grid.Column="0"
+                                VerticalAlignment="Center"
+                                Style="{ThemeResource BodyTextBlockStyle}"
+                                TextWrapping="Wrap" />
+                            <Grid Grid.Column="1" ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox
+                                    x:Name="CountryCodeTextBox"
+                                    Grid.Column="0"
+                                    MinHeight="36"
+                                    KeyUp="CountryCodeTextBox_KeyUp"
+                                    PlaceholderText="cn" />
+                                <Button
+                                    x:Uid="/SettingPage/About_Country_Code_Button"
+                                    Grid.Column="1"
+                                    MinHeight="36"
+                                    Click="CountryCodeButton" />
+                            </Grid>
+                        </Grid>
+
+                        <Grid ColumnSpacing="12" RowSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3*" />
+                                <ColumnDefinition Width="2*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                x:Uid="/SettingPage/About_Download_Directory"
+                                Grid.Column="0"
+                                VerticalAlignment="Center"
+                                Style="{ThemeResource BodyTextBlockStyle}"
+                                TextWrapping="Wrap" />
+                            <Grid Grid.Column="1" ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox
+                                    x:Name="DownloadDirectoryTextBox"
+                                    Grid.Column="0"
+                                    MinHeight="36"
+                                    PlaceholderText="C:\\Users\\username\\Downloads" />
+                                <Button
+                                    x:Uid="/SettingPage/About_Download_Directory_Button"
+                                    Grid.Column="1"
+                                    MinHeight="36"
+                                    Click="SaveDownloadDirectoryButton_Click" />
+                                <Button
+                                    x:Uid="/SettingPage/About_Download_Directory_Default_Button"
+                                    Grid.Column="2"
+                                    MinHeight="36"
+                                    Click="ResetDownloadDirectoryButton_Click" />
+                            </Grid>
+                        </Grid>
+
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3*" />
+                                <ColumnDefinition Width="2*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                x:Uid="/SettingPage/About_Developer"
+                                Grid.Column="0"
+                                VerticalAlignment="Center"
+                                Style="{ThemeResource BodyTextBlockStyle}"
+                                TextWrapping="Wrap" />
+                            <Button
+                                x:Uid="/SettingPage/About_Developer_Button"
+                                Grid.Column="1"
+                                MinHeight="36"
+                                HorizontalAlignment="Right"
+                                Click="GithubButton" />
+                        </Grid>
+
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3*" />
+                                <ColumnDefinition Width="2*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                x:Uid="/SettingPage/About_Feedback_Email"
+                                Grid.Column="0"
+                                VerticalAlignment="Center"
+                                Style="{ThemeResource BodyTextBlockStyle}"
+                                TextWrapping="Wrap" />
+                            <Button
+                                x:Uid="/SettingPage/About_Feedback_Email_Button"
+                                Grid.Column="1"
+                                MinHeight="36"
+                                HorizontalAlignment="Right"
+                                Click="CopyFeedbackEmailButton_Click" />
+                        </Grid>
+
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="3*" />
+                                <ColumnDefinition Width="2*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                x:Uid="/SettingPage/About_Remove_Database"
+                                Grid.Column="0"
+                                VerticalAlignment="Center"
+                                Style="{ThemeResource BodyTextBlockStyle}"
+                                TextWrapping="Wrap" />
+                            <Button
+                                x:Uid="/SettingPage/About_Remove_Database_Button"
+                                Grid.Column="1"
+                                MinHeight="36"
+                                HorizontalAlignment="Right"
+                                Background="Red"
+                                Click="DeleteDataBase"
+                                Foreground="White" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
                 <TextBlock x:Uid="/QA/Title" Style="{ThemeResource SubtitleTextBlockStyle}" />
                 <MenuFlyoutSeparator />
                 <TextBlock

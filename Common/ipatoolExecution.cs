@@ -116,6 +116,28 @@ namespace IPAbuyer.Common
             return ExecuteIpatoolAsync(arguments, account, cancellationToken);
         }
 
+        public static Task<IpatoolResult> DownloadAppAsync(string bundleId, string outputDirectory, string account, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                throw new ArgumentException("account 不能为空", nameof(account));
+            }
+
+            if (string.IsNullOrWhiteSpace(bundleId))
+            {
+                throw new ArgumentException("bundleId 不能为空", nameof(bundleId));
+            }
+
+            if (string.IsNullOrWhiteSpace(outputDirectory))
+            {
+                throw new ArgumentException("outputDirectory 不能为空", nameof(outputDirectory));
+            }
+
+            Directory.CreateDirectory(outputDirectory);
+            string arguments = $"download --output \"{outputDirectory}\" --bundle-identifier \"{bundleId}\"";
+            return ExecuteIpatoolAsync(arguments, account, cancellationToken);
+        }
+
         private static async Task<IpatoolResult> ExecuteIpatoolAsync(string arguments, string account, CancellationToken cancellationToken)
         {
             bool isLogout = arguments.TrimStart().StartsWith("auth revoke", StringComparison.OrdinalIgnoreCase);

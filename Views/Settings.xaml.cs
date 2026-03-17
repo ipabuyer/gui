@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Input;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 
 namespace IPAbuyer.Views
@@ -16,6 +17,7 @@ namespace IPAbuyer.Views
         {
             this.InitializeComponent();
             InitializeCountryCode();
+            InitializeDownloadDirectory();
         }
 
         private void AppleAccountButton(object sender, RoutedEventArgs e)
@@ -97,6 +99,21 @@ namespace IPAbuyer.Views
             }
         }
 
+        private void InitializeDownloadDirectory()
+        {
+            try
+            {
+                if (DownloadDirectoryTextBoxControl != null)
+                {
+                    DownloadDirectoryTextBoxControl.Text = KeychainConfig.GetDownloadDirectory();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"初始化下载目录失败: {ex.Message}");
+            }
+        }
+
         private async void CountryCodeButton(object sender, RoutedEventArgs e)
         {
             await HandleCountryCodeSubmissionAsync();
@@ -166,11 +183,79 @@ namespace IPAbuyer.Views
             return KeychainConfig.IsValidCountryCode(code);
         }
 
+        private async void SaveDownloadDirectoryButton_Click(object sender, RoutedEventArgs e)
+        {
+            string directory = DownloadDirectoryTextBoxControl?.Text?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(directory))
+            {
+                await ShowDialogAsync("操作失败", "下载目录不能为空");
+                return;
+            }
+
+            try
+            {
+                KeychainConfig.SaveDownloadDirectory(directory);
+                if (DownloadDirectoryTextBoxControl != null)
+                {
+                    DownloadDirectoryTextBoxControl.Text = KeychainConfig.GetDownloadDirectory();
+                }
+
+                await ShowDialogAsync("操作成功", "下载目录已更新");
+            }
+            catch (Exception ex)
+            {
+                await ShowDialogAsync("操作失败", $"保存失败：{ex.Message}");
+            }
+        }
+
+        private async void ResetDownloadDirectoryButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string defaultDirectory = KeychainConfig.GetDefaultDownloadDirectory();
+                KeychainConfig.SaveDownloadDirectory(defaultDirectory);
+                if (DownloadDirectoryTextBoxControl != null)
+                {
+                    DownloadDirectoryTextBoxControl.Text = defaultDirectory;
+                }
+
+                await ShowDialogAsync("操作成功", $"已恢复默认下载目录：{defaultDirectory}");
+            }
+            catch (Exception ex)
+            {
+                await ShowDialogAsync("操作失败", $"恢复默认目录失败：{ex.Message}");
+            }
+        }
+
+        private async void CopyFeedbackEmailButton_Click(object sender, RoutedEventArgs e)
+        {
+            const string feedbackEmail = "ipa@blazesnow.com";
+
+            try
+            {
+                var dataPackage = new DataPackage();
+                dataPackage.SetText(feedbackEmail);
+                Clipboard.SetContent(dataPackage);
+                Clipboard.Flush();
+
+                await ShowDialogAsync("操作成功", $"反馈邮箱已复制：{feedbackEmail}");
+            }
+            catch (Exception ex)
+            {
+                await ShowDialogAsync("操作失败", $"复制邮箱失败：{ex.Message}");
+            }
+        }
+
         private async Task ShowCountryCodeDialogAsync(string message, bool isError)
+        {
+            await ShowDialogAsync(isError ? "操作失败" : "操作成功", message);
+        }
+
+        private async Task ShowDialogAsync(string title, string message)
         {
             var dialog = new ContentDialog
             {
-                Title = isError ? "操作失败" : "操作成功",
+                Title = title,
                 Content = message,
                 CloseButtonText = "确定",
                 XamlRoot = this.XamlRoot
@@ -180,6 +265,7 @@ namespace IPAbuyer.Views
         }
 
         private TextBox? CountryCodeTextBoxControl => FindName("CountryCodeTextBox") as TextBox;
+        private TextBox? DownloadDirectoryTextBoxControl => FindName("DownloadDirectoryTextBox") as TextBox;
 
         private static string? GetAccountForCountryCode()
         {
