@@ -38,7 +38,7 @@
                     MinHeight="36"
                     SelectedIndex="0"
                     SelectionChanged="ScreeningComboBox_SelectionChanged">
-                    <ComboBoxItem x:Name="All" Tag="All">筛选</ComboBoxItem>
+                    <ComboBoxItem x:Name="All" Tag="All">全部</ComboBoxItem>
                     <ComboBoxItem x:Name="OnlyNotPurchased" Tag="OnlyNotPurchased">仅未购买</ComboBoxItem>
                     <ComboBoxItem x:Name="OnlyPurchased" Tag="OnlyPurchased">仅已购买</ComboBoxItem>
                     <ComboBoxItem x:Name="OnlyHad" Tag="OnlyHad">仅已拥有</ComboBoxItem>
@@ -51,68 +51,84 @@
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 CornerRadius="4">
-                <ListView
-                    x:Name="ResultList"
-                    Margin="0,10,0,10"
-                    SelectionMode="Extended">
-                    <ListView.Header>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="3*" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="2*" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" HorizontalAlignment="Center" Text="App 名称（图标）" />
-                            <TextBlock Grid.Column="1" HorizontalAlignment="Center" Text="AppID" />
-                            <TextBlock Grid.Column="2" HorizontalAlignment="Center" Text="开发者" />
-                            <TextBlock Grid.Column="3" HorizontalAlignment="Center" Text="版本号" />
-                            <TextBlock Grid.Column="4" HorizontalAlignment="Center" Text="价格" />
-                        </Grid>
-                    </ListView.Header>
-                    <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="models:SearchResult">
-                            <Grid>
-                                <Grid.ContextFlyout>
-                                    <MenuFlyout>
-                                        <MenuFlyoutItem Text="购买" Click="ContextMenuPurchase_Click" />
-                                        <MenuFlyoutItem Text="加入下载队列" Click="ContextMenuAddToQueue_Click" />
-                                    </MenuFlyout>
-                                </Grid.ContextFlyout>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="3*" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="2*" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
 
-                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                                    <Image
-                                        Width="24"
-                                        Height="24"
-                                        Source="{x:Bind artworkUrl}"
-                                        Stretch="UniformToFill" />
+                    <Grid Grid.Row="0" Padding="12,10,12,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="32" />
+                            <ColumnDefinition Width="3*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="1" HorizontalAlignment="Center" Text="App 名称(图标)" />
+                        <TextBlock Grid.Column="2" HorizontalAlignment="Center" Text="AppID" />
+                        <TextBlock Grid.Column="3" HorizontalAlignment="Center" Text="开发者" />
+                        <TextBlock Grid.Column="4" HorizontalAlignment="Center" Text="版本号" />
+                        <TextBlock Grid.Column="5" HorizontalAlignment="Center" Text="价格" />
+                    </Grid>
+
+                    <ListView
+                        x:Name="ResultList"
+                        Grid.Row="1"
+                        Margin="0,0,0,10"
+                        IsMultiSelectCheckBoxEnabled="True"
+                        SelectionMode="Multiple">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="models:SearchResult">
+                                <Grid Padding="12,6,12,6">
+                                    <Grid.ContextFlyout>
+                                        <MenuFlyout>
+                                            <MenuFlyoutItem Text="购买" Click="ContextMenuPurchase_Click" />
+                                            <MenuFlyoutItem Text="加入下载队列" Click="ContextMenuAddToQueue_Click" />
+                                        </MenuFlyout>
+                                    </Grid.ContextFlyout>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="32" />
+                                        <ColumnDefinition Width="3*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="2*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                        <Border
+                                            Width="24"
+                                            Height="24"
+                                            CornerRadius="6"
+                                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                                            <Image
+                                                Width="24"
+                                                Height="24"
+                                                Source="{x:Bind artworkUrl}"
+                                                Stretch="UniformToFill" />
+                                        </Border>
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            Text="{x:Bind name}"
+                                            TextTrimming="CharacterEllipsis"
+                                            ToolTipService.ToolTip="{x:Bind name}" />
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="2" HorizontalAlignment="Center" Text="{x:Bind id}" />
                                     <TextBlock
-                                        VerticalAlignment="Center"
-                                        Text="{x:Bind name}"
+                                        Grid.Column="3"
+                                        HorizontalAlignment="Center"
+                                        Text="{x:Bind developer}"
                                         TextTrimming="CharacterEllipsis"
-                                        ToolTipService.ToolTip="{x:Bind name}" />
-                                </StackPanel>
-                                <TextBlock Grid.Column="1" HorizontalAlignment="Center" Text="{x:Bind id}" />
-                                <TextBlock
-                                    Grid.Column="2"
-                                    HorizontalAlignment="Center"
-                                    Text="{x:Bind developer}"
-                                    TextTrimming="CharacterEllipsis"
-                                    ToolTipService.ToolTip="{x:Bind developer}" />
-                                <TextBlock Grid.Column="3" HorizontalAlignment="Center" Text="{x:Bind version}" />
-                                <TextBlock Grid.Column="4" HorizontalAlignment="Center" Text="{x:Bind price}" />
-                            </Grid>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
+                                        ToolTipService.ToolTip="{x:Bind developer}" />
+                                    <TextBlock Grid.Column="4" HorizontalAlignment="Center" Text="{x:Bind version}" />
+                                    <TextBlock Grid.Column="5" HorizontalAlignment="Center" Text="{x:Bind price}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </Grid>
             </Border>
         </Grid>
     </Page.Content>
