@@ -6,7 +6,7 @@
 
 1. winui 3作为软件框架
 2. 调用ipatool.exe执行命令
-3. 最终使用electron-builder发布至Microsoft Store
+3. 最终发布至Microsoft Store
 
 ## 数据库
 
