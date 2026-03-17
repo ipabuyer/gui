@@ -7,7 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:IPAbuyer.Models"
     mc:Ignorable="d">
-    <Grid Margin="24">
+    <Grid Margin="24" RowSpacing="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="7*" />
             <RowDefinition Height="3*" />
@@ -16,10 +16,20 @@
         <Grid Grid.Row="0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
+            <InfoBar
+                x:Name="StatusInfoBar"
+                Grid.Row="0"
+                IsClosable="True"
+                IsOpen="False"
+                Closed="StatusInfoBar_Closed"
+                Severity="Informational"
+                Title="提示" />
+
+            <StackPanel Grid.Row="1" Margin="0,8,0,0" Orientation="Horizontal" Spacing="8">
                 <Button
                     x:Name="StartQueueButton"
                     MinHeight="36"
@@ -43,7 +53,7 @@
 
             <ListView
                 x:Name="QueueListView"
-                Grid.Row="1"
+                Grid.Row="2"
                 Margin="0,12,0,0"
                 SelectionMode="Multiple">
                 <ListView.Header>
@@ -86,35 +96,47 @@
             </ListView>
         </Grid>
 
-        <Grid Grid.Row="1" Margin="0,12,0,0">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+        <Border
+            Grid.Row="1"
+            Padding="10"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="4">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
-                <Button
-                    MinHeight="36"
-                    Content="复制"
-                    Click="CopyLogButton_Click" />
-                <Button
-                    MinHeight="36"
-                    Content="清空"
-                    Click="ClearLogButton_Click" />
-                <Button
-                    MinHeight="36"
-                    Content="终止当前app下载"
-                    Click="CancelCurrentButton_Click" />
-            </StackPanel>
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Style="{ThemeResource BodyStrongTextBlockStyle}"
+                        Text="日志" />
+                    <Button
+                        MinHeight="36"
+                        Content="复制"
+                        Click="CopyLogButton_Click" />
+                    <Button
+                        MinHeight="36"
+                        Content="清空"
+                        Click="ClearLogButton_Click" />
+                    <Button
+                        MinHeight="36"
+                        Content="终止当前app下载"
+                        Click="CancelCurrentButton_Click" />
+                </StackPanel>
 
-            <TextBox
-                x:Name="LogTextBox"
-                Grid.Row="1"
-                Margin="0,8,0,0"
-                AcceptsReturn="True"
-                IsReadOnly="True"
-                TextWrapping="Wrap"
-                ScrollViewer.VerticalScrollBarVisibility="Auto" />
-        </Grid>
+                <TextBox
+                    x:Name="LogTextBox"
+                    Grid.Row="1"
+                    Margin="0,8,0,0"
+                    AcceptsReturn="True"
+                    IsReadOnly="True"
+                    TextWrapping="Wrap"
+                    ScrollViewer.VerticalScrollBarVisibility="Auto" />
+            </Grid>
+        </Border>
     </Grid>
 </Page>

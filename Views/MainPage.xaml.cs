@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +18,7 @@ namespace IPAbuyer.Views
     {
         private readonly List<SearchResult> _allResults = new();
         private readonly DownloadQueueService _downloadQueueService = DownloadQueueService.Instance;
+        private readonly StringBuilder _homeLogBuilder = new();
         private CancellationTokenSource _pageCts = new();
         private string _selectedFilter = "All";
         public event Action<bool>? SearchLoadingChanged;
@@ -40,13 +42,19 @@ namespace IPAbuyer.Views
         {
             if (string.IsNullOrWhiteSpace(appName))
             {
+                AppendHomeLog("搜索词为空，已忽略。");
                 return;
             }
 
+            AppendHomeLog($"开始搜索: {appName.Trim()}");
             SearchLoadingChanged?.Invoke(true);
             try
             {
                 await PerformSearchAsync(appName.Trim(), _pageCts.Token);
+            }
+            catch (Exception ex)
+            {
+                AppendHomeLog($"搜索异常: {ex.Message}");
             }
             finally
             {
@@ -67,6 +75,7 @@ namespace IPAbuyer.Views
                     ResultList.ItemsSource = null;
                 }
 
+                AppendHomeLog("搜索超时或无返回结果。");
                 return;
             }
 
@@ -115,6 +124,7 @@ namespace IPAbuyer.Views
                 }
 
                 ApplyFilterAndRefresh();
+                AppendHomeLog($"搜索完成，共 {_allResults.Count} 条结果。");
             }
             catch (JsonException)
             {
@@ -122,6 +132,8 @@ namespace IPAbuyer.Views
                 {
                     ResultList.ItemsSource = null;
                 }
+
+                AppendHomeLog("搜索结果解析失败。");
             }
         }
 
@@ -135,6 +147,7 @@ namespace IPAbuyer.Views
             var selectedApps = ResultList.SelectedItems.OfType<SearchResult>().ToList();
             if (selectedApps.Count == 0)
             {
+                AppendHomeLog("未选择应用，无法批量购买。");
                 return;
             }
 
@@ -145,7 +158,9 @@ namespace IPAbuyer.Views
 
             try
             {
+                AppendHomeLog($"开始批量购买，共 {selectedApps.Count} 项。");
                 await PurchaseAppsAsync(selectedApps);
+                AppendHomeLog("批量购买执行完成。");
             }
             finally
             {
@@ -165,10 +180,14 @@ namespace IPAbuyer.Views
                 return;
             }
 
+            int added = 0;
             foreach (var app in ResultList.SelectedItems.OfType<SearchResult>())
             {
                 _downloadQueueService.AddOrUpdateFromSearchResult(app);
+                added++;
             }
+
+            AppendHomeLog(added == 0 ? "未选择应用，未加入下载队列。" : $"已加入下载队列: {added} 项。");
         }
 
         private async void ContextMenuPurchase_Click(object sender, RoutedEventArgs e)
@@ -185,6 +204,7 @@ namespace IPAbuyer.Views
 
             try
             {
+                AppendHomeLog($"右键购买: {app.name ?? app.bundleId ?? "未知应用"}");
                 await PurchaseAppsAsync(new List<SearchResult> { app });
             }
             finally
@@ -206,6 +226,7 @@ namespace IPAbuyer.Views
             }
 
             _downloadQueueService.AddOrUpdateFromSearchResult(app);
+            AppendHomeLog($"右键加入下载队列: {app.name ?? app.bundleId ?? "未知应用"}");
         }
 
         private SearchResult? ResolveContextItem(object sender)
@@ -236,6 +257,7 @@ namespace IPAbuyer.Views
             {
                 _selectedFilter = selected.Tag?.ToString() ?? "All";
                 ApplyFilterAndRefresh();
+                AppendHomeLog($"切换筛选: {_selectedFilter}");
             }
         }
 
@@ -290,6 +312,7 @@ namespace IPAbuyer.Views
                 {
                     app.purchased = StatusOwned;
                     PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusOwned);
+                    AppendHomeLog($"标记为已拥有(非免费): {app.name ?? app.bundleId}");
                     continue;
                 }
 
@@ -297,6 +320,7 @@ namespace IPAbuyer.Views
                 {
                     app.purchased = StatusPurchased;
                     PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusPurchased);
+                    AppendHomeLog($"测试账户购买成功: {app.name ?? app.bundleId}");
                     continue;
                 }
 
@@ -305,11 +329,13 @@ namespace IPAbuyer.Views
                 {
                     app.purchased = StatusPurchased;
                     PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusPurchased);
+                    AppendHomeLog($"购买成功: {app.name ?? app.bundleId}");
                 }
                 else
                 {
                     app.purchased = StatusOwned;
                     PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusOwned);
+                    AppendHomeLog($"购买失败，标记为已拥有: {app.name ?? app.bundleId}");
                 }
             }
         }
@@ -470,6 +496,45 @@ namespace IPAbuyer.Views
 
             string normalized = code.Trim().ToLowerInvariant();
             return KeychainConfig.IsValidCountryCode(normalized) ? normalized : "cn";
+        }
+
+        private void CopyHomeLog_Click(object sender, RoutedEventArgs e)
+        {
+            string text = HomeLogTextBox.Text ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                AppendHomeLog("日志为空，无可复制内容。");
+                return;
+            }
+
+            var package = new Windows.ApplicationModel.DataTransfer.DataPackage();
+            package.SetText(text);
+            Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
+            Windows.ApplicationModel.DataTransfer.Clipboard.Flush();
+            AppendHomeLog("日志已复制到剪贴板。");
+        }
+
+        private void ClearHomeLog_Click(object sender, RoutedEventArgs e)
+        {
+            _homeLogBuilder.Clear();
+            HomeLogTextBox.Text = string.Empty;
+            AppendHomeLog("日志已清空。");
+        }
+
+        private void AppendHomeLog(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message) || HomeLogTextBox == null)
+            {
+                return;
+            }
+
+            _homeLogBuilder.Append('[')
+                .Append(DateTime.Now.ToString("HH:mm:ss"))
+                .Append("] ")
+                .AppendLine(message);
+
+            HomeLogTextBox.Text = _homeLogBuilder.ToString();
+            HomeLogTextBox.SelectionStart = HomeLogTextBox.Text.Length;
         }
 
         protected override void OnNavigatedFrom(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)

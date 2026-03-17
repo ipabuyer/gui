@@ -2,8 +2,13 @@
     x:Class="IPAbuyer.Views.LoginPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid Margin="24,16,24,24">
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <Grid Margin="24,16,24,24" RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="7*" />
+            <RowDefinition Height="3*" />
+        </Grid.RowDefinitions>
+
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
             <Grid MaxWidth="860" HorizontalAlignment="Center">
                 <StackPanel Spacing="14">
                     <TextBlock FontSize="34" FontWeight="Bold" Text="登录" />
@@ -147,5 +152,44 @@
                 </StackPanel>
             </Grid>
         </ScrollViewer>
+
+        <Border
+            Grid.Row="1"
+            Padding="10"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="4">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Style="{ThemeResource BodyStrongTextBlockStyle}"
+                        Text="日志" />
+                    <Button
+                        MinHeight="32"
+                        Content="复制"
+                        Click="CopyLoginLog_Click" />
+                    <Button
+                        MinHeight="32"
+                        Content="清空"
+                        Click="ClearLoginLog_Click" />
+                </StackPanel>
+
+                <TextBox
+                    x:Name="LoginLogOutput"
+                    Grid.Row="1"
+                    Margin="0,8,0,0"
+                    AcceptsReturn="True"
+                    IsReadOnly="True"
+                    TextWrapping="Wrap"
+                    ScrollViewer.VerticalScrollBarVisibility="Auto" />
+            </Grid>
+        </Border>
     </Grid>
 </Page>

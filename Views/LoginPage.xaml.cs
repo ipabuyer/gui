@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Input;
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,6 +14,7 @@ namespace IPAbuyer.Views
     public sealed partial class LoginPage : Page
     {
         private readonly CancellationTokenSource _pageCts = new();
+        private readonly StringBuilder _loginLogBuilder = new();
         private CancellationTokenSource? _currentOperationCts;
 
         private string? _lastLoginUsername;
@@ -55,10 +57,12 @@ namespace IPAbuyer.Views
         {
             if (_isTwoFactorPending)
             {
+                AppendLoginLog("Start verifying two-factor code.");
                 await ValidateAuthCodeAsync();
                 return;
             }
 
+            AppendLoginLog("Start login.");
             await TriggerLoginAsync();
         }
 
@@ -73,6 +77,7 @@ namespace IPAbuyer.Views
             if (string.IsNullOrWhiteSpace(account))
             {
                 ShowError("请先输入邮箱或登录账户");
+                AppendLoginLog("Auth info failed: account is empty.");
                 return;
             }
 
@@ -88,15 +93,18 @@ namespace IPAbuyer.Views
                 if (result.IsSuccessResponse)
                 {
                     ShowSuccess("登录状态正常");
+                    AppendLoginLog($"Auth info success: {account}");
                 }
                 else
                 {
                     ShowError(string.IsNullOrWhiteSpace(result.OutputOrError) ? "登录状态异常" : result.OutputOrError);
+                    AppendLoginLog($"Auth info failed: {account}");
                 }
             }
             catch (Exception ex)
             {
                 ShowError($"查询登录状态失败: {ex.Message}");
+                AppendLoginLog($"Auth info exception: {ex.Message}");
             }
             finally
             {
@@ -115,6 +123,7 @@ namespace IPAbuyer.Views
             if (string.IsNullOrWhiteSpace(account))
             {
                 ShowError("未找到可退出的账户");
+                AppendLoginLog("Logout failed: account is empty.");
                 return;
             }
 
@@ -132,15 +141,18 @@ namespace IPAbuyer.Views
                     SessionState.Reset();
                     HideInlineTwoFactor();
                     ShowSuccess("已退出登录");
+                    AppendLoginLog($"Logout success: {account}");
                 }
                 else
                 {
                     ShowError(string.IsNullOrWhiteSpace(result.OutputOrError) ? "退出登录失败" : result.OutputOrError);
+                    AppendLoginLog($"Logout failed: {account}");
                 }
             }
             catch (Exception ex)
             {
                 ShowError($"退出登录失败: {ex.Message}");
+                AppendLoginLog($"Logout exception: {ex.Message}");
             }
             finally
             {
@@ -162,7 +174,7 @@ namespace IPAbuyer.Views
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"加载账户历史失败: {ex.Message}");
+                Debug.WriteLine($"Load account history failed: {ex.Message}");
             }
         }
 
@@ -257,6 +269,7 @@ namespace IPAbuyer.Views
             {
                 hasLocalValidationIssue = true;
                 ShowError("邮箱、密码和加密密钥不能为空");
+                AppendLoginLog("Login blocked: required fields are empty.");
 
                 if (!hasAccount)
                 {
@@ -291,6 +304,7 @@ namespace IPAbuyer.Views
             if (authCode.Length != 6)
             {
                 ShowAuthError("请输入 6 位验证码");
+                AppendLoginLog("Code validation failed: length is not 6.");
                 CodeTextBox.Focus(FocusState.Programmatic);
                 return false;
             }
@@ -309,6 +323,7 @@ namespace IPAbuyer.Views
             if (result.Status == LoginStatus.AuthCodeInvalid)
             {
                 ShowAuthError("验证码错误，请重新输入。");
+                AppendLoginLog("Code validation failed: invalid code.");
                 CodeTextBox.Text = string.Empty;
                 CodeTextBox.Focus(FocusState.Programmatic);
                 RestoreIdleState();
@@ -318,6 +333,7 @@ namespace IPAbuyer.Views
             if (result.Status == LoginStatus.Timeout)
             {
                 ShowAuthError(result.Message);
+                AppendLoginLog("Code validation failed: timeout.");
                 CodeTextBox.Focus(FocusState.Programmatic);
                 RestoreIdleState();
                 return false;
@@ -326,11 +342,13 @@ namespace IPAbuyer.Views
             if (!result.IsSuccess)
             {
                 ShowAuthError(string.IsNullOrWhiteSpace(result.Message) ? "验证失败，请重试。" : result.Message);
+                AppendLoginLog("Code validation failed.");
                 RestoreIdleState();
                 return false;
             }
 
             await OnLoginSuccessAsync();
+            AppendLoginLog("Two-factor code verified.");
             return true;
         }
 
@@ -339,10 +357,12 @@ namespace IPAbuyer.Views
             switch (result.Status)
             {
                 case LoginStatus.Success:
+                    AppendLoginLog("Login success.");
                     await OnLoginSuccessAsync();
                     break;
 
                 case LoginStatus.RequiresTwoFactor:
+                    AppendLoginLog("Two-factor code required.");
                     ShowInlineTwoFactor(result.Message);
                     RestoreIdleState();
                     break;
@@ -352,6 +372,7 @@ namespace IPAbuyer.Views
                 case LoginStatus.UnknownError:
                 case LoginStatus.Timeout:
                     ShowError(result.Message);
+                    AppendLoginLog($"Login failed: {result.Message}");
                     RestoreIdleState();
                     break;
 
@@ -364,6 +385,7 @@ namespace IPAbuyer.Views
                     {
                         ShowError(result.Message);
                     }
+                    AppendLoginLog($"Login failed: {result.Message}");
                     RestoreIdleState();
                     break;
             }
@@ -535,15 +557,59 @@ namespace IPAbuyer.Views
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"保存账户信息失败: {ex.Message}");
+                Debug.WriteLine($"Save account info failed: {ex.Message}");
             }
 
             HideInlineTwoFactor();
             bool isMockAccount = KeychainConfig.IsMockAccount(_account, _password);
             SessionState.SetLoginState(_account, true, isMockAccount);
             DisposeCurrentOperation();
-            ShowSuccess("登录成功");
+            ShowSuccess("Login successful");
+            AppendLoginLog($"Login account: {_account}");
             return Task.CompletedTask;
+        }
+
+        private void CopyLoginLog_Click(object sender, RoutedEventArgs e)
+        {
+            string text = LoginLogOutput?.Text ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                AppendLoginLog("Log is empty; nothing to copy.");
+                return;
+            }
+
+            var package = new Windows.ApplicationModel.DataTransfer.DataPackage();
+            package.SetText(text);
+            Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
+            Windows.ApplicationModel.DataTransfer.Clipboard.Flush();
+            AppendLoginLog("Log copied to clipboard.");
+        }
+
+        private void ClearLoginLog_Click(object sender, RoutedEventArgs e)
+        {
+            _loginLogBuilder.Clear();
+            if (LoginLogOutput != null)
+            {
+                LoginLogOutput.Text = string.Empty;
+            }
+
+            AppendLoginLog("Log cleared.");
+        }
+
+        private void AppendLoginLog(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message) || LoginLogOutput == null)
+            {
+                return;
+            }
+
+            _loginLogBuilder.Append('[')
+                .Append(DateTime.Now.ToString("HH:mm:ss"))
+                .Append("] ")
+                .AppendLine(message);
+
+            LoginLogOutput.Text = _loginLogBuilder.ToString();
+            LoginLogOutput.SelectionStart = LoginLogOutput.Text.Length;
         }
 
         private void CancelCurrentOperation()
