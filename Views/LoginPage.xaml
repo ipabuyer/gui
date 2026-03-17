@@ -28,6 +28,7 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="140" />
@@ -62,28 +63,59 @@
                                 MinWidth="300"
                                 MinHeight="36"
                                 KeyUp="Input_KeyUp"
+                                PasswordRevealMode="Peek"
                                 PlaceholderText="请输入密码" />
 
                             <TextBlock
                                 Grid.Row="2"
                                 Grid.Column="0"
+                                VerticalAlignment="Top"
+                                Text="双重验证码" />
+                            <StackPanel
+                                x:Name="AuthCodeInlinePanel"
+                                Grid.Row="2"
+                                Grid.Column="1"
+                                Spacing="6"
+                                Visibility="Collapsed">
+                                <TextBlock
+                                    Foreground="Gray"
+                                    Text="检测到账户需要两步验证，请输入 6 位验证码。"
+                                    TextWrapping="WrapWholeWords" />
+                                <TextBox
+                                    x:Name="CodeBox"
+                                    MinWidth="220"
+                                    Header="验证码"
+                                    InputScope="Number"
+                                    KeyUp="CodeBox_KeyUp"
+                                    MaxLength="6"
+                                    PlaceholderText="请输入 6 位验证码"
+                                    TextChanged="CodeBox_TextChanged" />
+                                <TextBlock
+                                    x:Name="CodeErrorText"
+                                    Foreground="Red"
+                                    TextWrapping="Wrap"
+                                    Visibility="Collapsed" />
+                            </StackPanel>
+
+                            <TextBlock
+                                Grid.Row="3"
+                                Grid.Column="0"
                                 VerticalAlignment="Center"
                                 Text="加密密钥" />
-                            <PasswordBox
+                            <TextBox
                                 x:Name="PassphraseBox"
-                                Grid.Row="2"
+                                Grid.Row="3"
                                 Grid.Column="1"
                                 MinWidth="300"
                                 MinHeight="36"
                                 KeyUp="Input_KeyUp"
-                                PasswordRevealMode="Peek"
                                 PlaceholderText="用于 ipatool keychain-passphrase" />
                         </Grid>
                     </Border>
 
                     <Button
                         x:Name="NextButton"
-                        MinWidth="140"
+                        MinWidth="160"
                         HorizontalAlignment="Left"
                         Click="NextButton_Click"
                         Content="登录" />
@@ -92,43 +124,6 @@
                         x:Name="ResultText"
                         Foreground="Gray"
                         TextWrapping="Wrap" />
-
-                    <ContentDialog
-                        x:Name="WarningDialog"
-                        Title="警告"
-                        CloseButtonText="确认"
-                        DefaultButton="Primary" />
-
-                    <ContentDialog
-                        x:Name="AuthCodeDialog"
-                        Title="两步验证"
-                        CloseButtonClick="AuthCodeDialog_CloseButtonClick"
-                        CloseButtonText="取消"
-                        DefaultButton="Primary"
-                        PrimaryButtonClick="AuthCodeDialog_PrimaryButtonClick"
-                        PrimaryButtonText="验证">
-                        <StackPanel Spacing="12">
-                            <TextBlock Margin="0,0,0,12" TextWrapping="Wrap">
-                                您的账户已启用两步验证，请输入发送到您信任设备上的 6 位验证码。<LineBreak />
-                                若未收到验证码，请打开<Hyperlink Click="OpenAppleAccountLink">此链接</Hyperlink>
-                                ，输入账户与密码以收取验证码。
-                            </TextBlock>
-                            <TextBox
-                                x:Name="CodeBox"
-                                MinWidth="200"
-                                Header="验证码"
-                                InputScope="Number"
-                                KeyUp="CodeBox_KeyUp"
-                                MaxLength="6"
-                                PlaceholderText="请输入 6 位验证码"
-                                TextChanged="CodeBox_TextChanged" />
-                            <TextBlock
-                                x:Name="CodeErrorText"
-                                Foreground="Red"
-                                TextWrapping="Wrap"
-                                Visibility="Collapsed" />
-                        </StackPanel>
-                    </ContentDialog>
                 </StackPanel>
             </Grid>
         </ScrollViewer>
