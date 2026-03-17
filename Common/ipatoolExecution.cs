@@ -240,17 +240,24 @@ namespace IPAbuyer.Common
             string includeDirectory = Path.Combine(baseDirectory, "Include");
             if (Directory.Exists(includeDirectory))
             {
-                string binaryName = RuntimeInformation.ProcessArchitecture switch
+                string architectureSuffix = RuntimeInformation.ProcessArchitecture switch
                 {
-                    Architecture.Arm64 => "ipatool-2.2.0-windows-arm64.exe",
-                    Architecture.X64 => "ipatool-2.2.0-windows-amd64.exe",
-                    _ => "ipatool.exe"
+                    Architecture.Arm64 => "arm64",
+                    Architecture.X64 => "amd64",
+                    _ => string.Empty
                 };
 
-                string candidate = Path.Combine(includeDirectory, binaryName);
-                if (File.Exists(candidate))
+                if (!string.IsNullOrEmpty(architectureSuffix))
                 {
-                    return candidate;
+                    string pattern = $"ipatool-*-windows-{architectureSuffix}.exe";
+                    string? candidate = Directory.GetFiles(includeDirectory, pattern, SearchOption.TopDirectoryOnly)
+                        .OrderByDescending(path => path, StringComparer.OrdinalIgnoreCase)
+                        .FirstOrDefault();
+
+                    if (!string.IsNullOrWhiteSpace(candidate))
+                    {
+                        return candidate;
+                    }
                 }
             }
 
