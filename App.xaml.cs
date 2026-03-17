@@ -17,6 +17,7 @@ namespace IPAbuyer
     public partial class App : Application
     {
         private Window? _window;
+        public Window? MainWindowInstance => _window;
 
         // 构造函数
         public App()

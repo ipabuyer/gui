@@ -25,33 +25,19 @@
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         BorderThickness="1"
                         CornerRadius="8">
-                        <Grid ColumnSpacing="12" RowSpacing="8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="3*" />
-                                <ColumnDefinition Width="2*" />
-                            </Grid.ColumnDefinitions>
+                        <StackPanel Spacing="10">
                             <TextBlock
                                 x:Uid="/SettingPage/About_Country_Code"
-                                Grid.Column="0"
-                                VerticalAlignment="Center"
                                 Style="{ThemeResource BodyTextBlockStyle}"
                                 TextWrapping="Wrap" />
-                            <Grid Grid.Column="1" ColumnSpacing="8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBox
-                                    x:Name="CountryCodeTextBox"
-                                    Grid.Column="0"
-                                    KeyUp="CountryCodeTextBox_KeyUp"
-                                    PlaceholderText="cn" />
-                                <Button
-                                    x:Uid="/SettingPage/About_Country_Code_Button"
-                                    Grid.Column="1"
-                                    Click="CountryCodeButton" />
-                            </Grid>
-                        </Grid>
+                            <TextBox
+                                x:Name="CountryCodeTextBox"
+                                KeyUp="CountryCodeTextBox_KeyUp" />
+                            <Button
+                                x:Uid="/SettingPage/About_Country_Code_Button"
+                                HorizontalAlignment="Left"
+                                Click="CountryCodeButton" />
+                        </StackPanel>
                     </Border>
 
                     <Border
@@ -60,37 +46,29 @@
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         BorderThickness="1"
                         CornerRadius="8">
-                        <Grid ColumnSpacing="12" RowSpacing="8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="3*" />
-                                <ColumnDefinition Width="2*" />
-                            </Grid.ColumnDefinitions>
+                        <StackPanel Spacing="10">
                             <TextBlock
                                 x:Uid="/SettingPage/About_Download_Directory"
-                                Grid.Column="0"
-                                VerticalAlignment="Center"
                                 Style="{ThemeResource BodyTextBlockStyle}"
                                 TextWrapping="Wrap" />
-                            <Grid Grid.Column="1" ColumnSpacing="8">
+                            <TextBox
+                                x:Name="DownloadDirectoryTextBox"
+                                IsReadOnly="True" />
+                            <Grid ColumnSpacing="8">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBox
-                                    x:Name="DownloadDirectoryTextBox"
-                                    Grid.Column="0"
-                                    PlaceholderText="C:\\Users\\username\\Downloads" />
                                 <Button
                                     x:Uid="/SettingPage/About_Download_Directory_Button"
-                                    Grid.Column="1"
-                                    Click="SaveDownloadDirectoryButton_Click" />
+                                    Grid.Column="0"
+                                    Click="PickDownloadDirectoryButton_Click" />
                                 <Button
                                     x:Uid="/SettingPage/About_Download_Directory_Default_Button"
-                                    Grid.Column="2"
+                                    Grid.Column="1"
                                     Click="ResetDownloadDirectoryButton_Click" />
                             </Grid>
-                        </Grid>
+                        </StackPanel>
                     </Border>
 
                     <Border

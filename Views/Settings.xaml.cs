@@ -7,7 +7,9 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Storage.Pickers;
 using Windows.System;
+using WinRT.Interop;
 
 namespace IPAbuyer.Views
 {
@@ -71,7 +73,7 @@ namespace IPAbuyer.Views
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"初始化国家/地区代码失败: {ex.Message}");
+                Debug.WriteLine($"初始化国家代码失败: {ex.Message}");
             }
         }
 
@@ -119,7 +121,7 @@ namespace IPAbuyer.Views
 
             if (!IsValidCountryCode(normalizedInput))
             {
-                await ShowDialogAsync("操作失败", "请输入合法的 ISO 3166-1 Alpha-2 国家/地区代码（2 位英文字符）");
+                await ShowDialogAsync("操作失败", "请输入合法的 ISO 3166-1 Alpha-2 国家/地区代码（2 位英文字母）");
                 return;
             }
 
@@ -148,21 +150,32 @@ namespace IPAbuyer.Views
             return KeychainConfig.IsValidCountryCode(code);
         }
 
-        private async void SaveDownloadDirectoryButton_Click(object sender, RoutedEventArgs e)
+        private async void PickDownloadDirectoryButton_Click(object sender, RoutedEventArgs e)
         {
-            string directory = DownloadDirectoryTextBoxControl?.Text?.Trim() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(directory))
+            var folderPicker = new FolderPicker
             {
-                await ShowDialogAsync("操作失败", "下载目录不能为空");
-                return;
-            }
+                SuggestedStartLocation = PickerLocationId.Downloads
+            };
+            folderPicker.FileTypeFilter.Add("*");
 
             try
             {
-                KeychainConfig.SaveDownloadDirectory(directory);
+                if (Application.Current is App app && app.MainWindowInstance != null)
+                {
+                    IntPtr hwnd = WindowNative.GetWindowHandle(app.MainWindowInstance);
+                    InitializeWithWindow.Initialize(folderPicker, hwnd);
+                }
+
+                var folder = await folderPicker.PickSingleFolderAsync();
+                if (folder == null)
+                {
+                    return;
+                }
+
+                KeychainConfig.SaveDownloadDirectory(folder.Path);
                 if (DownloadDirectoryTextBoxControl != null)
                 {
-                    DownloadDirectoryTextBoxControl.Text = KeychainConfig.GetDownloadDirectory();
+                    DownloadDirectoryTextBoxControl.Text = folder.Path;
                 }
 
                 await ShowDialogAsync("操作成功", "下载目录已更新");

@@ -159,7 +159,7 @@
     <comment>设置页面的子标题：软件相关，的内容：下载目录</comment>
   </data>
   <data name="About_Download_Directory_Button.Content" xml:space="preserve">
-    <value>保存目录</value>
+    <value>修改路径</value>
     <comment>设置页面下载目录的保存按钮</comment>
   </data>
   <data name="About_Download_Directory_Default_Button.Content" xml:space="preserve">
