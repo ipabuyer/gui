@@ -17,13 +17,34 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
+
             <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
-                <Button x:Name="StartQueueButton" Content="开始下载队列" MinHeight="36" Click="StartQueueButton_Click" />
-                <Button x:Name="RemoveQueueButton" Content="移出下载队列" MinHeight="36" Click="RemoveQueueButton_Click" />
-                <Button Content="打开下载目录" MinHeight="36" Click="OpenDirectoryButton_Click" />
-                <Button x:Name="CancelAllButton" Content="终止所有下载" MinHeight="36" Click="CancelAllButton_Click" />
+                <Button
+                    x:Name="StartQueueButton"
+                    MinHeight="36"
+                    Content="开始下载队列"
+                    Click="StartQueueButton_Click" />
+                <Button
+                    x:Name="RemoveQueueButton"
+                    MinHeight="36"
+                    Content="移出下载队列"
+                    Click="RemoveQueueButton_Click" />
+                <Button
+                    MinHeight="36"
+                    Content="打开下载目录"
+                    Click="OpenDirectoryButton_Click" />
+                <Button
+                    x:Name="CancelAllButton"
+                    MinHeight="36"
+                    Content="终止所有下载"
+                    Click="CancelAllButton_Click" />
             </StackPanel>
-            <ListView x:Name="QueueListView" Grid.Row="1" Margin="0,12,0,0" SelectionMode="Multiple" />
+
+            <ListView
+                x:Name="QueueListView"
+                Grid.Row="1"
+                Margin="0,12,0,0"
+                SelectionMode="Multiple" />
         </Grid>
 
         <Grid Grid.Row="1" Margin="0,12,0,0">
@@ -31,11 +52,22 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
+
             <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
-                <Button Content="复制" MinHeight="36" Click="CopyLogButton_Click" />
-                <Button Content="清空" MinHeight="36" Click="ClearLogButton_Click" />
-                <Button Content="终止当前 app 下载" MinHeight="36" Click="CancelCurrentButton_Click" />
+                <Button
+                    MinHeight="36"
+                    Content="复制"
+                    Click="CopyLogButton_Click" />
+                <Button
+                    MinHeight="36"
+                    Content="清空"
+                    Click="ClearLogButton_Click" />
+                <Button
+                    MinHeight="36"
+                    Content="终止当前 app 下载"
+                    Click="CancelCurrentButton_Click" />
             </StackPanel>
+
             <TextBox
                 x:Name="LogTextBox"
                 Grid.Row="1"
@@ -43,7 +75,7 @@
                 AcceptsReturn="True"
                 IsReadOnly="True"
                 TextWrapping="Wrap"
-                VerticalScrollBarVisibility="Auto" />
+                ScrollViewer.VerticalScrollBarVisibility="Auto" />
         </Grid>
     </Grid>
 </Page>
