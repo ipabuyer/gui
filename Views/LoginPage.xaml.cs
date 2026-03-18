@@ -22,6 +22,7 @@ namespace IPAbuyer.Views
         private string _password = string.Empty;
         private string _passphrase = string.Empty;
         private bool _isTwoFactorPending;
+        private bool _operationLocked;
 
         public LoginPage()
         {
@@ -40,8 +41,19 @@ namespace IPAbuyer.Views
                 PassphraseInput.Text = savedPassphrase;
                 _passphrase = savedPassphrase;
             }
+            else if (PassphraseInput != null)
+            {
+                PassphraseInput.Text = "12345678";
+                _passphrase = "12345678";
+            }
 
             Unloaded += LoginPage_Unloaded;
+            Loaded += LoginPage_Loaded;
+        }
+
+        private async void LoginPage_Loaded(object sender, RoutedEventArgs e)
+        {
+            await QueryAuthInfoAsync(isAutoCheck: true);
         }
 
         private void LoginPage_Unloaded(object sender, RoutedEventArgs e)
@@ -68,6 +80,11 @@ namespace IPAbuyer.Views
 
         private async void AuthInfoButton_Click(object sender, RoutedEventArgs e)
         {
+            await QueryAuthInfoAsync(isAutoCheck: false);
+        }
+
+        private async Task QueryAuthInfoAsync(bool isAutoCheck)
+        {
             string account = (EmailTextBox?.Text ?? string.Empty).Trim();
             if (string.IsNullOrWhiteSpace(account))
             {
@@ -76,8 +93,12 @@ namespace IPAbuyer.Views
 
             if (string.IsNullOrWhiteSpace(account))
             {
-                ShowError("请先输入邮箱或登录账户");
-                AppendLoginLog("Auth info failed: account is empty.");
+                if (!isAutoCheck)
+                {
+                    ShowError("请先输入邮箱或登录账户");
+                }
+
+                AppendLoginLog("Auth info skipped: account is empty.");
                 return;
             }
 
@@ -92,11 +113,14 @@ namespace IPAbuyer.Views
 
                 if (result.IsSuccessResponse)
                 {
+                    SessionState.SetLoginState(account, true);
+                    ApplyOperationLock(true);
                     ShowSuccess("登录状态正常");
                     AppendLoginLog($"Auth info success: {account}");
                 }
                 else
                 {
+                    ApplyOperationLock(false);
                     ShowError(string.IsNullOrWhiteSpace(result.OutputOrError) ? "登录状态异常" : result.OutputOrError);
                     AppendLoginLog($"Auth info failed: {account}");
                 }
@@ -140,6 +164,7 @@ namespace IPAbuyer.Views
                 {
                     SessionState.Reset();
                     HideInlineTwoFactor();
+                    ApplyOperationLock(false);
                     ShowSuccess("已退出登录");
                     AppendLoginLog($"Logout success: {account}");
                 }
@@ -417,11 +442,6 @@ namespace IPAbuyer.Views
         {
             _isTwoFactorPending = false;
 
-            if (AuthCodeInlinePanelControl != null)
-            {
-                AuthCodeInlinePanelControl.Visibility = Visibility.Collapsed;
-            }
-
             if (CodeTextBox != null)
             {
                 CodeTextBox.Text = string.Empty;
@@ -439,22 +459,22 @@ namespace IPAbuyer.Views
         {
             if (EmailTextBox != null)
             {
-                EmailTextBox.IsEnabled = enabled;
+                EmailTextBox.IsEnabled = enabled && !_operationLocked;
             }
 
             if (PasswordInput != null)
             {
-                PasswordInput.IsEnabled = enabled;
+                PasswordInput.IsEnabled = enabled && !_operationLocked;
             }
 
             if (PassphraseInput != null)
             {
-                PassphraseInput.IsEnabled = enabled;
+                PassphraseInput.IsEnabled = enabled && !_operationLocked;
             }
 
             if (CodeTextBox != null)
             {
-                CodeTextBox.IsEnabled = enabled;
+                CodeTextBox.IsEnabled = enabled && !_operationLocked;
             }
 
             if (AuthInfoButtonControl != null)
@@ -466,13 +486,28 @@ namespace IPAbuyer.Views
             {
                 LogoutButtonControl.IsEnabled = enabled;
             }
+
+            if (NextButtonControl != null)
+            {
+                NextButtonControl.IsEnabled = enabled && !_operationLocked;
+            }
+
+            if (OpenAppleAccountButtonControl != null)
+            {
+                OpenAppleAccountButtonControl.IsEnabled = enabled && !_operationLocked;
+            }
+
+            if (OperationLockOverlayControl != null)
+            {
+                OperationLockOverlayControl.Visibility = _operationLocked ? Visibility.Visible : Visibility.Collapsed;
+            }
         }
 
         private void SetBusyState(bool isBusy, string message)
         {
             if (NextButtonControl != null)
             {
-                NextButtonControl.IsEnabled = !isBusy;
+                NextButtonControl.IsEnabled = !isBusy && !_operationLocked;
             }
 
             if (!string.IsNullOrEmpty(message))
@@ -551,10 +586,34 @@ namespace IPAbuyer.Views
             HideInlineTwoFactor();
             bool isMockAccount = KeychainConfig.IsMockAccount(_account, _password);
             SessionState.SetLoginState(_account, true, isMockAccount);
+            ApplyOperationLock(true);
             DisposeCurrentOperation();
             ShowSuccess("Login successful");
             AppendLoginLog($"Login account: {_account}");
             return Task.CompletedTask;
+        }
+
+        private void ApplyOperationLock(bool isLocked)
+        {
+            _operationLocked = isLocked;
+            SetInputControlsEnabled(true);
+        }
+
+        private void OpenAppleAccountButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "https://account.apple.com/",
+                    UseShellExecute = true
+                });
+                AppendLoginLog("已打开苹果账户官网。");
+            }
+            catch (Exception ex)
+            {
+                ShowError($"打开苹果账户官网失败: {ex.Message}");
+            }
         }
 
         private void CopyLoginLog_Click(object sender, RoutedEventArgs e)
@@ -628,9 +687,11 @@ namespace IPAbuyer.Views
         private Button? NextButtonControl => GetControl<Button>("NextButton");
         private Button? AuthInfoButtonControl => GetControl<Button>("AuthInfoButton");
         private Button? LogoutButtonControl => GetControl<Button>("LogoutButton");
+        private Button? OpenAppleAccountButtonControl => GetControl<Button>("OpenAppleAccountButton");
         private TextBox? CodeTextBox => GetControl<TextBox>("CodeBox");
         private TextBlock? CodeErrorTextBlock => GetControl<TextBlock>("CodeErrorText");
         private StackPanel? AuthCodeInlinePanelControl => GetControl<StackPanel>("AuthCodeInlinePanel");
+        private Border? OperationLockOverlayControl => GetControl<Border>("OperationLockOverlay");
 
         private T? GetControl<T>(string name)
             where T : class

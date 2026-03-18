@@ -27,124 +27,145 @@
                         Text="提示：新创建的 Apple 账号需先在苹果设备 App Store 完成一次购买后，才能正常购买与下载。"
                         TextWrapping="WrapWholeWords" />
 
-                    <Border
-                        Padding="18"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8">
-                        <Grid ColumnSpacing="12" RowSpacing="12">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="140" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
+                    <Grid>
+                        <Border
+                            Padding="18"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8">
+                            <Grid ColumnSpacing="12" RowSpacing="12">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="140" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
 
-                            <TextBlock
-                                Grid.Row="0"
-                                Grid.Column="0"
-                                VerticalAlignment="Center"
-                                Text="电子邮箱地址" />
-                            <TextBox
-                                x:Name="EmailComboBox"
-                                Grid.Row="0"
-                                Grid.Column="1"
-                                MinWidth="360"
-                                MinHeight="36"
-                                InputScope="EmailSmtpAddress"
-                                IsSpellCheckEnabled="False"
-                                KeyUp="Input_KeyUp"
-                                PlaceholderText="example@icloud.com" />
-
-                            <TextBlock
-                                Grid.Row="1"
-                                Grid.Column="0"
-                                VerticalAlignment="Center"
-                                Text="密码" />
-                            <PasswordBox
-                                x:Name="PasswordBox"
-                                Grid.Row="1"
-                                Grid.Column="1"
-                                MinWidth="360"
-                                MinHeight="36"
-                                KeyUp="Input_KeyUp"
-                                PasswordRevealMode="Peek"
-                                PlaceholderText="请输入密码" />
-
-                            <TextBlock
-                                Grid.Row="2"
-                                Grid.Column="0"
-                                VerticalAlignment="Top"
-                                Text="双重验证码" />
-                            <StackPanel
-                                x:Name="AuthCodeInlinePanel"
-                                Grid.Row="2"
-                                Grid.Column="1"
-                                Spacing="6"
-                                Visibility="Collapsed">
                                 <TextBlock
-                                    Foreground="Gray"
-                                    Text="检测到账户需要双重验证，请输入 6 位验证码。"
-                                    TextWrapping="WrapWholeWords" />
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="电子邮箱地址" />
                                 <TextBox
-                                    x:Name="CodeBox"
-                                    MinWidth="260"
-                                    Header="验证码"
-                                    InputScope="Number"
-                                    KeyUp="CodeBox_KeyUp"
-                                    MaxLength="6"
-                                    PlaceholderText="请输入 6 位验证码"
-                                    TextChanged="CodeBox_TextChanged" />
-                                <TextBlock
-                                    x:Name="CodeErrorText"
-                                    Foreground="Red"
-                                    TextWrapping="Wrap"
-                                    Visibility="Collapsed" />
-                            </StackPanel>
+                                    x:Name="EmailComboBox"
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    MinWidth="360"
+                                    MinHeight="36"
+                                    InputScope="EmailSmtpAddress"
+                                    IsSpellCheckEnabled="False"
+                                    KeyUp="Input_KeyUp"
+                                    PlaceholderText="example@icloud.com" />
 
-                            <TextBlock
-                                Grid.Row="3"
-                                Grid.Column="0"
-                                VerticalAlignment="Center"
-                                Text="加密密钥" />
-                            <TextBox
-                                x:Name="PassphraseBox"
-                                Grid.Row="3"
-                                Grid.Column="1"
-                                MinWidth="360"
-                                MinHeight="36"
-                                KeyUp="Input_KeyUp"
-                                PlaceholderText="用于 ipatool keychain-passphrase" />
-                        </Grid>
-                    </Border>
+                                <TextBlock
+                                    Grid.Row="1"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="密码" />
+                                <PasswordBox
+                                    x:Name="PasswordBox"
+                                    Grid.Row="1"
+                                    Grid.Column="1"
+                                    MinWidth="360"
+                                    MinHeight="36"
+                                    KeyUp="Input_KeyUp"
+                                    PasswordRevealMode="Peek"
+                                    PlaceholderText="请输入密码" />
+
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Top"
+                                    Text="双重验证码" />
+                                <StackPanel
+                                    x:Name="AuthCodeInlinePanel"
+                                    Grid.Row="2"
+                                    Grid.Column="1"
+                                    Spacing="6"
+                                    Visibility="Visible">
+                                    <TextBlock
+                                        Foreground="Gray"
+                                        Text="首次登录可输入 000000 触发发送验证码，再填 6 位验证码登录。"
+                                        TextWrapping="WrapWholeWords" />
+                                    <TextBox
+                                        x:Name="CodeBox"
+                                        MinWidth="260"
+                                        MinHeight="36"
+                                        Header="验证码"
+                                        InputScope="Number"
+                                        KeyUp="CodeBox_KeyUp"
+                                        MaxLength="6"
+                                        PlaceholderText="请输入 6 位验证码"
+                                        TextChanged="CodeBox_TextChanged" />
+                                    <TextBlock
+                                        x:Name="CodeErrorText"
+                                        Foreground="Red"
+                                        TextWrapping="Wrap"
+                                        Visibility="Collapsed" />
+                                </StackPanel>
+
+                                <TextBlock
+                                    Grid.Row="3"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="加密密钥" />
+                                <TextBox
+                                    x:Name="PassphraseBox"
+                                    Grid.Row="3"
+                                    Grid.Column="1"
+                                    MinWidth="360"
+                                    MinHeight="36"
+                                    KeyUp="Input_KeyUp"
+                                    PlaceholderText="用于 ipatool keychain-passphrase" />
+                            </Grid>
+                        </Border>
+
+                        <Border
+                            x:Name="OperationLockOverlay"
+                            Background="#66D9D9D9"
+                            CornerRadius="8"
+                            Visibility="Collapsed">
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+                                <FontIcon FontSize="24" Glyph="&#xE72E;" />
+                                <TextBlock Text="当前为已登录状态，操作区已锁定" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
 
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Button
                             x:Name="NextButton"
-                            MinWidth="160"
+                            MinWidth="150"
                             MinHeight="36"
                             HorizontalAlignment="Left"
                             Click="NextButton_Click"
                             Content="登录" />
                         <Button
                             x:Name="AuthInfoButton"
-                            MinWidth="160"
+                            MinWidth="150"
                             MinHeight="36"
                             HorizontalAlignment="Left"
                             Click="AuthInfoButton_Click"
                             Content="查询登录状态" />
                         <Button
                             x:Name="LogoutButton"
-                            MinWidth="120"
+                            MinWidth="150"
                             MinHeight="36"
                             HorizontalAlignment="Left"
                             Click="LogoutButton_Click"
                             Content="退出登录" />
+                        <Button
+                            x:Name="OpenAppleAccountButton"
+                            MinWidth="150"
+                            MinHeight="36"
+                            HorizontalAlignment="Left"
+                            Click="OpenAppleAccountButton_Click"
+                            Content="打开苹果账户官网" />
                     </StackPanel>
 
                     <TextBlock
