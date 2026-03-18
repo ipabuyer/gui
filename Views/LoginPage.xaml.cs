@@ -67,7 +67,7 @@ namespace IPAbuyer.Views
 
         private async void NextButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_isTwoFactorPending)
+            if (_isTwoFactorPending || HasAuthCodeInput())
             {
                 AppendLoginLog("Start verifying two-factor code.");
                 await ValidateAuthCodeAsync();
@@ -237,7 +237,7 @@ namespace IPAbuyer.Views
                 return;
             }
 
-            if (sender is TextBox && PasswordInput != null)
+            if (ReferenceEquals(sender, EmailTextBox))
             {
                 string accountText = EmailTextBox?.Text.Trim() ?? string.Empty;
                 if (string.IsNullOrEmpty(accountText))
@@ -247,7 +247,20 @@ namespace IPAbuyer.Views
                     return;
                 }
 
-                PasswordInput.Focus(FocusState.Programmatic);
+                PasswordInput?.Focus(FocusState.Programmatic);
+                return;
+            }
+
+            if (ReferenceEquals(sender, CodeTextBox))
+            {
+                if (_isTwoFactorPending || HasAuthCodeInput())
+                {
+                    await ValidateAuthCodeAsync();
+                }
+                else
+                {
+                    PassphraseInput?.Focus(FocusState.Programmatic);
+                }
                 return;
             }
 
@@ -274,6 +287,12 @@ namespace IPAbuyer.Views
                     await TriggerLoginAsync();
                 }
             }
+        }
+
+        private bool HasAuthCodeInput()
+        {
+            string code = CodeTextBox?.Text?.Trim() ?? string.Empty;
+            return code.Length == 6 && code.All(char.IsDigit);
         }
 
         private async Task TriggerLoginAsync()
@@ -322,6 +341,16 @@ namespace IPAbuyer.Views
         {
             if (CodeTextBox == null)
             {
+                return false;
+            }
+
+            _account = EmailTextBox?.Text.Trim() ?? string.Empty;
+            _password = PasswordInput?.Password?.Trim() ?? string.Empty;
+            _passphrase = PassphraseInput?.Text.Trim() ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(_account) || string.IsNullOrWhiteSpace(_password) || string.IsNullOrWhiteSpace(_passphrase))
+            {
+                ShowError("邮箱、密码和加密密钥不能为空");
                 return false;
             }
 
