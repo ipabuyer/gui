@@ -206,7 +206,7 @@ namespace IPAbuyer.Views
             _notificationTimer.Start();
         }
 
-        private void NotificationTimer_Tick(object sender, object e)
+        private void NotificationTimer_Tick(object? sender, object e)
         {
             _notificationTimer.Stop();
             if (StatusInfoBar.IsOpen)

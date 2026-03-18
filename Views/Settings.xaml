@@ -33,10 +33,16 @@
                             <TextBox
                                 x:Name="CountryCodeTextBox"
                                 KeyUp="CountryCodeTextBox_KeyUp" />
-                            <Button
-                                x:Uid="/SettingPage/About_Country_Code_Button"
-                                HorizontalAlignment="Left"
-                                Click="CountryCodeButton" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button
+                                    x:Uid="/SettingPage/About_Country_Code_Button"
+                                    HorizontalAlignment="Left"
+                                    Click="CountryCodeButton" />
+                                <Button
+                                    HorizontalAlignment="Left"
+                                    Content="恢复默认"
+                                    Click="ResetCountryCodeButton_Click" />
+                            </StackPanel>
                         </StackPanel>
                     </Border>
 
@@ -152,6 +158,38 @@
                                 Style="{ThemeResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 Text="说明：仅清空本地已购买/已拥有记录，不会影响你的 Apple 账户购买历史。" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border
+                        Padding="20"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                        <StackPanel Spacing="12">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="3*" />
+                                    <ColumnDefinition Width="2*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Style="{ThemeResource BodyTextBlockStyle}"
+                                    Text="清空 ipatool 本地数据目录（%USERPROFILE%\.ipatool\）。"
+                                    TextWrapping="Wrap" />
+                                <Button
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Right"
+                                    Content="清空 ipatool 数据"
+                                    Click="ClearIpatoolDataButton_Click" />
+                            </Grid>
+
+                            <TextBlock
+                                Style="{ThemeResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="说明：该操作会删除 ipatool 的认证缓存与配置，请在需要重新登录时使用。" />
                         </StackPanel>
                     </Border>
                 </StackPanel>

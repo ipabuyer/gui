@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 using IPAbuyer.Common;
 using IPAbuyer.Data;
@@ -145,6 +146,27 @@ namespace IPAbuyer.Views
             }
         }
 
+        private async void ResetCountryCodeButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (CountryCodeTextBoxControl == null)
+            {
+                return;
+            }
+
+            string? account = GetAccountForCountryCode();
+
+            try
+            {
+                KeychainConfig.SaveCountryCode("cn", account);
+                CountryCodeTextBoxControl.Text = "cn";
+                await ShowDialogAsync("操作成功", "国家/地区代码已恢复默认值 cn");
+            }
+            catch (Exception ex)
+            {
+                await ShowDialogAsync("操作失败", $"恢复默认失败：{ex.Message}");
+            }
+        }
+
         private static bool IsValidCountryCode(string code)
         {
             return KeychainConfig.IsValidCountryCode(code);
@@ -219,6 +241,42 @@ namespace IPAbuyer.Views
             catch (Exception ex)
             {
                 await ShowDialogAsync("操作失败", $"复制邮箱失败：{ex.Message}");
+            }
+        }
+
+        private async void ClearIpatoolDataButton_Click(object sender, RoutedEventArgs e)
+        {
+            string ipatoolDirectory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".ipatool");
+
+            var dialog = new ContentDialog
+            {
+                Title = "确认操作",
+                Content = $"确定要清空以下目录吗？{Environment.NewLine}{ipatoolDirectory}{Environment.NewLine}此操作不可恢复。",
+                PrimaryButtonText = "确认清空",
+                CloseButtonText = "取消",
+                XamlRoot = XamlRoot
+            };
+
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+            {
+                return;
+            }
+
+            try
+            {
+                if (Directory.Exists(ipatoolDirectory))
+                {
+                    Directory.Delete(ipatoolDirectory, recursive: true);
+                }
+
+                Directory.CreateDirectory(ipatoolDirectory);
+                await ShowDialogAsync("操作成功", "ipatool 数据目录已清空。");
+            }
+            catch (Exception ex)
+            {
+                await ShowDialogAsync("操作失败", $"清空 ipatool 数据失败：{ex.Message}");
             }
         }
 

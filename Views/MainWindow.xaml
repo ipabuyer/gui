@@ -90,7 +90,7 @@
           Icon="Home"
           Tag="MainPage" />
         <NavigationViewItem
-          Content="登录"
+          Content="账户"
           Icon="Contact"
           Tag="LoginPage" />
         <NavigationViewItem

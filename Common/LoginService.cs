@@ -30,7 +30,7 @@ namespace IPAbuyer.Common
 
         public static Task<LoginResult> LoginAsync(string account, string password, string passphrase, CancellationToken cancellationToken)
         {
-            return ExecuteLoginAsync(account, password, passphrase, string.Empty, cancellationToken, isTwoFactor: false);
+            return ExecuteLoginAsync(account, password, passphrase, "000000", cancellationToken, isTwoFactor: false);
         }
 
         public static Task<LoginResult> VerifyAuthCodeAsync(string account, string password, string passphrase, string authCode, CancellationToken cancellationToken)

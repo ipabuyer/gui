@@ -25,7 +25,7 @@ namespace IPAbuyer.Views
 
         private const string StatusPurchased = "已购买";
         private const string StatusOwned = "已拥有";
-        private const string StatusCanPurchase = "可购买";
+        private const string StatusCanPurchase = "未购买";
 
         private static readonly string[] PurchasedAliases = { "已购买", "宸茶喘涔?" };
         private static readonly string[] OwnedAliases = { "已拥有", "宸叉嫢鏈?" };
@@ -192,7 +192,8 @@ namespace IPAbuyer.Views
 
         private async void ContextMenuPurchase_Click(object sender, RoutedEventArgs e)
         {
-            if (ResolveContextItem(sender) is not SearchResult app)
+            var selectedApps = GetContextTargetApps(sender);
+            if (selectedApps.Count == 0)
             {
                 return;
             }
@@ -204,8 +205,8 @@ namespace IPAbuyer.Views
 
             try
             {
-                AppendHomeLog($"右键购买: {app.name ?? app.bundleId ?? "未知应用"}");
-                await PurchaseAppsAsync(new List<SearchResult> { app });
+                AppendHomeLog($"右键购买，共 {selectedApps.Count} 项。");
+                await PurchaseAppsAsync(selectedApps);
             }
             finally
             {
@@ -220,13 +221,18 @@ namespace IPAbuyer.Views
 
         private void ContextMenuAddToQueue_Click(object sender, RoutedEventArgs e)
         {
-            if (ResolveContextItem(sender) is not SearchResult app)
+            var selectedApps = GetContextTargetApps(sender);
+            if (selectedApps.Count == 0)
             {
                 return;
             }
 
-            _downloadQueueService.AddOrUpdateFromSearchResult(app);
-            AppendHomeLog($"右键加入下载队列: {app.name ?? app.bundleId ?? "未知应用"}");
+            foreach (var app in selectedApps)
+            {
+                _downloadQueueService.AddOrUpdateFromSearchResult(app);
+            }
+
+            AppendHomeLog($"右键加入下载队列: {selectedApps.Count} 项。");
         }
 
         private SearchResult? ResolveContextItem(object sender)
@@ -249,6 +255,111 @@ namespace IPAbuyer.Views
             }
 
             return null;
+        }
+
+        private List<SearchResult> GetContextTargetApps(object sender)
+        {
+            var contextItem = ResolveContextItem(sender);
+            if (contextItem == null || ResultList == null)
+            {
+                return new List<SearchResult>();
+            }
+
+            var selectedItems = ResultList.SelectedItems.OfType<SearchResult>().ToList();
+            if (selectedItems.Count > 1 && selectedItems.Contains(contextItem))
+            {
+                return selectedItems;
+            }
+
+            return new List<SearchResult> { contextItem };
+        }
+
+        private void ContextMenuMarkNotPurchased_Click(object sender, RoutedEventArgs e)
+        {
+            MarkAppsStatus(sender, StatusCanPurchase);
+        }
+
+        private void ContextMenuMarkPurchased_Click(object sender, RoutedEventArgs e)
+        {
+            MarkAppsStatus(sender, StatusPurchased);
+        }
+
+        private void ContextMenuMarkOwned_Click(object sender, RoutedEventArgs e)
+        {
+            MarkAppsStatus(sender, StatusOwned);
+        }
+
+        private void MarkAppsStatus(object sender, string status)
+        {
+            var selectedApps = GetContextTargetApps(sender);
+            if (selectedApps.Count == 0)
+            {
+                return;
+            }
+
+            string account = GetActiveAccount();
+            foreach (var app in selectedApps)
+            {
+                if (string.IsNullOrWhiteSpace(app.bundleId))
+                {
+                    continue;
+                }
+
+                app.purchased = status;
+                if (string.IsNullOrWhiteSpace(account))
+                {
+                    continue;
+                }
+
+                if (status == StatusCanPurchase)
+                {
+                    PurchasedAppDb.RemovePurchasedApp(app.bundleId, account);
+                }
+                else
+                {
+                    PurchasedAppDb.SavePurchasedApp(app.bundleId, account, status);
+                }
+            }
+
+            ApplyFilterAndRefresh();
+            AppendHomeLog($"已标记 {selectedApps.Count} 项为 {status}。");
+        }
+
+        private void ContextMenuCopyName_Click(object sender, RoutedEventArgs e)
+        {
+            CopyField(sender, app => app.name ?? string.Empty, "App 名称");
+        }
+
+        private void ContextMenuCopyId_Click(object sender, RoutedEventArgs e)
+        {
+            CopyField(sender, app => app.id ?? string.Empty, "ID");
+        }
+
+        private void ContextMenuCopyVersion_Click(object sender, RoutedEventArgs e)
+        {
+            CopyField(sender, app => app.version ?? string.Empty, "版本号");
+        }
+
+        private void CopyField(object sender, Func<SearchResult, string> selector, string fieldName)
+        {
+            var selectedApps = GetContextTargetApps(sender);
+            if (selectedApps.Count == 0)
+            {
+                return;
+            }
+
+            string value = string.Join(Environment.NewLine, selectedApps.Select(selector).Where(v => !string.IsNullOrWhiteSpace(v)));
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                AppendHomeLog($"复制失败：{fieldName}为空。");
+                return;
+            }
+
+            var package = new Windows.ApplicationModel.DataTransfer.DataPackage();
+            package.SetText(value);
+            Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
+            Windows.ApplicationModel.DataTransfer.Clipboard.Flush();
+            AppendHomeLog($"已复制{fieldName}，共 {selectedApps.Count} 项。");
         }
 
         private void ScreeningComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)

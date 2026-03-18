@@ -59,37 +59,77 @@
                 <ListView.Header>
                     <Grid Padding="8,0,8,4">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="32" />
+                            <ColumnDefinition Width="3*" />
+                            <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="2*" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" HorizontalAlignment="Center" Text="app名称" />
-                        <TextBlock Grid.Column="1" HorizontalAlignment="Center" Text="appid" />
-                        <TextBlock Grid.Column="2" HorizontalAlignment="Center" Text="下载状态" />
+                        <TextBlock Grid.Column="1" HorizontalAlignment="Center" Text="App 名称(图标)" />
+                        <TextBlock Grid.Column="2" HorizontalAlignment="Center" Text="AppID" />
+                        <TextBlock Grid.Column="3" HorizontalAlignment="Center" Text="开发者" />
+                        <TextBlock Grid.Column="4" HorizontalAlignment="Center" Text="版本号" />
+                        <TextBlock Grid.Column="5" HorizontalAlignment="Center" Text="价格" />
+                        <TextBlock Grid.Column="6" HorizontalAlignment="Center" Text="下载状态" />
                     </Grid>
                 </ListView.Header>
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="models:DownloadQueueItem">
                         <Grid Padding="8,6">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="32" />
+                                <ColumnDefinition Width="3*" />
+                                <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="2*" />
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock
+
+                            <Border
                                 Grid.Column="0"
+                                Width="24"
+                                Height="24"
+                                CornerRadius="6"
+                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                                <Image
+                                    Width="24"
+                                    Height="24"
+                                    Source="{x:Bind ArtworkUrl}"
+                                    Stretch="UniformToFill" />
+                            </Border>
+
+                            <TextBlock
+                                Grid.Column="1"
                                 HorizontalAlignment="Center"
                                 Text="{x:Bind Name}"
                                 TextTrimming="CharacterEllipsis" />
                             <TextBlock
-                                Grid.Column="1"
+                                Grid.Column="2"
                                 HorizontalAlignment="Center"
                                 Text="{x:Bind AppId}"
                                 TextTrimming="CharacterEllipsis" />
                             <TextBlock
-                                Grid.Column="2"
+                                Grid.Column="3"
                                 HorizontalAlignment="Center"
-                                Text="{x:Bind Status}" />
+                                Text="{x:Bind Developer}"
+                                TextTrimming="CharacterEllipsis" />
+                            <TextBlock
+                                Grid.Column="4"
+                                HorizontalAlignment="Center"
+                                Text="{x:Bind Version}"
+                                TextTrimming="CharacterEllipsis" />
+                            <TextBlock
+                                Grid.Column="5"
+                                HorizontalAlignment="Center"
+                                Text="{x:Bind Price}"
+                                TextTrimming="CharacterEllipsis" />
+                            <TextBlock
+                                Grid.Column="6"
+                                HorizontalAlignment="Center"
+                                Text="{x:Bind StatusText}" />
                         </Grid>
                     </DataTemplate>
                 </ListView.ItemTemplate>
