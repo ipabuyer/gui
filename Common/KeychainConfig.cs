@@ -19,6 +19,8 @@ namespace IPAbuyer.Common
         private static string _connectionString = string.Empty;
         private const string LastLoginKey = "LastLoginUsername";
         private const string CountryCodeKey = "CountryCode";
+        private const string DownloadDirectoryKey = "DownloadDirectory";
+        private const string PassphraseFileName = "passphrase.txt";
         private const string DefaultCountryCode = "cn";
         private static readonly HashSet<string> ValidCountryCodes = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -55,7 +57,7 @@ namespace IPAbuyer.Common
         public static void InitializeDatabase()
         {
             Database database = new Database();
-            _dbPath = database.AccountDB ?? throw new InvalidOperationException("账户数据库路径未初始化");
+            _dbPath = database.accountDb ?? throw new InvalidOperationException("账户数据库路径未初始化");
             _connectionString = $"Data Source={_dbPath}";
 
             using var connection = new SqliteConnection(_connectionString);
@@ -72,10 +74,17 @@ namespace IPAbuyer.Common
                 CREATE TABLE IF NOT EXISTS Settings (
                     Key TEXT PRIMARY KEY,
                     Value TEXT NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS MockAccounts (
+                    Username TEXT NOT NULL,
+                    Password TEXT NOT NULL,
+                    PRIMARY KEY (Username, Password)
                 );";
             createTableCmd.ExecuteNonQuery();
 
             EnsureCountryCodeColumn(connection);
+            EnsureMockAccountSeed(connection);
         }
 
         /// <summary>
@@ -325,6 +334,124 @@ namespace IPAbuyer.Common
             }
         }
 
+        public static string GetDownloadDirectory()
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(_connectionString))
+                {
+                    InitializeDatabase();
+                }
+
+                using var connection = new SqliteConnection(_connectionString);
+                connection.Open();
+
+                string? value = ReadSettingValue(connection, DownloadDirectoryKey);
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    string fallback = GetDefaultDownloadDirectory();
+                    SaveDownloadDirectory(fallback);
+                    return fallback;
+                }
+
+                Directory.CreateDirectory(value);
+                return value;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"获取下载目录失败: {ex.Message}", ex);
+            }
+        }
+
+        public static void SavePassphrase(string account, string passphrase)
+        {
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                throw new ArgumentException("账号不能为空", nameof(account));
+            }
+
+            if (string.IsNullOrWhiteSpace(passphrase))
+            {
+                throw new ArgumentException("加密密钥不能为空", nameof(passphrase));
+            }
+
+            string path = GetPassphraseFilePath();
+            string content = $"{account.Trim()}{Environment.NewLine}{passphrase.Trim()}";
+            File.WriteAllText(path, content);
+        }
+
+        public static string? GetPassphrase(string? account)
+        {
+            string path = GetPassphraseFilePath();
+            if (!File.Exists(path))
+            {
+                return null;
+            }
+
+            string[] lines = File.ReadAllLines(path);
+            if (lines.Length == 0)
+            {
+                return null;
+            }
+
+            if (lines.Length == 1)
+            {
+                return lines[0].Trim();
+            }
+
+            string savedAccount = lines[0].Trim();
+            string savedPassphrase = lines[1].Trim();
+            if (string.IsNullOrWhiteSpace(savedPassphrase))
+            {
+                return null;
+            }
+
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                return savedPassphrase;
+            }
+
+            return string.Equals(savedAccount, account.Trim(), StringComparison.OrdinalIgnoreCase)
+                ? savedPassphrase
+                : null;
+        }
+
+        public static void SaveDownloadDirectory(string directoryPath)
+        {
+            if (string.IsNullOrWhiteSpace(directoryPath))
+            {
+                throw new ArgumentException("下载目录不能为空", nameof(directoryPath));
+            }
+
+            try
+            {
+                if (string.IsNullOrEmpty(_connectionString))
+                {
+                    InitializeDatabase();
+                }
+
+                string normalized = Path.GetFullPath(directoryPath.Trim());
+                Directory.CreateDirectory(normalized);
+
+                using var connection = new SqliteConnection(_connectionString);
+                connection.Open();
+
+                var insertCmd = connection.CreateCommand();
+                insertCmd.CommandText = @"
+                    INSERT INTO Settings (Key, Value)
+                    VALUES (@key, @value)
+                    ON CONFLICT(Key)
+                    DO UPDATE SET Value = @value";
+                insertCmd.Parameters.AddWithValue("@key", DownloadDirectoryKey);
+                insertCmd.Parameters.AddWithValue("@value", normalized);
+                insertCmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"保存下载目录失败: {ex.Message}", ex);
+            }
+        }
+
         /// <summary>
         /// 保存最后登录用户名（内部方法）
         /// </summary>
@@ -360,6 +487,41 @@ namespace IPAbuyer.Common
             return ValidCountryCodes.Contains(code.Trim().ToLowerInvariant());
         }
 
+        public static bool IsMockAccount(string? username, string? password)
+        {
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            {
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(_connectionString))
+            {
+                InitializeDatabase();
+            }
+
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            EnsureMockAccountSeed(connection);
+
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = @"
+                SELECT COUNT(1)
+                FROM MockAccounts
+                WHERE LOWER(Username) = @username
+                  AND Password = @password";
+            cmd.Parameters.AddWithValue("@username", username.Trim().ToLowerInvariant());
+            cmd.Parameters.AddWithValue("@password", password.Trim());
+
+            var result = cmd.ExecuteScalar();
+            if (result == null)
+            {
+                return false;
+            }
+
+            return Convert.ToInt32(result) > 0;
+        }
+
         private static bool TryNormalizeCountryCode(string? value, out string normalized)
         {
             normalized = string.Empty;
@@ -376,6 +538,31 @@ namespace IPAbuyer.Common
 
             normalized = candidate;
             return true;
+        }
+
+        public static string GetDefaultDownloadDirectory()
+        {
+            string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            string downloadPath = Path.Combine(userProfile, "Downloads");
+            Directory.CreateDirectory(downloadPath);
+            return downloadPath;
+        }
+
+        private static string GetPassphraseFilePath()
+        {
+            if (string.IsNullOrEmpty(_dbPath))
+            {
+                InitializeDatabase();
+            }
+
+            string? directory = Path.GetDirectoryName(_dbPath);
+            if (string.IsNullOrWhiteSpace(directory))
+            {
+                directory = ResolveDataDirectory();
+            }
+
+            Directory.CreateDirectory(directory);
+            return Path.Combine(directory, PassphraseFileName);
         }
 
         private static string ResolveDataDirectory()
@@ -474,6 +661,18 @@ namespace IPAbuyer.Common
             return string.IsNullOrWhiteSpace(account)
                 ? string.Empty
                 : account.Trim().ToLowerInvariant();
+        }
+
+        private static void EnsureMockAccountSeed(SqliteConnection connection)
+        {
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = @"
+                INSERT INTO MockAccounts (Username, Password)
+                VALUES (@username, @password)
+                ON CONFLICT(Username, Password) DO NOTHING";
+            cmd.Parameters.AddWithValue("@username", "test");
+            cmd.Parameters.AddWithValue("@password", "test");
+            cmd.ExecuteNonQuery();
         }
 
         private static void EnsureCountryCodeColumn(SqliteConnection connection)

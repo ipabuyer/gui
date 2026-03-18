@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="IPAbuyer.Views.DownloadsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="using:IPAbuyer.Models"
+    mc:Ignorable="d">
+    <Grid Margin="24" RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="7*" />
+            <RowDefinition Height="3*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <InfoBar
+                x:Name="StatusInfoBar"
+                Grid.Row="0"
+                IsClosable="True"
+                IsOpen="False"
+                Closed="StatusInfoBar_Closed"
+                Severity="Informational"
+                Title="提示" />
+
+            <StackPanel Grid.Row="1" Margin="0,8,0,0" Orientation="Horizontal" Spacing="8">
+                <Button
+                    x:Name="StartQueueButton"
+                    MinHeight="36"
+                    Content="开始下载队列"
+                    Click="StartQueueButton_Click" />
+                <Button
+                    x:Name="RemoveQueueButton"
+                    MinHeight="36"
+                    Content="移出下载队列"
+                    Click="RemoveQueueButton_Click" />
+                <Button
+                    MinHeight="36"
+                    Content="打开下载目录"
+                    Click="OpenDirectoryButton_Click" />
+                <Button
+                    x:Name="CancelAllButton"
+                    MinHeight="36"
+                    Content="终止所有下载"
+                    Click="CancelAllButton_Click" />
+            </StackPanel>
+
+            <ListView
+                x:Name="QueueListView"
+                Grid.Row="2"
+                Margin="0,12,0,0"
+                SelectionMode="Multiple">
+                <ListView.Header>
+                    <Grid Padding="8,0,8,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" HorizontalAlignment="Center" Text="app名称" />
+                        <TextBlock Grid.Column="1" HorizontalAlignment="Center" Text="appid" />
+                        <TextBlock Grid.Column="2" HorizontalAlignment="Center" Text="下载状态" />
+                    </Grid>
+                </ListView.Header>
+                <ListView.ItemTemplate>
+                    <DataTemplate x:DataType="models:DownloadQueueItem">
+                        <Grid Padding="8,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock
+                                Grid.Column="0"
+                                HorizontalAlignment="Center"
+                                Text="{x:Bind Name}"
+                                TextTrimming="CharacterEllipsis" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Center"
+                                Text="{x:Bind AppId}"
+                                TextTrimming="CharacterEllipsis" />
+                            <TextBlock
+                                Grid.Column="2"
+                                HorizontalAlignment="Center"
+                                Text="{x:Bind Status}" />
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Grid>
+
+        <Border
+            Grid.Row="1"
+            Padding="10"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="4">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Style="{ThemeResource BodyStrongTextBlockStyle}"
+                        Text="日志" />
+                    <Button
+                        MinHeight="36"
+                        Content="复制"
+                        Click="CopyLogButton_Click" />
+                    <Button
+                        MinHeight="36"
+                        Content="清空"
+                        Click="ClearLogButton_Click" />
+                    <Button
+                        MinHeight="36"
+                        Content="终止当前app下载"
+                        Click="CancelCurrentButton_Click" />
+                </StackPanel>
+
+                <TextBox
+                    x:Name="LogTextBox"
+                    Grid.Row="1"
+                    Margin="0,8,0,0"
+                    AcceptsReturn="True"
+                    IsReadOnly="True"
+                    TextWrapping="Wrap"
+                    ScrollViewer.VerticalScrollBarVisibility="Auto" />
+            </Grid>
+        </Border>
+    </Grid>
+</Page>

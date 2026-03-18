@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+using System;
+using System.Diagnostics;
 using System.IO;
 using Windows.Storage;
 
@@ -6,59 +7,56 @@ namespace IPAbuyer.Models
 {
     public class Database
     {
-
-        public string? path { get; } // 存放数据库文件的根目录
-        public string? AppDBname = "PurchasedAppDb.db"; // 已购买app数据库文件名
-        public string? AccountDBname = "KeychainConfig.db"; // 账户数据库文件名
-        public string? AppDB; // 已购买app数据库路径
-        public string? AccountDB; // 账户数据库路径
+        public string? path { get; }
+        public string appDbName { get; } = "PurchasedAppDb.db";
+        public string accountDbName { get; } = "KeychainConfig.db";
+        public string? appDb { get; }
+        public string? accountDb { get; }
 
         public Database()
         {
-            // 设置数据库路径
-
-#if RELEASE // 生产版本
+#if RELEASE
             try
             {
-                // 获取安装目录
                 path = ApplicationData.Current.LocalFolder.Path;
-                AppDB = Path.Combine(path, AppDBname);
-                AccountDB = Path.Combine(path, AccountDBname);
-                
-                // 如果数据库文件不存在则创建
-                if (!File.Exists(AppDB))
+                appDb = Path.Combine(path, appDbName);
+                accountDb = Path.Combine(path, accountDbName);
+
+                if (!File.Exists(appDb))
                 {
-                    File.Create(AppDB).Close();
+                    File.Create(appDb).Close();
                 }
-                if (!File.Exists(AccountDB))
+
+                if (!File.Exists(accountDb))
                 {
-                    File.Create(AccountDB).Close();
+                    File.Create(accountDb).Close();
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Debug.WriteLine($"数据库错误: {ex.Message}");
             }
-#elif DEBUG // 调试版本
+#elif DEBUG
             try
             {
-                // 使用appdata文件夹
                 path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IPAbuyer");
 
-                // 创建appdata内的目录
                 if (!Directory.Exists(path))
+                {
                     Directory.CreateDirectory(path);
-                AppDB = Path.Combine(path, AppDBname);
-                AccountDB = Path.Combine(path, AccountDBname);
-
-                // 如果数据库文件不存在则创建
-                if (!File.Exists(AppDB))
-                {
-                    File.Create(AppDB).Close();
                 }
-                if (!File.Exists(AccountDB))
+
+                appDb = Path.Combine(path, appDbName);
+                accountDb = Path.Combine(path, accountDbName);
+
+                if (!File.Exists(appDb))
                 {
-                    File.Create(AccountDB).Close();
+                    File.Create(appDb).Close();
+                }
+
+                if (!File.Exists(accountDb))
+                {
+                    File.Create(accountDb).Close();
                 }
             }
             catch (Exception ex)

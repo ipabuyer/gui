@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,549 +11,378 @@ using IPAbuyer.Data;
 using IPAbuyer.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
 
 namespace IPAbuyer.Views
 {
     public sealed partial class MainPage : Page
     {
-        private readonly List<AppResult> _allResults = new();
-        private readonly CancellationTokenSource _pageCts = new();
-        // 已移除翻页相关字段
-        private bool _isPageLoaded;
-        private bool _isLoggedIn;
+        private readonly List<SearchResult> _allResults = new();
+        private readonly DownloadQueueService _downloadQueueService = DownloadQueueService.Instance;
+        private readonly StringBuilder _homeLogBuilder = new();
+        private CancellationTokenSource _pageCts = new();
         private string _selectedFilter = "All";
-        private const string TestAccountName = "test";
-        private string _countryCode = "cn";
-        private static readonly TimeSpan TestPurchaseDelay = TimeSpan.FromMilliseconds(1000);
+        public event Action<bool>? SearchLoadingChanged;
+
+        private const string StatusPurchased = "已购买";
+        private const string StatusOwned = "已拥有";
+        private const string StatusCanPurchase = "可购买";
+
+        private static readonly string[] PurchasedAliases = { "已购买", "宸茶喘涔?" };
+        private static readonly string[] OwnedAliases = { "已拥有", "宸叉嫢鏈?" };
+        private static readonly string[] CanPurchaseAliases = { "可购买", "未购买", "鍙喘涔?", "鏈喘涔?" };
 
         public int SearchLimitNum { get; set; } = 100;
 
         public MainPage()
         {
-            this.InitializeComponent();
-            Loaded += MainPage_Loaded;
-            Unloaded += MainPage_Unloaded;
+            InitializeComponent();
         }
 
-        // 供主窗口调用的搜索入口
         public async void PerformSearchFromMainWindow(string appName)
         {
             if (string.IsNullOrWhiteSpace(appName))
             {
-                UpdateStatusBar("请输入应用名称", true);
-                return;
-            }
-            await PerformSearchAsync(_pageCts.Token, appName);
-        }
-
-        private void MainPage_Unloaded(object sender, RoutedEventArgs e)
-        {
-            if (!_pageCts.IsCancellationRequested)
-            {
-                _pageCts.Cancel();
-            }
-            _pageCts.Dispose();
-        }
-
-        private async void MainPage_Loaded(object sender, RoutedEventArgs e)
-        {
-            _isPageLoaded = true;
-            _isLoggedIn = SessionState.IsLoggedIn;
-            UpdateLoginButton();
-            RefreshCountryCodeDisplay();
-            // 已移除翻页按钮更新
-
-            if (_isLoggedIn && !string.IsNullOrWhiteSpace(KeychainConfig.GetLastLoginUsername()))
-            {
-                UpdateStatusBar($"欢迎回来，{KeychainConfig.GetLastLoginUsername()}");
-            }
-
-            await RefreshLoginStatusAsync(_pageCts.Token);
-        }
-
-        private async Task RefreshLoginStatusAsync(CancellationToken cancellationToken)
-        {
-            string? account = SessionState.IsLoggedIn ? GetActiveAccount() : GetLastKnownAccount();
-            if (string.IsNullOrWhiteSpace(account))
-            {
-                _isLoggedIn = false;
-                UpdateLoginButton();
-                UpdateStatusBar("当前未登录", false);
-                RefreshCountryCodeDisplay();
+                AppendHomeLog("搜索词为空，已忽略。");
                 return;
             }
 
-            if (IsTestAccount(account))
-            {
-                _isLoggedIn = true;
-                SessionState.SetLoginState(TestAccountName, true);
-                UpdateLoginButton();
-                UpdateStatusBar("已登录账号名为: test");
-                RefreshCountryCodeDisplay();
-                return;
-            }
-
-            UpdateStatusBar("正在检查登录状态...");
-
+            AppendHomeLog($"开始搜索: {appName.Trim()}");
+            SearchLoadingChanged?.Invoke(true);
             try
             {
-                var result = await ipatoolExecution.AuthInfoAsync(account, cancellationToken);
-                string payload = result.OutputOrError;
-
-                if (result.TimedOut)
-                {
-                    _isLoggedIn = false;
-                    UpdateStatusBar("登录状态检查超时，请稍后再试", true);
-                }
-                else if (!string.IsNullOrWhiteSpace(payload))
-                {
-                    ParseLoginStatusResponse(payload, account);
-                }
-                else
-                {
-                    _isLoggedIn = false;
-                    UpdateStatusBar("登录状态检查失败，未收到响应", true);
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                UpdateStatusBar("登录状态检查已取消", true);
+                await PerformSearchAsync(appName.Trim(), _pageCts.Token);
             }
             catch (Exception ex)
             {
-                _isLoggedIn = false;
-                UpdateStatusBar($"登录状态检查失败: {ex.Message}", true);
+                AppendHomeLog($"搜索异常: {ex.Message}");
             }
-
-            UpdateLoginButton();
-            RefreshCountryCodeDisplay();
+            finally
+            {
+                SearchLoadingChanged?.Invoke(false);
+            }
         }
 
-        private void ParseLoginStatusResponse(string payload, string account)
+        private async Task PerformSearchAsync(string appName, CancellationToken cancellationToken)
         {
-            foreach (var segment in EnumerateJsonSegments(payload))
-            {
-                if (TryHandleAuthSegment(segment, account))
-                {
-                    return;
-                }
-            }
+            string account = GetActiveAccount();
+            string countryCode = NormalizeCountryCode(KeychainConfig.GetCountryCode(account));
 
-            if (IsAuthenticationError(payload))
+            var result = await IpatoolExecution.SearchAppAsync(appName, SearchLimitNum, account, countryCode, cancellationToken);
+            if (result.TimedOut || string.IsNullOrWhiteSpace(result.OutputOrError))
             {
-                _isLoggedIn = false;
-                SessionState.Reset();
-                UpdateLoginButton();
-                UpdateStatusBar("登录状态已失效，请重新登录", true);
-                RefreshCountryCodeDisplay();
+                if (ResultList != null)
+                {
+                    ResultList.ItemsSource = null;
+                }
+
+                AppendHomeLog("搜索超时或无返回结果。");
                 return;
             }
 
-            UpdateStatusBar("未能确认登录状态，将维持当前登录状态", false);
+            ParseSearchResponse(result.OutputOrError, account);
         }
 
-        private bool TryHandleAuthSegment(string segment, string account)
+        private void ParseSearchResponse(string payload, string account)
         {
             try
             {
-                using var doc = JsonDocument.Parse(segment);
+                using var doc = JsonDocument.Parse(payload);
                 var root = doc.RootElement;
-
-                if (root.TryGetProperty("success", out var successElement))
+                if (!root.TryGetProperty("results", out var resultsElement) || resultsElement.ValueKind != JsonValueKind.Array)
                 {
-                    bool? success = TryReadBoolean(successElement);
-                    if (success == true)
+                    if (ResultList != null)
                     {
-                        string displayAccount = KeychainConfig.GetLastLoginUsername() ?? account;
-                        _isLoggedIn = true;
-                        SessionState.SetLoginState(account, true);
-                        UpdateLoginButton();
-                        UpdateStatusBar($"已登录账户: {displayAccount}");
-                        RefreshCountryCodeDisplay();
-                        return true;
+                        ResultList.ItemsSource = null;
                     }
 
-                    if (success == false)
-                    {
-                        string errorMessage = ExtractErrorMessage(root) ?? "登录状态无效";
-                        _isLoggedIn = false;
-                        SessionState.Reset();
-                        UpdateLoginButton();
-                        UpdateStatusBar($"未登录: {errorMessage}", true);
-                        RefreshCountryCodeDisplay();
-                        return true;
-                    }
+                    return;
                 }
 
-                string? message = ExtractErrorMessage(root);
-                if (!string.IsNullOrWhiteSpace(message) && IsAuthenticationError(message))
+                var purchasedDict = string.IsNullOrWhiteSpace(account)
+                    ? new Dictionary<string, string>()
+                    : PurchasedAppDb.GetPurchasedApps(account).ToDictionary(x => x.appID, x => x.status);
+
+                _allResults.Clear();
+                foreach (var appElement in resultsElement.EnumerateArray())
                 {
-                    _isLoggedIn = false;
-                    SessionState.Reset();
-                    UpdateLoginButton();
-                    UpdateStatusBar("登录状态已失效，请重新登录", true);
-                    RefreshCountryCodeDisplay();
-                    return true;
+                    string bundleId = GetBundleId(appElement) ?? string.Empty;
+                    string status = purchasedDict.TryGetValue(bundleId, out string? purchasedStatus)
+                        ? NormalizePurchasedStatus(purchasedStatus)
+                        : StatusCanPurchase;
+
+                    _allResults.Add(new SearchResult
+                    {
+                        bundleId = bundleId,
+                        id = GetPropertyValue(appElement, "trackId"),
+                        name = GetPropertyValue(appElement, "trackName"),
+                        developer = GetPropertyValue(appElement, "sellerName"),
+                        artworkUrl = GetPropertyValue(appElement, "artworkUrl100"),
+                        price = GetPriceValue(appElement),
+                        version = GetPropertyValue(appElement, "version"),
+                        purchased = status
+                    });
                 }
+
+                ApplyFilterAndRefresh();
+                AppendHomeLog($"搜索完成，共 {_allResults.Count} 条结果。");
             }
             catch (JsonException)
             {
-                // 尝试解析下一个片段
-            }
-
-            return false;
-        }
-
-        private static IEnumerable<string> EnumerateJsonSegments(string payload)
-        {
-            if (string.IsNullOrWhiteSpace(payload))
-            {
-                yield break;
-            }
-
-            string normalized = payload.Replace("}{", "}\n{");
-            string[] lines = normalized.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-            foreach (string line in lines)
-            {
-                string trimmed = line.Trim();
-                if (trimmed.StartsWith("{") || trimmed.StartsWith("["))
+                if (ResultList != null)
                 {
-                    yield return trimmed;
+                    ResultList.ItemsSource = null;
                 }
+
+                AppendHomeLog("搜索结果解析失败。");
+            }
+        }
+
+        private async void BatchPurchaseButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (ResultList == null)
+            {
+                return;
             }
 
-            if (lines.Length == 0)
+            var selectedApps = ResultList.SelectedItems.OfType<SearchResult>().ToList();
+            if (selectedApps.Count == 0)
             {
-                string trimmed = payload.Trim();
-                if (!string.IsNullOrEmpty(trimmed))
+                AppendHomeLog("未选择应用，无法批量购买。");
+                return;
+            }
+
+            if (BatchPurchaseButton != null)
+            {
+                BatchPurchaseButton.IsEnabled = false;
+            }
+
+            try
+            {
+                AppendHomeLog($"开始批量购买，共 {selectedApps.Count} 项。");
+                await PurchaseAppsAsync(selectedApps);
+                AppendHomeLog("批量购买执行完成。");
+            }
+            finally
+            {
+                if (BatchPurchaseButton != null)
                 {
-                    yield return trimmed;
+                    BatchPurchaseButton.IsEnabled = true;
                 }
+
+                ApplyFilterAndRefresh();
             }
         }
 
-        private static string? ExtractAccountEmail(JsonElement root)
+        private void AddToDownloadQueueButton_Click(object sender, RoutedEventArgs e)
         {
-            if (root.TryGetProperty("data", out var dataElement) && dataElement.ValueKind == JsonValueKind.Object)
+            if (ResultList == null)
             {
-                if (dataElement.TryGetProperty("account", out var accountElement) && accountElement.ValueKind == JsonValueKind.Object)
+                return;
+            }
+
+            int added = 0;
+            foreach (var app in ResultList.SelectedItems.OfType<SearchResult>())
+            {
+                _downloadQueueService.AddOrUpdateFromSearchResult(app);
+                added++;
+            }
+
+            AppendHomeLog(added == 0 ? "未选择应用，未加入下载队列。" : $"已加入下载队列: {added} 项。");
+        }
+
+        private async void ContextMenuPurchase_Click(object sender, RoutedEventArgs e)
+        {
+            if (ResolveContextItem(sender) is not SearchResult app)
+            {
+                return;
+            }
+
+            if (BatchPurchaseButton != null)
+            {
+                BatchPurchaseButton.IsEnabled = false;
+            }
+
+            try
+            {
+                AppendHomeLog($"右键购买: {app.name ?? app.bundleId ?? "未知应用"}");
+                await PurchaseAppsAsync(new List<SearchResult> { app });
+            }
+            finally
+            {
+                if (BatchPurchaseButton != null)
                 {
-                    if (accountElement.TryGetProperty("email", out var emailElement) && emailElement.ValueKind == JsonValueKind.String)
-                    {
-                        return emailElement.GetString();
-                    }
+                    BatchPurchaseButton.IsEnabled = true;
                 }
-            }
 
-            if (root.TryGetProperty("email", out var email) && email.ValueKind == JsonValueKind.String)
-            {
-                return email.GetString();
+                ApplyFilterAndRefresh();
             }
-
-            return null;
         }
 
-        private static string? ExtractErrorMessage(JsonElement root)
+        private void ContextMenuAddToQueue_Click(object sender, RoutedEventArgs e)
         {
-            if (root.TryGetProperty("error", out var errorElement))
+            if (ResolveContextItem(sender) is not SearchResult app)
             {
-                return errorElement.GetString();
+                return;
             }
 
-            if (root.TryGetProperty("message", out var messageElement))
-            {
-                return messageElement.GetString();
-            }
-
-            if (root.TryGetProperty("reason", out var reasonElement))
-            {
-                return reasonElement.GetString();
-            }
-
-            return null;
+            _downloadQueueService.AddOrUpdateFromSearchResult(app);
+            AppendHomeLog($"右键加入下载队列: {app.name ?? app.bundleId ?? "未知应用"}");
         }
 
-        private static bool? TryReadBoolean(JsonElement element)
+        private SearchResult? ResolveContextItem(object sender)
         {
-            return element.ValueKind switch
-            {
-                JsonValueKind.True => true,
-                JsonValueKind.False => false,
-                JsonValueKind.String when bool.TryParse(element.GetString(), out bool parsed) => parsed,
-                JsonValueKind.Number => element.TryGetInt32(out int value) ? value != 0 : (bool?)null,
-                _ => null,
-            };
-        }
-
-        private string? GetActiveAccount()
-        {
-            if (!SessionState.IsLoggedIn)
+            if (sender is not MenuFlyoutItem menuItem)
             {
                 return null;
             }
 
-            string account = SessionState.CurrentAccount;
+            if (menuItem.DataContext is SearchResult direct)
+            {
+                return direct;
+            }
+
+            if (menuItem.Parent is MenuFlyout flyout &&
+                flyout.Target is FrameworkElement target &&
+                target.DataContext is SearchResult fromTarget)
+            {
+                return fromTarget;
+            }
+
+            return null;
+        }
+
+        private void ScreeningComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ScreeningComboBox != null && ScreeningComboBox.SelectedItem is ComboBoxItem selected)
+            {
+                _selectedFilter = selected.Tag?.ToString() ?? "All";
+                ApplyFilterAndRefresh();
+                AppendHomeLog($"切换筛选: {_selectedFilter}");
+            }
+        }
+
+        private void ApplyFilterAndRefresh()
+        {
+            if (ResultList == null)
+            {
+                return;
+            }
+
+            var filtered = GetFilteredResults();
+            ResultList.ItemsSource = null;
+            ResultList.ItemsSource = filtered;
+        }
+
+        private List<SearchResult> GetFilteredResults()
+        {
+            return _selectedFilter switch
+            {
+                "OnlyPurchased" => _allResults.Where(a => IsPurchasedStatus(a.purchased)).ToList(),
+                "OnlyNotPurchased" => _allResults.Where(a => IsCanPurchaseStatus(a.purchased)).ToList(),
+                "OnlyHad" => _allResults.Where(a => IsOwnedStatus(a.purchased)).ToList(),
+                _ => _allResults.ToList(),
+            };
+        }
+
+        private async Task PurchaseAppsAsync(List<SearchResult> selectedApps)
+        {
+            string account = GetActiveAccount();
             if (string.IsNullOrWhiteSpace(account))
             {
-                account = KeychainConfig.GetLastLoginUsername() ?? string.Empty;
-            }
-
-            string normalized = NormalizeAccount(account);
-            return string.IsNullOrEmpty(normalized) ? null : normalized;
-        }
-
-        private string? GetLastKnownAccount()
-        {
-            string? account = KeychainConfig.GetLastLoginUsername();
-            string normalized = NormalizeAccount(account);
-            return string.IsNullOrEmpty(normalized) ? null : normalized;
-        }
-
-        private void SearchLimit_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
-        {
-            SearchLimitNum = (int)e.NewValue;
-            var searchLimitText = GetControl<TextBlock>("SearchLimitNumText");
-            if (searchLimitText != null)
-            {
-                searchLimitText.Text = SearchLimitNum.ToString();
-            }
-            UpdateStatusBar("已调整搜索范围");
-        }
-
-        private void UpdateLoginButton()
-        {
-            if (GetControl<Button>("LogoutButton") is not Button logoutButton)
-            {
                 return;
             }
 
-            if (_isLoggedIn)
+            bool isTestAccount = SessionState.IsLoggedIn
+                && SessionState.IsMockAccount
+                && string.Equals(SessionState.CurrentAccount, account, StringComparison.OrdinalIgnoreCase);
+
+            foreach (var app in selectedApps)
             {
-                logoutButton.Content = "退出登录";
-                logoutButton.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
-            }
-            else
-            {
-                logoutButton.Content = "前往登录";
-                logoutButton.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.DodgerBlue);
-            }
-        }
-
-        private void UpdateStatusBar(string message, bool isError = false)
-        {
-            var resultText = GetControl<TextBlock>("ResultText");
-
-            if (resultText == null || !_isPageLoaded)
-            {
-                Debug.WriteLine($"[状态栏] {message}");
-                return;
-            }
-
-            try
-            {
-                resultText.Text = $"[{DateTime.Now:HH:mm:ss}] {message}";
-                resultText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(isError ? Microsoft.UI.Colors.Red : Microsoft.UI.Colors.Gray);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"更新状态栏失败: {ex.Message}");
-            }
-        }
-
-        // 已移除翻页相关方法
-
-        private async void BatchPurchaseButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (!_isLoggedIn)
-            {
-                UpdateStatusBar("请先登录账户", true);
-                return;
-            }
-
-            if (GetControl<ListView>("ResultList") is not ListView resultList || resultList.SelectedItems.Count == 0)
-            {
-                UpdateStatusBar("请先选择要购买的免费项目", true);
-                return;
-            }
-
-            var account = GetActiveAccount();
-            var normalizedAccount = NormalizeAccount(account);
-            if (string.IsNullOrWhiteSpace(normalizedAccount))
-            {
-                UpdateStatusBar("无法获取当前账户，请重新登录", true);
-                return;
-            }
-
-            bool isTestAccount = IsTestAccount(normalizedAccount);
-
-            var appsToPurchase = resultList.SelectedItems.OfType<AppResult>().ToList();
-            if (appsToPurchase.Count == 0)
-            {
-                UpdateStatusBar("未选择有效的应用条目", true);
-                return;
-            }
-
-            var batchPurchaseButton = GetControl<Button>("BatchPurchaseButton");
-            if (batchPurchaseButton != null)
-            {
-                batchPurchaseButton.IsEnabled = false;
-            }
-
-            int successCount = 0;
-            int failCount = 0;
-            int skipCount = 0;
-            List<string> ownedButFailed = new();
-            List<AppResult> pricedApps = new();
-
-            UpdateStatusBar($"开始购买 {appsToPurchase.Count} 个应用...");
-
-            foreach (var app in appsToPurchase)
-            {
-                if (app.purchased is "已购买" or "已拥有")
+                if (string.IsNullOrWhiteSpace(app.bundleId))
                 {
-                    skipCount++;
                     continue;
                 }
 
-                bool isFreeApp = IsPriceFree(app.price);
+                if (IsPurchasedStatus(app.purchased) || IsOwnedStatus(app.purchased))
+                {
+                    continue;
+                }
+
+                if (!IsPriceFree(app.price))
+                {
+                    app.purchased = StatusOwned;
+                    PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusOwned);
+                    AppendHomeLog($"标记为已拥有(非免费): {app.name ?? app.bundleId}");
+                    continue;
+                }
 
                 if (isTestAccount)
                 {
-                    await Task.Delay(TestPurchaseDelay, _pageCts.Token);
-                    successCount++;
-                    app.purchased = "已购买";
-                    if (!string.IsNullOrWhiteSpace(app.bundleID))
-                    {
-                        PurchasedAppDb.SavePurchasedApp(app.bundleID, normalizedAccount, "已购买");
-                    }
-                    UpdateStatusBar($"成功购买: {app.name}");
+                    app.purchased = StatusPurchased;
+                    PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusPurchased);
+                    AppendHomeLog($"测试账户购买成功: {app.name ?? app.bundleId}");
                     continue;
                 }
 
-                if (!isFreeApp)
+                var result = await IpatoolExecution.PurchaseAppAsync(app.bundleId, account, _pageCts.Token);
+                if (IsPurchaseSuccess(result.OutputOrError))
                 {
-                    failCount++;
-                    pricedApps.Add(app);
-                    UpdateStatusBar($"购买失败(非免费): {app.name}", true);
-                    continue;
+                    app.purchased = StatusPurchased;
+                    PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusPurchased);
+                    AppendHomeLog($"购买成功: {app.name ?? app.bundleId}");
                 }
-
-                UpdateStatusBar($"正在购买: {app.name}...");
-
-                try
+                else
                 {
-                    var result = await ipatoolExecution.PurchaseAppAsync(app.bundleID ?? string.Empty, normalizedAccount, _pageCts.Token);
-                    string payload = result.OutputOrError;
-
-                    if (IsPurchaseSuccess(payload))
-                    {
-                        successCount++;
-                        app.purchased = "已购买";
-                        PurchasedAppDb.SavePurchasedApp(app.bundleID ?? string.Empty, normalizedAccount, "已购买");
-                        UpdateStatusBar($"成功购买: {app.name}");
-                    }
-                    else
-                    {
-                        failCount++;
-                        if (isFreeApp)
-                        {
-                            app.purchased = "已拥有";
-                            PurchasedAppDb.SavePurchasedApp(app.bundleID ?? string.Empty, normalizedAccount, "已拥有");
-                            ownedButFailed.Add(app.name ?? string.Empty);
-                            UpdateStatusBar($"购买失败但已拥有: {app.name}", true);
-                        }
-                        else
-                        {
-                            UpdateStatusBar($"购买失败: {app.name}", true);
-                        }
-                    }
+                    app.purchased = StatusOwned;
+                    PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusOwned);
+                    AppendHomeLog($"购买失败，标记为已拥有: {app.name ?? app.bundleId}");
                 }
-                catch (OperationCanceledException)
-                {
-                    UpdateStatusBar("购买操作被取消", true);
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    failCount++;
-                    UpdateStatusBar($"购买失败: {app.name} ({ex.Message})", true);
-                }
-            }
-
-            string extra = ownedButFailed.Count > 0 ? $"，购买失败但已拥有: {ownedButFailed.Count} 个" : string.Empty;
-
-            if (batchPurchaseButton != null)
-            {
-                batchPurchaseButton.IsEnabled = true;
-            }
-            RefreshPurchasedStatus();
-
-            var displayList = GetFilteredResults();
-            // 已移除翻页相关逻辑
-
-            if (displayList.Count == 0)
-            {
-                UpdateStatusBar("购买后筛选结果为空", false);
-            }
-            else
-            {
-                UpdateStatusBar($"批量购买完成 - 成功: {successCount}, 失败: {failCount}, 跳过: {skipCount}{extra}。共 {displayList.Count} 条");
-            }
-
-            if (pricedApps.Count > 0)
-            {
-                var dialog = new ContentDialog
-                {
-                    Title = "发现付费应用",
-                    Content = $"以下 {pricedApps.Count} 个应用价格不为 0，已标记为购买失败:" + Environment.NewLine + string.Join(Environment.NewLine, pricedApps.Select(a => $"• {a.name} ({a.price})")),
-                    PrimaryButtonText = "知道了",
-                    XamlRoot = this.XamlRoot
-                };
-
-                _ = dialog.ShowAsync();
             }
         }
 
-        // 已移除本地搜索按钮和输入框事件，统一由主窗口处理
-
-        // 正确位置：PerformSearchAsync 方法
-        private async Task PerformSearchAsync(CancellationToken cancellationToken, string appName)
+        private static string NormalizePurchasedStatus(string? status)
         {
-            var account = GetActiveAccount();
-            var normalizedAccount = NormalizeAccount(account);
-            var countryCode = GetCurrentCountryCode();
-
-            UpdateStatusBar($"正在搜索 \"{appName}\"");
-
-            try
+            if (IsPurchasedStatus(status))
             {
-                var result = await ipatoolExecution.SearchAppAsync(appName, SearchLimitNum, normalizedAccount, countryCode, cancellationToken);
-
-                if (result.TimedOut)
-                {
-                    UpdateStatusBar("搜索超时，请稍后再试", true);
-                    return;
-                }
-
-                string payload = result.OutputOrError;
-                if (string.IsNullOrWhiteSpace(payload))
-                {
-                    UpdateStatusBar("搜索失败：未收到有效响应", true);
-                    return;
-                }
-
-                ParseSearchResponse(payload, normalizedAccount);
+                return StatusPurchased;
             }
-            catch (OperationCanceledException)
+
+            if (IsOwnedStatus(status))
             {
-                UpdateStatusBar("搜索已取消", true);
+                return StatusOwned;
             }
-            catch (Exception ex)
+
+            return StatusCanPurchase;
+        }
+
+        private static bool IsPurchasedStatus(string? status)
+        {
+            if (string.IsNullOrWhiteSpace(status))
             {
-                UpdateStatusBar($"搜索失败: {ex.Message}", true);
+                return false;
             }
+
+            return PurchasedAliases.Any(alias => string.Equals(status, alias, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static bool IsOwnedStatus(string? status)
+        {
+            if (string.IsNullOrWhiteSpace(status))
+            {
+                return false;
+            }
+
+            return OwnedAliases.Any(alias => string.Equals(status, alias, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static bool IsCanPurchaseStatus(string? status)
+        {
+            if (string.IsNullOrWhiteSpace(status))
+            {
+                return true;
+            }
+
+            return CanPurchaseAliases.Any(alias => string.Equals(status, alias, StringComparison.OrdinalIgnoreCase));
         }
 
         private static bool IsPurchaseSuccess(string response)
@@ -571,285 +400,40 @@ namespace IPAbuyer.Views
             try
             {
                 using var doc = JsonDocument.Parse(response);
-                if (doc.RootElement.TryGetProperty("success", out var successElement))
-                {
-                    return successElement.ValueKind == JsonValueKind.True && successElement.GetBoolean();
-                }
+                return doc.RootElement.TryGetProperty("success", out var successElement)
+                    && successElement.ValueKind == JsonValueKind.True
+                    && successElement.GetBoolean();
             }
             catch (JsonException)
             {
-                // JSON 解析失败时退回到字符串判断
-            }
-
-            return false;
-        }
-
-        private void RefreshPurchasedStatus()
-        {
-            var account = GetActiveAccount();
-            var normalizedAccount = NormalizeAccount(account);
-            if (string.IsNullOrWhiteSpace(normalizedAccount))
-            {
-                return;
-            }
-
-            var purchasedDict = PurchasedAppDb.GetPurchasedApps(normalizedAccount).ToDictionary(x => x.appID, x => x.status);
-
-            foreach (var app in _allResults)
-            {
-                var key = app.bundleID ?? string.Empty;
-                if (purchasedDict.TryGetValue(key, out var status))
-                {
-                    app.purchased = status;
-                }
-            }
-
-            // 已移除翻页相关逻辑
-        }
-
-        private List<AppResult> GetFilteredResults()
-        {
-            return _selectedFilter switch
-            {
-                "OnlyPurchased" => _allResults.Where(a => a.purchased == "已购买").ToList(),
-                "OnlyNotPurchased" => _allResults.Where(a => a.purchased == "未购买" || a.purchased == "可购买").ToList(),
-                "OnlyHad" => _allResults.Where(a => a.purchased == "已拥有").ToList(),
-                _ => _allResults.ToList(),
-            };
-        }
-
-        private void ScreeningComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (!_isPageLoaded || GetControl<ComboBox>("ScreeningComboBox")?.SelectedItem is not ComboBoxItem selectedItem)
-            {
-                return;
-            }
-
-            _selectedFilter = selectedItem.Tag?.ToString() ?? "All";
-            var displayList = GetFilteredResults();
-            // 已移除翻页相关逻辑
-
-            var resultList = GetControl<ListView>("ResultList");
-            if (resultList != null)
-            {
-                resultList.ItemsSource = displayList;
-            }
-            if (displayList.Count == 0)
-            {
-                UpdateStatusBar("筛选结果为空，请先输入App名称进行查询", false);
-            }
-            else
-            {
-                UpdateStatusBar($"筛选已更新，共 {displayList.Count} 条");
+                return false;
             }
         }
 
-        // 已移除翻页相关方法
-
-        private async void SearchButton_Click(object sender, RoutedEventArgs e)
+        private static string GetActiveAccount()
         {
-            await PerformSearchAsync(_pageCts.Token);
+            string account = SessionState.IsLoggedIn ? SessionState.CurrentAccount : string.Empty;
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                account = KeychainConfig.GetLastLoginUsername() ?? string.Empty;
+            }
+
+            return account.Trim();
         }
 
-        private void AppNameBox_TextChanged(object sender, TextChangedEventArgs e)
+        private static bool IsPriceFree(string? price)
         {
-            // 已移除翻页按钮更新
-        }
-
-        private async void LogoutButton_Click(object sender, RoutedEventArgs e)
-        {
-            var logoutButton = GetControl<Button>("LogoutButton");
-            if (logoutButton != null)
+            if (string.IsNullOrWhiteSpace(price))
             {
-                logoutButton.IsEnabled = false;
+                return false;
             }
 
-            if (!_isLoggedIn)
+            if (decimal.TryParse(price, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal value))
             {
-                UpdateStatusBar("正在跳转到登录页面...");
-                if (logoutButton != null)
-                {
-                    logoutButton.IsEnabled = true;
-                }
-                Frame.Navigate(typeof(LoginPage));
-                return;
+                return value <= 0m;
             }
 
-            var account = GetActiveAccount();
-            var normalizedAccount = NormalizeAccount(account);
-            if (!string.IsNullOrWhiteSpace(normalizedAccount) && !IsTestAccount(normalizedAccount))
-            {
-                try
-                {
-                    UpdateStatusBar("正在退出登录...");
-                    await ipatoolExecution.AuthLogoutAsync(normalizedAccount, _pageCts.Token);
-                }
-                catch (OperationCanceledException)
-                {
-                    UpdateStatusBar("退出登录被取消", true);
-                }
-                catch (Exception ex)
-                {
-                    UpdateStatusBar($"退出登录失败: {ex.Message}", true);
-                }
-            }
-
-            _isLoggedIn = false;
-            SessionState.Reset();
-            KeychainConfig.ClearLastLoginUsername();
-            _countryCode = KeychainConfig.GetCountryCode();
-            RefreshCountryCodeDisplay();
-            UpdateLoginButton();
-            UpdateStatusBar("已退出登录");
-            if (logoutButton != null)
-            {
-                logoutButton.IsEnabled = true;
-            }
-            Frame.Navigate(typeof(LoginPage));
-        }
-
-        private async void Search_KeyUp(object sender, KeyRoutedEventArgs e)
-        {
-            if (e.Key != Windows.System.VirtualKey.Enter)
-            {
-                return;
-            }
-
-            e.Handled = true;
-
-            if (sender is Control control)
-            {
-                control.IsEnabled = false;
-                control.IsEnabled = true;
-            }
-
-            await PerformSearchAsync(_pageCts.Token);
-        }
-
-        private async Task PerformSearchAsync(CancellationToken cancellationToken)
-        {
-            var account = GetActiveAccount();
-            var normalizedAccount = NormalizeAccount(account);
-            var countryCode = GetCurrentCountryCode();
-
-            var appNameBox = GetControl<TextBox>("AppNameBox");
-            string appName = appNameBox?.Text?.Trim() ?? string.Empty;
-            if (string.IsNullOrEmpty(appName))
-            {
-                UpdateStatusBar("请输入应用名称", true);
-                appNameBox?.Focus(FocusState.Programmatic);
-                return;
-            }
-
-            var searchButton = GetControl<Button>("SearchButton");
-            if (searchButton != null)
-            {
-                searchButton.IsEnabled = false;
-            }
-            UpdateStatusBar($"正在搜索 \"{appName}\"");
-
-            try
-            {
-                var result = await ipatoolExecution.SearchAppAsync(appName, SearchLimitNum, normalizedAccount, countryCode, cancellationToken);
-
-                if (result.TimedOut)
-                {
-                    UpdateStatusBar("搜索超时，请稍后再试", true);
-                    return;
-                }
-
-                string payload = result.OutputOrError;
-                if (string.IsNullOrWhiteSpace(payload))
-                {
-                    UpdateStatusBar("搜索失败：未收到有效响应", true);
-                    return;
-                }
-
-                ParseSearchResponse(payload, normalizedAccount);
-            }
-            catch (OperationCanceledException)
-            {
-                UpdateStatusBar("搜索已取消", true);
-            }
-            catch (Exception ex)
-            {
-                UpdateStatusBar($"搜索失败: {ex.Message}", true);
-            }
-            finally
-            {
-                if (searchButton != null)
-                {
-                    searchButton.IsEnabled = true;
-                }
-            }
-        }
-
-        private void ParseSearchResponse(string payload, string account)
-        {
-            try
-            {
-                using var doc = JsonDocument.Parse(payload);
-                var root = doc.RootElement;
-
-                if (!root.TryGetProperty("results", out var resultsElement) || resultsElement.ValueKind != JsonValueKind.Array)
-                {
-                    UpdateStatusBar("搜索结果为空或格式错误", true);
-                    return;
-                }
-
-                var purchasedDict = string.IsNullOrEmpty(account)
-                    ? new Dictionary<string, string>()
-                    : PurchasedAppDb.GetPurchasedApps(account).ToDictionary(x => x.appID, x => x.status);
-
-                _allResults.Clear();
-                int successCount = 0;
-                int failCount = 0;
-
-                foreach (var appElement in resultsElement.EnumerateArray())
-                {
-                    try
-                    {
-                        var bundleId = GetBundleId(appElement);
-                        var app = new AppResult
-                        {
-                            bundleID = bundleId,
-                            id = GetPropertyValue(appElement, "trackId"),
-                            name = GetPropertyValue(appElement, "trackName"),
-                            price = GetPriceValue(appElement),
-                            version = GetPropertyValue(appElement, "version"),
-                            purchased = purchasedDict.TryGetValue(bundleId ?? string.Empty, out var status)
-                                ? status
-                                : "可购买"
-                        };
-
-                        _allResults.Add(app);
-                        successCount++;
-                    }
-                    catch
-                    {
-                        failCount++;
-                    }
-                }
-
-                // 搜索完成后刷新筛选并显示所有结果
-                var resultList = GetControl<ListView>("ResultList");
-                _selectedFilter = "All";
-                var displayList = GetFilteredResults();
-                if (resultList != null)
-                {
-                    resultList.ItemsSource = displayList;
-                }
-
-                int resultCount = root.TryGetProperty("resultCount", out var countElement) && countElement.TryGetInt32(out int countValue)
-                    ? countValue
-                    : _allResults.Count;
-
-                UpdateStatusBar($"搜索完成 - 找到 {_allResults.Count} 个应用 (成功: {successCount}, 失败: {failCount})");
-            }
-            catch (JsonException ex)
-            {
-                UpdateStatusBar($"解析搜索结果失败: {ex.Message}", true);
-            }
+            return price.Trim().Equals("free", StringComparison.OrdinalIgnoreCase);
         }
 
         private static string? GetBundleId(JsonElement element)
@@ -865,6 +449,23 @@ namespace IPAbuyer.Views
             }
 
             return null;
+        }
+
+        private static string? GetPropertyValue(JsonElement element, string propertyName)
+        {
+            if (!element.TryGetProperty(propertyName, out var property))
+            {
+                return null;
+            }
+
+            return property.ValueKind switch
+            {
+                JsonValueKind.String => property.GetString(),
+                JsonValueKind.Number => property.GetRawText(),
+                JsonValueKind.True => "true",
+                JsonValueKind.False => "false",
+                _ => property.GetRawText()
+            };
         }
 
         private static string? GetPriceValue(JsonElement element)
@@ -886,110 +487,6 @@ namespace IPAbuyer.Views
             };
         }
 
-        private static string? GetPropertyValue(JsonElement element, string propertyName)
-        {
-            if (!element.TryGetProperty(propertyName, out var property))
-            {
-                return null;
-            }
-
-            return property.ValueKind switch
-            {
-                JsonValueKind.String => property.GetString(),
-                JsonValueKind.Number => property.GetRawText(),
-                JsonValueKind.True => "true",
-                JsonValueKind.False => "false",
-                _ => property.GetRawText()
-            };
-        }
-
-        private static bool IsAuthenticationError(string message)
-        {
-            if (string.IsNullOrWhiteSpace(message))
-            {
-                return false;
-            }
-
-            string lower = message.ToLowerInvariant();
-            return lower.Contains("failed to get account")
-                || lower.Contains("session expired")
-                || lower.Contains("not logged in")
-                || lower.Contains("please log in")
-                || (lower.Contains("authentication") && (lower.Contains("fail") || lower.Contains("invalid")))
-                || (lower.Contains("keychain") && lower.Contains("passphrase"));
-        }
-
-        protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
-        {
-            base.OnNavigatedTo(e);
-
-            if (e.Parameter is string accountParam && !string.IsNullOrWhiteSpace(accountParam))
-            {
-                string normalizedAccount = NormalizeAccount(accountParam);
-                _isLoggedIn = true;
-                SessionState.SetLoginState(normalizedAccount, true);
-                UpdateLoginButton();
-                UpdateStatusBar($"登录成功，欢迎使用 {normalizedAccount}");
-            }
-            else if (e.Parameter is bool loginStatus)
-            {
-                _isLoggedIn = loginStatus;
-                if (_isLoggedIn)
-                {
-                    var account = GetActiveAccount();
-                    if (!string.IsNullOrWhiteSpace(account))
-                    {
-                        SessionState.SetLoginState(account, true);
-                    }
-
-                    UpdateStatusBar("登录成功，欢迎使用");
-                }
-                UpdateLoginButton();
-            }
-
-            RefreshCountryCodeDisplay();
-            await RefreshLoginStatusAsync(_pageCts.Token);
-        }
-
-        private static string NormalizeAccount(string? account)
-        {
-            if (string.IsNullOrWhiteSpace(account))
-            {
-                return string.Empty;
-            }
-
-            string trimmed = account.Trim();
-            return trimmed.Equals(TestAccountName, StringComparison.OrdinalIgnoreCase) ? TestAccountName : trimmed;
-        }
-
-        private static bool IsTestAccount(string? account)
-        {
-            return NormalizeAccount(account) == TestAccountName;
-        }
-
-        private void RefreshCountryCodeDisplay()
-        {
-            string code = GetCurrentCountryCode();
-            var textBlock = GetControl<TextBlock>("CountryCodeShowTextBlock");
-            if (textBlock != null)
-            {
-                textBlock.Text = $"国家/地区代码：{code}";
-            }
-        }
-
-        private string GetCurrentCountryCode()
-        {
-            string? account = GetActiveAccount();
-            if (string.IsNullOrEmpty(account))
-            {
-                account = GetLastKnownAccount();
-            }
-
-            string stored = NormalizeCountryCode(KeychainConfig.GetCountryCode(account));
-            _countryCode = stored;
-            return stored;
-        }
-
         private static string NormalizeCountryCode(string? code)
         {
             if (string.IsNullOrWhiteSpace(code))
@@ -1001,25 +498,55 @@ namespace IPAbuyer.Views
             return KeychainConfig.IsValidCountryCode(normalized) ? normalized : "cn";
         }
 
-        private static bool IsPriceFree(string? price)
+        private void CopyHomeLog_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(price))
+            string text = HomeLogTextBox.Text ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(text))
             {
-                return false;
+                AppendHomeLog("日志为空，无可复制内容。");
+                return;
             }
 
-            if (decimal.TryParse(price, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal value))
-            {
-                return value <= 0m;
-            }
-
-            return price.Trim().Equals("free", StringComparison.OrdinalIgnoreCase);
+            var package = new Windows.ApplicationModel.DataTransfer.DataPackage();
+            package.SetText(text);
+            Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
+            Windows.ApplicationModel.DataTransfer.Clipboard.Flush();
+            AppendHomeLog("日志已复制到剪贴板。");
         }
 
-        private T? GetControl<T>(string name)
-            where T : class
+        private void ClearHomeLog_Click(object sender, RoutedEventArgs e)
         {
-            return FindName(name) as T;
+            _homeLogBuilder.Clear();
+            HomeLogTextBox.Text = string.Empty;
+            AppendHomeLog("日志已清空。");
+        }
+
+        private void AppendHomeLog(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message) || HomeLogTextBox == null)
+            {
+                return;
+            }
+
+            _homeLogBuilder.Append('[')
+                .Append(DateTime.Now.ToString("HH:mm:ss"))
+                .Append("] ")
+                .AppendLine(message);
+
+            HomeLogTextBox.Text = _homeLogBuilder.ToString();
+            HomeLogTextBox.SelectionStart = HomeLogTextBox.Text.Length;
+        }
+
+        protected override void OnNavigatedFrom(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+        {
+            base.OnNavigatedFrom(e);
+            if (!_pageCts.IsCancellationRequested)
+            {
+                _pageCts.Cancel();
+            }
+
+            _pageCts.Dispose();
+            _pageCts = new CancellationTokenSource();
         }
     }
 }

@@ -4,16 +4,17 @@ using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace IPAbuyer.Common
 {
-    public static class ipatoolExecution
+    public static class IpatoolExecution
     {
         private const int MaxPreviewLength = 200;
         private static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(2);
-    private static readonly HttpClient HttpClient = new();
+        private static readonly HttpClient HttpClient = new();
 
         public sealed record IpatoolResult(string? Output, string? Error, int ExitCode, bool TimedOut)
         {
@@ -21,15 +22,20 @@ namespace IPAbuyer.Common
             public bool IsSuccessResponse => !TimedOut && ExitCode == 0;
         }
 
-        public static Task<IpatoolResult> AuthLoginAsync(string account, string password, string authCode, CancellationToken cancellationToken = default)
+        public static Task<IpatoolResult> AuthLoginAsync(string account, string password, string authCode, string passphrase, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(account))
             {
                 throw new ArgumentException("account 不能为空", nameof(account));
             }
 
-            string arguments = $"auth login --email \"{account}\" --password \"{password}\" --auth-code \"{authCode}\"";
-            return ExecuteIpatoolAsync(arguments, account, cancellationToken);
+            string arguments = $"auth login --email \"{account}\" --password \"{password}\"";
+            if (!string.IsNullOrWhiteSpace(authCode))
+            {
+                arguments += $" --auth-code \"{authCode}\"";
+            }
+
+            return ExecuteIpatoolAsync(arguments, account, passphrase, cancellationToken);
         }
 
         public static Task<IpatoolResult> AuthLogoutAsync(string account, CancellationToken cancellationToken = default)
@@ -39,7 +45,7 @@ namespace IPAbuyer.Common
                 throw new ArgumentException("account 不能为空", nameof(account));
             }
 
-            return ExecuteIpatoolAsync("auth revoke", account, cancellationToken);
+            return ExecuteIpatoolAsync("auth revoke", account, null, cancellationToken);
         }
 
         public static async Task<IpatoolResult> SearchAppAsync(string name, int limit, string account, string countryCode, CancellationToken cancellationToken = default)
@@ -97,7 +103,7 @@ namespace IPAbuyer.Common
                 throw new ArgumentException("account 不能为空", nameof(account));
             }
 
-            return ExecuteIpatoolAsync("auth info", account, cancellationToken);
+            return ExecuteIpatoolAsync("auth info", account, null, cancellationToken);
         }
 
         public static Task<IpatoolResult> PurchaseAppAsync(string bundleId, string account, CancellationToken cancellationToken = default)
@@ -113,22 +119,48 @@ namespace IPAbuyer.Common
             }
 
             string arguments = $"purchase --bundle-identifier \"{bundleId}\"";
-            return ExecuteIpatoolAsync(arguments, account, cancellationToken);
+            return ExecuteIpatoolAsync(arguments, account, null, cancellationToken);
         }
 
-        private static async Task<IpatoolResult> ExecuteIpatoolAsync(string arguments, string account, CancellationToken cancellationToken)
+        public static Task<IpatoolResult> DownloadAppAsync(string bundleId, string outputDirectory, string account, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                throw new ArgumentException("account 不能为空", nameof(account));
+            }
+
+            if (string.IsNullOrWhiteSpace(bundleId))
+            {
+                throw new ArgumentException("bundleId 不能为空", nameof(bundleId));
+            }
+
+            if (string.IsNullOrWhiteSpace(outputDirectory))
+            {
+                throw new ArgumentException("outputDirectory 不能为空", nameof(outputDirectory));
+            }
+
+            Directory.CreateDirectory(outputDirectory);
+            string arguments = $"download --output \"{outputDirectory}\" --bundle-identifier \"{bundleId}\"";
+            return ExecuteIpatoolAsync(arguments, account, null, cancellationToken);
+        }
+
+        private static async Task<IpatoolResult> ExecuteIpatoolAsync(string arguments, string account, string? passphrase, CancellationToken cancellationToken)
         {
             bool isLogout = arguments.TrimStart().StartsWith("auth revoke", StringComparison.OrdinalIgnoreCase);
 
             string ipatoolPath = ResolveIpatoolPath();
             string workingDirectory = Path.GetDirectoryName(ipatoolPath) ?? AppContext.BaseDirectory;
 
-            string passphrase = EnsurePassphrase(account);
+            string effectivePassphrase = EnsurePassphrase(account, passphrase);
+
+            string finalArguments = isLogout
+                ? $"{arguments} --format json --non-interactive --verbose"
+                : $"{arguments} --keychain-passphrase {effectivePassphrase} --format json --non-interactive --verbose";
 
             var psi = new ProcessStartInfo
             {
                 FileName = ipatoolPath,
-                Arguments = $"{arguments} --keychain-passphrase {passphrase} --format json --non-interactive --verbose",
+                Arguments = finalArguments,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -179,16 +211,8 @@ namespace IPAbuyer.Common
                 Debug.WriteLine($"ipatool output: {Preview(output)}");
                 Debug.WriteLine($"ipatool stderr: {Preview(error)}");
 
-                string? normalizedOutput = ExtractMeaningfulJson(output);
-                string? normalizedError = ExtractMeaningfulJson(error) ?? error;
-
-                // 如果标准输出没有有用信息，返回标准错误中的内容
-                if (string.IsNullOrWhiteSpace(normalizedOutput) && !string.IsNullOrWhiteSpace(normalizedError))
-                {
-                    return new IpatoolResult(normalizedError, normalizedError, process.ExitCode, TimedOut: false);
-                }
-
-                return new IpatoolResult(normalizedOutput ?? output, normalizedError, process.ExitCode, TimedOut: false);
+                (string normalizedOutput, string normalizedError) = NormalizeIpatoolStreams(output, error, process.ExitCode);
+                return new IpatoolResult(normalizedOutput, normalizedError, process.ExitCode, TimedOut: false);
             }
             catch (Exception ex)
             {
@@ -221,17 +245,24 @@ namespace IPAbuyer.Common
             string includeDirectory = Path.Combine(baseDirectory, "Include");
             if (Directory.Exists(includeDirectory))
             {
-                string binaryName = RuntimeInformation.ProcessArchitecture switch
+                string architectureSuffix = RuntimeInformation.ProcessArchitecture switch
                 {
-                    Architecture.Arm64 => "ipatool-2.2.0-windows-arm64.exe",
-                    Architecture.X64 => "ipatool-2.2.0-windows-amd64.exe",
-                    _ => "ipatool.exe"
+                    Architecture.Arm64 => "arm64",
+                    Architecture.X64 => "amd64",
+                    _ => string.Empty
                 };
 
-                string candidate = Path.Combine(includeDirectory, binaryName);
-                if (File.Exists(candidate))
+                if (!string.IsNullOrEmpty(architectureSuffix))
                 {
-                    return candidate;
+                    string pattern = $"ipatool-*-windows-{architectureSuffix}.exe";
+                    string? candidate = Directory.GetFiles(includeDirectory, pattern, SearchOption.TopDirectoryOnly)
+                        .OrderByDescending(path => path, StringComparer.OrdinalIgnoreCase)
+                        .FirstOrDefault();
+
+                    if (!string.IsNullOrWhiteSpace(candidate))
+                    {
+                        return candidate;
+                    }
                 }
             }
 
@@ -239,8 +270,20 @@ namespace IPAbuyer.Common
             return "ipatool.exe";
         }
 
-        private static string EnsurePassphrase(string account)
+        private static string EnsurePassphrase(string account, string? passphrase)
         {
+            if (!string.IsNullOrWhiteSpace(passphrase))
+            {
+                return passphrase.Trim();
+            }
+
+            string? filePassphrase = KeychainConfig.GetPassphrase(account);
+            if (!string.IsNullOrWhiteSpace(filePassphrase))
+            {
+                return filePassphrase;
+            }
+
+            // 兼容旧实现：若 passphrase.txt 不存在，回退到历史数据库密钥。
             string? existingKey = KeychainConfig.GetSecretKey(account);
             if (!string.IsNullOrEmpty(existingKey))
             {
@@ -289,6 +332,66 @@ namespace IPAbuyer.Common
             }
 
             return null;
+        }
+
+        private static (string Output, string Error) NormalizeIpatoolStreams(string? stdout, string? stderr, int exitCode)
+        {
+            string outputText = stdout?.Trim() ?? string.Empty;
+            string errorText = stderr?.Trim() ?? string.Empty;
+
+            string? outputJson = ExtractMeaningfulJson(outputText);
+            string? errorJson = ExtractMeaningfulJson(errorText);
+
+            string normalizedOutput = !string.IsNullOrWhiteSpace(outputJson) ? outputJson : outputText;
+            string normalizedError = !string.IsNullOrWhiteSpace(errorJson) ? errorJson : errorText;
+
+            if (string.IsNullOrWhiteSpace(normalizedError) && !string.IsNullOrWhiteSpace(errorText))
+            {
+                normalizedError = errorText;
+            }
+
+            if (string.IsNullOrWhiteSpace(normalizedOutput))
+            {
+                normalizedOutput = BuildReadableError(normalizedError, exitCode);
+            }
+
+            if (string.IsNullOrWhiteSpace(normalizedError) && exitCode != 0)
+            {
+                normalizedError = BuildReadableError(normalizedOutput, exitCode);
+            }
+
+            return (normalizedOutput, normalizedError);
+        }
+
+        private static string BuildReadableError(string? text, int exitCode)
+        {
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                string trimmed = text.Trim();
+                try
+                {
+                    using var doc = JsonDocument.Parse(trimmed);
+                    var root = doc.RootElement;
+
+                    if (root.TryGetProperty("error", out var error) && error.ValueKind == JsonValueKind.String)
+                    {
+                        return $"ipatool 错误: {error.GetString()} (exit: {exitCode})";
+                    }
+
+                    if (root.TryGetProperty("message", out var message) && message.ValueKind == JsonValueKind.String)
+                    {
+                        return $"ipatool 错误: {message.GetString()} (exit: {exitCode})";
+                    }
+                }
+                catch (JsonException)
+                {
+                    // ignore json parse failure and fallback to raw text
+                }
+
+                return trimmed;
+            }
+
+            return $"ipatool 执行失败 (exit: {exitCode})";
         }
 
         private static string Preview(string? value)

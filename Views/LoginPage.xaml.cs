@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Input;
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,22 +14,33 @@ namespace IPAbuyer.Views
     public sealed partial class LoginPage : Page
     {
         private readonly CancellationTokenSource _pageCts = new();
+        private readonly StringBuilder _loginLogBuilder = new();
         private CancellationTokenSource? _currentOperationCts;
 
         private string? _lastLoginUsername;
         private string _account = "example@icloud.com";
         private string _password = string.Empty;
-        private const string TestCredential = "test";
+        private string _passphrase = string.Empty;
+        private bool _isTwoFactorPending;
 
         public LoginPage()
         {
-            this.InitializeComponent();
+            InitializeComponent();
+
             _lastLoginUsername = KeychainConfig.GetLastLoginUsername();
             if (!string.IsNullOrWhiteSpace(_lastLoginUsername))
             {
                 _account = _lastLoginUsername;
             }
+
             LoadAccountHistory();
+            string? savedPassphrase = KeychainConfig.GetPassphrase(_account);
+            if (!string.IsNullOrWhiteSpace(savedPassphrase) && PassphraseInput != null)
+            {
+                PassphraseInput.Text = savedPassphrase;
+                _passphrase = savedPassphrase;
+            }
+
             Unloaded += LoginPage_Unloaded;
         }
 
@@ -43,17 +55,109 @@ namespace IPAbuyer.Views
 
         private async void NextButton_Click(object sender, RoutedEventArgs e)
         {
+            if (_isTwoFactorPending)
+            {
+                AppendLoginLog("Start verifying two-factor code.");
+                await ValidateAuthCodeAsync();
+                return;
+            }
+
+            AppendLoginLog("Start login.");
             await TriggerLoginAsync();
         }
 
-        private void OpenAppleAccountLink(object sender, RoutedEventArgs e)
+        private async void AuthInfoButton_Click(object sender, RoutedEventArgs e)
         {
-            var url = "https://account.apple.com";
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            string account = (EmailTextBox?.Text ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(account))
             {
-                FileName = url,
-                UseShellExecute = true
-            });
+                account = SessionState.CurrentAccount;
+            }
+
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                ShowError("请先输入邮箱或登录账户");
+                AppendLoginLog("Auth info failed: account is empty.");
+                return;
+            }
+
+            try
+            {
+                CancelCurrentOperation();
+                _currentOperationCts = CancellationTokenSource.CreateLinkedTokenSource(_pageCts.Token);
+                SetBusyState(true, "正在查询登录状态...");
+
+                var result = await IpatoolExecution.AuthInfoAsync(account, _currentOperationCts.Token);
+                DisposeCurrentOperation();
+
+                if (result.IsSuccessResponse)
+                {
+                    ShowSuccess("登录状态正常");
+                    AppendLoginLog($"Auth info success: {account}");
+                }
+                else
+                {
+                    ShowError(string.IsNullOrWhiteSpace(result.OutputOrError) ? "登录状态异常" : result.OutputOrError);
+                    AppendLoginLog($"Auth info failed: {account}");
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowError($"查询登录状态失败: {ex.Message}");
+                AppendLoginLog($"Auth info exception: {ex.Message}");
+            }
+            finally
+            {
+                RestoreIdleState();
+            }
+        }
+
+        private async void LogoutButton_Click(object sender, RoutedEventArgs e)
+        {
+            string account = SessionState.CurrentAccount;
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                account = (EmailTextBox?.Text ?? string.Empty).Trim();
+            }
+
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                ShowError("未找到可退出的账户");
+                AppendLoginLog("Logout failed: account is empty.");
+                return;
+            }
+
+            try
+            {
+                CancelCurrentOperation();
+                _currentOperationCts = CancellationTokenSource.CreateLinkedTokenSource(_pageCts.Token);
+                SetBusyState(true, "正在退出登录...");
+
+                var result = await IpatoolExecution.AuthLogoutAsync(account, _currentOperationCts.Token);
+                DisposeCurrentOperation();
+
+                if (result.IsSuccessResponse)
+                {
+                    SessionState.Reset();
+                    HideInlineTwoFactor();
+                    ShowSuccess("已退出登录");
+                    AppendLoginLog($"Logout success: {account}");
+                }
+                else
+                {
+                    ShowError(string.IsNullOrWhiteSpace(result.OutputOrError) ? "退出登录失败" : result.OutputOrError);
+                    AppendLoginLog($"Logout failed: {account}");
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowError($"退出登录失败: {ex.Message}");
+                AppendLoginLog($"Logout exception: {ex.Message}");
+            }
+            finally
+            {
+                RestoreIdleState();
+            }
         }
 
         private void LoadAccountHistory()
@@ -70,16 +174,13 @@ namespace IPAbuyer.Views
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"加载账号历史失败: {ex.Message}");
+                Debug.WriteLine($"Load account history failed: {ex.Message}");
             }
         }
 
         private void CodeBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (CodeErrorTextBlock != null)
-            {
-                CodeErrorTextBlock.Visibility = Visibility.Collapsed;
-            }
+            HideAuthMessage();
 
             if (sender is TextBox textBox)
             {
@@ -93,42 +194,15 @@ namespace IPAbuyer.Views
             }
         }
 
-        private void AuthCodeDialog_CloseButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
-        {
-            CancelCurrentOperation();
-            ResetAuthDialogUI();
-            SetInputControlsEnabled(true);
-            SetBusyState(false, string.Empty);
-            ShowInfo("登录已取消");
-        }
-
-        private async void AuthCodeDialog_PrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
-        {
-            var deferral = args.GetDeferral();
-            args.Cancel = true;
-
-            bool success = await ValidateAuthCodeAsync();
-            if (success)
-            {
-                AuthCodeDialogControl?.Hide();
-            }
-
-            deferral.Complete();
-        }
-
         private async void CodeBox_KeyUp(object sender, KeyRoutedEventArgs e)
         {
-            if (e.Key != Windows.System.VirtualKey.Enter)
+            if (e.Key != Windows.System.VirtualKey.Enter || !_isTwoFactorPending)
             {
                 return;
             }
 
             e.Handled = true;
-            bool success = await ValidateAuthCodeAsync();
-            if (success)
-            {
-                AuthCodeDialogControl?.Hide();
-            }
+            await ValidateAuthCodeAsync();
         }
 
         private async void Input_KeyUp(object sender, KeyRoutedEventArgs e)
@@ -140,7 +214,7 @@ namespace IPAbuyer.Views
 
             if (sender is TextBox && PasswordInput != null)
             {
-                var accountText = EmailTextBox?.Text.Trim() ?? string.Empty;
+                string accountText = EmailTextBox?.Text.Trim() ?? string.Empty;
                 if (string.IsNullOrEmpty(accountText))
                 {
                     ShowError("邮箱不能为空");
@@ -149,10 +223,31 @@ namespace IPAbuyer.Views
                 }
 
                 PasswordInput.Focus(FocusState.Programmatic);
+                return;
             }
-            else if (sender is PasswordBox)
+
+            if (ReferenceEquals(sender, PasswordInput))
             {
-                await TriggerLoginAsync();
+                if (_isTwoFactorPending && CodeTextBox != null && AuthCodeInlinePanelControl?.Visibility == Visibility.Visible)
+                {
+                    CodeTextBox.Focus(FocusState.Programmatic);
+                    return;
+                }
+
+                PassphraseInput?.Focus(FocusState.Programmatic);
+                return;
+            }
+
+            if (ReferenceEquals(sender, PassphraseInput))
+            {
+                if (_isTwoFactorPending)
+                {
+                    await ValidateAuthCodeAsync();
+                }
+                else
+                {
+                    await TriggerLoginAsync();
+                }
             }
         }
 
@@ -163,22 +258,18 @@ namespace IPAbuyer.Views
 
             _account = EmailTextBox?.Text.Trim() ?? string.Empty;
             _password = PasswordInput?.Password?.Trim() ?? string.Empty;
-
-            if (IsTestCredential(_account, _password))
-            {
-                _account = TestCredential;
-                _password = TestCredential;
-            }
-
+            _passphrase = PassphraseInput?.Text.Trim() ?? string.Empty;
 
             bool hasAccount = !string.IsNullOrWhiteSpace(_account);
             bool hasPassword = !string.IsNullOrWhiteSpace(_password);
+            bool hasPassphrase = !string.IsNullOrWhiteSpace(_passphrase);
 
             bool hasLocalValidationIssue = false;
-            if (!hasAccount || !hasPassword)
+            if (!hasAccount || !hasPassword || !hasPassphrase)
             {
                 hasLocalValidationIssue = true;
-                ShowError("邮箱和密码不能为空");
+                ShowError("邮箱、密码和加密密钥不能为空");
+                AppendLoginLog("Login blocked: required fields are empty.");
 
                 if (!hasAccount)
                 {
@@ -188,12 +279,16 @@ namespace IPAbuyer.Views
                 {
                     PasswordInput?.Focus(FocusState.Programmatic);
                 }
+                else if (!hasPassphrase)
+                {
+                    PassphraseInput?.Focus(FocusState.Programmatic);
+                }
             }
 
             SetInputControlsEnabled(false);
             SetBusyState(true, hasLocalValidationIssue ? string.Empty : "正在登录...");
 
-            var result = await LoginService.LoginAsync(_account, _password, _currentOperationCts.Token);
+            var result = await LoginService.LoginAsync(_account, _password, _passphrase, _currentOperationCts.Token);
             DisposeCurrentOperation();
             await HandleLoginResultAsync(result, isTwoFactorStep: false);
         }
@@ -208,7 +303,8 @@ namespace IPAbuyer.Views
             string authCode = CodeTextBox.Text.Trim();
             if (authCode.Length != 6)
             {
-                ShowAuthError("请输入六位验证码");
+                ShowAuthError("请输入 6 位验证码");
+                AppendLoginLog("Code validation failed: length is not 6.");
                 CodeTextBox.Focus(FocusState.Programmatic);
                 return false;
             }
@@ -218,44 +314,41 @@ namespace IPAbuyer.Views
             CancelCurrentOperation();
             _currentOperationCts = CancellationTokenSource.CreateLinkedTokenSource(_pageCts.Token);
 
-            if (AuthCodeDialogControl != null)
-            {
-                AuthCodeDialogControl.IsPrimaryButtonEnabled = false;
-            }
+            SetInputControlsEnabled(false);
+            SetBusyState(true, "正在验证...");
 
-            ShowAuthWarning("正在验证...");
-
-            var result = await LoginService.VerifyAuthCodeAsync(_account, _password, authCode, _currentOperationCts.Token);
+            var result = await LoginService.VerifyAuthCodeAsync(_account, _password, _passphrase, authCode, _currentOperationCts.Token);
             DisposeCurrentOperation();
-
-            if (AuthCodeDialogControl != null)
-            {
-                AuthCodeDialogControl.IsPrimaryButtonEnabled = true;
-            }
 
             if (result.Status == LoginStatus.AuthCodeInvalid)
             {
                 ShowAuthError("验证码错误，请重新输入。");
+                AppendLoginLog("Code validation failed: invalid code.");
                 CodeTextBox.Text = string.Empty;
                 CodeTextBox.Focus(FocusState.Programmatic);
+                RestoreIdleState();
                 return false;
             }
 
             if (result.Status == LoginStatus.Timeout)
             {
+                ShowAuthError(result.Message);
+                AppendLoginLog("Code validation failed: timeout.");
                 CodeTextBox.Focus(FocusState.Programmatic);
+                RestoreIdleState();
                 return false;
             }
 
             if (!result.IsSuccess)
             {
-                Debug.WriteLine($"验证码验证失败: {result.Message}");
-                ShowAuthError("请检查验证码或密码是否有误");
+                ShowAuthError(string.IsNullOrWhiteSpace(result.Message) ? "验证失败，请重试。" : result.Message);
+                AppendLoginLog("Code validation failed.");
+                RestoreIdleState();
                 return false;
             }
 
-            ShowAuthSuccess("验证成功，正在完成登录...");
             await OnLoginSuccessAsync();
+            AppendLoginLog("Two-factor code verified.");
             return true;
         }
 
@@ -264,26 +357,22 @@ namespace IPAbuyer.Views
             switch (result.Status)
             {
                 case LoginStatus.Success:
+                    AppendLoginLog("Login success.");
                     await OnLoginSuccessAsync();
                     break;
 
                 case LoginStatus.RequiresTwoFactor:
-                    await ShowAuthCodeDialogAsync(result.Message);
+                    AppendLoginLog("Two-factor code required.");
+                    ShowInlineTwoFactor(result.Message);
+                    RestoreIdleState();
                     break;
 
                 case LoginStatus.InvalidCredential:
-                    ShowError(result.Message);
-                    RestoreIdleState();
-                    break;
-
                 case LoginStatus.NetworkError:
                 case LoginStatus.UnknownError:
-                    ShowError(result.Message);
-                    RestoreIdleState();
-                    break;
-
                 case LoginStatus.Timeout:
                     ShowError(result.Message);
+                    AppendLoginLog($"Login failed: {result.Message}");
                     RestoreIdleState();
                     break;
 
@@ -296,44 +385,54 @@ namespace IPAbuyer.Views
                     {
                         ShowError(result.Message);
                     }
+                    AppendLoginLog($"Login failed: {result.Message}");
                     RestoreIdleState();
                     break;
             }
         }
 
-        private async Task ShowAuthCodeDialogAsync(string message)
+        private void ShowInlineTwoFactor(string message)
         {
-            ResetAuthDialogUI();
+            _isTwoFactorPending = true;
 
-            if (CodeErrorTextBlock != null)
+            if (AuthCodeInlinePanelControl != null)
             {
-                CodeErrorTextBlock.Text = message;
-                CodeErrorTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.OrangeRed);
-                CodeErrorTextBlock.Visibility = Visibility.Visible;
+                AuthCodeInlinePanelControl.Visibility = Visibility.Visible;
             }
 
+            if (NextButtonControl != null)
+            {
+                NextButtonControl.Content = "验证并登录";
+            }
+
+            string fallbackMessage = "请输入两步验证码继续登录。如果未收到验证码，请打开 https://account.apple.com/ 获取后再输入。";
+            string finalMessage = string.IsNullOrWhiteSpace(message)
+                ? fallbackMessage
+                : $"{message} 如未收到验证码，请打开 https://account.apple.com/ 获取后再输入。";
+            ShowAuthWarning(finalMessage);
             CodeTextBox?.Focus(FocusState.Programmatic);
-
-            if (AuthCodeDialogControl != null)
-            {
-                AuthCodeDialogControl.XamlRoot = this.XamlRoot;
-                await AuthCodeDialogControl.ShowAsync();
-            }
         }
 
-        private void ResetAuthDialogUI()
+        private void HideInlineTwoFactor()
         {
+            _isTwoFactorPending = false;
+
+            if (AuthCodeInlinePanelControl != null)
+            {
+                AuthCodeInlinePanelControl.Visibility = Visibility.Collapsed;
+            }
+
             if (CodeTextBox != null)
             {
                 CodeTextBox.Text = string.Empty;
             }
 
             HideAuthMessage();
-        }
 
-        private bool ValidateInput(string account, string password)
-        {
-            return !string.IsNullOrWhiteSpace(account) && !string.IsNullOrWhiteSpace(password);
+            if (NextButtonControl != null)
+            {
+                NextButtonControl.Content = "登录";
+            }
         }
 
         private void SetInputControlsEnabled(bool enabled)
@@ -346,6 +445,26 @@ namespace IPAbuyer.Views
             if (PasswordInput != null)
             {
                 PasswordInput.IsEnabled = enabled;
+            }
+
+            if (PassphraseInput != null)
+            {
+                PassphraseInput.IsEnabled = enabled;
+            }
+
+            if (CodeTextBox != null)
+            {
+                CodeTextBox.IsEnabled = enabled;
+            }
+
+            if (AuthInfoButtonControl != null)
+            {
+                AuthInfoButtonControl.IsEnabled = enabled;
+            }
+
+            if (LogoutButtonControl != null)
+            {
+                LogoutButtonControl.IsEnabled = enabled;
             }
         }
 
@@ -409,16 +528,6 @@ namespace IPAbuyer.Views
             }
         }
 
-        private void ShowAuthSuccess(string message)
-        {
-            if (CodeErrorTextBlock != null)
-            {
-                CodeErrorTextBlock.Text = message;
-                CodeErrorTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.ForestGreen);
-                CodeErrorTextBlock.Visibility = Visibility.Visible;
-            }
-        }
-
         private void HideAuthMessage()
         {
             if (CodeErrorTextBlock != null)
@@ -434,11 +543,12 @@ namespace IPAbuyer.Views
             SetBusyState(false, string.Empty);
         }
 
-        private async Task OnLoginSuccessAsync()
+        private Task OnLoginSuccessAsync()
         {
             try
             {
                 KeychainConfig.GenerateAndSaveSecretKey(_account);
+                KeychainConfig.SavePassphrase(_account, _passphrase);
                 _lastLoginUsername = _account;
                 if (EmailTextBox != null)
                 {
@@ -447,15 +557,59 @@ namespace IPAbuyer.Views
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"保存账户信息失败: {ex.Message}");
+                Debug.WriteLine($"Save account info failed: {ex.Message}");
             }
 
-            SessionState.SetLoginState(_account, true);
+            HideInlineTwoFactor();
+            bool isMockAccount = KeychainConfig.IsMockAccount(_account, _password);
+            SessionState.SetLoginState(_account, true, isMockAccount);
             DisposeCurrentOperation();
-            ShowSuccess("登录成功，正在跳转...");
+            ShowSuccess("Login successful");
+            AppendLoginLog($"Login account: {_account}");
+            return Task.CompletedTask;
+        }
 
-            await Task.Delay(400);
-            Frame.Navigate(typeof(MainPage), _account);
+        private void CopyLoginLog_Click(object sender, RoutedEventArgs e)
+        {
+            string text = LoginLogOutput?.Text ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                AppendLoginLog("Log is empty; nothing to copy.");
+                return;
+            }
+
+            var package = new Windows.ApplicationModel.DataTransfer.DataPackage();
+            package.SetText(text);
+            Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
+            Windows.ApplicationModel.DataTransfer.Clipboard.Flush();
+            AppendLoginLog("Log copied to clipboard.");
+        }
+
+        private void ClearLoginLog_Click(object sender, RoutedEventArgs e)
+        {
+            _loginLogBuilder.Clear();
+            if (LoginLogOutput != null)
+            {
+                LoginLogOutput.Text = string.Empty;
+            }
+
+            AppendLoginLog("Log cleared.");
+        }
+
+        private void AppendLoginLog(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message) || LoginLogOutput == null)
+            {
+                return;
+            }
+
+            _loginLogBuilder.Append('[')
+                .Append(DateTime.Now.ToString("HH:mm:ss"))
+                .Append("] ")
+                .AppendLine(message);
+
+            LoginLogOutput.Text = _loginLogBuilder.ToString();
+            LoginLogOutput.SelectionStart = LoginLogOutput.Text.Length;
         }
 
         private void CancelCurrentOperation()
@@ -466,6 +620,7 @@ namespace IPAbuyer.Views
                 {
                     _currentOperationCts.Cancel();
                 }
+
                 DisposeCurrentOperation();
             }
         }
@@ -479,29 +634,16 @@ namespace IPAbuyer.Views
             }
         }
 
-        private void BackToMainpage(object sender, RoutedEventArgs e)
-        {
-            Frame.Navigate(typeof(MainPage));
-        }
-
-        private static bool IsTestCredential(string account, string password)
-        {
-            if (string.IsNullOrWhiteSpace(account) || string.IsNullOrWhiteSpace(password))
-            {
-                return false;
-            }
-
-            return account.Equals(TestCredential, StringComparison.OrdinalIgnoreCase)
-                && password.Equals(TestCredential, StringComparison.OrdinalIgnoreCase);
-        }
-
         private TextBox? EmailTextBox => GetControl<TextBox>("EmailComboBox");
         private PasswordBox? PasswordInput => GetControl<PasswordBox>("PasswordBox");
+        private TextBox? PassphraseInput => GetControl<TextBox>("PassphraseBox");
         private Button? NextButtonControl => GetControl<Button>("NextButton");
+        private Button? AuthInfoButtonControl => GetControl<Button>("AuthInfoButton");
+        private Button? LogoutButtonControl => GetControl<Button>("LogoutButton");
         private TextBlock? ResultTextBlock => GetControl<TextBlock>("ResultText");
-        private ContentDialog? AuthCodeDialogControl => GetControl<ContentDialog>("AuthCodeDialog");
         private TextBox? CodeTextBox => GetControl<TextBox>("CodeBox");
         private TextBlock? CodeErrorTextBlock => GetControl<TextBlock>("CodeErrorText");
+        private StackPanel? AuthCodeInlinePanelControl => GetControl<StackPanel>("AuthCodeInlinePanel");
 
         private T? GetControl<T>(string name)
             where T : class

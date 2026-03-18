@@ -154,4 +154,24 @@
     <value>清除本地数据库</value>
     <comment>设置页面的子标题：软件相关，的内容：清除本地数据库，的按钮</comment>
   </data>
+  <data name="About_Download_Directory.Text" xml:space="preserve">
+    <value>修改下载目录（默认当前用户下载文件夹）。</value>
+    <comment>设置页面的子标题：软件相关，的内容：下载目录</comment>
+  </data>
+  <data name="About_Download_Directory_Button.Content" xml:space="preserve">
+    <value>修改路径</value>
+    <comment>设置页面下载目录的保存按钮</comment>
+  </data>
+  <data name="About_Download_Directory_Default_Button.Content" xml:space="preserve">
+    <value>恢复默认</value>
+    <comment>设置页面下载目录的恢复默认按钮</comment>
+  </data>
+  <data name="About_Feedback_Email.Text" xml:space="preserve">
+    <value>反馈邮箱：ipa@blazesnow.com</value>
+    <comment>设置页面反馈邮箱说明</comment>
+  </data>
+  <data name="About_Feedback_Email_Button.Content" xml:space="preserve">
+    <value>复制邮箱</value>
+    <comment>设置页面复制反馈邮箱按钮</comment>
+  </data>
 </root>

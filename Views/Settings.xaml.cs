@@ -1,81 +1,62 @@
-using IPAbuyer.Common;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using IPAbuyer.Common;
+using IPAbuyer.Data;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.Storage.Pickers;
 using Windows.System;
+using WinRT.Interop;
 
 namespace IPAbuyer.Views
 {
     public sealed partial class Settings : Page
     {
-
         public Settings()
         {
-            this.InitializeComponent();
+            InitializeComponent();
             InitializeCountryCode();
+            InitializeDownloadDirectory();
         }
 
-        private void AppleAccountButton(object sender, RoutedEventArgs e)
-        {
-            var url = "https://account.apple.com/";
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = url,
-                UseShellExecute = true
-            });
-        }
-
-        // 跳转到开发者官网
         private void GithubButton(object sender, RoutedEventArgs e)
         {
-            var url = "https://ipa.blazesnow.com/";
             Process.Start(new ProcessStartInfo
             {
-                FileName = url,
+                FileName = "https://ipa.blazesnow.com/",
                 UseShellExecute = true
             });
         }
 
-        // 清除本地数据库
         private async void DeleteDataBase(object sender, RoutedEventArgs e)
         {
+            int totalBefore = PurchasedAppDb.GetTotalCount();
             var dialog = new ContentDialog
             {
                 Title = "确认操作",
-                Content = "确定要删除本地所有已购买记录吗？此操作不可恢复！",
-                PrimaryButtonText = "确认",
+                Content = $"确定要清空本地数据库中的已购买记录吗？{Environment.NewLine}当前记录数：{totalBefore} 条。{Environment.NewLine}此操作不可恢复。",
+                PrimaryButtonText = "确认清空",
                 CloseButtonText = "取消",
-                XamlRoot = this.XamlRoot
+                XamlRoot = XamlRoot
             };
-            var result = await dialog.ShowAsync();
-            if (result == ContentDialogResult.Primary)
+
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary)
             {
-                try
-                {
-                    IPAbuyer.Data.PurchasedAppDb.ClearPurchasedApps();
-                    var successDialog = new ContentDialog
-                    {
-                        Title = "操作成功",
-                        Content = "本地已购记录已清除。",
-                        CloseButtonText = "确定",
-                        XamlRoot = this.XamlRoot
-                    };
-                    await successDialog.ShowAsync();
-                }
-                catch (Exception ex)
-                {
-                    var errorDialog = new ContentDialog
-                    {
-                        Title = "错误",
-                        Content = $"清除失败：{ex.Message}",
-                        CloseButtonText = "确定",
-                        XamlRoot = this.XamlRoot
-                    };
-                    await errorDialog.ShowAsync();
-                }
+                return;
+            }
+
+            try
+            {
+                PurchasedAppDb.ClearPurchasedApps();
+                int totalAfter = PurchasedAppDb.GetTotalCount();
+                await ShowDialogAsync("操作成功", $"本地记录已清空。{Environment.NewLine}清空前：{totalBefore} 条，清空后：{totalAfter} 条。");
+            }
+            catch (Exception ex)
+            {
+                await ShowDialogAsync("错误", $"清空失败：{ex.Message}");
             }
         }
 
@@ -85,15 +66,29 @@ namespace IPAbuyer.Views
             {
                 string? account = GetAccountForCountryCode();
                 string currentCode = KeychainConfig.GetCountryCode(account);
-                var textBox = CountryCodeTextBoxControl;
-                if (textBox != null)
+                if (CountryCodeTextBoxControl != null)
                 {
-                    textBox.Text = currentCode;
+                    CountryCodeTextBoxControl.Text = currentCode;
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"初始化国家/地区代码失败: {ex.Message}");
+                Debug.WriteLine($"初始化国家代码失败: {ex.Message}");
+            }
+        }
+
+        private void InitializeDownloadDirectory()
+        {
+            try
+            {
+                if (DownloadDirectoryTextBoxControl != null)
+                {
+                    DownloadDirectoryTextBoxControl.Text = KeychainConfig.GetDownloadDirectory();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"初始化下载目录失败: {ex.Message}");
             }
         }
 
@@ -115,19 +110,18 @@ namespace IPAbuyer.Views
 
         private async Task HandleCountryCodeSubmissionAsync()
         {
-            var textBox = CountryCodeTextBoxControl;
-            if (textBox == null)
+            if (CountryCodeTextBoxControl == null)
             {
                 return;
             }
 
-            string rawInput = textBox.Text?.Trim() ?? string.Empty;
+            string rawInput = CountryCodeTextBoxControl.Text?.Trim() ?? string.Empty;
             bool inputWasEmpty = string.IsNullOrWhiteSpace(rawInput);
             string normalizedInput = inputWasEmpty ? "cn" : rawInput;
 
             if (!IsValidCountryCode(normalizedInput))
             {
-                await ShowCountryCodeDialogAsync("请输入合法的 ISO 3166-1 Alpha-2 国家/地区代码（两位英文字母）", isError: true);
+                await ShowDialogAsync("操作失败", "请输入合法的 ISO 3166-1 Alpha-2 国家/地区代码（2 位英文字母）");
                 return;
             }
 
@@ -137,27 +131,17 @@ namespace IPAbuyer.Views
             try
             {
                 KeychainConfig.SaveCountryCode(normalized, account);
-                textBox.Text = normalized;
+                CountryCodeTextBoxControl.Text = normalized;
 
-                string message;
-                if (inputWasEmpty)
-                {
-                    message = "国家/地区代码为空，已恢复为默认值 cn";
-                }
-                else if (string.Equals(normalized, "cn", StringComparison.OrdinalIgnoreCase))
-                {
-                    message = "国家/地区代码已更新为 cn";
-                }
-                else
-                {
-                    message = $"国家/地区代码已更新为 {normalized}";
-                }
+                string message = inputWasEmpty
+                    ? "国家/地区代码为空，已恢复为默认值 cn"
+                    : $"国家/地区代码已更新为 {normalized}";
 
-                await ShowCountryCodeDialogAsync(message, isError: false);
+                await ShowDialogAsync("操作成功", message);
             }
             catch (Exception ex)
             {
-                await ShowCountryCodeDialogAsync($"保存失败：{ex.Message}", isError: true);
+                await ShowDialogAsync("操作失败", $"保存失败：{ex.Message}");
             }
         }
 
@@ -166,20 +150,93 @@ namespace IPAbuyer.Views
             return KeychainConfig.IsValidCountryCode(code);
         }
 
-        private async Task ShowCountryCodeDialogAsync(string message, bool isError)
+        private async void PickDownloadDirectoryButton_Click(object sender, RoutedEventArgs e)
+        {
+            var folderPicker = new FolderPicker
+            {
+                SuggestedStartLocation = PickerLocationId.Downloads
+            };
+            folderPicker.FileTypeFilter.Add("*");
+
+            try
+            {
+                if (Application.Current is App app && app.MainWindowInstance != null)
+                {
+                    IntPtr hwnd = WindowNative.GetWindowHandle(app.MainWindowInstance);
+                    InitializeWithWindow.Initialize(folderPicker, hwnd);
+                }
+
+                var folder = await folderPicker.PickSingleFolderAsync();
+                if (folder == null)
+                {
+                    return;
+                }
+
+                KeychainConfig.SaveDownloadDirectory(folder.Path);
+                if (DownloadDirectoryTextBoxControl != null)
+                {
+                    DownloadDirectoryTextBoxControl.Text = folder.Path;
+                }
+
+                await ShowDialogAsync("操作成功", "下载目录已更新");
+            }
+            catch (Exception ex)
+            {
+                await ShowDialogAsync("操作失败", $"保存失败：{ex.Message}");
+            }
+        }
+
+        private async void ResetDownloadDirectoryButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string defaultDirectory = KeychainConfig.GetDefaultDownloadDirectory();
+                KeychainConfig.SaveDownloadDirectory(defaultDirectory);
+                if (DownloadDirectoryTextBoxControl != null)
+                {
+                    DownloadDirectoryTextBoxControl.Text = defaultDirectory;
+                }
+
+                await ShowDialogAsync("操作成功", $"已恢复默认下载目录：{defaultDirectory}");
+            }
+            catch (Exception ex)
+            {
+                await ShowDialogAsync("操作失败", $"恢复默认目录失败：{ex.Message}");
+            }
+        }
+
+        private async void CopyFeedbackEmailButton_Click(object sender, RoutedEventArgs e)
+        {
+            const string feedbackEmail = "ipa@blazesnow.com";
+            try
+            {
+                var dataPackage = new DataPackage();
+                dataPackage.SetText(feedbackEmail);
+                Clipboard.SetContent(dataPackage);
+                Clipboard.Flush();
+                await ShowDialogAsync("操作成功", $"反馈邮箱已复制：{feedbackEmail}");
+            }
+            catch (Exception ex)
+            {
+                await ShowDialogAsync("操作失败", $"复制邮箱失败：{ex.Message}");
+            }
+        }
+
+        private async Task ShowDialogAsync(string title, string message)
         {
             var dialog = new ContentDialog
             {
-                Title = isError ? "操作失败" : "操作成功",
+                Title = title,
                 Content = message,
                 CloseButtonText = "确定",
-                XamlRoot = this.XamlRoot
+                XamlRoot = XamlRoot
             };
 
             await dialog.ShowAsync();
         }
 
         private TextBox? CountryCodeTextBoxControl => FindName("CountryCodeTextBox") as TextBox;
+        private TextBox? DownloadDirectoryTextBoxControl => FindName("DownloadDirectoryTextBox") as TextBox;
 
         private static string? GetAccountForCountryCode()
         {
