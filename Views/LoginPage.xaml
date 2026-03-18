@@ -102,11 +102,6 @@
                                         MaxLength="6"
                                         PlaceholderText="请输入 6 位验证码"
                                         TextChanged="CodeBox_TextChanged" />
-                                    <TextBlock
-                                        x:Name="CodeErrorText"
-                                        Foreground="Red"
-                                        TextWrapping="Wrap"
-                                        Visibility="Collapsed" />
                                 </StackPanel>
 
                                 <TextBlock
@@ -167,11 +162,6 @@
                             Click="OpenAppleAccountButton_Click"
                             Content="打开苹果账户官网" />
                     </StackPanel>
-
-                    <TextBlock
-                        Foreground="Gray"
-                        Text="如果收不到双重验证码，请打开 https://account.apple.com/ 获取后再填入本软件。"
-                        TextWrapping="WrapWholeWords" />
                 </StackPanel>
             </Grid>
         </ScrollViewer>

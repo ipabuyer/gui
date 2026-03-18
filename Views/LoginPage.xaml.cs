@@ -533,31 +533,17 @@ namespace IPAbuyer.Views
 
         private void ShowAuthError(string message)
         {
-            if (CodeErrorTextBlock != null)
-            {
-                CodeErrorTextBlock.Text = message;
-                CodeErrorTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
-                CodeErrorTextBlock.Visibility = Visibility.Visible;
-            }
+            AppendLoginLog($"[验证码错误] {message}");
         }
 
         private void ShowAuthWarning(string message)
         {
-            if (CodeErrorTextBlock != null)
-            {
-                CodeErrorTextBlock.Text = message;
-                CodeErrorTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray);
-                CodeErrorTextBlock.Visibility = Visibility.Visible;
-            }
+            AppendLoginLog($"[验证码提示] {message}");
         }
 
         private void HideAuthMessage()
         {
-            if (CodeErrorTextBlock != null)
-            {
-                CodeErrorTextBlock.Visibility = Visibility.Collapsed;
-                CodeErrorTextBlock.Text = string.Empty;
-            }
+            // 操作区不再显示错误提示，保留方法用于兼容现有调用点。
         }
 
         private void RestoreIdleState()
@@ -689,7 +675,6 @@ namespace IPAbuyer.Views
         private Button? LogoutButtonControl => GetControl<Button>("LogoutButton");
         private Button? OpenAppleAccountButtonControl => GetControl<Button>("OpenAppleAccountButton");
         private TextBox? CodeTextBox => GetControl<TextBox>("CodeBox");
-        private TextBlock? CodeErrorTextBlock => GetControl<TextBlock>("CodeErrorText");
         private StackPanel? AuthCodeInlinePanelControl => GetControl<StackPanel>("AuthCodeInlinePanel");
         private Border? OperationLockOverlayControl => GetControl<Border>("OperationLockOverlay");
 
