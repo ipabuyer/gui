@@ -483,29 +483,17 @@ namespace IPAbuyer.Views
 
         private void ShowInfo(string message)
         {
-            if (ResultTextBlock != null)
-            {
-                ResultTextBlock.Text = message;
-                ResultTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray);
-            }
+            AppendLoginLog(message);
         }
 
         private void ShowError(string message)
         {
-            if (ResultTextBlock != null)
-            {
-                ResultTextBlock.Text = message;
-                ResultTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
-            }
+            AppendLoginLog($"[错误] {message}");
         }
 
         private void ShowSuccess(string message)
         {
-            if (ResultTextBlock != null)
-            {
-                ResultTextBlock.Text = message;
-                ResultTextBlock.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.ForestGreen);
-            }
+            AppendLoginLog($"[成功] {message}");
         }
 
         private void ShowAuthError(string message)
@@ -640,7 +628,6 @@ namespace IPAbuyer.Views
         private Button? NextButtonControl => GetControl<Button>("NextButton");
         private Button? AuthInfoButtonControl => GetControl<Button>("AuthInfoButton");
         private Button? LogoutButtonControl => GetControl<Button>("LogoutButton");
-        private TextBlock? ResultTextBlock => GetControl<TextBlock>("ResultText");
         private TextBox? CodeTextBox => GetControl<TextBox>("CodeBox");
         private TextBlock? CodeErrorTextBlock => GetControl<TextBlock>("CodeErrorText");
         private StackPanel? AuthCodeInlinePanelControl => GetControl<StackPanel>("AuthCodeInlinePanel");
