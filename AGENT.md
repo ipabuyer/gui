@@ -108,7 +108,7 @@
 
 ## exe可执行文件
 
-1. ipatool.exe位于include目录，注意区分amd64和arm64
+1. ipatool.exe位于Include目录，注意区分amd64和arm64
 2. 针对ipatool输出的内容，需要在命令中加入`--format text`或者`--format json`
 
 ## 数据库文件目录
