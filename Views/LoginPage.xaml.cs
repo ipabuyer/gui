@@ -332,7 +332,7 @@ namespace IPAbuyer.Views
                 return false;
             }
 
-            string authCode = CodeTextBox.Text.Trim();
+            string authCode = CodeTextBox.Password.Trim();
             if (string.IsNullOrWhiteSpace(authCode))
             {
                 ShowAuthError("请输入双重验证码");
@@ -355,7 +355,7 @@ namespace IPAbuyer.Views
             {
                 ShowAuthError("验证码错误，请重新输入。");
                 AppendLoginLog("Code validation failed: invalid code.");
-                CodeTextBox.Text = string.Empty;
+                CodeTextBox.Password = string.Empty;
                 CodeTextBox.Focus(FocusState.Programmatic);
                 RestoreIdleState();
                 return false;
@@ -450,7 +450,7 @@ namespace IPAbuyer.Views
 
             if (CodeTextBox != null)
             {
-                CodeTextBox.Text = string.Empty;
+                CodeTextBox.Password = string.Empty;
             }
 
             HideAuthMessage();
@@ -680,7 +680,7 @@ namespace IPAbuyer.Views
         private Button? AuthInfoButtonControl => GetControl<Button>("AuthInfoButton");
         private Button? LogoutButtonControl => GetControl<Button>("LogoutButton");
         private Button? OpenAppleAccountButtonControl => GetControl<Button>("OpenAppleAccountButton");
-        private TextBox? CodeTextBox => GetControl<TextBox>("CodeBox");
+        private PasswordBox? CodeTextBox => GetControl<PasswordBox>("CodeBox");
         private StackPanel? AuthCodeInlinePanelControl => GetControl<StackPanel>("AuthCodeInlinePanel");
         private Border? OperationLockOverlayControl => GetControl<Border>("OperationLockOverlay");
 

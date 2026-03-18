@@ -89,12 +89,12 @@
                                 Spacing="6"
                                 VerticalAlignment="Center"
                                 Visibility="Visible">
-                                    <TextBox
+                                    <PasswordBox
                                         x:Name="CodeBox"
                                         MinWidth="260"
                                         MinHeight="36"
-                                        InputScope="Number"
                                         KeyUp="CodeBox_KeyUp"
+                                        PasswordRevealMode="Peek"
                                         PlaceholderText="请输入双重验证码" />
                                 </StackPanel>
 
