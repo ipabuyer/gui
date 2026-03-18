@@ -113,5 +113,6 @@
 
 ## 数据库文件目录
 
-1. DEBUG时存放于`AppData\Local\IPAbuyer\`
-2. RELEASE时存放于`AppData\Local\Packages\IPAbuyer.IPAbuyer_kr1hdvrv6tpd0\LocalState\`
+1. DEBUG时存放于`%AppData%\Local\IPAbuyer\`
+2. RELEASE时存放于`%AppData%\Local\Packages\IPAbuyer.IPAbuyer_kr1hdvrv6tpd0\LocalState\`
+3. 推荐通过winui 3的Windows api获取上述路径
