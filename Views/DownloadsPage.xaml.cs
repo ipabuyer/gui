@@ -1,11 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using IPAbuyer.Common;
 using IPAbuyer.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Windows.ApplicationModel.DataTransfer;
 
 namespace IPAbuyer.Views
@@ -14,9 +14,6 @@ namespace IPAbuyer.Views
     {
         private readonly DownloadQueueService _queueService = DownloadQueueService.Instance;
         private readonly StringBuilder _logBuilder = new();
-        private readonly Queue<(string message, InfoBarSeverity severity)> _notificationQueue = new();
-        private readonly DispatcherTimer _notificationTimer = new();
-        private bool _notificationShowing;
 
         public DownloadsPage()
         {
@@ -25,9 +22,6 @@ namespace IPAbuyer.Views
             QueueListView.ItemsSource = _queueService.Items;
             _queueService.LogReceived += OnLogReceived;
             _queueService.QueueChanged += OnQueueChanged;
-
-            _notificationTimer.Interval = TimeSpan.FromSeconds(2.8);
-            _notificationTimer.Tick += NotificationTimer_Tick;
 
             UpdateButtons();
         }
@@ -43,7 +37,6 @@ namespace IPAbuyer.Views
             {
                 string message = $"开始下载失败: {ex.Message}";
                 AppendLog($"[错误] {message}");
-                EnqueueNotification(message, InfoBarSeverity.Error);
             }
             finally
             {
@@ -58,14 +51,12 @@ namespace IPAbuyer.Views
             {
                 const string message = "请先选择要移出的队列项";
                 AppendLog($"[提示] {message}");
-                EnqueueNotification(message, InfoBarSeverity.Warning);
                 return;
             }
 
             int removed = _queueService.RemoveItems(selected);
             string removedMessage = $"已移出 {removed} 项";
             AppendLog($"[提示] {removedMessage}");
-            EnqueueNotification(removedMessage, InfoBarSeverity.Informational);
             RefreshQueueView();
         }
 
@@ -80,14 +71,12 @@ namespace IPAbuyer.Views
                     Arguments = $"\"{outputDirectory}\"",
                     UseShellExecute = true
                 });
-
-                EnqueueNotification("已打开下载目录", InfoBarSeverity.Informational);
+                AppendLog("[提示] 已打开下载目录");
             }
             catch (Exception ex)
             {
                 string message = $"打开下载目录失败: {ex.Message}";
                 AppendLog($"[错误] {message}");
-                EnqueueNotification(message, InfoBarSeverity.Error);
             }
         }
 
@@ -96,7 +85,7 @@ namespace IPAbuyer.Views
             _queueService.CancelAll();
             RefreshQueueView();
             UpdateButtons();
-            EnqueueNotification("已请求终止所有下载任务", InfoBarSeverity.Warning);
+            AppendLog("[提示] 已请求终止所有下载任务");
         }
 
         private void CopyLogButton_Click(object sender, RoutedEventArgs e)
@@ -104,7 +93,7 @@ namespace IPAbuyer.Views
             string text = LogTextBox.Text ?? string.Empty;
             if (string.IsNullOrWhiteSpace(text))
             {
-                EnqueueNotification("日志为空，无可复制内容", InfoBarSeverity.Warning);
+                AppendLog("[提示] 日志为空，无可复制内容");
                 return;
             }
 
@@ -112,22 +101,20 @@ namespace IPAbuyer.Views
             dataPackage.SetText(text);
             Clipboard.SetContent(dataPackage);
             Clipboard.Flush();
-
-            EnqueueNotification("日志已复制到剪贴板", InfoBarSeverity.Success);
+            AppendLog("[提示] 日志已复制到剪贴板");
         }
 
         private void ClearLogButton_Click(object sender, RoutedEventArgs e)
         {
             _logBuilder.Clear();
             LogTextBox.Text = string.Empty;
-            EnqueueNotification("日志已清空", InfoBarSeverity.Informational);
         }
 
         private void CancelCurrentButton_Click(object sender, RoutedEventArgs e)
         {
             _queueService.CancelCurrent();
             RefreshQueueView();
-            EnqueueNotification("已请求终止当前下载任务", InfoBarSeverity.Warning);
+            AppendLog("[提示] 已请求终止当前下载任务");
         }
 
         private void OnLogReceived(string log)
@@ -135,11 +122,6 @@ namespace IPAbuyer.Views
             DispatcherQueue.TryEnqueue(() =>
             {
                 AppendLog(log);
-
-                if (TryClassifyLog(log, out string message, out InfoBarSeverity severity))
-                {
-                    EnqueueNotification(message, severity);
-                }
             });
         }
 
@@ -175,122 +157,42 @@ namespace IPAbuyer.Views
 
             _logBuilder.AppendLine(message);
             LogTextBox.Text = _logBuilder.ToString();
-            LogTextBox.SelectionStart = LogTextBox.Text.Length;
+            ScrollLogToBottom(LogTextBox);
         }
 
-        private void EnqueueNotification(string message, InfoBarSeverity severity)
+        private static void ScrollLogToBottom(TextBox textBox)
         {
-            if (string.IsNullOrWhiteSpace(message))
-            {
-                return;
-            }
+            textBox.SelectionStart = textBox.Text.Length;
+            textBox.SelectionLength = 0;
 
-            _notificationQueue.Enqueue((message, severity));
-            TryShowNextNotification();
+            var scrollViewer = FindDescendantScrollViewer(textBox);
+            scrollViewer?.ChangeView(null, scrollViewer.ScrollableHeight, null, disableAnimation: true);
         }
 
-        private void TryShowNextNotification()
+        private static ScrollViewer? FindDescendantScrollViewer(DependencyObject root)
         {
-            if (_notificationShowing || _notificationQueue.Count == 0)
+            int childrenCount = VisualTreeHelper.GetChildrenCount(root);
+            for (int i = 0; i < childrenCount; i++)
             {
-                return;
+                DependencyObject child = VisualTreeHelper.GetChild(root, i);
+                if (child is ScrollViewer scrollViewer)
+                {
+                    return scrollViewer;
+                }
+
+                ScrollViewer? nested = FindDescendantScrollViewer(child);
+                if (nested != null)
+                {
+                    return nested;
+                }
             }
 
-            var item = _notificationQueue.Dequeue();
-            StatusInfoBar.Severity = item.severity;
-            StatusInfoBar.Message = item.message;
-            StatusInfoBar.IsOpen = true;
-
-            _notificationShowing = true;
-            _notificationTimer.Stop();
-            _notificationTimer.Start();
-        }
-
-        private void NotificationTimer_Tick(object sender, object e)
-        {
-            _notificationTimer.Stop();
-            if (StatusInfoBar.IsOpen)
-            {
-                StatusInfoBar.IsOpen = false;
-            }
-            else
-            {
-                _notificationShowing = false;
-                TryShowNextNotification();
-            }
-        }
-
-        private void StatusInfoBar_Closed(InfoBar sender, InfoBarClosedEventArgs args)
-        {
-            _notificationTimer.Stop();
-            _notificationShowing = false;
-            TryShowNextNotification();
-        }
-
-        private static bool TryClassifyLog(string log, out string message, out InfoBarSeverity severity)
-        {
-            message = StripTimestampPrefix(log);
-            severity = InfoBarSeverity.Informational;
-
-            if (string.IsNullOrWhiteSpace(message))
-            {
-                return false;
-            }
-
-            if (message.Contains("失败", StringComparison.OrdinalIgnoreCase)
-                || message.Contains("错误", StringComparison.OrdinalIgnoreCase)
-                || message.Contains("异常", StringComparison.OrdinalIgnoreCase))
-            {
-                severity = InfoBarSeverity.Error;
-                return true;
-            }
-
-            if (message.Contains("成功", StringComparison.OrdinalIgnoreCase)
-                || message.Contains("完成", StringComparison.OrdinalIgnoreCase))
-            {
-                severity = InfoBarSeverity.Success;
-                return true;
-            }
-
-            if (message.Contains("终止", StringComparison.OrdinalIgnoreCase)
-                || message.Contains("取消", StringComparison.OrdinalIgnoreCase)
-                || message.Contains("超时", StringComparison.OrdinalIgnoreCase))
-            {
-                severity = InfoBarSeverity.Warning;
-                return true;
-            }
-
-            return false;
-        }
-
-        private static string StripTimestampPrefix(string log)
-        {
-            if (string.IsNullOrWhiteSpace(log))
-            {
-                return string.Empty;
-            }
-
-            string trimmed = log.Trim();
-            if (!trimmed.StartsWith("[", StringComparison.Ordinal))
-            {
-                return trimmed;
-            }
-
-            int end = trimmed.IndexOf("]", StringComparison.Ordinal);
-            if (end < 0 || end + 1 >= trimmed.Length)
-            {
-                return trimmed;
-            }
-
-            return trimmed.Substring(end + 1).Trim();
+            return null;
         }
 
         protected override void OnNavigatedFrom(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedFrom(e);
-
-            _notificationTimer.Stop();
-            _notificationTimer.Tick -= NotificationTimer_Tick;
 
             _queueService.LogReceived -= OnLogReceived;
             _queueService.QueueChanged -= OnQueueChanged;

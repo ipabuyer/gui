@@ -135,6 +135,24 @@ namespace IPAbuyer.Data
             }
         }
 
+        public static void RemovePurchasedApp(string appID, string account)
+        {
+            if (string.IsNullOrWhiteSpace(appID) || string.IsNullOrWhiteSpace(account))
+            {
+                return;
+            }
+
+            using (var conn = new SqliteConnection(_connectionString))
+            {
+                conn.Open();
+                var cmd = conn.CreateCommand();
+                cmd.CommandText = "DELETE FROM PurchasedApp WHERE AppID = $appid AND Account = $account";
+                cmd.Parameters.AddWithValue("$appid", appID);
+                cmd.Parameters.AddWithValue("$account", account);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
         /// <summary>
         /// 清除指定账户的所有已购买记录
         /// </summary>

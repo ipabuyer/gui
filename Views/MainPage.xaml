@@ -71,12 +71,14 @@
                                 <ColumnDefinition Width="2*" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="1" HorizontalAlignment="Center" Text="App 名称(图标)" />
                             <TextBlock Grid.Column="2" HorizontalAlignment="Center" Text="AppID" />
                             <TextBlock Grid.Column="3" HorizontalAlignment="Center" Text="开发者" />
                             <TextBlock Grid.Column="4" HorizontalAlignment="Center" Text="版本号" />
                             <TextBlock Grid.Column="5" HorizontalAlignment="Center" Text="价格" />
+                            <TextBlock Grid.Column="6" HorizontalAlignment="Center" Text="购买状态" />
                         </Grid>
 
                         <ListView
@@ -92,6 +94,14 @@
                                             <MenuFlyout>
                                                 <MenuFlyoutItem Text="购买" Click="ContextMenuPurchase_Click" />
                                                 <MenuFlyoutItem Text="加入下载队列" Click="ContextMenuAddToQueue_Click" />
+                                                <MenuFlyoutSeparator />
+                                                <MenuFlyoutItem Text="标记为未购买" Click="ContextMenuMarkNotPurchased_Click" />
+                                                <MenuFlyoutItem Text="标记为已购买" Click="ContextMenuMarkPurchased_Click" />
+                                                <MenuFlyoutItem Text="标记为已拥有" Click="ContextMenuMarkOwned_Click" />
+                                                <MenuFlyoutSeparator />
+                                                <MenuFlyoutItem Text="复制App名称" Click="ContextMenuCopyName_Click" />
+                                                <MenuFlyoutItem Text="复制ID" Click="ContextMenuCopyId_Click" />
+                                                <MenuFlyoutItem Text="复制版本号" Click="ContextMenuCopyVersion_Click" />
                                             </MenuFlyout>
                                         </Grid.ContextFlyout>
                                         <Grid.ColumnDefinitions>
@@ -99,6 +109,7 @@
                                             <ColumnDefinition Width="3*" />
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="2*" />
+                                            <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
@@ -130,6 +141,7 @@
                                             ToolTipService.ToolTip="{x:Bind developer}" />
                                         <TextBlock Grid.Column="4" HorizontalAlignment="Center" Text="{x:Bind version}" />
                                         <TextBlock Grid.Column="5" HorizontalAlignment="Center" Text="{x:Bind price}" />
+                                        <TextBlock Grid.Column="6" HorizontalAlignment="Center" Text="{x:Bind purchased}" />
                                     </Grid>
                                 </DataTemplate>
                             </ListView.ItemTemplate>

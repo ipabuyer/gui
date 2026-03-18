@@ -45,6 +45,8 @@ namespace IPAbuyer.Common
                 existing.Name = app.name ?? existing.Name;
                 existing.Developer = app.developer ?? existing.Developer;
                 existing.Version = app.version ?? existing.Version;
+                existing.Price = app.price ?? existing.Price;
+                existing.ArtworkUrl = app.artworkUrl ?? existing.ArtworkUrl;
 
                 if (existing.Status is DownloadQueueStatus.Failed or DownloadQueueStatus.Canceled or DownloadQueueStatus.Success)
                 {
@@ -64,6 +66,8 @@ namespace IPAbuyer.Common
                 Name = app.name ?? bundleId,
                 Developer = app.developer ?? string.Empty,
                 Version = app.version ?? string.Empty,
+                Price = app.price ?? string.Empty,
+                ArtworkUrl = app.artworkUrl ?? string.Empty,
                 Status = DownloadQueueStatus.Pending,
                 LastMessage = "等待下载"
             };
