@@ -2,6 +2,7 @@ using IPAbuyer.Common;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -638,7 +639,37 @@ namespace IPAbuyer.Views
                 .AppendLine(message);
 
             LoginLogOutput.Text = _loginLogBuilder.ToString();
-            LoginLogOutput.SelectionStart = LoginLogOutput.Text.Length;
+            ScrollLogToBottom(LoginLogOutput);
+        }
+
+        private static void ScrollLogToBottom(TextBox textBox)
+        {
+            textBox.SelectionStart = textBox.Text.Length;
+            textBox.SelectionLength = 0;
+
+            var scrollViewer = FindDescendantScrollViewer(textBox);
+            scrollViewer?.ChangeView(null, scrollViewer.ScrollableHeight, null, disableAnimation: true);
+        }
+
+        private static ScrollViewer? FindDescendantScrollViewer(DependencyObject root)
+        {
+            int childrenCount = VisualTreeHelper.GetChildrenCount(root);
+            for (int i = 0; i < childrenCount; i++)
+            {
+                DependencyObject child = VisualTreeHelper.GetChild(root, i);
+                if (child is ScrollViewer scrollViewer)
+                {
+                    return scrollViewer;
+                }
+
+                ScrollViewer? nested = FindDescendantScrollViewer(child);
+                if (nested != null)
+                {
+                    return nested;
+                }
+            }
+
+            return null;
         }
 
         private void CancelCurrentOperation()

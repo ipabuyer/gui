@@ -5,6 +5,7 @@ using IPAbuyer.Common;
 using IPAbuyer.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Windows.ApplicationModel.DataTransfer;
 
 namespace IPAbuyer.Views
@@ -156,7 +157,37 @@ namespace IPAbuyer.Views
 
             _logBuilder.AppendLine(message);
             LogTextBox.Text = _logBuilder.ToString();
-            LogTextBox.SelectionStart = LogTextBox.Text.Length;
+            ScrollLogToBottom(LogTextBox);
+        }
+
+        private static void ScrollLogToBottom(TextBox textBox)
+        {
+            textBox.SelectionStart = textBox.Text.Length;
+            textBox.SelectionLength = 0;
+
+            var scrollViewer = FindDescendantScrollViewer(textBox);
+            scrollViewer?.ChangeView(null, scrollViewer.ScrollableHeight, null, disableAnimation: true);
+        }
+
+        private static ScrollViewer? FindDescendantScrollViewer(DependencyObject root)
+        {
+            int childrenCount = VisualTreeHelper.GetChildrenCount(root);
+            for (int i = 0; i < childrenCount; i++)
+            {
+                DependencyObject child = VisualTreeHelper.GetChild(root, i);
+                if (child is ScrollViewer scrollViewer)
+                {
+                    return scrollViewer;
+                }
+
+                ScrollViewer? nested = FindDescendantScrollViewer(child);
+                if (nested != null)
+                {
+                    return nested;
+                }
+            }
+
+            return null;
         }
 
         protected override void OnNavigatedFrom(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
