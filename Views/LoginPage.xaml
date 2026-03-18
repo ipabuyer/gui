@@ -89,15 +89,13 @@
                                 Spacing="6"
                                 VerticalAlignment="Center"
                                 Visibility="Visible">
-                                <TextBox
-                                    x:Name="CodeBox"
+                                    <TextBox
+                                        x:Name="CodeBox"
                                         MinWidth="260"
                                         MinHeight="36"
                                         InputScope="Number"
                                         KeyUp="CodeBox_KeyUp"
-                                        MaxLength="6"
-                                        PlaceholderText="请输入 6 位验证码"
-                                        TextChanged="CodeBox_TextChanged" />
+                                        PlaceholderText="请输入双重验证码" />
                                 </StackPanel>
 
                                 <TextBlock

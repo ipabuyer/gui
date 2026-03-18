@@ -67,7 +67,7 @@ namespace IPAbuyer.Views
 
         private async void NextButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_isTwoFactorPending || HasAuthCodeInput())
+            if (_isTwoFactorPending)
             {
                 AppendLoginLog("Start verifying two-factor code.");
                 await ValidateAuthCodeAsync();
@@ -203,22 +203,6 @@ namespace IPAbuyer.Views
             }
         }
 
-        private void CodeBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            HideAuthMessage();
-
-            if (sender is TextBox textBox)
-            {
-                string filtered = new string(textBox.Text.Where(char.IsDigit).ToArray());
-                if (!string.Equals(filtered, textBox.Text, StringComparison.Ordinal))
-                {
-                    int selectionStart = textBox.SelectionStart;
-                    textBox.Text = filtered;
-                    textBox.SelectionStart = Math.Min(selectionStart, filtered.Length);
-                }
-            }
-        }
-
         private async void CodeBox_KeyUp(object sender, KeyRoutedEventArgs e)
         {
             if (e.Key != Windows.System.VirtualKey.Enter || !_isTwoFactorPending)
@@ -253,7 +237,7 @@ namespace IPAbuyer.Views
 
             if (ReferenceEquals(sender, CodeTextBox))
             {
-                if (_isTwoFactorPending || HasAuthCodeInput())
+                if (_isTwoFactorPending)
                 {
                     await ValidateAuthCodeAsync();
                 }
@@ -287,12 +271,6 @@ namespace IPAbuyer.Views
                     await TriggerLoginAsync();
                 }
             }
-        }
-
-        private bool HasAuthCodeInput()
-        {
-            string code = CodeTextBox?.Text?.Trim() ?? string.Empty;
-            return code.Length == 6 && code.All(char.IsDigit);
         }
 
         private async Task TriggerLoginAsync()
@@ -355,10 +333,9 @@ namespace IPAbuyer.Views
             }
 
             string authCode = CodeTextBox.Text.Trim();
-            if (authCode.Length != 6)
+            if (string.IsNullOrWhiteSpace(authCode))
             {
-                ShowAuthError("请输入 6 位验证码");
-                AppendLoginLog("Code validation failed: length is not 6.");
+                ShowAuthError("请输入双重验证码");
                 CodeTextBox.Focus(FocusState.Programmatic);
                 return false;
             }
