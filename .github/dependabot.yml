@@ -1,7 +1,0 @@
-version: 2
-updates:
-- package-ecosystem: "nuget"
-  directory: "/"
-  schedule:
-    timezone: "Asia/Shanghai"
-    interval: "weekly"
