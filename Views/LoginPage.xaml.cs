@@ -335,9 +335,8 @@ namespace IPAbuyer.Views
             string authCode = CodeTextBox.Password.Trim();
             if (string.IsNullOrWhiteSpace(authCode))
             {
-                ShowAuthError("请输入双重验证码");
-                CodeTextBox.Focus(FocusState.Programmatic);
-                return false;
+                authCode = "000000";
+                AppendLoginLog("双重验证码为空，按 000000 处理。");
             }
 
             HideAuthMessage();
@@ -431,11 +430,6 @@ namespace IPAbuyer.Views
                 AuthCodeInlinePanelControl.Visibility = Visibility.Visible;
             }
 
-            if (NextButtonControl != null)
-            {
-                NextButtonControl.Content = "验证并登录";
-            }
-
             string fallbackMessage = "请输入两步验证码继续登录。如果未收到验证码，请打开 https://account.apple.com/ 获取后再输入。";
             string finalMessage = string.IsNullOrWhiteSpace(message)
                 ? fallbackMessage
@@ -455,10 +449,6 @@ namespace IPAbuyer.Views
 
             HideAuthMessage();
 
-            if (NextButtonControl != null)
-            {
-                NextButtonControl.Content = "登录";
-            }
         }
 
         private void SetInputControlsEnabled(bool enabled)

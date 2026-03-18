@@ -131,9 +131,12 @@
                             x:Name="NextButton"
                             MinWidth="150"
                             MinHeight="36"
+                            Background="#4DA3FF"
+                            BorderBrush="#4DA3FF"
                             HorizontalAlignment="Left"
                             Click="NextButton_Click"
-                            Content="登录" />
+                            Content="登录"
+                            Foreground="White" />
                         <Button
                             x:Name="AuthInfoButton"
                             MinWidth="150"
@@ -145,9 +148,12 @@
                             x:Name="LogoutButton"
                             MinWidth="150"
                             MinHeight="36"
+                            Background="#C42B1C"
+                            BorderBrush="#C42B1C"
                             HorizontalAlignment="Left"
                             Click="LogoutButton_Click"
-                            Content="退出登录" />
+                            Content="退出登录"
+                            Foreground="White" />
                         <Button
                             x:Name="OpenAppleAccountButton"
                             MinWidth="150"
