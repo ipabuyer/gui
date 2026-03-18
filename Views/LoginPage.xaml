@@ -11,8 +11,13 @@
         <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
             <Grid MaxWidth="860" HorizontalAlignment="Center">
                 <StackPanel Spacing="14">
-                    <TextBlock FontSize="34" FontWeight="Bold" Text="登录" />
-                    <TextBlock FontSize="15" Text="输入您的 Apple ID、密码和加密密钥后登录。" />
+                    <StackPanel Margin="0,0,0,4" Spacing="4">
+                        <TextBlock FontSize="38" FontWeight="SemiBold" Text="账户登录" />
+                        <TextBlock
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                            Style="{ThemeResource BodyTextBlockStyle}"
+                            Text="输入 Apple ID、密码和加密密钥，完成登录后即可购买与下载。" />
+                    </StackPanel>
                     <TextBlock
                         Foreground="Gray"
                         Text="如需修改加密密钥，请先退出登录并重新登录。"
