@@ -80,11 +80,13 @@
 ## 登录苹果账户
 
 1. 对app进行购买和下载，需要用户登录苹果账户
-2. 登录命令为：`ipatool.exe auth login --auth-code 双重验证码 --email 邮箱 --password 密码 --keychain-passphrase 加密密钥`；可以先通过只传入邮箱和密码的方式，让苹果向用户发送双重验证码，然后再让用户输入双重验证码；如果用户仍然收不到双重验证码，则提示用户打开<https://account.apple.com/>，输入用户名和密码后获取双重验证码，然后填入本软件
-3. 需要提示用户，新创建的苹果账号不能直接用于进行购买和下载，必须要在苹果设备上登陆过一次AppStore并完成一次app的购买
-4. 查询登录状态的命令：`ipatool.exe auth info --keychain-passphrase 加密密钥`
-5. 登出命令为：`ipatool.exe auth revoke`
-6. 为了测试用途，在数据库中准备用户名test和密码test的账户，该账户购买或下载任何app都直接成功，该账户用于界面测试
+2. 登录命令为：`ipatool.exe auth login --auth-code 双重验证码 --email 邮箱 --password 密码 --keychain-passphrase 加密密钥`
+3. 可以先通过只传入邮箱、密码和000000作为双重验证码的方式，让苹果向用户发送双重验证码，然后再让用户输入双重验证码
+4. 对于收不到双重验证码的情况，提示用户打开<https://account.apple.com/>，输入用户名和密码后获取双重验证码，然后填入本软件
+5. 需要提示用户，新创建的苹果账号不能直接用于进行购买和下载，必须要在苹果设备上登陆过一次AppStore并完成一次app的购买
+6. 查询登录状态的命令：`ipatool.exe auth info --keychain-passphrase 加密密钥`
+7. 登出命令为：`ipatool.exe auth revoke`
+8. 为了测试用途，在数据库中准备用户名test和密码test的账户，该账户购买或下载任何app都直接成功，该账户用于界面测试
 
 ## 账户加密密钥处理
 
