@@ -8,7 +8,7 @@
     xmlns:models="using:IPAbuyer.Models"
     mc:Ignorable="d">
     <Page.Content>
-        <Grid Margin="50,20,50,20" RowSpacing="12">
+        <Grid Margin="24" RowSpacing="12">
             <Grid.RowDefinitions>
                 <RowDefinition Height="7*" />
                 <RowDefinition Height="3*" />
