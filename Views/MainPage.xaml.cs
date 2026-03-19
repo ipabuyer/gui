@@ -198,8 +198,11 @@ namespace IPAbuyer.Views
             try
             {
                 AppendHomeLog($"开始批量购买，共 {selectedApps.Count} 项。");
-                await PurchaseAppsAsync(selectedApps);
-                AppendHomeLog("批量购买执行完成。");
+                bool executed = await PurchaseAppsAsync(selectedApps);
+                if (executed)
+                {
+                    AppendHomeLog("批量购买执行完成。");
+                }
             }
             catch (OperationCanceledException)
             {
@@ -255,7 +258,7 @@ namespace IPAbuyer.Views
             try
             {
                 AppendHomeLog($"右键购买，共 {selectedApps.Count} 项。");
-                await PurchaseAppsAsync(selectedApps);
+                _ = await PurchaseAppsAsync(selectedApps);
             }
             catch (OperationCanceledException)
             {
@@ -471,13 +474,13 @@ namespace IPAbuyer.Views
             return ApplySorting(filtered);
         }
 
-        private async Task PurchaseAppsAsync(List<SearchResult> selectedApps)
+        private async Task<bool> PurchaseAppsAsync(List<SearchResult> selectedApps)
         {
             string account = GetActiveAccount();
             if (string.IsNullOrWhiteSpace(account))
             {
                 AppendHomeLog("请先在账户页面登录后再购买。");
-                return;
+                return false;
             }
 
             bool isTestAccount = SessionState.IsLoggedIn
@@ -542,6 +545,7 @@ namespace IPAbuyer.Views
                     }
                 }
             }
+            return true;
         }
 
         private async Task<bool> ConfirmMarkOwnedAsync(SearchResult app)
