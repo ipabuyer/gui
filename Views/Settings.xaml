@@ -51,7 +51,7 @@
                             <TextBlock
                                 Style="{ThemeResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="提示：跨地区购买时，应用可能被标记为“疑似已拥有”。"
+                                Text="跨地区购买时，应用可能被标记为“疑似已拥有”。"
                                 TextWrapping="Wrap" />
                         </StackPanel>
                     </Border>
@@ -93,23 +93,22 @@
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         BorderThickness="1"
                         CornerRadius="8">
-                        <Grid ColumnSpacing="12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="3*" />
-                                <ColumnDefinition Width="2*" />
-                            </Grid.ColumnDefinitions>
+                        <StackPanel Spacing="10">
                             <TextBlock
-                                x:Uid="/SettingPage/About_Developer"
-                                Grid.Column="0"
-                                VerticalAlignment="Center"
                                 Style="{ThemeResource BodyTextBlockStyle}"
+                                Text="详细日志"
                                 TextWrapping="Wrap" />
-                            <Button
-                                x:Uid="/SettingPage/About_Developer_Button"
-                                Grid.Column="1"
-                                HorizontalAlignment="Right"
-                                Click="GithubButton" />
-                        </Grid>
+                            <CheckBox
+                                x:Name="DetailedIpatoolLogCheckBox"
+                                Content="显示所有 ipatool 命令"
+                                Checked="DetailedIpatoolLogCheckBox_Checked"
+                                Unchecked="DetailedIpatoolLogCheckBox_Unchecked" />
+                            <TextBlock
+                                Style="{ThemeResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="勾选后，所有 ipatool 的命令和输出都显示在日志区。"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
                     </Border>
 
                     <Border
@@ -118,23 +117,86 @@
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         BorderThickness="1"
                         CornerRadius="8">
-                        <Grid ColumnSpacing="12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="3*" />
-                                <ColumnDefinition Width="2*" />
-                            </Grid.ColumnDefinitions>
+                        <StackPanel Spacing="10">
                             <TextBlock
-                                x:Uid="/SettingPage/About_Feedback_Email"
-                                Grid.Column="0"
-                                VerticalAlignment="Center"
                                 Style="{ThemeResource BodyTextBlockStyle}"
+                                Text="标记为已拥有前的提示"
                                 TextWrapping="Wrap" />
-                            <Button
-                                x:Uid="/SettingPage/About_Feedback_Email_Button"
-                                Grid.Column="1"
-                                HorizontalAlignment="Right"
-                                Click="CopyFeedbackEmailButton_Click" />
-                        </Grid>
+                            <CheckBox
+                                x:Name="OwnedCheckBox"
+                                Content="标记为已拥有前不弹窗询问"
+                                Checked="OwnedCheckBox_Checked"
+                                Unchecked="OwnedCheckBox_Unchecked" />
+                            <TextBlock
+                                Style="{ThemeResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="勾选后，标记为已拥有将不再弹窗询问。"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border
+                        Padding="20"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                        <StackPanel Spacing="10">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="3*" />
+                                    <ColumnDefinition Width="2*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    x:Uid="/SettingPage/About_Developer"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Style="{ThemeResource BodyTextBlockStyle}"
+                                    TextWrapping="Wrap" />
+                                <Button
+                                    x:Uid="/SettingPage/About_Developer_Button"
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Right"
+                                    Click="GithubButton" />
+                            </Grid>
+                            <TextBlock
+                                Style="{ThemeResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="打开开发者官方网站，查看 Q&amp;A 及更多信息。"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border
+                        Padding="20"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                        <StackPanel Spacing="10">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="3*" />
+                                    <ColumnDefinition Width="2*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    x:Uid="/SettingPage/About_Feedback_Email"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Style="{ThemeResource BodyTextBlockStyle}"
+                                    TextWrapping="Wrap" />
+                                <Button
+                                    x:Uid="/SettingPage/About_Feedback_Email_Button"
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Right"
+                                    Click="CopyFeedbackEmailButton_Click" />
+                            </Grid>
+                            <TextBlock
+                                Style="{ThemeResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="附带屏幕截图和复现步骤，有助于更快地修复问题。"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
                     </Border>
 
                     <Border
@@ -169,7 +231,7 @@
                             <TextBlock
                                 Style="{ThemeResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="说明：仅清空本地已购买/已拥有记录，不会影响你的 Apple 账户购买历史。" />
+                                Text="仅清空本地已购买/已拥有记录，不会影响 Apple 账户购买历史。" />
                         </StackPanel>
                     </Border>
 
@@ -205,7 +267,8 @@
                             <TextBlock
                                 Style="{ThemeResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="说明：该操作会删除 ipatool 的认证缓存与配置，请在需要重新登录时使用。" />
+                                Text="将清空 %USERNAME%/.ipatool/ 目录下的本地认证缓存与配置。"
+                                TextWrapping="Wrap" />
                         </StackPanel>
                     </Border>
 
@@ -238,7 +301,8 @@
                             <TextBlock
                                 Style="{ThemeResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="说明：默认导出到当前下载目录，文件名为 ipatool.exe，已存在时会覆盖。" />
+                                Text="默认导出到当前下载目录，文件名为 ipatool.exe，已存在时会覆盖。"
+                                TextWrapping="Wrap" />
                         </StackPanel>
                     </Border>
                 </StackPanel>

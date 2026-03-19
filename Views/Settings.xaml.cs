@@ -16,11 +16,16 @@ namespace IPAbuyer.Views
 {
     public sealed partial class Settings : Page
     {
+        private bool _isInitializingDetailedLogOption;
+        private bool _isInitializingOwnedCheckOption;
+
         public Settings()
         {
             InitializeComponent();
             InitializeCountryCode();
             InitializeDownloadDirectory();
+            InitializeDetailedIpatoolLogOption();
+            InitializeOwnedCheckOption();
         }
 
         private void GithubButton(object sender, RoutedEventArgs e)
@@ -65,8 +70,7 @@ namespace IPAbuyer.Views
         {
             try
             {
-                string? account = GetAccountForCountryCode();
-                string currentCode = KeychainConfig.GetCountryCode(account);
+                string currentCode = KeychainConfig.GetCountryCode();
                 if (CountryCodeTextBoxControl != null)
                 {
                     CountryCodeTextBoxControl.Text = currentCode;
@@ -116,11 +120,10 @@ namespace IPAbuyer.Views
             }
 
             string normalized = normalizedInput.ToLowerInvariant();
-            string? account = GetAccountForCountryCode();
 
             try
             {
-                KeychainConfig.SaveCountryCode(normalized, account);
+                KeychainConfig.SaveCountryCode(normalized);
                 CountryCodeTextBoxControl.Text = normalized;
                 MainPageCacheState.InvalidateSearchCache();
 
@@ -143,11 +146,9 @@ namespace IPAbuyer.Views
                 return;
             }
 
-            string? account = GetAccountForCountryCode();
-
             try
             {
-                KeychainConfig.SaveCountryCode("cn", account);
+                KeychainConfig.SaveCountryCode("cn");
                 CountryCodeTextBoxControl.Text = "cn";
                 MainPageCacheState.InvalidateSearchCache();
                 await ShowDialogAsync("操作成功", "国家/地区代码已恢复默认值 cn");
@@ -301,6 +302,82 @@ namespace IPAbuyer.Views
             }
         }
 
+        private void InitializeDetailedIpatoolLogOption()
+        {
+            if (DetailedIpatoolLogCheckBox == null)
+            {
+                return;
+            }
+
+            _isInitializingDetailedLogOption = true;
+            try
+            {
+                DetailedIpatoolLogCheckBox.IsChecked = KeychainConfig.GetDetailedIpatoolLogEnabled();
+            }
+            finally
+            {
+                _isInitializingDetailedLogOption = false;
+            }
+        }
+
+        private void DetailedIpatoolLogCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializingDetailedLogOption)
+            {
+                return;
+            }
+
+            KeychainConfig.SaveDetailedIpatoolLogEnabled(true);
+        }
+
+        private void DetailedIpatoolLogCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializingDetailedLogOption)
+            {
+                return;
+            }
+
+            KeychainConfig.SaveDetailedIpatoolLogEnabled(false);
+        }
+
+        private void InitializeOwnedCheckOption()
+        {
+            if (OwnedCheckBox == null)
+            {
+                return;
+            }
+
+            _isInitializingOwnedCheckOption = true;
+            try
+            {
+                OwnedCheckBox.IsChecked = KeychainConfig.GetOwnedCheckEnabled();
+            }
+            finally
+            {
+                _isInitializingOwnedCheckOption = false;
+            }
+        }
+
+        private void OwnedCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializingOwnedCheckOption)
+            {
+                return;
+            }
+
+            KeychainConfig.SaveOwnedCheckEnabled(true);
+        }
+
+        private void OwnedCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializingOwnedCheckOption)
+            {
+                return;
+            }
+
+            KeychainConfig.SaveOwnedCheckEnabled(false);
+        }
+
         private static string? ResolveBundledIpatoolPath()
         {
             string baseDirectory = AppContext.BaseDirectory;
@@ -350,19 +427,5 @@ namespace IPAbuyer.Views
         private TextBox? CountryCodeTextBoxControl => FindName("CountryCodeTextBox") as TextBox;
         private TextBox? DownloadDirectoryTextBoxControl => FindName("DownloadDirectoryTextBox") as TextBox;
 
-        private static string? GetAccountForCountryCode()
-        {
-            if (SessionState.IsLoggedIn)
-            {
-                string account = SessionState.CurrentAccount;
-                if (!string.IsNullOrWhiteSpace(account))
-                {
-                    return account;
-                }
-            }
-
-            string? lastLogin = KeychainConfig.GetLastLoginUsername();
-            return string.IsNullOrWhiteSpace(lastLogin) ? null : lastLogin;
-        }
     }
 }

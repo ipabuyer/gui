@@ -8,6 +8,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,7 +21,6 @@ namespace IPAbuyer.Views
         private readonly System.Collections.Generic.List<UiLogEntry> _loginLogEntries = new();
         private CancellationTokenSource? _currentOperationCts;
 
-        private string? _lastLoginUsername;
         private string _account = "example@icloud.com";
         private string _password = string.Empty;
         private string _passphrase = string.Empty;
@@ -32,42 +32,48 @@ namespace IPAbuyer.Views
         {
             InitializeComponent();
 
-            _lastLoginUsername = KeychainConfig.GetLastLoginUsername();
-            if (!string.IsNullOrWhiteSpace(_lastLoginUsername))
+            string defaultPassphrase = KeychainConfig.GetPassphrase(null) ?? KeychainConfig.GetDefaultPassphrase();
+            if (PassphraseInput != null)
             {
-                _account = _lastLoginUsername;
-            }
-
-            LoadAccountHistory();
-            string? savedPassphrase = KeychainConfig.GetPassphrase(_account);
-            if (!string.IsNullOrWhiteSpace(savedPassphrase) && PassphraseInput != null)
-            {
-                PassphraseInput.Text = savedPassphrase;
-                _passphrase = savedPassphrase;
-            }
-            else if (PassphraseInput != null)
-            {
-                PassphraseInput.Text = "12345678";
-                _passphrase = "12345678";
+                PassphraseInput.Text = defaultPassphrase;
+                _passphrase = defaultPassphrase;
             }
 
             Unloaded += LoginPage_Unloaded;
             Loaded += LoginPage_Loaded;
         }
 
-        private async void LoginPage_Loaded(object sender, RoutedEventArgs e)
+        private void LoginPage_Loaded(object sender, RoutedEventArgs e)
         {
+            IpatoolExecution.CommandExecuting -= OnIpatoolCommandExecuting;
+            IpatoolExecution.CommandExecuting += OnIpatoolCommandExecuting;
+            IpatoolExecution.CommandOutputReceived -= OnIpatoolCommandOutputReceived;
+            IpatoolExecution.CommandOutputReceived += OnIpatoolCommandOutputReceived;
+
             if (_pageCts.IsCancellationRequested)
             {
                 _pageCts.Dispose();
                 _pageCts = new CancellationTokenSource();
             }
 
-            await QueryAuthInfoAsync(isAutoCheck: true);
+            string account = SessionState.CurrentAccount;
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                account = KeychainConfig.GetLastLoginUsername() ?? string.Empty;
+            }
+
+            if (!string.IsNullOrWhiteSpace(account) && EmailTextBox != null)
+            {
+                EmailTextBox.Text = account;
+            }
+
+            ApplyOperationLock(SessionState.IsLoggedIn);
         }
 
         private void LoginPage_Unloaded(object sender, RoutedEventArgs e)
         {
+            IpatoolExecution.CommandExecuting -= OnIpatoolCommandExecuting;
+            IpatoolExecution.CommandOutputReceived -= OnIpatoolCommandOutputReceived;
             CancelCurrentOperation();
             if (!_pageCts.IsCancellationRequested)
             {
@@ -99,26 +105,15 @@ namespace IPAbuyer.Views
 
         private async void AuthInfoButton_Click(object sender, RoutedEventArgs e)
         {
-            await QueryAuthInfoAsync(isAutoCheck: false);
+            await QueryAuthInfoAsync();
         }
 
-        private async Task QueryAuthInfoAsync(bool isAutoCheck)
+        private async Task QueryAuthInfoAsync()
         {
             string account = (EmailTextBox?.Text ?? string.Empty).Trim();
             if (string.IsNullOrWhiteSpace(account))
             {
                 account = SessionState.CurrentAccount;
-            }
-
-            if (string.IsNullOrWhiteSpace(account))
-            {
-                if (!isAutoCheck)
-                {
-                    ShowError("请先输入邮箱或登录账户");
-                }
-
-                AppendLoginLog("Auth info skipped: account is empty.");
-                return;
             }
 
             try
@@ -127,21 +122,43 @@ namespace IPAbuyer.Views
                 _currentOperationCts = CancellationTokenSource.CreateLinkedTokenSource(_pageCts.Token);
                 SetBusyState(true, "正在查询登录状态...");
 
-                var result = await IpatoolExecution.AuthInfoAsync(account, _currentOperationCts.Token);
+                var result = await IpatoolExecution.AuthInfoAsync(_currentOperationCts.Token);
                 DisposeCurrentOperation();
 
                 if (result.IsSuccessResponse)
                 {
-                    SessionState.SetLoginState(account, true);
+                    string payloadEmail = ExtractEmailFromAuthInfoPayload(result.OutputOrError);
+                    if (!string.IsNullOrWhiteSpace(payloadEmail))
+                    {
+                        account = payloadEmail;
+                        if (EmailTextBox != null)
+                        {
+                            EmailTextBox.Text = payloadEmail;
+                        }
+                    }
+
+                    string activeAccount = account;
+                    if (string.IsNullOrWhiteSpace(activeAccount))
+                    {
+                        activeAccount = KeychainConfig.GetLastLoginUsername() ?? string.Empty;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(activeAccount))
+                    {
+                        SessionState.SetLoginState(activeAccount, true);
+                    }
+
                     ApplyOperationLock(true);
                     ShowSuccess("登录状态正常");
-                    AppendLoginLog($"Auth info success: {account}");
+                    AppendLoginLog(string.IsNullOrWhiteSpace(activeAccount)
+                        ? "Auth info success."
+                        : $"Auth info success: {activeAccount}");
                 }
                 else
                 {
                     ApplyOperationLock(false);
                     ShowError(string.IsNullOrWhiteSpace(result.OutputOrError) ? "登录状态异常" : result.OutputOrError);
-                    AppendLoginLog($"Auth info failed: {account}");
+                    AppendLoginLog("Auth info failed.");
                 }
             }
             catch (Exception ex)
@@ -156,6 +173,74 @@ namespace IPAbuyer.Views
             }
         }
 
+        private static string ExtractEmailFromAuthInfoPayload(string? payload)
+        {
+            if (string.IsNullOrWhiteSpace(payload))
+            {
+                return string.Empty;
+            }
+
+            string normalized = payload.Replace("}{", "}\n{");
+            string[] lines = normalized.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string line in lines)
+            {
+                string trimmed = line.Trim();
+                if (!trimmed.StartsWith("{", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    using JsonDocument document = JsonDocument.Parse(trimmed);
+                    JsonElement root = document.RootElement;
+                    if (TryReadEmailFromJson(root, out string email))
+                    {
+                        return email;
+                    }
+                }
+                catch (JsonException)
+                {
+                    // ignore invalid segment
+                }
+            }
+
+            return string.Empty;
+        }
+
+        private static bool TryReadEmailFromJson(JsonElement root, out string email)
+        {
+            if (TryReadEmailProperty(root, "email", out email))
+            {
+                return true;
+            }
+
+            // 兼容指导文档中的拼写（eamil）
+            if (TryReadEmailProperty(root, "eamil", out email))
+            {
+                return true;
+            }
+
+            email = string.Empty;
+            return false;
+        }
+
+        private static bool TryReadEmailProperty(JsonElement root, string propertyName, out string email)
+        {
+            if (root.TryGetProperty(propertyName, out JsonElement element) && element.ValueKind == JsonValueKind.String)
+            {
+                string? value = element.GetString()?.Trim();
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    email = value;
+                    return true;
+                }
+            }
+
+            email = string.Empty;
+            return false;
+        }
+
         private async void LogoutButton_Click(object sender, RoutedEventArgs e)
         {
             string account = SessionState.CurrentAccount;
@@ -164,25 +249,25 @@ namespace IPAbuyer.Views
                 account = (EmailTextBox?.Text ?? string.Empty).Trim();
             }
 
-            if (string.IsNullOrWhiteSpace(account))
-            {
-                ShowError("未找到可退出的账户");
-                AppendLoginLog("Logout failed: account is empty.");
-                return;
-            }
-
             try
             {
                 CancelCurrentOperation();
                 _currentOperationCts = CancellationTokenSource.CreateLinkedTokenSource(_pageCts.Token);
                 SetBusyState(true, "正在退出登录...");
 
-                var result = await IpatoolExecution.AuthLogoutAsync(account, _currentOperationCts.Token);
+                var result = await IpatoolExecution.AuthLogoutAsync(_currentOperationCts.Token);
                 DisposeCurrentOperation();
 
                 if (result.IsSuccessResponse)
                 {
                     SessionState.Reset();
+                    string defaultPassphrase = KeychainConfig.GetDefaultPassphrase();
+                    KeychainConfig.SavePassphrase(string.Empty, defaultPassphrase);
+                    _passphrase = defaultPassphrase;
+                    if (PassphraseInput != null)
+                    {
+                        PassphraseInput.Text = defaultPassphrase;
+                    }
                     HideInlineTwoFactor();
                     ApplyOperationLock(false);
                     ShowSuccess("已退出登录");
@@ -203,24 +288,6 @@ namespace IPAbuyer.Views
             {
                 DisposeCurrentOperation();
                 RestoreIdleState();
-            }
-        }
-
-        private void LoadAccountHistory()
-        {
-            try
-            {
-                _lastLoginUsername = KeychainConfig.GetLastLoginUsername();
-
-                if (!string.IsNullOrEmpty(_lastLoginUsername) && EmailTextBox != null)
-                {
-                    EmailTextBox.Text = _lastLoginUsername;
-                    _account = _lastLoginUsername;
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Load account history failed: {ex.Message}");
             }
         }
 
@@ -617,7 +684,6 @@ namespace IPAbuyer.Views
             {
                 KeychainConfig.GenerateAndSaveSecretKey(_account);
                 KeychainConfig.SavePassphrase(_account, _passphrase);
-                _lastLoginUsername = _account;
                 if (EmailTextBox != null)
                 {
                     EmailTextBox.Text = _account;
@@ -780,6 +846,22 @@ namespace IPAbuyer.Views
                 _currentOperationCts.Dispose();
                 _currentOperationCts = null;
             }
+        }
+
+        private void OnIpatoolCommandExecuting(string command)
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                AppendLoginLog(command, UiLogSource.Ipatool);
+            });
+        }
+
+        private void OnIpatoolCommandOutputReceived(string line)
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                AppendLoginLog(line, UiLogSource.Ipatool);
+            });
         }
 
         private TextBox? EmailTextBox => GetControl<TextBox>("EmailComboBox");
