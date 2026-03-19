@@ -43,7 +43,7 @@ namespace IPAbuyer.Views
             Loaded += LoginPage_Loaded;
         }
 
-        private async void LoginPage_Loaded(object sender, RoutedEventArgs e)
+        private void LoginPage_Loaded(object sender, RoutedEventArgs e)
         {
             IpatoolExecution.CommandExecuting -= OnIpatoolCommandExecuting;
             IpatoolExecution.CommandExecuting += OnIpatoolCommandExecuting;
@@ -56,7 +56,18 @@ namespace IPAbuyer.Views
                 _pageCts = new CancellationTokenSource();
             }
 
-            await QueryAuthInfoAsync(isAutoCheck: true);
+            string account = SessionState.CurrentAccount;
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                account = KeychainConfig.GetLastLoginUsername() ?? string.Empty;
+            }
+
+            if (!string.IsNullOrWhiteSpace(account) && EmailTextBox != null)
+            {
+                EmailTextBox.Text = account;
+            }
+
+            ApplyOperationLock(SessionState.IsLoggedIn);
         }
 
         private void LoginPage_Unloaded(object sender, RoutedEventArgs e)
@@ -94,10 +105,10 @@ namespace IPAbuyer.Views
 
         private async void AuthInfoButton_Click(object sender, RoutedEventArgs e)
         {
-            await QueryAuthInfoAsync(isAutoCheck: false);
+            await QueryAuthInfoAsync();
         }
 
-        private async Task QueryAuthInfoAsync(bool isAutoCheck)
+        private async Task QueryAuthInfoAsync()
         {
             string account = (EmailTextBox?.Text ?? string.Empty).Trim();
             if (string.IsNullOrWhiteSpace(account))
