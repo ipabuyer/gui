@@ -12,7 +12,6 @@ using IPAbuyer.Models;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 
 namespace IPAbuyer.Views
@@ -666,9 +665,9 @@ namespace IPAbuyer.Views
             return KeychainConfig.IsValidCountryCode(normalized) ? normalized : "cn";
         }
 
-        private void SortHeader_Tapped(object sender, TappedRoutedEventArgs e)
+        private void SortHeader_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is not TextBlock header)
+            if (sender is not Button header)
             {
                 return;
             }
@@ -757,21 +756,21 @@ namespace IPAbuyer.Views
             SetHeaderText(PurchasedHeaderText, PurchasedHeaderBase, "purchased");
         }
 
-        private void SetHeaderText(TextBlock? textBlock, string baseText, string key)
+        private void SetHeaderText(Button? button, string baseText, string key)
         {
-            if (textBlock == null)
+            if (button == null)
             {
                 return;
             }
 
             if (!string.Equals(_sortKey, key, StringComparison.Ordinal) || _sortDirection == SortDirection.None)
             {
-                textBlock.Text = baseText;
+                button.Content = baseText;
                 return;
             }
 
             string suffix = _sortDirection == SortDirection.Ascending ? " ↑" : " ↓";
-            textBlock.Text = baseText + suffix;
+            button.Content = baseText + suffix;
         }
 
         private void CopyHomeLog_Click(object sender, RoutedEventArgs e)

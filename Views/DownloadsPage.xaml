@@ -48,123 +48,145 @@
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 CornerRadius="4">
-                <ListView
-                    x:Name="QueueListView"
-                    SelectionMode="Multiple">
-                    <ListView.Header>
-                        <Grid Padding="8,0,8,4">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="32" />
-                                <ColumnDefinition Width="3*" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="2*" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock
-                                x:Name="DownloadNameHeaderText"
-                                Grid.Column="1"
-                                HorizontalAlignment="Center"
-                                Tapped="SortHeader_Tapped"
-                                Tag="name"
-                                Text="App名称" />
-                            <TextBlock
-                                x:Name="DownloadIdHeaderText"
-                                Grid.Column="2"
-                                HorizontalAlignment="Center"
-                                Tapped="SortHeader_Tapped"
-                                Tag="appid"
-                                Text="AppID" />
-                            <TextBlock
-                                x:Name="DownloadDeveloperHeaderText"
-                                Grid.Column="3"
-                                HorizontalAlignment="Center"
-                                Tapped="SortHeader_Tapped"
-                                Tag="developer"
-                                Text="开发者" />
-                            <TextBlock
-                                x:Name="DownloadVersionHeaderText"
-                                Grid.Column="4"
-                                HorizontalAlignment="Center"
-                                Tapped="SortHeader_Tapped"
-                                Tag="version"
-                                Text="版本号" />
-                            <TextBlock
-                                x:Name="DownloadPriceHeaderText"
-                                Grid.Column="5"
-                                HorizontalAlignment="Center"
-                                Tapped="SortHeader_Tapped"
-                                Tag="price"
-                                Text="价格" />
-                            <TextBlock
-                                x:Name="DownloadStatusHeaderText"
-                                Grid.Column="6"
-                                HorizontalAlignment="Center"
-                                Tapped="SortHeader_Tapped"
-                                Tag="status"
-                                Text="下载状态" />
-                        </Grid>
-                    </ListView.Header>
-                    <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="models:DownloadQueueItem">
-                            <Grid Padding="8,6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="32" />
-                                    <ColumnDefinition Width="3*" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="2*" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
 
-                                <Border
-                                    Grid.Column="0"
-                                    Width="24"
-                                    Height="24"
-                                    CornerRadius="6"
-                                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
-                                    <Image
+                    <Grid Grid.Row="0" Padding="12,10,12,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="32" />
+                            <ColumnDefinition Width="3*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="2*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Button
+                            x:Name="DownloadNameHeaderText"
+                            Grid.Column="1"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            HorizontalAlignment="Center"
+                            Click="SortHeader_Click"
+                            Tag="name"
+                            Content="App名称" />
+                        <Button
+                            x:Name="DownloadIdHeaderText"
+                            Grid.Column="2"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            HorizontalAlignment="Center"
+                            Click="SortHeader_Click"
+                            Tag="appid"
+                            Content="AppID" />
+                        <Button
+                            x:Name="DownloadDeveloperHeaderText"
+                            Grid.Column="3"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            HorizontalAlignment="Center"
+                            Click="SortHeader_Click"
+                            Tag="developer"
+                            Content="开发者" />
+                        <Button
+                            x:Name="DownloadVersionHeaderText"
+                            Grid.Column="4"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            HorizontalAlignment="Center"
+                            Click="SortHeader_Click"
+                            Tag="version"
+                            Content="版本号" />
+                        <Button
+                            x:Name="DownloadPriceHeaderText"
+                            Grid.Column="5"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            HorizontalAlignment="Center"
+                            Click="SortHeader_Click"
+                            Tag="price"
+                            Content="价格" />
+                        <Button
+                            x:Name="DownloadStatusHeaderText"
+                            Grid.Column="6"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            HorizontalAlignment="Center"
+                            Click="SortHeader_Click"
+                            Tag="status"
+                            Content="下载状态" />
+                    </Grid>
+
+                    <ListView
+                        x:Name="QueueListView"
+                        Grid.Row="1"
+                        Margin="0,0,0,10"
+                        SelectionMode="Multiple">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="models:DownloadQueueItem">
+                                <Grid Padding="12,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="32" />
+                                        <ColumnDefinition Width="3*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="2*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border
+                                        Grid.Column="0"
                                         Width="24"
                                         Height="24"
-                                        Source="{x:Bind ArtworkUrl}"
-                                        Stretch="UniformToFill" />
-                                </Border>
+                                        CornerRadius="6"
+                                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                        BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                        BorderThickness="0.6">
+                                        <Image
+                                            Width="24"
+                                            Height="24"
+                                            Source="{x:Bind ArtworkUrl}"
+                                            Stretch="UniformToFill" />
+                                    </Border>
 
-                                <TextBlock
-                                    Grid.Column="1"
-                                    HorizontalAlignment="Center"
-                                    Text="{x:Bind Name}"
-                                    TextTrimming="CharacterEllipsis" />
-                                <TextBlock
-                                    Grid.Column="2"
-                                    HorizontalAlignment="Center"
-                                    Text="{x:Bind AppId}"
-                                    TextTrimming="CharacterEllipsis" />
-                                <TextBlock
-                                    Grid.Column="3"
-                                    HorizontalAlignment="Center"
-                                    Text="{x:Bind Developer}"
-                                    TextTrimming="CharacterEllipsis" />
-                                <TextBlock
-                                    Grid.Column="4"
-                                    HorizontalAlignment="Center"
-                                    Text="{x:Bind Version}"
-                                    TextTrimming="CharacterEllipsis" />
-                                <TextBlock
-                                    Grid.Column="5"
-                                    HorizontalAlignment="Center"
-                                    Text="{x:Bind Price}"
-                                    TextTrimming="CharacterEllipsis" />
-                                <TextBlock
-                                    Grid.Column="6"
-                                    HorizontalAlignment="Center"
-                                    Text="{x:Bind StatusText}" />
-                            </Grid>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        HorizontalAlignment="Center"
+                                        Text="{x:Bind Name}"
+                                        TextTrimming="CharacterEllipsis" />
+                                    <TextBlock
+                                        Grid.Column="2"
+                                        HorizontalAlignment="Center"
+                                        Text="{x:Bind AppId}"
+                                        TextTrimming="CharacterEllipsis" />
+                                    <TextBlock
+                                        Grid.Column="3"
+                                        HorizontalAlignment="Center"
+                                        Text="{x:Bind Developer}"
+                                        TextTrimming="CharacterEllipsis" />
+                                    <TextBlock
+                                        Grid.Column="4"
+                                        HorizontalAlignment="Center"
+                                        Text="{x:Bind Version}"
+                                        TextTrimming="CharacterEllipsis" />
+                                    <TextBlock
+                                        Grid.Column="5"
+                                        HorizontalAlignment="Center"
+                                        Text="{x:Bind Price}"
+                                        TextTrimming="CharacterEllipsis" />
+                                    <TextBlock
+                                        Grid.Column="6"
+                                        HorizontalAlignment="Center"
+                                        Text="{x:Bind StatusText}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </Grid>
             </Border>
         </Grid>
 

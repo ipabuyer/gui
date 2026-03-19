@@ -82,48 +82,60 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock
+                            <Button
                                 x:Name="NameHeaderText"
                                 Grid.Column="1"
+                                Background="Transparent"
+                                BorderThickness="0"
                                 HorizontalAlignment="Center"
-                                Tapped="SortHeader_Tapped"
+                                Click="SortHeader_Click"
                                 Tag="name"
-                                Text="App名称" />
-                            <TextBlock
+                                Content="App名称" />
+                            <Button
                                 x:Name="IdHeaderText"
                                 Grid.Column="2"
+                                Background="Transparent"
+                                BorderThickness="0"
                                 HorizontalAlignment="Center"
-                                Tapped="SortHeader_Tapped"
+                                Click="SortHeader_Click"
                                 Tag="id"
-                                Text="AppID" />
-                            <TextBlock
+                                Content="AppID" />
+                            <Button
                                 x:Name="DeveloperHeaderText"
                                 Grid.Column="3"
+                                Background="Transparent"
+                                BorderThickness="0"
                                 HorizontalAlignment="Center"
-                                Tapped="SortHeader_Tapped"
+                                Click="SortHeader_Click"
                                 Tag="developer"
-                                Text="开发者" />
-                            <TextBlock
+                                Content="开发者" />
+                            <Button
                                 x:Name="VersionHeaderText"
                                 Grid.Column="4"
+                                Background="Transparent"
+                                BorderThickness="0"
                                 HorizontalAlignment="Center"
-                                Tapped="SortHeader_Tapped"
+                                Click="SortHeader_Click"
                                 Tag="version"
-                                Text="版本号" />
-                            <TextBlock
+                                Content="版本号" />
+                            <Button
                                 x:Name="PriceHeaderText"
                                 Grid.Column="5"
+                                Background="Transparent"
+                                BorderThickness="0"
                                 HorizontalAlignment="Center"
-                                Tapped="SortHeader_Tapped"
+                                Click="SortHeader_Click"
                                 Tag="price"
-                                Text="价格" />
-                            <TextBlock
+                                Content="价格" />
+                            <Button
                                 x:Name="PurchasedHeaderText"
                                 Grid.Column="6"
+                                Background="Transparent"
+                                BorderThickness="0"
                                 HorizontalAlignment="Center"
-                                Tapped="SortHeader_Tapped"
+                                Click="SortHeader_Click"
                                 Tag="purchased"
-                                Text="购买状态" />
+                                Content="购买状态" />
                         </Grid>
 
                         <ListView
