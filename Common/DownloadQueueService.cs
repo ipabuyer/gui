@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,6 +13,9 @@ namespace IPAbuyer.Common
 {
     public sealed class DownloadQueueService
     {
+        private static readonly Regex ProgressRegex = new(@"(?<!\d)(\d{1,3})(?:\.\d+)?\s*%", RegexOptions.Compiled);
+        private const int ProgressBufferMaxLength = 256;
+        private const int ProgressUiNotifyIntervalMs = 120;
         private readonly ObservableCollection<DownloadQueueItem> _items = new();
         private readonly SemaphoreSlim _runLock = new(1, 1);
         private CancellationTokenSource? _queueCts;
@@ -161,7 +165,30 @@ namespace IPAbuyer.Common
                         }
                         else
                         {
-                            var result = await IpatoolExecution.DownloadAppAsync(item.BundleId, outputDirectory, account, _currentItemCts.Token);
+                            int lastProgress = -1;
+                            long lastNotifyTick = 0;
+                            string progressBuffer = string.Empty;
+                            var result = await IpatoolExecution.DownloadAppWithProgressAsync(
+                                item.BundleId,
+                                outputDirectory,
+                                account,
+                                chunk =>
+                                {
+                                    int? progress = TryExtractProgressPercentFromChunk(ref progressBuffer, chunk);
+                                    if (!progress.HasValue || progress.Value == lastProgress)
+                                    {
+                                        return;
+                                    }
+
+                                    lastProgress = progress.Value;
+                                    item.LastMessage = $"下载中 {lastProgress}%";
+                                    if (ShouldNotifyProgress(lastProgress, ref lastNotifyTick))
+                                    {
+                                        NotifyQueueChanged();
+                                    }
+                                },
+                                _currentItemCts.Token);
+
                             if (IsDownloadSuccess(result))
                             {
                                 item.Status = DownloadQueueStatus.Success;
@@ -257,17 +284,22 @@ namespace IPAbuyer.Common
                 return true;
             }
 
-            try
+            foreach (string segment in EnumerateJsonSegments(payload))
             {
-                using var doc = JsonDocument.Parse(payload);
-                if (doc.RootElement.TryGetProperty("success", out var success))
+                try
                 {
-                    return success.ValueKind == JsonValueKind.True || (success.ValueKind == JsonValueKind.String && success.GetString() == "true");
+                    using var doc = JsonDocument.Parse(segment);
+                    if (doc.RootElement.TryGetProperty("success", out var success))
+                    {
+                        return success.ValueKind == JsonValueKind.True
+                            || (success.ValueKind == JsonValueKind.String
+                                && string.Equals(success.GetString(), "true", StringComparison.OrdinalIgnoreCase));
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"下载结果 JSON 解析失败: {ex.Message}");
+                catch (JsonException)
+                {
+                    // ignore and continue trying remaining segments
+                }
             }
 
             return false;
@@ -286,25 +318,57 @@ namespace IPAbuyer.Common
                 return $"退出码 {result.ExitCode}";
             }
 
-            try
+            foreach (string segment in EnumerateJsonSegments(payload))
             {
-                using var doc = JsonDocument.Parse(payload);
-                if (doc.RootElement.TryGetProperty("error", out var error))
+                try
                 {
-                    return error.GetString() ?? payload;
-                }
+                    using var doc = JsonDocument.Parse(segment);
+                    if (doc.RootElement.TryGetProperty("error", out var error))
+                    {
+                        return error.GetString() ?? payload;
+                    }
 
-                if (doc.RootElement.TryGetProperty("message", out var message))
-                {
-                    return message.GetString() ?? payload;
+                    if (doc.RootElement.TryGetProperty("message", out var message))
+                    {
+                        return message.GetString() ?? payload;
+                    }
                 }
-            }
-            catch (JsonException)
-            {
-                // fallback to raw payload
+                catch (JsonException)
+                {
+                    // ignore and continue trying remaining segments
+                }
             }
 
             return payload.Length > 160 ? payload.Substring(0, 160) + "..." : payload;
+        }
+
+        private static System.Collections.Generic.IEnumerable<string> EnumerateJsonSegments(string payload)
+        {
+            if (string.IsNullOrWhiteSpace(payload))
+            {
+                yield break;
+            }
+
+            string normalized = payload.Replace("}{", "}\n{");
+            string[] lines = normalized.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (string line in lines)
+            {
+                string trimmed = line.Trim();
+                if (trimmed.StartsWith("{", StringComparison.Ordinal) || trimmed.StartsWith("[", StringComparison.Ordinal))
+                {
+                    yield return trimmed;
+                }
+            }
+
+            if (lines.Length == 0)
+            {
+                string trimmed = payload.Trim();
+                if (!string.IsNullOrEmpty(trimmed))
+                {
+                    yield return trimmed;
+                }
+            }
         }
 
         private static string ResolveAccount()
@@ -321,6 +385,56 @@ namespace IPAbuyer.Common
             }
 
             return account.Trim();
+        }
+
+        private static int? TryExtractProgressPercent(string? line)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                return null;
+            }
+
+            MatchCollection matches = ProgressRegex.Matches(line);
+            if (matches.Count == 0)
+            {
+                return null;
+            }
+
+            Match match = matches[matches.Count - 1];
+            if (match.Groups.Count < 2 || !int.TryParse(match.Groups[1].Value, out int percent))
+            {
+                return null;
+            }
+
+            return Math.Clamp(percent, 0, 100);
+        }
+
+        private static int? TryExtractProgressPercentFromChunk(ref string buffer, string? chunk)
+        {
+            if (string.IsNullOrEmpty(chunk))
+            {
+                return null;
+            }
+
+            buffer += chunk;
+            if (buffer.Length > ProgressBufferMaxLength)
+            {
+                buffer = buffer.Substring(buffer.Length - ProgressBufferMaxLength, ProgressBufferMaxLength);
+            }
+
+            return TryExtractProgressPercent(buffer);
+        }
+
+        private static bool ShouldNotifyProgress(int progress, ref long lastNotifyTick)
+        {
+            long nowTick = Environment.TickCount64;
+            if (progress >= 100 || lastNotifyTick == 0 || nowTick - lastNotifyTick >= ProgressUiNotifyIntervalMs)
+            {
+                lastNotifyTick = nowTick;
+                return true;
+            }
+
+            return false;
         }
 
         private void EmitLog(string message)

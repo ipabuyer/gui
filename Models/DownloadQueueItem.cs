@@ -18,7 +18,7 @@ namespace IPAbuyer.Models
         public string StatusText => Status switch
         {
             DownloadQueueStatus.Pending => "等待下载",
-            DownloadQueueStatus.Downloading => "下载中",
+            DownloadQueueStatus.Downloading => string.IsNullOrWhiteSpace(LastMessage) ? "下载中" : LastMessage,
             DownloadQueueStatus.Success => "下载成功",
             DownloadQueueStatus.Failed => "下载失败",
             DownloadQueueStatus.Canceled => "已终止",
