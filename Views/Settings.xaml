@@ -49,6 +49,11 @@
                                     Content="恢复默认"
                                     Click="ResetCountryCodeButton_Click" />
                             </StackPanel>
+                            <TextBlock
+                                Style="{ThemeResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="提示：跨地区购买时，应用可能被标记为“疑似已拥有”。"
+                                TextWrapping="Wrap" />
                         </StackPanel>
                     </Border>
 
