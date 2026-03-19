@@ -15,7 +15,7 @@ namespace IPAbuyer.Views
 {
     public sealed partial class LoginPage : Page
     {
-        private readonly CancellationTokenSource _pageCts = new();
+        private CancellationTokenSource _pageCts = new();
         private readonly StringBuilder _loginLogBuilder = new();
         private readonly System.Collections.Generic.List<UiLogEntry> _loginLogEntries = new();
         private CancellationTokenSource? _currentOperationCts;
@@ -57,6 +57,12 @@ namespace IPAbuyer.Views
 
         private async void LoginPage_Loaded(object sender, RoutedEventArgs e)
         {
+            if (_pageCts.IsCancellationRequested)
+            {
+                _pageCts.Dispose();
+                _pageCts = new CancellationTokenSource();
+            }
+
             await QueryAuthInfoAsync(isAutoCheck: true);
         }
 
@@ -145,6 +151,7 @@ namespace IPAbuyer.Views
             }
             finally
             {
+                DisposeCurrentOperation();
                 RestoreIdleState();
             }
         }
@@ -194,6 +201,7 @@ namespace IPAbuyer.Views
             }
             finally
             {
+                DisposeCurrentOperation();
                 RestoreIdleState();
             }
         }
