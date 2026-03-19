@@ -100,7 +100,8 @@ namespace IPAbuyer.Common
             }
 
             KeychainConfig.InitializeDatabase();
-            _currentAccount = KeychainConfig.GetLastLoginUsername() ?? string.Empty;
+            _currentAccount = string.Empty;
+            _isLoggedIn = false;
             _isMockAccount = false;
             _initialized = true;
         }

@@ -72,15 +72,9 @@ namespace IPAbuyer
                 string account = ExtractEmailFromAuthInfoPayload(result.OutputOrError);
                 if (string.IsNullOrWhiteSpace(account))
                 {
-                    account = KeychainConfig.GetLastLoginUsername() ?? string.Empty;
-                }
-
-                if (string.IsNullOrWhiteSpace(account))
-                {
                     return;
                 }
 
-                KeychainConfig.GenerateAndSaveSecretKey(account);
                 SessionState.SetLoginState(account, true);
             }
             catch (Exception ex)

@@ -81,10 +81,6 @@ namespace IPAbuyer.Views
         private void RefreshFromSessionState()
         {
             string account = SessionState.CurrentAccount;
-            if (string.IsNullOrWhiteSpace(account))
-            {
-                account = KeychainConfig.GetLastLoginUsername() ?? string.Empty;
-            }
 
             if (!string.IsNullOrWhiteSpace(account) && EmailTextBox != null)
             {
@@ -154,11 +150,6 @@ namespace IPAbuyer.Views
                     }
 
                     string activeAccount = account;
-                    if (string.IsNullOrWhiteSpace(activeAccount))
-                    {
-                        activeAccount = KeychainConfig.GetLastLoginUsername() ?? string.Empty;
-                    }
-
                     if (!string.IsNullOrWhiteSpace(activeAccount))
                     {
                         SessionState.SetLoginState(activeAccount, true);
@@ -698,7 +689,6 @@ namespace IPAbuyer.Views
         {
             try
             {
-                KeychainConfig.GenerateAndSaveSecretKey(_account);
                 KeychainConfig.SavePassphrase(_account, _passphrase);
                 if (EmailTextBox != null)
                 {

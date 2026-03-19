@@ -655,11 +655,6 @@ namespace IPAbuyer.Views
         private static string GetActiveAccount()
         {
             string account = SessionState.IsLoggedIn ? SessionState.CurrentAccount : string.Empty;
-            if (string.IsNullOrWhiteSpace(account))
-            {
-                account = KeychainConfig.GetLastLoginUsername() ?? string.Empty;
-            }
-
             return account.Trim();
         }
 

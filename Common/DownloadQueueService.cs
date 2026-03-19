@@ -411,11 +411,6 @@ namespace IPAbuyer.Common
             string account = SessionState.IsLoggedIn ? SessionState.CurrentAccount : string.Empty;
             if (string.IsNullOrWhiteSpace(account))
             {
-                account = KeychainConfig.GetLastLoginUsername() ?? string.Empty;
-            }
-
-            if (string.IsNullOrWhiteSpace(account))
-            {
                 throw new InvalidOperationException("未找到可用账号，请先登录");
             }
 
