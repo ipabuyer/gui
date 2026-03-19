@@ -324,6 +324,7 @@ namespace IPAbuyer.Views
 
             RebuildLogView();
             ScrollLogToBottom(LogScrollViewer);
+            DispatcherQueue.TryEnqueue(() => ScrollLogToBottom(LogScrollViewer));
         }
 
         private static void ScrollLogToBottom(ScrollViewer scrollViewer)

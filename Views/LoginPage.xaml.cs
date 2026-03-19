@@ -1,4 +1,5 @@
 using IPAbuyer.Common;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
@@ -707,11 +708,32 @@ namespace IPAbuyer.Views
 
             RebuildLoginLogView();
             ScrollLogToBottom(LoginLogScrollViewer);
+            EnsureLoginLogScrollToBottom();
         }
 
-        private static void ScrollLogToBottom(ScrollViewer scrollViewer)
+        private static void ScrollLogToBottom(ScrollViewer? scrollViewer)
         {
+            if (scrollViewer == null)
+            {
+                return;
+            }
+
             scrollViewer.ChangeView(null, scrollViewer.ScrollableHeight, null, disableAnimation: true);
+        }
+
+        private void EnsureLoginLogScrollToBottom()
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                LoginLogScrollViewer?.UpdateLayout();
+                ScrollLogToBottom(LoginLogScrollViewer);
+
+                DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
+                {
+                    LoginLogScrollViewer?.UpdateLayout();
+                    ScrollLogToBottom(LoginLogScrollViewer);
+                });
+            });
         }
 
         private void RebuildLoginLogView()

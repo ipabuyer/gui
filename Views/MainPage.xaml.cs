@@ -911,6 +911,7 @@ namespace IPAbuyer.Views
 
             RebuildHomeLogView();
             ScrollLogToBottom(HomeLogScrollViewer);
+            DispatcherQueue.TryEnqueue(() => ScrollLogToBottom(HomeLogScrollViewer));
         }
 
         private void SetPurchaseLoading(bool isLoading)
