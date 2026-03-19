@@ -124,6 +124,16 @@ namespace IPAbuyer.Common
 
         public static Task<IpatoolResult> DownloadAppAsync(string bundleId, string outputDirectory, string account, CancellationToken cancellationToken = default)
         {
+            return DownloadAppWithProgressAsync(bundleId, outputDirectory, account, null, cancellationToken);
+        }
+
+        public static async Task<IpatoolResult> DownloadAppWithProgressAsync(
+            string bundleId,
+            string outputDirectory,
+            string account,
+            Action<string>? outputChunkCallback,
+            CancellationToken cancellationToken = default)
+        {
             if (string.IsNullOrWhiteSpace(account))
             {
                 throw new ArgumentException("account 不能为空", nameof(account));
@@ -141,7 +151,101 @@ namespace IPAbuyer.Common
 
             Directory.CreateDirectory(outputDirectory);
             string arguments = $"download --output \"{outputDirectory}\" --bundle-identifier \"{bundleId}\"";
-            return ExecuteIpatoolAsync(arguments, account, null, cancellationToken);
+
+            string ipatoolPath = ResolveIpatoolPath();
+            string workingDirectory = Path.GetDirectoryName(ipatoolPath) ?? AppContext.BaseDirectory;
+            string effectivePassphrase = EnsurePassphrase(account, null);
+            string finalArguments = $"{arguments} --keychain-passphrase {effectivePassphrase} --format json --non-interactive --verbose";
+
+            var psi = new ProcessStartInfo
+            {
+                FileName = ipatoolPath,
+                Arguments = finalArguments,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8,
+                WorkingDirectory = workingDirectory,
+            };
+
+            psi.EnvironmentVariables["NO_COLOR"] = "1";
+            psi.EnvironmentVariables["TERM"] = "dumb";
+
+            Process? process = null;
+
+            try
+            {
+                process = new Process { StartInfo = psi, EnableRaisingEvents = true };
+                if (!process.Start())
+                {
+                    return new IpatoolResult(null, "无法启动 ipatool 进程", ExitCode: -1, TimedOut: false);
+                }
+
+                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                linkedCts.CancelAfter(DefaultTimeout);
+
+                var outputBuilder = new StringBuilder();
+                var errorBuilder = new StringBuilder();
+
+                Task readStdoutTask = ReadProcessStreamAsync(process.StandardOutput, outputBuilder, outputChunkCallback, linkedCts.Token);
+                Task readStderrTask = ReadProcessStreamAsync(process.StandardError, errorBuilder, outputChunkCallback, linkedCts.Token);
+
+                try
+                {
+                    await process.WaitForExitAsync(linkedCts.Token).ConfigureAwait(false);
+                    await Task.WhenAll(readStdoutTask, readStderrTask).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    TryTerminateProcess(process);
+                    return new IpatoolResult(null, $"执行超时: {arguments}", ExitCode: -1, TimedOut: true);
+                }
+
+                string output = outputBuilder.ToString();
+                string error = errorBuilder.ToString();
+
+                Debug.WriteLine($"ipatool output: {Preview(output)}");
+                Debug.WriteLine($"ipatool stderr: {Preview(error)}");
+
+                (string normalizedOutput, string normalizedError) = NormalizeIpatoolStreams(output, error, process.ExitCode);
+                return new IpatoolResult(normalizedOutput, normalizedError, process.ExitCode, TimedOut: false);
+            }
+            catch (Exception ex)
+            {
+                if (process != null)
+                {
+                    TryTerminateProcess(process);
+                }
+
+                return new IpatoolResult(null, ex.Message, ExitCode: -1, TimedOut: false);
+            }
+            finally
+            {
+                process?.Dispose();
+            }
+        }
+
+        private static async Task ReadProcessStreamAsync(
+            StreamReader reader,
+            StringBuilder builder,
+            Action<string>? outputChunkCallback,
+            CancellationToken cancellationToken)
+        {
+            char[] buffer = new char[1024];
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                int read = await reader.ReadAsync(buffer.AsMemory(0, buffer.Length), cancellationToken).ConfigureAwait(false);
+                if (read <= 0)
+                {
+                    break;
+                }
+
+                string chunk = new(buffer, 0, read);
+                builder.Append(chunk);
+                outputChunkCallback?.Invoke(chunk);
+            }
         }
 
         private static async Task<IpatoolResult> ExecuteIpatoolAsync(string arguments, string account, string? passphrase, CancellationToken cancellationToken)

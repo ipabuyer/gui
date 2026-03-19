@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using IPAbuyer.Common;
@@ -14,12 +16,22 @@ namespace IPAbuyer.Views
     {
         private readonly DownloadQueueService _queueService = DownloadQueueService.Instance;
         private readonly StringBuilder _logBuilder = new();
+        private string? _sortKey;
+        private SortDirection _sortDirection = SortDirection.None;
+
+        private const string NameHeaderBase = "App名称";
+        private const string IdHeaderBase = "AppID";
+        private const string DeveloperHeaderBase = "开发者";
+        private const string VersionHeaderBase = "版本号";
+        private const string PriceHeaderBase = "价格";
+        private const string StatusHeaderBase = "下载状态";
 
         public DownloadsPage()
         {
             InitializeComponent();
 
-            QueueListView.ItemsSource = _queueService.Items;
+            RefreshQueueView();
+            UpdateSortHeaderTexts();
             _queueService.LogReceived += OnLogReceived;
             _queueService.QueueChanged += OnQueueChanged;
 
@@ -31,6 +43,7 @@ namespace IPAbuyer.Views
             try
             {
                 StartQueueButton.IsEnabled = false;
+                SetDownloadLoading(true);
                 await _queueService.StartQueueAsync();
             }
             catch (Exception ex)
@@ -40,6 +53,7 @@ namespace IPAbuyer.Views
             }
             finally
             {
+                SetDownloadLoading(false);
                 UpdateButtons();
             }
         }
@@ -136,8 +150,117 @@ namespace IPAbuyer.Views
 
         private void RefreshQueueView()
         {
-            QueueListView.ItemsSource = null;
-            QueueListView.ItemsSource = _queueService.Items;
+            QueueListView.ItemsSource = GetDisplayedItems();
+        }
+
+        private List<DownloadQueueItem> GetDisplayedItems()
+        {
+            var source = _queueService.Items.ToList();
+            if (string.IsNullOrWhiteSpace(_sortKey) || _sortDirection == SortDirection.None)
+            {
+                return source;
+            }
+
+            Func<DownloadQueueItem, object?> keySelector = _sortKey switch
+            {
+                "name" => item => item.Name ?? string.Empty,
+                "appid" => item => item.AppId ?? string.Empty,
+                "developer" => item => item.Developer ?? string.Empty,
+                "version" => item => item.Version ?? string.Empty,
+                "price" => item => GetPriceSortValue(item.Price),
+                "status" => item => item.StatusText ?? string.Empty,
+                _ => item => item.Name ?? string.Empty
+            };
+
+            IOrderedEnumerable<DownloadQueueItem> ordered = _sortDirection == SortDirection.Ascending
+                ? source.OrderBy(keySelector)
+                : source.OrderByDescending(keySelector);
+
+            return ordered.ToList();
+        }
+
+        private static decimal GetPriceSortValue(string? price)
+        {
+            if (string.IsNullOrWhiteSpace(price))
+            {
+                return decimal.MaxValue;
+            }
+
+            string normalized = price.Trim();
+            if (normalized.Equals("免费", StringComparison.OrdinalIgnoreCase)
+                || normalized.Equals("free", StringComparison.OrdinalIgnoreCase))
+            {
+                return 0m;
+            }
+
+            return decimal.TryParse(normalized, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal value)
+                ? value
+                : decimal.MaxValue - 1;
+        }
+
+        private void SortHeader_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not Button header)
+            {
+                return;
+            }
+
+            string key = header.Tag?.ToString() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                return;
+            }
+
+            if (!string.Equals(_sortKey, key, StringComparison.Ordinal))
+            {
+                _sortKey = key;
+                _sortDirection = SortDirection.Ascending;
+            }
+            else
+            {
+                _sortDirection = _sortDirection switch
+                {
+                    SortDirection.None => SortDirection.Ascending,
+                    SortDirection.Ascending => SortDirection.Descending,
+                    SortDirection.Descending => SortDirection.None,
+                    _ => SortDirection.None
+                };
+
+                if (_sortDirection == SortDirection.None)
+                {
+                    _sortKey = null;
+                }
+            }
+
+            UpdateSortHeaderTexts();
+            RefreshQueueView();
+        }
+
+        private void UpdateSortHeaderTexts()
+        {
+            SetHeaderText(DownloadNameHeaderText, NameHeaderBase, "name");
+            SetHeaderText(DownloadIdHeaderText, IdHeaderBase, "appid");
+            SetHeaderText(DownloadDeveloperHeaderText, DeveloperHeaderBase, "developer");
+            SetHeaderText(DownloadVersionHeaderText, VersionHeaderBase, "version");
+            SetHeaderText(DownloadPriceHeaderText, PriceHeaderBase, "price");
+            SetHeaderText(DownloadStatusHeaderText, StatusHeaderBase, "status");
+        }
+
+        private void SetHeaderText(Button? button, string baseText, string key)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            if (!string.Equals(_sortKey, key, StringComparison.Ordinal) || _sortDirection == SortDirection.None)
+            {
+                button.Content = baseText;
+                return;
+            }
+
+            string suffix = _sortDirection == SortDirection.Ascending ? " ↑" : " ↓";
+            button.Content = baseText + suffix;
         }
 
         private void UpdateButtons()
@@ -146,6 +269,17 @@ namespace IPAbuyer.Views
             StartQueueButton.IsEnabled = !running;
             RemoveQueueButton.IsEnabled = !running;
             CancelAllButton.IsEnabled = running;
+            SetDownloadLoading(running);
+        }
+
+        private void SetDownloadLoading(bool isLoading)
+        {
+            if (DownloadLoadingBar == null)
+            {
+                return;
+            }
+
+            DownloadLoadingBar.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void AppendLog(string message)
@@ -196,6 +330,13 @@ namespace IPAbuyer.Views
 
             _queueService.LogReceived -= OnLogReceived;
             _queueService.QueueChanged -= OnQueueChanged;
+        }
+
+        private enum SortDirection
+        {
+            None = 0,
+            Ascending = 1,
+            Descending = 2
         }
     }
 }

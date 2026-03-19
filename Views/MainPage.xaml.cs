@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using IPAbuyer.Common;
 using IPAbuyer.Data;
 using IPAbuyer.Models;
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -22,6 +23,8 @@ namespace IPAbuyer.Views
         private readonly StringBuilder _homeLogBuilder = new();
         private CancellationTokenSource _pageCts = new();
         private string _selectedFilter = "All";
+        private string? _sortKey;
+        private SortDirection _sortDirection = SortDirection.None;
         public event Action<bool>? SearchLoadingChanged;
 
         private const string StatusPurchased = "已购买";
@@ -31,12 +34,19 @@ namespace IPAbuyer.Views
         private static readonly string[] PurchasedAliases = { "已购买", "宸茶喘涔?" };
         private static readonly string[] OwnedAliases = { "已拥有", "宸叉嫢鏈?" };
         private static readonly string[] CanPurchaseAliases = { "可购买", "未购买", "鍙喘涔?", "鏈喘涔?" };
+        private const string NameHeaderBase = "App名称";
+        private const string IdHeaderBase = "AppID";
+        private const string DeveloperHeaderBase = "开发者";
+        private const string VersionHeaderBase = "版本号";
+        private const string PriceHeaderBase = "价格";
+        private const string PurchasedHeaderBase = "购买状态";
 
         public int SearchLimitNum { get; set; } = 100;
 
         public MainPage()
         {
             InitializeComponent();
+            NavigationCacheMode = Microsoft.UI.Xaml.Navigation.NavigationCacheMode.Enabled;
         }
 
         public async void PerformSearchFromMainWindow(string appName)
@@ -118,7 +128,7 @@ namespace IPAbuyer.Views
                         name = GetPropertyValue(appElement, "trackName"),
                         developer = GetPropertyValue(appElement, "sellerName"),
                         artworkUrl = GetPropertyValue(appElement, "artworkUrl100"),
-                        price = GetPriceValue(appElement),
+                        price = NormalizePriceForDisplay(GetPriceValue(appElement)),
                         version = GetPropertyValue(appElement, "version"),
                         purchased = status
                     });
@@ -156,6 +166,7 @@ namespace IPAbuyer.Views
             {
                 BatchPurchaseButton.IsEnabled = false;
             }
+            SetPurchaseLoading(true);
 
             try
             {
@@ -169,8 +180,9 @@ namespace IPAbuyer.Views
                 {
                     BatchPurchaseButton.IsEnabled = true;
                 }
+                SetPurchaseLoading(false);
 
-                ApplyFilterAndRefresh();
+                ApplyFilterAndRefresh(preserveScrollPosition: true);
             }
         }
 
@@ -203,6 +215,7 @@ namespace IPAbuyer.Views
             {
                 BatchPurchaseButton.IsEnabled = false;
             }
+            SetPurchaseLoading(true);
 
             try
             {
@@ -215,8 +228,9 @@ namespace IPAbuyer.Views
                 {
                     BatchPurchaseButton.IsEnabled = true;
                 }
+                SetPurchaseLoading(false);
 
-                ApplyFilterAndRefresh();
+                ApplyFilterAndRefresh(preserveScrollPosition: true);
             }
         }
 
@@ -322,7 +336,7 @@ namespace IPAbuyer.Views
                 }
             }
 
-            ApplyFilterAndRefresh();
+            ApplyFilterAndRefresh(preserveScrollPosition: true);
             AppendHomeLog($"已标记 {selectedApps.Count} 项为 {status}。");
         }
 
@@ -373,27 +387,45 @@ namespace IPAbuyer.Views
             }
         }
 
-        private void ApplyFilterAndRefresh()
+        private void ApplyFilterAndRefresh(bool preserveScrollPosition = false)
         {
             if (ResultList == null)
             {
                 return;
             }
 
+            ScrollViewer? listScrollViewer = null;
+            double? previousVerticalOffset = null;
+            if (preserveScrollPosition)
+            {
+                listScrollViewer = FindDescendantScrollViewer(ResultList);
+                previousVerticalOffset = listScrollViewer?.VerticalOffset;
+            }
+
             var filtered = GetFilteredResults();
-            ResultList.ItemsSource = null;
             ResultList.ItemsSource = filtered;
+
+            if (preserveScrollPosition && listScrollViewer != null && previousVerticalOffset.HasValue)
+            {
+                double targetOffset = previousVerticalOffset.Value;
+                DispatcherQueue.TryEnqueue(() =>
+                {
+                    listScrollViewer.ChangeView(null, targetOffset, null, disableAnimation: true);
+                });
+            }
         }
 
         private List<SearchResult> GetFilteredResults()
         {
-            return _selectedFilter switch
+            List<SearchResult> filtered = _selectedFilter switch
             {
                 "OnlyPurchased" => _allResults.Where(a => IsPurchasedStatus(a.purchased)).ToList(),
                 "OnlyNotPurchased" => _allResults.Where(a => IsCanPurchaseStatus(a.purchased)).ToList(),
                 "OnlyHad" => _allResults.Where(a => IsOwnedStatus(a.purchased)).ToList(),
                 _ => _allResults.ToList(),
             };
+
+            return ApplySorting(filtered);
         }
 
         private async Task PurchaseAppsAsync(List<SearchResult> selectedApps)
@@ -447,7 +479,7 @@ namespace IPAbuyer.Views
                 {
                     app.purchased = StatusOwned;
                     PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusOwned);
-                    AppendHomeLog($"购买失败，标记为已拥有: {app.name ?? app.bundleId}");
+                    AppendHomeLog($"疑似已拥有，已标记: {app.name ?? app.bundleId}");
                 }
             }
         }
@@ -545,7 +577,9 @@ namespace IPAbuyer.Views
                 return value <= 0m;
             }
 
-            return price.Trim().Equals("free", StringComparison.OrdinalIgnoreCase);
+            string normalized = price.Trim();
+            return normalized.Equals("free", StringComparison.OrdinalIgnoreCase)
+                || normalized.Equals("免费", StringComparison.OrdinalIgnoreCase);
         }
 
         private static string? GetBundleId(JsonElement element)
@@ -599,6 +633,27 @@ namespace IPAbuyer.Views
             };
         }
 
+        private static string NormalizePriceForDisplay(string? rawPrice)
+        {
+            if (string.IsNullOrWhiteSpace(rawPrice))
+            {
+                return string.Empty;
+            }
+
+            if (decimal.TryParse(rawPrice, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal value)
+                && value <= 0m)
+            {
+                return "免费";
+            }
+
+            if (rawPrice.Trim().Equals("free", StringComparison.OrdinalIgnoreCase))
+            {
+                return "免费";
+            }
+
+            return rawPrice.Trim();
+        }
+
         private static string NormalizeCountryCode(string? code)
         {
             if (string.IsNullOrWhiteSpace(code))
@@ -608,6 +663,114 @@ namespace IPAbuyer.Views
 
             string normalized = code.Trim().ToLowerInvariant();
             return KeychainConfig.IsValidCountryCode(normalized) ? normalized : "cn";
+        }
+
+        private void SortHeader_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not Button header)
+            {
+                return;
+            }
+
+            string key = header.Tag?.ToString() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                return;
+            }
+
+            if (!string.Equals(_sortKey, key, StringComparison.Ordinal))
+            {
+                _sortKey = key;
+                _sortDirection = SortDirection.Ascending;
+            }
+            else
+            {
+                _sortDirection = _sortDirection switch
+                {
+                    SortDirection.None => SortDirection.Ascending,
+                    SortDirection.Ascending => SortDirection.Descending,
+                    SortDirection.Descending => SortDirection.None,
+                    _ => SortDirection.None
+                };
+
+                if (_sortDirection == SortDirection.None)
+                {
+                    _sortKey = null;
+                }
+            }
+
+            UpdateSortHeaderTexts();
+            ApplyFilterAndRefresh(preserveScrollPosition: true);
+        }
+
+        private List<SearchResult> ApplySorting(List<SearchResult> input)
+        {
+            if (string.IsNullOrWhiteSpace(_sortKey) || _sortDirection == SortDirection.None)
+            {
+                return input;
+            }
+
+            Func<SearchResult, object?> keySelector = _sortKey switch
+            {
+                "name" => item => item.name ?? string.Empty,
+                "id" => item => item.id ?? string.Empty,
+                "developer" => item => item.developer ?? string.Empty,
+                "version" => item => item.version ?? string.Empty,
+                "price" => item => GetPriceSortValue(item.price),
+                "purchased" => item => item.purchased ?? string.Empty,
+                _ => item => item.name ?? string.Empty
+            };
+
+            IOrderedEnumerable<SearchResult> ordered = _sortDirection == SortDirection.Ascending
+                ? input.OrderBy(keySelector)
+                : input.OrderByDescending(keySelector);
+
+            return ordered.ToList();
+        }
+
+        private static decimal GetPriceSortValue(string? price)
+        {
+            if (string.IsNullOrWhiteSpace(price))
+            {
+                return decimal.MaxValue;
+            }
+
+            if (price.Trim().Equals("免费", StringComparison.OrdinalIgnoreCase)
+                || price.Trim().Equals("free", StringComparison.OrdinalIgnoreCase))
+            {
+                return 0m;
+            }
+
+            return decimal.TryParse(price, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal value)
+                ? value
+                : decimal.MaxValue - 1;
+        }
+
+        private void UpdateSortHeaderTexts()
+        {
+            SetHeaderText(NameHeaderText, NameHeaderBase, "name");
+            SetHeaderText(IdHeaderText, IdHeaderBase, "id");
+            SetHeaderText(DeveloperHeaderText, DeveloperHeaderBase, "developer");
+            SetHeaderText(VersionHeaderText, VersionHeaderBase, "version");
+            SetHeaderText(PriceHeaderText, PriceHeaderBase, "price");
+            SetHeaderText(PurchasedHeaderText, PurchasedHeaderBase, "purchased");
+        }
+
+        private void SetHeaderText(Button? button, string baseText, string key)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            if (!string.Equals(_sortKey, key, StringComparison.Ordinal) || _sortDirection == SortDirection.None)
+            {
+                button.Content = baseText;
+                return;
+            }
+
+            string suffix = _sortDirection == SortDirection.Ascending ? " ↑" : " ↓";
+            button.Content = baseText + suffix;
         }
 
         private void CopyHomeLog_Click(object sender, RoutedEventArgs e)
@@ -647,6 +810,80 @@ namespace IPAbuyer.Views
 
             HomeLogTextBox.Text = _homeLogBuilder.ToString();
             ScrollLogToBottom(HomeLogTextBox);
+        }
+
+        private void SetPurchaseLoading(bool isLoading)
+        {
+            if (PurchaseLoadingBar == null)
+            {
+                return;
+            }
+
+            PurchaseLoadingBar.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void ResultList_ContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
+        {
+            if (args.ItemContainer?.ContentTemplateRoot is not Grid rowGrid)
+            {
+                return;
+            }
+
+            bool isOddRow = args.ItemIndex % 2 == 1;
+            if (!isOddRow)
+            {
+                rowGrid.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(0x00, 0x00, 0x00, 0x00));
+                ApplyPurchasedStatusColor(rowGrid, args.Item as SearchResult);
+                ApplyPriceColor(rowGrid, args.Item as SearchResult);
+                return;
+            }
+
+            // Use neutral gray striping and keep it independent from pointer visual states.
+            var stripeColor = ActualTheme == ElementTheme.Dark
+                ? Windows.UI.Color.FromArgb(0x1A, 0x80, 0x80, 0x80)
+                : Windows.UI.Color.FromArgb(0x14, 0x70, 0x70, 0x70);
+
+            rowGrid.Background = new SolidColorBrush(stripeColor);
+            ApplyPurchasedStatusColor(rowGrid, args.Item as SearchResult);
+            ApplyPriceColor(rowGrid, args.Item as SearchResult);
+        }
+
+        private void ApplyPurchasedStatusColor(Grid rowGrid, SearchResult? item)
+        {
+            if (rowGrid.FindName("PurchasedTextBlock") is not TextBlock statusTextBlock)
+            {
+                return;
+            }
+
+            if (item != null && (IsPurchasedStatus(item.purchased) || IsOwnedStatus(item.purchased)))
+            {
+                var greenColor = ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0x8D, 0xE6, 0x9A)
+                    : Windows.UI.Color.FromArgb(0xFF, 0x2E, 0xA0, 0x43);
+                statusTextBlock.Foreground = new SolidColorBrush(greenColor);
+                return;
+            }
+
+            statusTextBlock.ClearValue(TextBlock.ForegroundProperty);
+        }
+
+        private void ApplyPriceColor(Grid rowGrid, SearchResult? item)
+        {
+            if (rowGrid.FindName("PriceTextBlock") is not TextBlock priceTextBlock)
+            {
+                return;
+            }
+
+            if (item != null && !IsPriceFree(item.price))
+            {
+                var redColor = ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0xFF, 0x99, 0x99)
+                    : Windows.UI.Color.FromArgb(0xFF, 0xC4, 0x2B, 0x1C);
+                priceTextBlock.Foreground = new SolidColorBrush(redColor);
+                return;
+            }
+
+            priceTextBlock.ClearValue(TextBlock.ForegroundProperty);
         }
 
         private static void ScrollLogToBottom(TextBox textBox)
@@ -689,6 +926,13 @@ namespace IPAbuyer.Views
 
             _pageCts.Dispose();
             _pageCts = new CancellationTokenSource();
+        }
+
+        private enum SortDirection
+        {
+            None = 0,
+            Ascending = 1,
+            Descending = 2
         }
     }
 }
