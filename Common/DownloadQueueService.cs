@@ -143,7 +143,16 @@ namespace IPAbuyer.Common
                 _queueCts = new CancellationTokenSource();
                 NotifyQueueChanged();
 
-                string account = ResolveAccount();
+                string account;
+                try
+                {
+                    account = ResolveAccount();
+                }
+                catch (InvalidOperationException ex)
+                {
+                    EmitLog(ex.Message);
+                    return 0;
+                }
                 string outputDirectory = KeychainConfig.GetDownloadDirectory();
                 Directory.CreateDirectory(outputDirectory);
                 bool useMockFlow = SessionState.IsLoggedIn
