@@ -15,31 +15,13 @@ namespace IPAbuyer.Models
 
         public Database()
         {
-#if RELEASE
             try
             {
-                path = ApplicationData.Current.LocalFolder.Path;
-                appDb = Path.Combine(path, appDbName);
-                accountDb = Path.Combine(path, accountDbName);
-
-                if (!File.Exists(appDb))
-                {
-                    File.Create(appDb).Close();
-                }
-
-                if (!File.Exists(accountDb))
-                {
-                    File.Create(accountDb).Close();
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"数据库错误: {ex.Message}");
-            }
-#elif DEBUG
-            try
-            {
+#if DEBUG
                 path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IPAbuyer");
+#else
+                path = ApplicationData.Current.LocalFolder.Path;
+#endif
 
                 if (!Directory.Exists(path))
                 {
@@ -63,7 +45,6 @@ namespace IPAbuyer.Models
             {
                 Debug.WriteLine($"数据库错误: {ex.Message}");
             }
-#endif
         }
     }
 }

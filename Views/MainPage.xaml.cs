@@ -109,9 +109,19 @@ namespace IPAbuyer.Views
                     return;
                 }
 
-                var purchasedDict = string.IsNullOrWhiteSpace(account)
-                    ? new Dictionary<string, string>()
-                    : PurchasedAppDb.GetPurchasedApps(account).ToDictionary(x => x.appID, x => x.status);
+                var purchasedDict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                if (!string.IsNullOrWhiteSpace(account))
+                {
+                    foreach (var record in PurchasedAppDb.GetPurchasedApps(account))
+                    {
+                        if (string.IsNullOrWhiteSpace(record.appID))
+                        {
+                            continue;
+                        }
+
+                        purchasedDict[record.appID] = record.status;
+                    }
+                }
 
                 _allResults.Clear();
                 foreach (var appElement in resultsElement.EnumerateArray())
