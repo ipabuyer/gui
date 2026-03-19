@@ -120,7 +120,9 @@
                                                 Width="24"
                                                 Height="24"
                                                 CornerRadius="6"
-                                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                                BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                                BorderThickness="0.6">
                                                 <Image
                                                     Width="24"
                                                     Height="24"

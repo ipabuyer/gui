@@ -448,7 +448,7 @@ namespace IPAbuyer.Views
                 {
                     app.purchased = StatusOwned;
                     PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusOwned);
-                    AppendHomeLog($"购买失败，标记为已拥有: {app.name ?? app.bundleId}");
+                    AppendHomeLog($"疑似已拥有，已标记: {app.name ?? app.bundleId}");
                 }
             }
         }
