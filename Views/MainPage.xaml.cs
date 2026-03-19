@@ -38,6 +38,7 @@ namespace IPAbuyer.Views
         public MainPage()
         {
             InitializeComponent();
+            NavigationCacheMode = Microsoft.UI.Xaml.Navigation.NavigationCacheMode.Enabled;
         }
 
         public async void PerformSearchFromMainWindow(string appName)
@@ -173,7 +174,7 @@ namespace IPAbuyer.Views
                 }
                 SetPurchaseLoading(false);
 
-                ApplyFilterAndRefresh();
+                ApplyFilterAndRefresh(preserveScrollPosition: true);
             }
         }
 
@@ -221,7 +222,7 @@ namespace IPAbuyer.Views
                 }
                 SetPurchaseLoading(false);
 
-                ApplyFilterAndRefresh();
+                ApplyFilterAndRefresh(preserveScrollPosition: true);
             }
         }
 
@@ -327,7 +328,7 @@ namespace IPAbuyer.Views
                 }
             }
 
-            ApplyFilterAndRefresh();
+            ApplyFilterAndRefresh(preserveScrollPosition: true);
             AppendHomeLog($"已标记 {selectedApps.Count} 项为 {status}。");
         }
 
@@ -378,16 +379,32 @@ namespace IPAbuyer.Views
             }
         }
 
-        private void ApplyFilterAndRefresh()
+        private void ApplyFilterAndRefresh(bool preserveScrollPosition = false)
         {
             if (ResultList == null)
             {
                 return;
             }
 
+            ScrollViewer? listScrollViewer = null;
+            double? previousVerticalOffset = null;
+            if (preserveScrollPosition)
+            {
+                listScrollViewer = FindDescendantScrollViewer(ResultList);
+                previousVerticalOffset = listScrollViewer?.VerticalOffset;
+            }
+
             var filtered = GetFilteredResults();
-            ResultList.ItemsSource = null;
             ResultList.ItemsSource = filtered;
+
+            if (preserveScrollPosition && listScrollViewer != null && previousVerticalOffset.HasValue)
+            {
+                double targetOffset = previousVerticalOffset.Value;
+                DispatcherQueue.TryEnqueue(() =>
+                {
+                    listScrollViewer.ChangeView(null, targetOffset, null, disableAnimation: true);
+                });
+            }
         }
 
         private List<SearchResult> GetFilteredResults()
