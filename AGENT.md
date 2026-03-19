@@ -95,11 +95,14 @@
 
 1. 设置界面的配置写入`settings.json`文件，存放于数据库目录
 2. 修改和重置国家代码（默认为cn）功能
-   1. 需要提示用户：跨地区购买会导致标记为疑似已拥有
+   1. 设置名称：country
+   2. 需要提示用户：跨地区购买会导致标记为疑似已拥有
 3. 修改和重置下载目录功能，默认为当前用户的下载文件夹
-4. 开发者官方网站（按钮跳转<https://ipa.blazesnow.com>）
-5. 反馈邮箱（按钮复制<ipa@blazesnow.com>）
-6. 详细日志选框，勾选后所有ipatool命令都显示在日志区，显示在软件日志输出前
+   1. 设置名称：download_dir
+4. 详细日志选框，勾选后所有ipatool命令都显示在日志区，显示在软件日志输出前
+   1. 设置名称：verbose
+5. 开发者官方网站（按钮跳转<https://ipa.blazesnow.com>）
+6. 反馈邮箱（按钮复制<ipa@blazesnow.com>）
 7. 清空本地数据库按钮与介绍
 8. 清空ipatool数据按钮与介绍，ipatool数据目录：`%USERNAME%/.ipatool/`
 9. 导出ipatool.exe功能，默认输出目录为下载目录
