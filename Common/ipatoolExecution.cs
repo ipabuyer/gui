@@ -319,7 +319,7 @@ namespace IPAbuyer.Common
                 catch (OperationCanceledException)
                 {
                     TryTerminateProcess(process);
-                    return new IpatoolResult(null, $"执行超时: {string.Join(' ', arguments)}", ExitCode: -1, TimedOut: true);
+                    return new IpatoolResult(null, $"执行超时: {GetSafeCommandLabel(arguments)}", ExitCode: -1, TimedOut: true);
                 }
 
                 string output = await outputTask.ConfigureAwait(false);
@@ -449,13 +449,19 @@ namespace IPAbuyer.Common
             }
 
             string[] lines = trimmed.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            var jsonLines = new List<string>();
             foreach (string line in lines)
             {
                 string candidate = line.Trim();
                 if (candidate.StartsWith("{") || candidate.StartsWith("["))
                 {
-                    return candidate;
+                    jsonLines.Add(candidate);
                 }
+            }
+
+            if (jsonLines.Count > 0)
+            {
+                return string.Join(Environment.NewLine, jsonLines);
             }
 
             return null;
@@ -570,6 +576,21 @@ namespace IPAbuyer.Common
             psi.EnvironmentVariables["NO_COLOR"] = "1";
             psi.EnvironmentVariables["TERM"] = "dumb";
             return psi;
+        }
+
+        private static string GetSafeCommandLabel(IReadOnlyList<string> arguments)
+        {
+            if (arguments.Count == 0)
+            {
+                return "ipatool";
+            }
+
+            if (arguments.Count == 1)
+            {
+                return $"ipatool {arguments[0]}";
+            }
+
+            return $"ipatool {arguments[0]} {arguments[1]}";
         }
     }
 }
