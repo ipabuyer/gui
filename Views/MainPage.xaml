@@ -141,7 +141,11 @@
                                             TextTrimming="CharacterEllipsis"
                                             ToolTipService.ToolTip="{x:Bind developer}" />
                                         <TextBlock Grid.Column="4" HorizontalAlignment="Center" Text="{x:Bind version}" />
-                                        <TextBlock Grid.Column="5" HorizontalAlignment="Center" Text="{x:Bind price}" />
+                                        <TextBlock
+                                            x:Name="PriceTextBlock"
+                                            Grid.Column="5"
+                                            HorizontalAlignment="Center"
+                                            Text="{x:Bind price}" />
                                         <TextBlock
                                             x:Name="PurchasedTextBlock"
                                             Grid.Column="6"

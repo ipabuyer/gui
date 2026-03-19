@@ -119,7 +119,7 @@ namespace IPAbuyer.Views
                         name = GetPropertyValue(appElement, "trackName"),
                         developer = GetPropertyValue(appElement, "sellerName"),
                         artworkUrl = GetPropertyValue(appElement, "artworkUrl100"),
-                        price = GetPriceValue(appElement),
+                        price = NormalizePriceForDisplay(GetPriceValue(appElement)),
                         version = GetPropertyValue(appElement, "version"),
                         purchased = status
                     });
@@ -546,7 +546,9 @@ namespace IPAbuyer.Views
                 return value <= 0m;
             }
 
-            return price.Trim().Equals("free", StringComparison.OrdinalIgnoreCase);
+            string normalized = price.Trim();
+            return normalized.Equals("free", StringComparison.OrdinalIgnoreCase)
+                || normalized.Equals("免费", StringComparison.OrdinalIgnoreCase);
         }
 
         private static string? GetBundleId(JsonElement element)
@@ -598,6 +600,27 @@ namespace IPAbuyer.Views
                 JsonValueKind.False => "false",
                 _ => priceElement.GetRawText()
             };
+        }
+
+        private static string NormalizePriceForDisplay(string? rawPrice)
+        {
+            if (string.IsNullOrWhiteSpace(rawPrice))
+            {
+                return string.Empty;
+            }
+
+            if (decimal.TryParse(rawPrice, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal value)
+                && value <= 0m)
+            {
+                return "免费";
+            }
+
+            if (rawPrice.Trim().Equals("free", StringComparison.OrdinalIgnoreCase))
+            {
+                return "免费";
+            }
+
+            return rawPrice.Trim();
         }
 
         private static string NormalizeCountryCode(string? code)
@@ -662,6 +685,7 @@ namespace IPAbuyer.Views
             {
                 rowGrid.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(0x00, 0x00, 0x00, 0x00));
                 ApplyPurchasedStatusColor(rowGrid, args.Item as SearchResult);
+                ApplyPriceColor(rowGrid, args.Item as SearchResult);
                 return;
             }
 
@@ -672,6 +696,7 @@ namespace IPAbuyer.Views
 
             rowGrid.Background = new SolidColorBrush(stripeColor);
             ApplyPurchasedStatusColor(rowGrid, args.Item as SearchResult);
+            ApplyPriceColor(rowGrid, args.Item as SearchResult);
         }
 
         private void ApplyPurchasedStatusColor(Grid rowGrid, SearchResult? item)
@@ -691,6 +716,25 @@ namespace IPAbuyer.Views
             }
 
             statusTextBlock.ClearValue(TextBlock.ForegroundProperty);
+        }
+
+        private void ApplyPriceColor(Grid rowGrid, SearchResult? item)
+        {
+            if (rowGrid.FindName("PriceTextBlock") is not TextBlock priceTextBlock)
+            {
+                return;
+            }
+
+            if (item != null && !IsPriceFree(item.price))
+            {
+                var redColor = ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0xFF, 0x99, 0x99)
+                    : Windows.UI.Color.FromArgb(0xFF, 0xC4, 0x2B, 0x1C);
+                priceTextBlock.Foreground = new SolidColorBrush(redColor);
+                return;
+            }
+
+            priceTextBlock.ClearValue(TextBlock.ForegroundProperty);
         }
 
         private static void ScrollLogToBottom(TextBox textBox)
