@@ -20,7 +20,6 @@ namespace IPAbuyer.Views
         private readonly System.Collections.Generic.List<UiLogEntry> _loginLogEntries = new();
         private CancellationTokenSource? _currentOperationCts;
 
-        private string? _lastLoginUsername;
         private string _account = "example@icloud.com";
         private string _password = string.Empty;
         private string _passphrase = string.Empty;
@@ -32,13 +31,6 @@ namespace IPAbuyer.Views
         {
             InitializeComponent();
 
-            _lastLoginUsername = KeychainConfig.GetLastLoginUsername();
-            if (!string.IsNullOrWhiteSpace(_lastLoginUsername))
-            {
-                _account = _lastLoginUsername;
-            }
-
-            LoadAccountHistory();
             string? savedPassphrase = KeychainConfig.GetPassphrase(_account);
             if (!string.IsNullOrWhiteSpace(savedPassphrase) && PassphraseInput != null)
             {
@@ -184,7 +176,7 @@ namespace IPAbuyer.Views
                 _currentOperationCts = CancellationTokenSource.CreateLinkedTokenSource(_pageCts.Token);
                 SetBusyState(true, "正在退出登录...");
 
-                var result = await IpatoolExecution.AuthLogoutAsync(account, _currentOperationCts.Token);
+                var result = await IpatoolExecution.AuthLogoutAsync(_currentOperationCts.Token);
                 DisposeCurrentOperation();
 
                 if (result.IsSuccessResponse)
@@ -210,24 +202,6 @@ namespace IPAbuyer.Views
             {
                 DisposeCurrentOperation();
                 RestoreIdleState();
-            }
-        }
-
-        private void LoadAccountHistory()
-        {
-            try
-            {
-                _lastLoginUsername = KeychainConfig.GetLastLoginUsername();
-
-                if (!string.IsNullOrEmpty(_lastLoginUsername) && EmailTextBox != null)
-                {
-                    EmailTextBox.Text = _lastLoginUsername;
-                    _account = _lastLoginUsername;
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Load account history failed: {ex.Message}");
             }
         }
 
@@ -624,7 +598,6 @@ namespace IPAbuyer.Views
             {
                 KeychainConfig.GenerateAndSaveSecretKey(_account);
                 KeychainConfig.SavePassphrase(_account, _passphrase);
-                _lastLoginUsername = _account;
                 if (EmailTextBox != null)
                 {
                     EmailTextBox.Text = _account;

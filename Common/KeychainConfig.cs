@@ -1,28 +1,24 @@
-using IPAbuyer.Models;
-using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Security.Cryptography;
-using System.Threading.Tasks;
-using Windows.ApplicationModel;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Windows.Storage;
 
 namespace IPAbuyer.Common
 {
     /// <summary>
-    /// SQLite 数据库交互帮助类
+    /// 本地配置读写（文件版，不使用 KeychainConfig.db）
     /// </summary>
     public static class KeychainConfig
     {
-        private static string _dbPath = string.Empty;
-        private static string _connectionString = string.Empty;
-        private const string LastLoginKey = "LastLoginUsername";
-        private const string CountryCodeKey = "CountryCode";
-        private const string DownloadDirectoryKey = "DownloadDirectory";
-        private const string DetailedIpatoolLogKey = "DetailedIpatoolLogEnabled";
+        private const string SettingsFileName = "settings.json";
         private const string PassphraseFileName = "passphrase.txt";
+        private const string LastLoginFileName = "last_login.txt";
         private const string DefaultCountryCode = "cn";
+        private static readonly object SyncRoot = new();
+
         private static readonly HashSet<string> ValidCountryCodes = new(StringComparer.OrdinalIgnoreCase)
         {
             "ad","ae","af","ag","ai","al","am","ao","aq","ar","as","at","au","aw","ax","az",
@@ -52,242 +48,69 @@ namespace IPAbuyer.Common
             "za","zm","zw"
         };
 
-        /// <summary>
-        /// 初始化数据库
-        /// </summary>
         public static void InitializeDatabase()
         {
-            Database database = new Database();
-            _dbPath = database.accountDb ?? throw new InvalidOperationException("账户数据库路径未初始化");
-            _connectionString = $"Data Source={_dbPath}";
-
-            using var connection = new SqliteConnection(_connectionString);
-            connection.Open();
-
-            var createTableCmd = connection.CreateCommand();
-            createTableCmd.CommandText = @"
-                CREATE TABLE IF NOT EXISTS Users (
-                    Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Username TEXT NOT NULL UNIQUE,
-                    SecretKey TEXT NOT NULL
-                );
-                
-                CREATE TABLE IF NOT EXISTS Settings (
-                    Key TEXT PRIMARY KEY,
-                    Value TEXT NOT NULL
-                );
-
-                CREATE TABLE IF NOT EXISTS MockAccounts (
-                    Username TEXT NOT NULL,
-                    Password TEXT NOT NULL,
-                    PRIMARY KEY (Username, Password)
-                );";
-            createTableCmd.ExecuteNonQuery();
-
-            EnsureCountryCodeColumn(connection);
-            EnsureMockAccountSeed(connection);
-        }
-
-        /// <summary>
-        /// 生成10位随机字符串密钥（包含大小写字母和数字）
-        /// </summary>
-        private static string GenerateRandomKey()
-        {
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-            const int keyLength = 10;
-
-            using var rng = RandomNumberGenerator.Create();
-            var result = new char[keyLength];
-            var buffer = new byte[keyLength];
-
-            rng.GetBytes(buffer);
-
-            for (int i = 0; i < keyLength; i++)
+            lock (SyncRoot)
             {
-                result[i] = chars[buffer[i] % chars.Length];
+                EnsureStorageReady();
+                RemoveLegacyKeychainDatabase();
+                _ = LoadSettingsInternal();
             }
-
-            return new string(result);
         }
 
-        /// <summary>
-        /// 1. 输入用户名返回密钥
-        /// </summary>
-        /// <param name="username">用户名</param>
-        /// <returns>密钥，如果用户不存在则返回 null</returns>
         public static string? GetSecretKey(string username)
         {
-            if (string.IsNullOrWhiteSpace(username))
-                return null;
-
-            try
-            {
-                using var connection = new SqliteConnection(_connectionString);
-                connection.Open();
-
-                EnsureCountryCodeColumn(connection);
-
-                var selectCmd = connection.CreateCommand();
-                selectCmd.CommandText = "SELECT SecretKey FROM Users WHERE Username = @username";
-                selectCmd.Parameters.AddWithValue("@username", username);
-
-                var result = selectCmd.ExecuteScalar();
-                return result?.ToString(); // 添加 ? 操作符以安全处理 null
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"查询密钥失败: {ex.Message}", ex);
-            }
+            // 兼容旧调用：已移除数据库，不再存储 SecretKey。
+            return null;
         }
 
-        /// <summary>
-        /// 2. 输入用户名生成密钥，返回密钥，写入数据库
-        /// </summary>
-        /// <param name="username">用户名</param>
-        /// <returns>生成的密钥</returns>
         public static string GenerateAndSaveSecretKey(string username)
         {
             if (string.IsNullOrWhiteSpace(username))
-                throw new ArgumentException("用户名不能为空");
-
-            try
             {
-
-                using var connection = new SqliteConnection(_connectionString);
-                connection.Open();
-
-                // 先尝试读取已有密钥，避免重复生成导致登录状态失效
-                var selectCmd = connection.CreateCommand();
-                selectCmd.CommandText = "SELECT SecretKey FROM Users WHERE Username = @username";
-                selectCmd.Parameters.AddWithValue("@username", username);
-
-                var existingKey = selectCmd.ExecuteScalar()?.ToString();
-                if (!string.IsNullOrEmpty(existingKey))
-                {
-                    SaveLastLoginUsername(username);
-                    return existingKey;
-                }
-
-                var secretKey = GenerateRandomKey();
-                EnsureCountryCodeColumn(connection);
-
-                // 使用 INSERT OR REPLACE 来处理用户已存在的情况
-                var insertCmd = connection.CreateCommand();
-                insertCmd.CommandText = @"
-                    INSERT INTO Users (Username, SecretKey, CountryCode) 
-                    VALUES (@username, @secretKey, @countryCode)
-                    ON CONFLICT(Username) 
-                    DO UPDATE SET SecretKey = @secretKey";
-
-                insertCmd.Parameters.AddWithValue("@username", username);
-                insertCmd.Parameters.AddWithValue("@secretKey", secretKey);
-                insertCmd.Parameters.AddWithValue("@countryCode", DefaultCountryCode);
-                insertCmd.ExecuteNonQuery();
-
-                // 更新最后登录用户
-                SaveLastLoginUsername(username);
-
-                return secretKey;
+                throw new ArgumentException("用户名不能为空", nameof(username));
             }
-            catch (Exception ex)
-            {
-                throw new Exception($"生成并保存密钥失败: {ex.Message}", ex);
-            }
+
+            SaveLastLoginUsername(username);
+            return string.Empty;
         }
 
-        /// <summary>
-        /// 3. 查找最后一次登录用户名
-        /// </summary>
-        /// <returns>最后登录的用户名，如果不存在则返回 null</returns>
         public static string? GetLastLoginUsername()
         {
-            try
+            lock (SyncRoot)
             {
-                if (string.IsNullOrEmpty(_connectionString))
+                string path = GetLastLoginFilePath();
+                if (!File.Exists(path))
                 {
-                    InitializeDatabase();
+                    return null;
                 }
 
-                using var connection = new SqliteConnection(_connectionString);
-                connection.Open();
-
-                var selectCmd = connection.CreateCommand();
-                selectCmd.CommandText = "SELECT Value FROM Settings WHERE Key = @key";
-                selectCmd.Parameters.AddWithValue("@key", LastLoginKey);
-
-                var result = selectCmd.ExecuteScalar();
-                return result?.ToString();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"获取最后登录用户失败: {ex.Message}", ex);
+                string content = File.ReadAllText(path, Encoding.UTF8).Trim();
+                return string.IsNullOrWhiteSpace(content) ? null : content;
             }
         }
 
         public static void ClearLastLoginUsername()
         {
-            try
+            lock (SyncRoot)
             {
-                if (string.IsNullOrEmpty(_connectionString))
+                string path = GetLastLoginFilePath();
+                if (File.Exists(path))
                 {
-                    InitializeDatabase();
+                    File.Delete(path);
                 }
-
-                using var connection = new SqliteConnection(_connectionString);
-                connection.Open();
-
-                var deleteCmd = connection.CreateCommand();
-                deleteCmd.CommandText = "DELETE FROM Settings WHERE Key = @key";
-                deleteCmd.Parameters.AddWithValue("@key", LastLoginKey);
-                deleteCmd.ExecuteNonQuery();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"清除最后登录用户失败: {ex.Message}", ex);
             }
         }
 
         public static string GetCountryCode(string? account = null)
         {
-            try
+            lock (SyncRoot)
             {
-                if (string.IsNullOrEmpty(_connectionString))
-                {
-                    InitializeDatabase();
-                }
-
-                using var connection = new SqliteConnection(_connectionString);
-                connection.Open();
-
-                EnsureCountryCodeColumn(connection);
-
-                string normalizedAccount = NormalizeAccount(account);
-
-                if (!string.IsNullOrEmpty(normalizedAccount))
-                {
-                    string? userCode = GetUserCountryCode(connection, normalizedAccount);
-                    if (TryNormalizeCountryCode(userCode, out string normalizedUserCode))
-                    {
-                        return normalizedUserCode;
-                    }
-
-                    if (TryMigrateLegacyCountryCode(connection, normalizedAccount, out string migratedCode))
-                    {
-                        return migratedCode;
-                    }
-                }
-
-                string? defaultValue = ReadSettingValue(connection, CountryCodeKey);
-                if (TryNormalizeCountryCode(defaultValue, out string normalizedDefaultValue))
-                {
-                    return normalizedDefaultValue;
-                }
-
-                return DefaultCountryCode;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"获取国家/地区代码失败: {ex.Message}", ex);
+                var settings = LoadSettingsInternal();
+                string candidate = string.IsNullOrWhiteSpace(settings.CountryCode)
+                    ? DefaultCountryCode
+                    : settings.CountryCode.Trim().ToLowerInvariant();
+                return IsValidCountryCode(candidate) ? candidate : DefaultCountryCode;
             }
         }
 
@@ -299,122 +122,66 @@ namespace IPAbuyer.Common
             }
 
             string normalized = countryCode.Trim().ToLowerInvariant();
-
             if (!IsValidCountryCode(normalized))
             {
                 throw new ArgumentException("国家/地区代码格式无效", nameof(countryCode));
             }
 
-            try
+            lock (SyncRoot)
             {
-                if (string.IsNullOrEmpty(_connectionString))
-                {
-                    InitializeDatabase();
-                }
-
-                using var connection = new SqliteConnection(_connectionString);
-                connection.Open();
-
-                EnsureCountryCodeColumn(connection);
-
-                string normalizedAccount = NormalizeAccount(account);
-
-                if (!string.IsNullOrEmpty(normalizedAccount))
-                {
-                    SaveUserCountryCode(connection, normalizedAccount, normalized);
-                    DeleteSettingKey(connection, $"{CountryCodeKey}:{normalizedAccount}");
-                }
-                else
-                {
-                    SaveGlobalCountryCode(connection, normalized);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"保存国家/地区代码失败: {ex.Message}", ex);
+                var settings = LoadSettingsInternal();
+                settings.CountryCode = normalized;
+                SaveSettingsInternal(settings);
             }
         }
 
         public static string GetDownloadDirectory()
         {
-            try
+            lock (SyncRoot)
             {
-                if (string.IsNullOrEmpty(_connectionString))
+                var settings = LoadSettingsInternal();
+                string directory = string.IsNullOrWhiteSpace(settings.DownloadDirectory)
+                    ? GetDefaultDownloadDirectory()
+                    : Path.GetFullPath(settings.DownloadDirectory.Trim());
+                Directory.CreateDirectory(directory);
+
+                if (!string.Equals(settings.DownloadDirectory, directory, StringComparison.Ordinal))
                 {
-                    InitializeDatabase();
+                    settings.DownloadDirectory = directory;
+                    SaveSettingsInternal(settings);
                 }
 
-                using var connection = new SqliteConnection(_connectionString);
-                connection.Open();
-
-                string? value = ReadSettingValue(connection, DownloadDirectoryKey);
-                if (string.IsNullOrWhiteSpace(value))
-                {
-                    string fallback = GetDefaultDownloadDirectory();
-                    SaveDownloadDirectory(fallback);
-                    return fallback;
-                }
-
-                Directory.CreateDirectory(value);
-                return value;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"获取下载目录失败: {ex.Message}", ex);
+                return directory;
             }
         }
 
         public static void SavePassphrase(string account, string passphrase)
         {
-            if (string.IsNullOrWhiteSpace(account))
-            {
-                throw new ArgumentException("账号不能为空", nameof(account));
-            }
-
             if (string.IsNullOrWhiteSpace(passphrase))
             {
                 throw new ArgumentException("加密密钥不能为空", nameof(passphrase));
             }
 
-            string path = GetPassphraseFilePath();
-            string content = $"{account.Trim()}{Environment.NewLine}{passphrase.Trim()}";
-            File.WriteAllText(path, content);
+            lock (SyncRoot)
+            {
+                string path = GetPassphraseFilePath();
+                File.WriteAllText(path, passphrase.Trim(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            }
         }
 
         public static string? GetPassphrase(string? account)
         {
-            string path = GetPassphraseFilePath();
-            if (!File.Exists(path))
+            lock (SyncRoot)
             {
-                return null;
-            }
+                string path = GetPassphraseFilePath();
+                if (!File.Exists(path))
+                {
+                    return null;
+                }
 
-            string[] lines = File.ReadAllLines(path);
-            if (lines.Length == 0)
-            {
-                return null;
+                string content = File.ReadAllText(path, Encoding.UTF8).Trim();
+                return string.IsNullOrWhiteSpace(content) ? null : content;
             }
-
-            if (lines.Length == 1)
-            {
-                return lines[0].Trim();
-            }
-
-            string savedAccount = lines[0].Trim();
-            string savedPassphrase = lines[1].Trim();
-            if (string.IsNullOrWhiteSpace(savedPassphrase))
-            {
-                return null;
-            }
-
-            if (string.IsNullOrWhiteSpace(account))
-            {
-                return savedPassphrase;
-            }
-
-            return string.Equals(savedAccount, account.Trim(), StringComparison.OrdinalIgnoreCase)
-                ? savedPassphrase
-                : null;
         }
 
         public static void SaveDownloadDirectory(string directoryPath)
@@ -424,106 +191,33 @@ namespace IPAbuyer.Common
                 throw new ArgumentException("下载目录不能为空", nameof(directoryPath));
             }
 
-            try
+            string normalized = Path.GetFullPath(directoryPath.Trim());
+            Directory.CreateDirectory(normalized);
+
+            lock (SyncRoot)
             {
-                if (string.IsNullOrEmpty(_connectionString))
-                {
-                    InitializeDatabase();
-                }
-
-                string normalized = Path.GetFullPath(directoryPath.Trim());
-                Directory.CreateDirectory(normalized);
-
-                using var connection = new SqliteConnection(_connectionString);
-                connection.Open();
-
-                var insertCmd = connection.CreateCommand();
-                insertCmd.CommandText = @"
-                    INSERT INTO Settings (Key, Value)
-                    VALUES (@key, @value)
-                    ON CONFLICT(Key)
-                    DO UPDATE SET Value = @value";
-                insertCmd.Parameters.AddWithValue("@key", DownloadDirectoryKey);
-                insertCmd.Parameters.AddWithValue("@value", normalized);
-                insertCmd.ExecuteNonQuery();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"保存下载目录失败: {ex.Message}", ex);
+                var settings = LoadSettingsInternal();
+                settings.DownloadDirectory = normalized;
+                SaveSettingsInternal(settings);
             }
         }
 
         public static bool GetDetailedIpatoolLogEnabled()
         {
-            try
+            lock (SyncRoot)
             {
-                if (string.IsNullOrEmpty(_connectionString))
-                {
-                    InitializeDatabase();
-                }
-
-                using var connection = new SqliteConnection(_connectionString);
-                connection.Open();
-
-                string? value = ReadSettingValue(connection, DetailedIpatoolLogKey);
-                if (string.IsNullOrWhiteSpace(value))
-                {
-                    return false;
-                }
-
-                return value.Equals("1", StringComparison.Ordinal)
-                    || value.Equals("true", StringComparison.OrdinalIgnoreCase);
-            }
-            catch
-            {
-                return false;
+                return LoadSettingsInternal().DetailedIpatoolLogEnabled;
             }
         }
 
         public static void SaveDetailedIpatoolLogEnabled(bool enabled)
         {
-            if (string.IsNullOrEmpty(_connectionString))
+            lock (SyncRoot)
             {
-                InitializeDatabase();
+                var settings = LoadSettingsInternal();
+                settings.DetailedIpatoolLogEnabled = enabled;
+                SaveSettingsInternal(settings);
             }
-
-            using var connection = new SqliteConnection(_connectionString);
-            connection.Open();
-
-            var insertCmd = connection.CreateCommand();
-            insertCmd.CommandText = @"
-                INSERT INTO Settings (Key, Value)
-                VALUES (@key, @value)
-                ON CONFLICT(Key)
-                DO UPDATE SET Value = @value";
-            insertCmd.Parameters.AddWithValue("@key", DetailedIpatoolLogKey);
-            insertCmd.Parameters.AddWithValue("@value", enabled ? "1" : "0");
-            insertCmd.ExecuteNonQuery();
-        }
-
-        /// <summary>
-        /// 保存最后登录用户名（内部方法）
-        /// </summary>
-        private static void SaveLastLoginUsername(string username)
-        {
-            if (string.IsNullOrEmpty(_connectionString))
-            {
-                InitializeDatabase();
-            }
-
-            using var connection = new SqliteConnection(_connectionString);
-            connection.Open();
-
-            var insertCmd = connection.CreateCommand();
-            insertCmd.CommandText = @"
-                INSERT INTO Settings (Key, Value) 
-                VALUES (@key, @username)
-                ON CONFLICT(Key) 
-                DO UPDATE SET Value = @username";
-
-            insertCmd.Parameters.AddWithValue("@key", LastLoginKey);
-            insertCmd.Parameters.AddWithValue("@username", username);
-            insertCmd.ExecuteNonQuery();
         }
 
         public static bool IsValidCountryCode(string? code)
@@ -543,50 +237,8 @@ namespace IPAbuyer.Common
                 return false;
             }
 
-            if (string.IsNullOrEmpty(_connectionString))
-            {
-                InitializeDatabase();
-            }
-
-            using var connection = new SqliteConnection(_connectionString);
-            connection.Open();
-
-            EnsureMockAccountSeed(connection);
-
-            using var cmd = connection.CreateCommand();
-            cmd.CommandText = @"
-                SELECT COUNT(1)
-                FROM MockAccounts
-                WHERE LOWER(Username) = @username
-                  AND Password = @password";
-            cmd.Parameters.AddWithValue("@username", username.Trim().ToLowerInvariant());
-            cmd.Parameters.AddWithValue("@password", password.Trim());
-
-            var result = cmd.ExecuteScalar();
-            if (result == null)
-            {
-                return false;
-            }
-
-            return Convert.ToInt32(result) > 0;
-        }
-
-        private static bool TryNormalizeCountryCode(string? value, out string normalized)
-        {
-            normalized = string.Empty;
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                return false;
-            }
-
-            string candidate = value.Trim().ToLowerInvariant();
-            if (!IsValidCountryCode(candidate))
-            {
-                return false;
-            }
-
-            normalized = candidate;
-            return true;
+            return string.Equals(username.Trim(), "test", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(password.Trim(), "test", StringComparison.Ordinal);
         }
 
         public static string GetDefaultDownloadDirectory()
@@ -597,21 +249,156 @@ namespace IPAbuyer.Common
             return downloadPath;
         }
 
+        private static void SaveLastLoginUsername(string username)
+        {
+            lock (SyncRoot)
+            {
+                string path = GetLastLoginFilePath();
+                File.WriteAllText(path, username.Trim(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            }
+        }
+
+        private static string GetSettingsFilePath()
+        {
+            string dataDirectory = ResolveDataDirectory();
+            return Path.Combine(dataDirectory, SettingsFileName);
+        }
+
         private static string GetPassphraseFilePath()
         {
-            if (string.IsNullOrEmpty(_dbPath))
+            string dataDirectory = ResolveDataDirectory();
+            return Path.Combine(dataDirectory, PassphraseFileName);
+        }
+
+        private static string GetLastLoginFilePath()
+        {
+            string dataDirectory = ResolveDataDirectory();
+            return Path.Combine(dataDirectory, LastLoginFileName);
+        }
+
+        private static void EnsureStorageReady()
+        {
+            Directory.CreateDirectory(ResolveDataDirectory());
+        }
+
+        private static LocalSettingsModel LoadSettingsInternal()
+        {
+            string path = GetSettingsFilePath();
+            if (!File.Exists(path))
             {
-                InitializeDatabase();
+                var defaults = CreateDefaultSettings();
+                SaveSettingsInternal(defaults);
+                return defaults;
             }
 
-            string? directory = Path.GetDirectoryName(_dbPath);
-            if (string.IsNullOrWhiteSpace(directory))
+            try
             {
-                directory = ResolveDataDirectory();
+                string json = File.ReadAllText(path, Encoding.UTF8);
+                var model = CreateDefaultSettings();
+                if (!string.IsNullOrWhiteSpace(json))
+                {
+                    using JsonDocument document = JsonDocument.Parse(json);
+                    JsonElement root = document.RootElement;
+                    if (root.ValueKind == JsonValueKind.Object)
+                    {
+                        if (TryReadStringProperty(root, out string? countryValue, "country", "CountryCode"))
+                        {
+                            model.CountryCode = countryValue ?? DefaultCountryCode;
+                        }
+
+                        if (TryReadStringProperty(root, out string? downloadDirectoryValue, "download_dir", "DownloadDirectory"))
+                        {
+                            model.DownloadDirectory = downloadDirectoryValue ?? string.Empty;
+                        }
+
+                        if (TryReadBooleanProperty(root, out bool verboseValue, "verbose", "DetailedIpatoolLogEnabled"))
+                        {
+                            model.DetailedIpatoolLogEnabled = verboseValue;
+                        }
+                    }
+                }
+
+                NormalizeSettings(model);
+                SaveSettingsInternal(model);
+                return model;
+            }
+            catch
+            {
+                var defaults = CreateDefaultSettings();
+                SaveSettingsInternal(defaults);
+                return defaults;
+            }
+        }
+
+        private static void SaveSettingsInternal(LocalSettingsModel settings)
+        {
+            NormalizeSettings(settings);
+            string path = GetSettingsFilePath();
+            string json = JsonSerializer.Serialize(settings, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+            File.WriteAllText(path, json, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        }
+
+        private static void NormalizeSettings(LocalSettingsModel settings)
+        {
+            settings.CountryCode = string.IsNullOrWhiteSpace(settings.CountryCode)
+                ? DefaultCountryCode
+                : settings.CountryCode.Trim().ToLowerInvariant();
+            if (!IsValidCountryCode(settings.CountryCode))
+            {
+                settings.CountryCode = DefaultCountryCode;
             }
 
-            Directory.CreateDirectory(directory);
-            return Path.Combine(directory, PassphraseFileName);
+            settings.DownloadDirectory = string.IsNullOrWhiteSpace(settings.DownloadDirectory)
+                ? GetDefaultDownloadDirectory()
+                : Path.GetFullPath(settings.DownloadDirectory.Trim());
+        }
+
+        private static LocalSettingsModel CreateDefaultSettings()
+        {
+            return new LocalSettingsModel
+            {
+                CountryCode = DefaultCountryCode,
+                DownloadDirectory = GetDefaultDownloadDirectory(),
+                DetailedIpatoolLogEnabled = false
+            };
+        }
+
+        private static bool TryReadStringProperty(JsonElement root, out string? value, params string[] names)
+        {
+            foreach (string name in names)
+            {
+                if (root.TryGetProperty(name, out JsonElement element) && element.ValueKind == JsonValueKind.String)
+                {
+                    value = element.GetString();
+                    return true;
+                }
+            }
+
+            value = null;
+            return false;
+        }
+
+        private static bool TryReadBooleanProperty(JsonElement root, out bool value, params string[] names)
+        {
+            foreach (string name in names)
+            {
+                if (!root.TryGetProperty(name, out JsonElement element))
+                {
+                    continue;
+                }
+
+                if (element.ValueKind == JsonValueKind.True || element.ValueKind == JsonValueKind.False)
+                {
+                    value = element.GetBoolean();
+                    return true;
+                }
+            }
+
+            value = false;
+            return false;
         }
 
         private static string ResolveDataDirectory()
@@ -630,130 +417,37 @@ namespace IPAbuyer.Common
                 // ignore and fall back
             }
 
-            string fallback = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            string fallback = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IPAbuyer");
             Directory.CreateDirectory(fallback);
             return fallback;
         }
 
-        private static string? ReadSettingValue(SqliteConnection connection, string key)
+        private static void RemoveLegacyKeychainDatabase()
         {
-            using var selectCmd = connection.CreateCommand();
-            selectCmd.CommandText = "SELECT Value FROM Settings WHERE Key = @key";
-            selectCmd.Parameters.AddWithValue("@key", key);
-            var result = selectCmd.ExecuteScalar();
-            return result?.ToString();
-        }
-
-        private static void SaveGlobalCountryCode(SqliteConnection connection, string normalized)
-        {
-            var insertCmd = connection.CreateCommand();
-            insertCmd.CommandText = @"
-                INSERT INTO Settings (Key, Value)
-                VALUES (@key, @value)
-                ON CONFLICT(Key)
-                DO UPDATE SET Value = @value";
-
-            insertCmd.Parameters.AddWithValue("@key", CountryCodeKey);
-            insertCmd.Parameters.AddWithValue("@value", normalized);
-            insertCmd.ExecuteNonQuery();
-        }
-
-        private static void SaveUserCountryCode(SqliteConnection connection, string normalizedAccount, string countryCode)
-        {
-            var updateCmd = connection.CreateCommand();
-            updateCmd.CommandText = "UPDATE Users SET CountryCode = @code WHERE LOWER(Username) = @username";
-            updateCmd.Parameters.AddWithValue("@code", countryCode);
-            updateCmd.Parameters.AddWithValue("@username", normalizedAccount);
-
-            int affected = updateCmd.ExecuteNonQuery();
-            if (affected == 0)
+            try
             {
-                SaveGlobalCountryCode(connection, countryCode);
-            }
-        }
-
-        private static string? GetUserCountryCode(SqliteConnection connection, string normalizedAccount)
-        {
-            var selectCmd = connection.CreateCommand();
-            selectCmd.CommandText = "SELECT CountryCode FROM Users WHERE LOWER(Username) = @username";
-            selectCmd.Parameters.AddWithValue("@username", normalizedAccount);
-            var result = selectCmd.ExecuteScalar();
-            return result?.ToString();
-        }
-
-        private static bool TryMigrateLegacyCountryCode(SqliteConnection connection, string normalizedAccount, out string normalized)
-        {
-            string legacyKey = $"{CountryCodeKey}:{normalizedAccount}";
-            string? legacyValue = ReadSettingValue(connection, legacyKey);
-
-            if (TryNormalizeCountryCode(legacyValue, out normalized))
-            {
-                SaveUserCountryCode(connection, normalizedAccount, normalized);
-                DeleteSettingKey(connection, legacyKey);
-                return true;
-            }
-
-            normalized = string.Empty;
-            return false;
-        }
-
-        private static void DeleteSettingKey(SqliteConnection connection, string key)
-        {
-            var deleteCmd = connection.CreateCommand();
-            deleteCmd.CommandText = "DELETE FROM Settings WHERE Key = @key";
-            deleteCmd.Parameters.AddWithValue("@key", key);
-            deleteCmd.ExecuteNonQuery();
-        }
-
-        private static string NormalizeAccount(string? account)
-        {
-            return string.IsNullOrWhiteSpace(account)
-                ? string.Empty
-                : account.Trim().ToLowerInvariant();
-        }
-
-        private static void EnsureMockAccountSeed(SqliteConnection connection)
-        {
-            using var cmd = connection.CreateCommand();
-            cmd.CommandText = @"
-                INSERT INTO MockAccounts (Username, Password)
-                VALUES (@username, @password)
-                ON CONFLICT(Username, Password) DO NOTHING";
-            cmd.Parameters.AddWithValue("@username", "test");
-            cmd.Parameters.AddWithValue("@password", "test");
-            cmd.ExecuteNonQuery();
-        }
-
-        private static void EnsureCountryCodeColumn(SqliteConnection connection)
-        {
-            var pragmaCmd = connection.CreateCommand();
-            pragmaCmd.CommandText = "PRAGMA table_info(Users);";
-
-            bool hasColumn = false;
-            using (var reader = pragmaCmd.ExecuteReader())
-            {
-                while (reader.Read())
+                string legacyPath = Path.Combine(ResolveDataDirectory(), "KeychainConfig.db");
+                if (File.Exists(legacyPath))
                 {
-                    string? columnName = reader["name"]?.ToString();
-                    if (string.Equals(columnName, "CountryCode", StringComparison.OrdinalIgnoreCase))
-                    {
-                        hasColumn = true;
-                        break;
-                    }
+                    File.Delete(legacyPath);
                 }
             }
-
-            if (!hasColumn)
+            catch
             {
-                var alterCmd = connection.CreateCommand();
-                alterCmd.CommandText = "ALTER TABLE Users ADD COLUMN CountryCode TEXT";
-                alterCmd.ExecuteNonQuery();
-
-                var updateCmd = connection.CreateCommand();
-                updateCmd.CommandText = "UPDATE Users SET CountryCode = @default WHERE CountryCode IS NULL OR CountryCode = ''";
-                updateCmd.Parameters.AddWithValue("@default", DefaultCountryCode);
-                updateCmd.ExecuteNonQuery();
+                // ignore legacy cleanup errors
             }
+        }
+
+        private sealed class LocalSettingsModel
+        {
+            [JsonPropertyName("country")]
+            public string CountryCode { get; set; } = DefaultCountryCode;
+
+            [JsonPropertyName("download_dir")]
+            public string DownloadDirectory { get; set; } = string.Empty;
+
+            [JsonPropertyName("verbose")]
+            public bool DetailedIpatoolLogEnabled { get; set; }
         }
     }
 }

@@ -26,6 +26,7 @@ namespace IPAbuyer
             {
                 // 初始化数据库
                 PurchasedAppDb.InitDb();
+                // KeychainConfig 改为文件配置（无 KeychainConfig.db），保留初始化入口用于创建默认配置文件。
                 KeychainConfig.InitializeDatabase();
 
                 this.InitializeComponent();

@@ -52,14 +52,9 @@ namespace IPAbuyer.Common
             return ExecuteIpatoolAsync(arguments, account, passphrase, cancellationToken);
         }
 
-        public static Task<IpatoolResult> AuthLogoutAsync(string account, CancellationToken cancellationToken = default)
+        public static Task<IpatoolResult> AuthLogoutAsync(CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(account))
-            {
-                throw new ArgumentException("account 不能为空", nameof(account));
-            }
-
-            return ExecuteIpatoolAsync(new[] { "auth", "revoke" }, account, null, cancellationToken);
+            return ExecuteIpatoolAsync(new[] { "auth", "revoke" }, account: string.Empty, passphrase: null, cancellationToken);
         }
 
         public static async Task<IpatoolResult> SearchAppAsync(string name, int limit, string account, string countryCode, CancellationToken cancellationToken = default)

@@ -9,9 +9,7 @@ namespace IPAbuyer.Models
     {
         public string? path { get; }
         public string appDbName { get; } = "PurchasedAppDb.db";
-        public string accountDbName { get; } = "KeychainConfig.db";
         public string? appDb { get; }
-        public string? accountDb { get; }
 
         public Database()
         {
@@ -29,16 +27,10 @@ namespace IPAbuyer.Models
                 }
 
                 appDb = Path.Combine(path, appDbName);
-                accountDb = Path.Combine(path, accountDbName);
 
                 if (!File.Exists(appDb))
                 {
                     File.Create(appDb).Close();
-                }
-
-                if (!File.Exists(accountDb))
-                {
-                    File.Create(accountDb).Close();
                 }
             }
             catch (Exception ex)
