@@ -157,6 +157,7 @@ namespace IPAbuyer.Views
             {
                 BatchPurchaseButton.IsEnabled = false;
             }
+            SetPurchaseLoading(true);
 
             try
             {
@@ -170,6 +171,7 @@ namespace IPAbuyer.Views
                 {
                     BatchPurchaseButton.IsEnabled = true;
                 }
+                SetPurchaseLoading(false);
 
                 ApplyFilterAndRefresh();
             }
@@ -204,6 +206,7 @@ namespace IPAbuyer.Views
             {
                 BatchPurchaseButton.IsEnabled = false;
             }
+            SetPurchaseLoading(true);
 
             try
             {
@@ -216,6 +219,7 @@ namespace IPAbuyer.Views
                 {
                     BatchPurchaseButton.IsEnabled = true;
                 }
+                SetPurchaseLoading(false);
 
                 ApplyFilterAndRefresh();
             }
@@ -671,6 +675,16 @@ namespace IPAbuyer.Views
 
             HomeLogTextBox.Text = _homeLogBuilder.ToString();
             ScrollLogToBottom(HomeLogTextBox);
+        }
+
+        private void SetPurchaseLoading(bool isLoading)
+        {
+            if (PurchaseLoadingBar == null)
+            {
+                return;
+            }
+
+            PurchaseLoadingBar.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void ResultList_ContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
