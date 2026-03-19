@@ -139,11 +139,21 @@ namespace IPAbuyer.Common
                     return 0;
                 }
 
+                string account;
+                try
+                {
+                    account = ResolveAccount();
+                }
+                catch (InvalidOperationException ex)
+                {
+                    EmitLog(ex.Message);
+                    return 0;
+                }
+
                 _isRunning = true;
                 _queueCts = new CancellationTokenSource();
                 NotifyQueueChanged();
 
-                string account = ResolveAccount();
                 string outputDirectory = KeychainConfig.GetDownloadDirectory();
                 Directory.CreateDirectory(outputDirectory);
                 bool useMockFlow = SessionState.IsLoggedIn
@@ -411,11 +421,11 @@ namespace IPAbuyer.Common
             string account = SessionState.IsLoggedIn ? SessionState.CurrentAccount : string.Empty;
             if (string.IsNullOrWhiteSpace(account))
             {
-                account = KeychainConfig.GetLastLoginUsername() ?? string.Empty;
-            }
+                if (SessionState.IsLoggedIn)
+                {
+                    throw new InvalidOperationException("当前登录状态未获取到邮箱，请先在账户页面退出并重新登录");
+                }
 
-            if (string.IsNullOrWhiteSpace(account))
-            {
                 throw new InvalidOperationException("未找到可用账号，请先登录");
             }
 
@@ -577,6 +587,11 @@ namespace IPAbuyer.Common
 
         private void EmitUniqueChunkLog(string appName, string line, ref string lastChunkLog)
         {
+            if (!KeychainConfig.GetDetailedIpatoolLogEnabled())
+            {
+                return;
+            }
+
             if (string.Equals(lastChunkLog, line, StringComparison.Ordinal))
             {
                 return;

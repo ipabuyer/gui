@@ -15,7 +15,6 @@ namespace IPAbuyer.Common
     {
         private const string SettingsFileName = "settings.json";
         private const string PassphraseFileName = "passphrase.txt";
-        private const string LastLoginFileName = "last_login.txt";
         private const string DefaultCountryCode = "cn";
         private const string DefaultPassphrase = "12345678";
         private static readonly object SyncRoot = new();
@@ -63,44 +62,6 @@ namespace IPAbuyer.Common
         {
             // 兼容旧调用：已移除数据库，不再存储 SecretKey。
             return null;
-        }
-
-        public static string GenerateAndSaveSecretKey(string username)
-        {
-            if (string.IsNullOrWhiteSpace(username))
-            {
-                throw new ArgumentException("用户名不能为空", nameof(username));
-            }
-
-            SaveLastLoginUsername(username);
-            return string.Empty;
-        }
-
-        public static string? GetLastLoginUsername()
-        {
-            lock (SyncRoot)
-            {
-                string path = GetLastLoginFilePath();
-                if (!File.Exists(path))
-                {
-                    return null;
-                }
-
-                string content = File.ReadAllText(path, Encoding.UTF8).Trim();
-                return string.IsNullOrWhiteSpace(content) ? null : content;
-            }
-        }
-
-        public static void ClearLastLoginUsername()
-        {
-            lock (SyncRoot)
-            {
-                string path = GetLastLoginFilePath();
-                if (File.Exists(path))
-                {
-                    File.Delete(path);
-                }
-            }
         }
 
         public static string GetCountryCode(string? account = null)
@@ -273,15 +234,6 @@ namespace IPAbuyer.Common
             return downloadPath;
         }
 
-        private static void SaveLastLoginUsername(string username)
-        {
-            lock (SyncRoot)
-            {
-                string path = GetLastLoginFilePath();
-                File.WriteAllText(path, username.Trim(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-            }
-        }
-
         private static string GetSettingsFilePath()
         {
             string dataDirectory = ResolveDataDirectory();
@@ -292,12 +244,6 @@ namespace IPAbuyer.Common
         {
             string dataDirectory = ResolveDataDirectory();
             return Path.Combine(dataDirectory, PassphraseFileName);
-        }
-
-        private static string GetLastLoginFilePath()
-        {
-            string dataDirectory = ResolveDataDirectory();
-            return Path.Combine(dataDirectory, LastLoginFileName);
         }
 
         private static void EnsureStorageReady()

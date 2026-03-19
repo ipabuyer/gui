@@ -1,4 +1,5 @@
 using IPAbuyer.Common;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
@@ -8,7 +9,6 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -49,6 +49,8 @@ namespace IPAbuyer.Views
             IpatoolExecution.CommandExecuting += OnIpatoolCommandExecuting;
             IpatoolExecution.CommandOutputReceived -= OnIpatoolCommandOutputReceived;
             IpatoolExecution.CommandOutputReceived += OnIpatoolCommandOutputReceived;
+            SessionState.LoginStateChanged -= OnSessionStateChanged;
+            SessionState.LoginStateChanged += OnSessionStateChanged;
 
             if (_pageCts.IsCancellationRequested)
             {
@@ -56,29 +58,35 @@ namespace IPAbuyer.Views
                 _pageCts = new CancellationTokenSource();
             }
 
-            string account = SessionState.CurrentAccount;
-            if (string.IsNullOrWhiteSpace(account))
-            {
-                account = KeychainConfig.GetLastLoginUsername() ?? string.Empty;
-            }
-
-            if (!string.IsNullOrWhiteSpace(account) && EmailTextBox != null)
-            {
-                EmailTextBox.Text = account;
-            }
-
-            ApplyOperationLock(SessionState.IsLoggedIn);
+            RefreshFromSessionState();
         }
 
         private void LoginPage_Unloaded(object sender, RoutedEventArgs e)
         {
             IpatoolExecution.CommandExecuting -= OnIpatoolCommandExecuting;
             IpatoolExecution.CommandOutputReceived -= OnIpatoolCommandOutputReceived;
+            SessionState.LoginStateChanged -= OnSessionStateChanged;
             CancelCurrentOperation();
             if (!_pageCts.IsCancellationRequested)
             {
                 _pageCts.Cancel();
             }
+        }
+
+        private void OnSessionStateChanged()
+        {
+            DispatcherQueue.TryEnqueue(RefreshFromSessionState);
+        }
+
+        private void RefreshFromSessionState()
+        {
+            string account = SessionState.CurrentAccount;
+            if (EmailTextBox != null)
+            {
+                EmailTextBox.Text = account ?? string.Empty;
+            }
+
+            ApplyOperationLock(SessionState.IsLoggedIn);
         }
 
         private async void NextButton_Click(object sender, RoutedEventArgs e)
@@ -110,11 +118,8 @@ namespace IPAbuyer.Views
 
         private async Task QueryAuthInfoAsync()
         {
-            string account = (EmailTextBox?.Text ?? string.Empty).Trim();
-            if (string.IsNullOrWhiteSpace(account))
-            {
-                account = SessionState.CurrentAccount;
-            }
+            string account = SessionState.CurrentAccount;
+            bool wasLoggedIn = SessionState.IsLoggedIn;
 
             try
             {
@@ -122,12 +127,19 @@ namespace IPAbuyer.Views
                 _currentOperationCts = CancellationTokenSource.CreateLinkedTokenSource(_pageCts.Token);
                 SetBusyState(true, "正在查询登录状态...");
 
-                var result = await IpatoolExecution.AuthInfoAsync(_currentOperationCts.Token);
+                string inputPassphrase = PassphraseInput?.Text?.Trim() ?? string.Empty;
+                var result = await IpatoolExecution.AuthInfoAsync(
+                    passphrase: string.IsNullOrWhiteSpace(inputPassphrase) ? null : inputPassphrase,
+                    cancellationToken: _currentOperationCts.Token);
                 DisposeCurrentOperation();
 
-                if (result.IsSuccessResponse)
+                string payloadEmail = IpatoolExecution.ExtractEmailFromPayload(result.OutputOrError);
+                bool isAuthSuccess = result.IsSuccessResponse
+                    && !IpatoolExecution.HasExplicitFailureFlag(result.OutputOrError)
+                    && (IpatoolExecution.IsPayloadSuccess(result.OutputOrError) || !string.IsNullOrWhiteSpace(payloadEmail));
+
+                if (isAuthSuccess)
                 {
-                    string payloadEmail = ExtractEmailFromAuthInfoPayload(result.OutputOrError);
                     if (!string.IsNullOrWhiteSpace(payloadEmail))
                     {
                         account = payloadEmail;
@@ -137,32 +149,32 @@ namespace IPAbuyer.Views
                         }
                     }
 
-                    string activeAccount = account;
-                    if (string.IsNullOrWhiteSpace(activeAccount))
-                    {
-                        activeAccount = KeychainConfig.GetLastLoginUsername() ?? string.Empty;
-                    }
-
+                    string activeAccount = string.IsNullOrWhiteSpace(payloadEmail) ? account : payloadEmail;
                     if (!string.IsNullOrWhiteSpace(activeAccount))
                     {
                         SessionState.SetLoginState(activeAccount, true);
+                        ApplyOperationLock(true);
+                        ShowSuccess("登录状态正常");
+                        AppendLoginLog($"Auth info success: {activeAccount}");
                     }
-
-                    ApplyOperationLock(true);
-                    ShowSuccess("登录状态正常");
-                    AppendLoginLog(string.IsNullOrWhiteSpace(activeAccount)
-                        ? "Auth info success."
-                        : $"Auth info success: {activeAccount}");
+                    else
+                    {
+                        SessionState.Reset();
+                        ApplyOperationLock(false);
+                        ShowError("已查询到登录状态，但未获取到邮箱。请先重新登录后再进行购买或下载。");
+                        AppendLoginLog("Auth info success but email missing.");
+                    }
                 }
                 else
                 {
-                    ApplyOperationLock(false);
+                    ApplyOperationLock(wasLoggedIn);
                     ShowError(string.IsNullOrWhiteSpace(result.OutputOrError) ? "登录状态异常" : result.OutputOrError);
                     AppendLoginLog("Auth info failed.");
                 }
             }
             catch (Exception ex)
             {
+                ApplyOperationLock(wasLoggedIn);
                 ShowError($"查询登录状态失败: {ex.Message}");
                 AppendLoginLog($"Auth info exception: {ex.Message}");
             }
@@ -171,74 +183,6 @@ namespace IPAbuyer.Views
                 DisposeCurrentOperation();
                 RestoreIdleState();
             }
-        }
-
-        private static string ExtractEmailFromAuthInfoPayload(string? payload)
-        {
-            if (string.IsNullOrWhiteSpace(payload))
-            {
-                return string.Empty;
-            }
-
-            string normalized = payload.Replace("}{", "}\n{");
-            string[] lines = normalized.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (string line in lines)
-            {
-                string trimmed = line.Trim();
-                if (!trimmed.StartsWith("{", StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                try
-                {
-                    using JsonDocument document = JsonDocument.Parse(trimmed);
-                    JsonElement root = document.RootElement;
-                    if (TryReadEmailFromJson(root, out string email))
-                    {
-                        return email;
-                    }
-                }
-                catch (JsonException)
-                {
-                    // ignore invalid segment
-                }
-            }
-
-            return string.Empty;
-        }
-
-        private static bool TryReadEmailFromJson(JsonElement root, out string email)
-        {
-            if (TryReadEmailProperty(root, "email", out email))
-            {
-                return true;
-            }
-
-            // 兼容指导文档中的拼写（eamil）
-            if (TryReadEmailProperty(root, "eamil", out email))
-            {
-                return true;
-            }
-
-            email = string.Empty;
-            return false;
-        }
-
-        private static bool TryReadEmailProperty(JsonElement root, string propertyName, out string email)
-        {
-            if (root.TryGetProperty(propertyName, out JsonElement element) && element.ValueKind == JsonValueKind.String)
-            {
-                string? value = element.GetString()?.Trim();
-                if (!string.IsNullOrWhiteSpace(value))
-                {
-                    email = value;
-                    return true;
-                }
-            }
-
-            email = string.Empty;
-            return false;
         }
 
         private async void LogoutButton_Click(object sender, RoutedEventArgs e)
@@ -682,7 +626,6 @@ namespace IPAbuyer.Views
         {
             try
             {
-                KeychainConfig.GenerateAndSaveSecretKey(_account);
                 KeychainConfig.SavePassphrase(_account, _passphrase);
                 if (EmailTextBox != null)
                 {
@@ -771,11 +714,32 @@ namespace IPAbuyer.Views
 
             RebuildLoginLogView();
             ScrollLogToBottom(LoginLogScrollViewer);
+            EnsureLoginLogScrollToBottom();
         }
 
-        private static void ScrollLogToBottom(ScrollViewer scrollViewer)
+        private static void ScrollLogToBottom(ScrollViewer? scrollViewer)
         {
+            if (scrollViewer == null)
+            {
+                return;
+            }
+
             scrollViewer.ChangeView(null, scrollViewer.ScrollableHeight, null, disableAnimation: true);
+        }
+
+        private void EnsureLoginLogScrollToBottom()
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                LoginLogScrollViewer?.UpdateLayout();
+                ScrollLogToBottom(LoginLogScrollViewer);
+
+                DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
+                {
+                    LoginLogScrollViewer?.UpdateLayout();
+                    ScrollLogToBottom(LoginLogScrollViewer);
+                });
+            });
         }
 
         private void RebuildLoginLogView()

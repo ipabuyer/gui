@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -17,6 +18,15 @@ namespace IPAbuyer.Common
         private const int MaxPreviewLength = 200;
         private static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(2);
         private static readonly HttpClient HttpClient = new();
+        private static readonly HashSet<string> SensitiveSwitches = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "--password",
+            "--auth-code",
+            "--keychain-passphrase"
+        };
+        private static readonly Regex EmailRegex = new(
+            @"[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         public sealed record IpatoolResult(string? Output, string? Error, int ExitCode, bool TimedOut)
         {
@@ -105,9 +115,149 @@ namespace IPAbuyer.Common
             }
         }
 
-        public static Task<IpatoolResult> AuthInfoAsync(CancellationToken cancellationToken = default)
+        public static Task<IpatoolResult> AuthInfoAsync(string? passphrase = null, CancellationToken cancellationToken = default, bool silent = false)
         {
-            return ExecuteIpatoolAsync(new[] { "auth", "info" }, account: string.Empty, passphrase: null, cancellationToken);
+            return ExecuteIpatoolAsync(
+                new[] { "auth", "info" },
+                account: string.Empty,
+                passphrase: passphrase,
+                cancellationToken,
+                suppressLogEvents: silent);
+        }
+
+        public static string ExtractEmailFromPayload(string? payload)
+        {
+            if (string.IsNullOrWhiteSpace(payload))
+            {
+                return string.Empty;
+            }
+
+            string normalized = payload.Replace("}{", "}\n{");
+            string[] lines = normalized.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string line in lines)
+            {
+                string trimmed = line.Trim();
+                if (!trimmed.StartsWith("{", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    using JsonDocument document = JsonDocument.Parse(trimmed);
+                    JsonElement root = document.RootElement;
+                    if (TryReadEmailProperty(root, "email", out string email))
+                    {
+                        return email;
+                    }
+
+                    if (TryReadEmailProperty(root, "eamil", out email))
+                    {
+                        return email;
+                    }
+                }
+                catch (JsonException)
+                {
+                    // ignore invalid segment
+                }
+            }
+
+            Match match = EmailRegex.Match(payload);
+            return match.Success ? match.Value : string.Empty;
+        }
+
+        public static bool IsPayloadSuccess(string? payload)
+        {
+            if (string.IsNullOrWhiteSpace(payload))
+            {
+                return false;
+            }
+
+            string normalized = payload.Replace("}{", "}\n{");
+            string[] lines = normalized.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string line in lines)
+            {
+                string trimmed = line.Trim();
+                if (!trimmed.StartsWith("{", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    using JsonDocument document = JsonDocument.Parse(trimmed);
+                    JsonElement root = document.RootElement;
+                    if (!root.TryGetProperty("success", out JsonElement successElement))
+                    {
+                        continue;
+                    }
+
+                    if (successElement.ValueKind == JsonValueKind.True)
+                    {
+                        return true;
+                    }
+
+                    if (successElement.ValueKind == JsonValueKind.String
+                        && string.Equals(successElement.GetString(), "true", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+                catch (JsonException)
+                {
+                    // ignore invalid segment
+                }
+            }
+
+            return payload.Contains("success=true", StringComparison.OrdinalIgnoreCase)
+                || payload.Contains("\"success\":true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static bool HasExplicitFailureFlag(string? payload)
+        {
+            if (string.IsNullOrWhiteSpace(payload))
+            {
+                return false;
+            }
+
+            string normalized = payload.Replace("}{", "}\n{");
+            string[] lines = normalized.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string line in lines)
+            {
+                string trimmed = line.Trim();
+                if (!trimmed.StartsWith("{", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    using JsonDocument document = JsonDocument.Parse(trimmed);
+                    JsonElement root = document.RootElement;
+                    if (!root.TryGetProperty("success", out JsonElement successElement))
+                    {
+                        continue;
+                    }
+
+                    if (successElement.ValueKind == JsonValueKind.False)
+                    {
+                        return true;
+                    }
+
+                    if (successElement.ValueKind == JsonValueKind.String
+                        && string.Equals(successElement.GetString(), "false", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+                catch (JsonException)
+                {
+                    // ignore invalid segment
+                }
+            }
+
+            return payload.Contains("success=false", StringComparison.OrdinalIgnoreCase)
+                || payload.Contains("\"success\":false", StringComparison.OrdinalIgnoreCase);
         }
 
         public static Task<IpatoolResult> PurchaseAppAsync(string bundleId, string account, CancellationToken cancellationToken = default)
@@ -258,7 +408,12 @@ namespace IPAbuyer.Common
             }
         }
 
-        private static async Task<IpatoolResult> ExecuteIpatoolAsync(IReadOnlyList<string> arguments, string account, string? passphrase, CancellationToken cancellationToken)
+        private static async Task<IpatoolResult> ExecuteIpatoolAsync(
+            IReadOnlyList<string> arguments,
+            string account,
+            string? passphrase,
+            CancellationToken cancellationToken,
+            bool suppressLogEvents = false)
         {
             bool isLogout = arguments.Count >= 2
                 && string.Equals(arguments[0], "auth", StringComparison.OrdinalIgnoreCase)
@@ -297,7 +452,10 @@ namespace IPAbuyer.Common
                     DeleteCookieLockFile();
                 }
 
-                EmitCommandLog(finalArguments);
+                if (!suppressLogEvents)
+                {
+                    EmitCommandLog(finalArguments);
+                }
                 process = new Process { StartInfo = psi, EnableRaisingEvents = true };
 
                 if (!process.Start())
@@ -323,7 +481,10 @@ namespace IPAbuyer.Common
 
                 string output = await outputTask.ConfigureAwait(false);
                 string error = await errorTask.ConfigureAwait(false);
-                EmitDetailedOutputLogs(output, error);
+                if (!suppressLogEvents)
+                {
+                    EmitDetailedOutputLogs(output, error);
+                }
 
                 Debug.WriteLine($"ipatool output: {Preview(output)}");
                 Debug.WriteLine($"ipatool stderr: {Preview(error)}");
@@ -408,6 +569,22 @@ namespace IPAbuyer.Common
             }
 
             throw new InvalidOperationException("未找到可用的加密密钥，请先在账户页面重新登录后再试。");
+        }
+
+        private static bool TryReadEmailProperty(JsonElement root, string propertyName, out string email)
+        {
+            if (root.TryGetProperty(propertyName, out JsonElement element) && element.ValueKind == JsonValueKind.String)
+            {
+                string? value = element.GetString()?.Trim();
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    email = value;
+                    return true;
+                }
+            }
+
+            email = string.Empty;
+            return false;
         }
 
         private static void TryTerminateProcess(Process process)
@@ -590,7 +767,7 @@ namespace IPAbuyer.Common
                 return;
             }
 
-            string rendered = string.Join(" ", arguments.Select(FormatArgForDisplay));
+            string rendered = RenderArgumentsForDisplay(arguments);
             CommandExecuting?.Invoke($"ipatool.exe {rendered}");
         }
 
@@ -643,6 +820,32 @@ namespace IPAbuyer.Common
             }
 
             return "\"" + argument.Replace("\"", "\\\"") + "\"";
+        }
+
+        private static string RenderArgumentsForDisplay(IReadOnlyList<string> arguments)
+        {
+            var rendered = new List<string>(arguments.Count);
+            for (int i = 0; i < arguments.Count; i++)
+            {
+                string arg = arguments[i];
+                rendered.Add(FormatArgForDisplay(arg));
+
+                if (!SensitiveSwitches.Contains(arg))
+                {
+                    continue;
+                }
+
+                int nextIndex = i + 1;
+                if (nextIndex >= arguments.Count)
+                {
+                    continue;
+                }
+
+                rendered.Add("\"***\"");
+                i++;
+            }
+
+            return string.Join(" ", rendered);
         }
     }
 }

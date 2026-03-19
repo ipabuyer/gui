@@ -9,6 +9,7 @@ namespace IPAbuyer.Common
         private static bool _isLoggedIn;
         private static bool _isMockAccount;
         private static bool _initialized;
+        public static event Action? LoginStateChanged;
 
         public static string CurrentAccount
         {
@@ -48,28 +49,43 @@ namespace IPAbuyer.Common
 
         public static void SetLoginState(string account, bool isLoggedIn, bool isMockAccount = false)
         {
-            if (string.IsNullOrWhiteSpace(account))
-            {
-                throw new ArgumentException("account cannot be empty", nameof(account));
-            }
+            string normalizedAccount = account?.Trim() ?? string.Empty;
 
+            bool changed;
             lock (_syncRoot)
             {
                 EnsureInitialized();
-                _currentAccount = account;
+                changed = !string.Equals(_currentAccount, normalizedAccount, StringComparison.Ordinal)
+                    || _isLoggedIn != isLoggedIn
+                    || _isMockAccount != isMockAccount;
+                _currentAccount = normalizedAccount;
                 _isLoggedIn = isLoggedIn;
                 _isMockAccount = isMockAccount;
+            }
+
+            if (changed)
+            {
+                LoginStateChanged?.Invoke();
             }
         }
 
         public static void Reset()
         {
+            bool changed;
             lock (_syncRoot)
             {
                 EnsureInitialized();
+                changed = _isLoggedIn
+                    || !string.IsNullOrWhiteSpace(_currentAccount)
+                    || _isMockAccount;
                 _isLoggedIn = false;
                 _currentAccount = string.Empty;
                 _isMockAccount = false;
+            }
+
+            if (changed)
+            {
+                LoginStateChanged?.Invoke();
             }
         }
 
@@ -81,7 +97,8 @@ namespace IPAbuyer.Common
             }
 
             KeychainConfig.InitializeDatabase();
-            _currentAccount = KeychainConfig.GetLastLoginUsername() ?? string.Empty;
+            _currentAccount = string.Empty;
+            _isLoggedIn = false;
             _isMockAccount = false;
             _initialized = true;
         }

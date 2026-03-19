@@ -10,6 +10,7 @@ using IPAbuyer.Common;
 using IPAbuyer.Data;
 using IPAbuyer.Models;
 using Microsoft.UI;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
@@ -198,8 +199,11 @@ namespace IPAbuyer.Views
             try
             {
                 AppendHomeLog($"开始批量购买，共 {selectedApps.Count} 项。");
-                await PurchaseAppsAsync(selectedApps);
-                AppendHomeLog("批量购买执行完成。");
+                bool executed = await PurchaseAppsAsync(selectedApps);
+                if (executed)
+                {
+                    AppendHomeLog("批量购买执行完成。");
+                }
             }
             catch (OperationCanceledException)
             {
@@ -255,7 +259,7 @@ namespace IPAbuyer.Views
             try
             {
                 AppendHomeLog($"右键购买，共 {selectedApps.Count} 项。");
-                await PurchaseAppsAsync(selectedApps);
+                _ = await PurchaseAppsAsync(selectedApps);
             }
             catch (OperationCanceledException)
             {
@@ -471,12 +475,16 @@ namespace IPAbuyer.Views
             return ApplySorting(filtered);
         }
 
-        private async Task PurchaseAppsAsync(List<SearchResult> selectedApps)
+        private async Task<bool> PurchaseAppsAsync(List<SearchResult> selectedApps)
         {
             string account = GetActiveAccount();
             if (string.IsNullOrWhiteSpace(account))
             {
-                return;
+                string message = SessionState.IsLoggedIn
+                    ? "当前登录状态未获取到邮箱，请先在账户页面退出并重新登录。"
+                    : "请先在账户页面登录后再购买。";
+                AppendHomeLog(message);
+                return false;
             }
 
             bool isTestAccount = SessionState.IsLoggedIn
@@ -541,6 +549,7 @@ namespace IPAbuyer.Views
                     }
                 }
             }
+            return true;
         }
 
         private async Task<bool> ConfirmMarkOwnedAsync(SearchResult app)
@@ -655,11 +664,6 @@ namespace IPAbuyer.Views
         private static string GetActiveAccount()
         {
             string account = SessionState.IsLoggedIn ? SessionState.CurrentAccount : string.Empty;
-            if (string.IsNullOrWhiteSpace(account))
-            {
-                account = KeychainConfig.GetLastLoginUsername() ?? string.Empty;
-            }
-
             return account.Trim();
         }
 
@@ -910,7 +914,7 @@ namespace IPAbuyer.Views
             }
 
             RebuildHomeLogView();
-            ScrollLogToBottom(HomeLogScrollViewer);
+            EnsureHomeLogScrollToBottom();
         }
 
         private void SetPurchaseLoading(bool isLoading)
@@ -987,9 +991,29 @@ namespace IPAbuyer.Views
             priceTextBlock.ClearValue(TextBlock.ForegroundProperty);
         }
 
-        private static void ScrollLogToBottom(ScrollViewer scrollViewer)
+        private static void ScrollLogToBottom(ScrollViewer? scrollViewer)
         {
+            if (scrollViewer == null)
+            {
+                return;
+            }
+
             scrollViewer.ChangeView(null, scrollViewer.ScrollableHeight, null, disableAnimation: true);
+        }
+
+        private void EnsureHomeLogScrollToBottom()
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                HomeLogScrollViewer?.UpdateLayout();
+                ScrollLogToBottom(HomeLogScrollViewer);
+
+                DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
+                {
+                    HomeLogScrollViewer?.UpdateLayout();
+                    ScrollLogToBottom(HomeLogScrollViewer);
+                });
+            });
         }
 
         private void RebuildHomeLogView()
