@@ -92,6 +92,7 @@
 4. 反馈邮箱（按钮复制<ipa@blazesnow.com>）
 5. 清空本地数据库按钮与介绍
 6. 清空ipatool数据按钮与介绍，ipatool数据目录：`%USERNAME%/.ipatool/`
+7. 导出ipatool.exe功能，默认输出目录为下载目录
 
 ## 搜索功能
 
