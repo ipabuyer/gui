@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
@@ -30,10 +31,19 @@ namespace IPAbuyer.Common
                 throw new ArgumentException("account 不能为空", nameof(account));
             }
 
-            string arguments = $"auth login --email {QuoteArgument(account)} --password {QuoteArgument(password)}";
+            var arguments = new List<string>
+            {
+                "auth",
+                "login",
+                "--email",
+                account,
+                "--password",
+                password
+            };
             if (!string.IsNullOrWhiteSpace(authCode))
             {
-                arguments += $" --auth-code {QuoteArgument(authCode)}";
+                arguments.Add("--auth-code");
+                arguments.Add(authCode);
             }
 
             return ExecuteIpatoolAsync(arguments, account, passphrase, cancellationToken);
@@ -46,7 +56,7 @@ namespace IPAbuyer.Common
                 throw new ArgumentException("account 不能为空", nameof(account));
             }
 
-            return ExecuteIpatoolAsync("auth revoke", account, null, cancellationToken);
+            return ExecuteIpatoolAsync(new[] { "auth", "revoke" }, account, null, cancellationToken);
         }
 
         public static async Task<IpatoolResult> SearchAppAsync(string name, int limit, string account, string countryCode, CancellationToken cancellationToken = default)
@@ -104,7 +114,7 @@ namespace IPAbuyer.Common
                 throw new ArgumentException("account 不能为空", nameof(account));
             }
 
-            return ExecuteIpatoolAsync("auth info", account, null, cancellationToken);
+            return ExecuteIpatoolAsync(new[] { "auth", "info" }, account, null, cancellationToken);
         }
 
         public static Task<IpatoolResult> PurchaseAppAsync(string bundleId, string account, CancellationToken cancellationToken = default)
@@ -119,8 +129,11 @@ namespace IPAbuyer.Common
                 throw new ArgumentException("bundleId 不能为空", nameof(bundleId));
             }
 
-            string arguments = $"purchase --bundle-identifier {QuoteArgument(bundleId)}";
-            return ExecuteIpatoolAsync(arguments, account, null, cancellationToken);
+            return ExecuteIpatoolAsync(
+                new[] { "purchase", "--bundle-identifier", bundleId },
+                account,
+                null,
+                cancellationToken);
         }
 
         public static Task<IpatoolResult> DownloadAppAsync(string bundleId, string outputDirectory, string account, CancellationToken cancellationToken = default)
@@ -151,28 +164,26 @@ namespace IPAbuyer.Common
             }
 
             Directory.CreateDirectory(outputDirectory);
-            string arguments = $"download --output {QuoteArgument(outputDirectory)} --bundle-identifier {QuoteArgument(bundleId)}";
 
             string ipatoolPath = ResolveIpatoolPath();
             string workingDirectory = Path.GetDirectoryName(ipatoolPath) ?? AppContext.BaseDirectory;
             string effectivePassphrase = EnsurePassphrase(account, null);
-            string finalArguments = $"{arguments} --keychain-passphrase {QuoteArgument(effectivePassphrase)} --format json --non-interactive --verbose";
-
-            var psi = new ProcessStartInfo
+            var finalArguments = new List<string>
             {
-                FileName = ipatoolPath,
-                Arguments = finalArguments,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                StandardOutputEncoding = Encoding.UTF8,
-                StandardErrorEncoding = Encoding.UTF8,
-                WorkingDirectory = workingDirectory,
+                "download",
+                "--output",
+                outputDirectory,
+                "--bundle-identifier",
+                bundleId,
+                "--keychain-passphrase",
+                effectivePassphrase,
+                "--format",
+                "json",
+                "--non-interactive",
+                "--verbose"
             };
 
-            psi.EnvironmentVariables["NO_COLOR"] = "1";
-            psi.EnvironmentVariables["TERM"] = "dumb";
+            var psi = CreateIpatoolProcessStartInfo(ipatoolPath, workingDirectory, finalArguments);
 
             Process? process = null;
 
@@ -201,7 +212,7 @@ namespace IPAbuyer.Common
                 catch (OperationCanceledException)
                 {
                     TryTerminateProcess(process);
-                    return new IpatoolResult(null, $"执行超时: {arguments}", ExitCode: -1, TimedOut: true);
+                    return new IpatoolResult(null, $"执行超时: download --bundle-identifier {bundleId}", ExitCode: -1, TimedOut: true);
                 }
 
                 string output = outputBuilder.ToString();
@@ -249,34 +260,35 @@ namespace IPAbuyer.Common
             }
         }
 
-        private static async Task<IpatoolResult> ExecuteIpatoolAsync(string arguments, string account, string? passphrase, CancellationToken cancellationToken)
+        private static async Task<IpatoolResult> ExecuteIpatoolAsync(IReadOnlyList<string> arguments, string account, string? passphrase, CancellationToken cancellationToken)
         {
-            bool isLogout = arguments.TrimStart().StartsWith("auth revoke", StringComparison.OrdinalIgnoreCase);
+            bool isLogout = arguments.Count >= 2
+                && string.Equals(arguments[0], "auth", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(arguments[1], "revoke", StringComparison.OrdinalIgnoreCase);
 
             string ipatoolPath = ResolveIpatoolPath();
             string workingDirectory = Path.GetDirectoryName(ipatoolPath) ?? AppContext.BaseDirectory;
 
             string effectivePassphrase = EnsurePassphrase(account, passphrase);
 
-            string finalArguments = isLogout
-                ? $"{arguments} --format json --non-interactive --verbose"
-                : $"{arguments} --keychain-passphrase {QuoteArgument(effectivePassphrase)} --format json --non-interactive --verbose";
-
-            var psi = new ProcessStartInfo
+            var finalArguments = new List<string>(arguments.Count + 6);
+            foreach (string arg in arguments)
             {
-                FileName = ipatoolPath,
-                Arguments = finalArguments,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                StandardOutputEncoding = Encoding.UTF8,
-                StandardErrorEncoding = Encoding.UTF8,
-                WorkingDirectory = workingDirectory,
-            };
+                finalArguments.Add(arg);
+            }
 
-            psi.EnvironmentVariables["NO_COLOR"] = "1";
-            psi.EnvironmentVariables["TERM"] = "dumb";
+            if (!isLogout)
+            {
+                finalArguments.Add("--keychain-passphrase");
+                finalArguments.Add(effectivePassphrase);
+            }
+
+            finalArguments.Add("--format");
+            finalArguments.Add("json");
+            finalArguments.Add("--non-interactive");
+            finalArguments.Add("--verbose");
+
+            var psi = CreateIpatoolProcessStartInfo(ipatoolPath, workingDirectory, finalArguments);
 
             Process? process = null;
 
@@ -307,7 +319,7 @@ namespace IPAbuyer.Common
                 catch (OperationCanceledException)
                 {
                     TryTerminateProcess(process);
-                    return new IpatoolResult(null, $"执行超时: {arguments}", ExitCode: -1, TimedOut: true);
+                    return new IpatoolResult(null, $"执行超时: {string.Join(' ', arguments)}", ExitCode: -1, TimedOut: true);
                 }
 
                 string output = await outputTask.ConfigureAwait(false);
@@ -536,15 +548,28 @@ namespace IPAbuyer.Common
             }
         }
 
-        private static string QuoteArgument(string value)
+        private static ProcessStartInfo CreateIpatoolProcessStartInfo(string ipatoolPath, string workingDirectory, IReadOnlyList<string> arguments)
         {
-            if (value == null)
+            var psi = new ProcessStartInfo
             {
-                return "\"\"";
+                FileName = ipatoolPath,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8,
+                WorkingDirectory = workingDirectory,
+            };
+
+            foreach (string arg in arguments)
+            {
+                psi.ArgumentList.Add(arg);
             }
 
-            string escaped = value.Replace("\\", "\\\\").Replace("\"", "\\\"");
-            return $"\"{escaped}\"";
+            psi.EnvironmentVariables["NO_COLOR"] = "1";
+            psi.EnvironmentVariables["TERM"] = "dumb";
+            return psi;
         }
     }
 }
