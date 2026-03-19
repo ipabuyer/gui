@@ -12,6 +12,7 @@ using IPAbuyer.Models;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 
 namespace IPAbuyer.Views
@@ -23,6 +24,8 @@ namespace IPAbuyer.Views
         private readonly StringBuilder _homeLogBuilder = new();
         private CancellationTokenSource _pageCts = new();
         private string _selectedFilter = "All";
+        private string? _sortKey;
+        private SortDirection _sortDirection = SortDirection.None;
         public event Action<bool>? SearchLoadingChanged;
 
         private const string StatusPurchased = "已购买";
@@ -32,6 +35,12 @@ namespace IPAbuyer.Views
         private static readonly string[] PurchasedAliases = { "已购买", "宸茶喘涔?" };
         private static readonly string[] OwnedAliases = { "已拥有", "宸叉嫢鏈?" };
         private static readonly string[] CanPurchaseAliases = { "可购买", "未购买", "鍙喘涔?", "鏈喘涔?" };
+        private const string NameHeaderBase = "App 名称(图标)";
+        private const string IdHeaderBase = "AppID";
+        private const string DeveloperHeaderBase = "开发者";
+        private const string VersionHeaderBase = "版本号";
+        private const string PriceHeaderBase = "价格";
+        private const string PurchasedHeaderBase = "购买状态";
 
         public int SearchLimitNum { get; set; } = 100;
 
@@ -409,13 +418,15 @@ namespace IPAbuyer.Views
 
         private List<SearchResult> GetFilteredResults()
         {
-            return _selectedFilter switch
+            List<SearchResult> filtered = _selectedFilter switch
             {
                 "OnlyPurchased" => _allResults.Where(a => IsPurchasedStatus(a.purchased)).ToList(),
                 "OnlyNotPurchased" => _allResults.Where(a => IsCanPurchaseStatus(a.purchased)).ToList(),
                 "OnlyHad" => _allResults.Where(a => IsOwnedStatus(a.purchased)).ToList(),
                 _ => _allResults.ToList(),
             };
+
+            return ApplySorting(filtered);
         }
 
         private async Task PurchaseAppsAsync(List<SearchResult> selectedApps)
@@ -655,6 +666,114 @@ namespace IPAbuyer.Views
             return KeychainConfig.IsValidCountryCode(normalized) ? normalized : "cn";
         }
 
+        private void SortHeader_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            if (sender is not TextBlock header)
+            {
+                return;
+            }
+
+            string key = header.Tag?.ToString() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                return;
+            }
+
+            if (!string.Equals(_sortKey, key, StringComparison.Ordinal))
+            {
+                _sortKey = key;
+                _sortDirection = SortDirection.Ascending;
+            }
+            else
+            {
+                _sortDirection = _sortDirection switch
+                {
+                    SortDirection.None => SortDirection.Ascending,
+                    SortDirection.Ascending => SortDirection.Descending,
+                    SortDirection.Descending => SortDirection.None,
+                    _ => SortDirection.None
+                };
+
+                if (_sortDirection == SortDirection.None)
+                {
+                    _sortKey = null;
+                }
+            }
+
+            UpdateSortHeaderTexts();
+            ApplyFilterAndRefresh(preserveScrollPosition: true);
+        }
+
+        private List<SearchResult> ApplySorting(List<SearchResult> input)
+        {
+            if (string.IsNullOrWhiteSpace(_sortKey) || _sortDirection == SortDirection.None)
+            {
+                return input;
+            }
+
+            Func<SearchResult, object?> keySelector = _sortKey switch
+            {
+                "name" => item => item.name ?? string.Empty,
+                "id" => item => item.id ?? string.Empty,
+                "developer" => item => item.developer ?? string.Empty,
+                "version" => item => item.version ?? string.Empty,
+                "price" => item => GetPriceSortValue(item.price),
+                "purchased" => item => item.purchased ?? string.Empty,
+                _ => item => item.name ?? string.Empty
+            };
+
+            IOrderedEnumerable<SearchResult> ordered = _sortDirection == SortDirection.Ascending
+                ? input.OrderBy(keySelector)
+                : input.OrderByDescending(keySelector);
+
+            return ordered.ToList();
+        }
+
+        private static decimal GetPriceSortValue(string? price)
+        {
+            if (string.IsNullOrWhiteSpace(price))
+            {
+                return decimal.MaxValue;
+            }
+
+            if (price.Trim().Equals("免费", StringComparison.OrdinalIgnoreCase)
+                || price.Trim().Equals("free", StringComparison.OrdinalIgnoreCase))
+            {
+                return 0m;
+            }
+
+            return decimal.TryParse(price, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal value)
+                ? value
+                : decimal.MaxValue - 1;
+        }
+
+        private void UpdateSortHeaderTexts()
+        {
+            SetHeaderText(NameHeaderText, NameHeaderBase, "name");
+            SetHeaderText(IdHeaderText, IdHeaderBase, "id");
+            SetHeaderText(DeveloperHeaderText, DeveloperHeaderBase, "developer");
+            SetHeaderText(VersionHeaderText, VersionHeaderBase, "version");
+            SetHeaderText(PriceHeaderText, PriceHeaderBase, "price");
+            SetHeaderText(PurchasedHeaderText, PurchasedHeaderBase, "purchased");
+        }
+
+        private void SetHeaderText(TextBlock? textBlock, string baseText, string key)
+        {
+            if (textBlock == null)
+            {
+                return;
+            }
+
+            if (!string.Equals(_sortKey, key, StringComparison.Ordinal) || _sortDirection == SortDirection.None)
+            {
+                textBlock.Text = baseText;
+                return;
+            }
+
+            string suffix = _sortDirection == SortDirection.Ascending ? " ↑" : " ↓";
+            textBlock.Text = baseText + suffix;
+        }
+
         private void CopyHomeLog_Click(object sender, RoutedEventArgs e)
         {
             string text = HomeLogTextBox.Text ?? string.Empty;
@@ -808,6 +927,13 @@ namespace IPAbuyer.Views
 
             _pageCts.Dispose();
             _pageCts = new CancellationTokenSource();
+        }
+
+        private enum SortDirection
+        {
+            None = 0,
+            Ascending = 1,
+            Descending = 2
         }
     }
 }

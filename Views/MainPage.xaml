@@ -82,12 +82,48 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="1" HorizontalAlignment="Center" Text="App 名称(图标)" />
-                            <TextBlock Grid.Column="2" HorizontalAlignment="Center" Text="AppID" />
-                            <TextBlock Grid.Column="3" HorizontalAlignment="Center" Text="开发者" />
-                            <TextBlock Grid.Column="4" HorizontalAlignment="Center" Text="版本号" />
-                            <TextBlock Grid.Column="5" HorizontalAlignment="Center" Text="价格" />
-                            <TextBlock Grid.Column="6" HorizontalAlignment="Center" Text="购买状态" />
+                            <TextBlock
+                                x:Name="NameHeaderText"
+                                Grid.Column="1"
+                                HorizontalAlignment="Center"
+                                Tapped="SortHeader_Tapped"
+                                Tag="name"
+                                Text="App 名称(图标)" />
+                            <TextBlock
+                                x:Name="IdHeaderText"
+                                Grid.Column="2"
+                                HorizontalAlignment="Center"
+                                Tapped="SortHeader_Tapped"
+                                Tag="id"
+                                Text="AppID" />
+                            <TextBlock
+                                x:Name="DeveloperHeaderText"
+                                Grid.Column="3"
+                                HorizontalAlignment="Center"
+                                Tapped="SortHeader_Tapped"
+                                Tag="developer"
+                                Text="开发者" />
+                            <TextBlock
+                                x:Name="VersionHeaderText"
+                                Grid.Column="4"
+                                HorizontalAlignment="Center"
+                                Tapped="SortHeader_Tapped"
+                                Tag="version"
+                                Text="版本号" />
+                            <TextBlock
+                                x:Name="PriceHeaderText"
+                                Grid.Column="5"
+                                HorizontalAlignment="Center"
+                                Tapped="SortHeader_Tapped"
+                                Tag="price"
+                                Text="价格" />
+                            <TextBlock
+                                x:Name="PurchasedHeaderText"
+                                Grid.Column="6"
+                                HorizontalAlignment="Center"
+                                Tapped="SortHeader_Tapped"
+                                Tag="purchased"
+                                Text="购买状态" />
                         </Grid>
 
                         <ListView
