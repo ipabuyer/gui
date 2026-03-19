@@ -250,6 +250,13 @@ namespace IPAbuyer.Views
                 if (result.IsSuccessResponse)
                 {
                     SessionState.Reset();
+                    string defaultPassphrase = KeychainConfig.GetDefaultPassphrase();
+                    KeychainConfig.SavePassphrase(string.Empty, defaultPassphrase);
+                    _passphrase = defaultPassphrase;
+                    if (PassphraseInput != null)
+                    {
+                        PassphraseInput.Text = defaultPassphrase;
+                    }
                     HideInlineTwoFactor();
                     ApplyOperationLock(false);
                     ShowSuccess("已退出登录");
