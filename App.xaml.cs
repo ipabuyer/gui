@@ -63,12 +63,14 @@ namespace IPAbuyer
                 var result = await IpatoolExecution.AuthInfoAsync(
                     passphrase: null,
                     silent: true).ConfigureAwait(false);
-                if (!result.IsSuccessResponse)
+                string account = IpatoolExecution.ExtractEmailFromPayload(result.OutputOrError);
+                bool isAuthSuccess = result.IsSuccessResponse
+                    && (IpatoolExecution.IsPayloadSuccess(result.OutputOrError) || !string.IsNullOrWhiteSpace(account));
+                if (!isAuthSuccess)
                 {
                     return;
                 }
 
-                string account = IpatoolExecution.ExtractEmailFromPayload(result.OutputOrError);
                 SessionState.SetLoginState(account, true);
             }
             catch (Exception ex)

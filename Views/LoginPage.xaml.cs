@@ -133,9 +133,12 @@ namespace IPAbuyer.Views
                     cancellationToken: _currentOperationCts.Token);
                 DisposeCurrentOperation();
 
-                if (result.IsSuccessResponse)
+                string payloadEmail = IpatoolExecution.ExtractEmailFromPayload(result.OutputOrError);
+                bool isAuthSuccess = result.IsSuccessResponse
+                    && (IpatoolExecution.IsPayloadSuccess(result.OutputOrError) || !string.IsNullOrWhiteSpace(payloadEmail));
+
+                if (isAuthSuccess)
                 {
-                    string payloadEmail = IpatoolExecution.ExtractEmailFromPayload(result.OutputOrError);
                     if (!string.IsNullOrWhiteSpace(payloadEmail))
                     {
                         account = payloadEmail;

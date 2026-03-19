@@ -166,6 +166,53 @@ namespace IPAbuyer.Common
             return match.Success ? match.Value : string.Empty;
         }
 
+        public static bool IsPayloadSuccess(string? payload)
+        {
+            if (string.IsNullOrWhiteSpace(payload))
+            {
+                return false;
+            }
+
+            string normalized = payload.Replace("}{", "}\n{");
+            string[] lines = normalized.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string line in lines)
+            {
+                string trimmed = line.Trim();
+                if (!trimmed.StartsWith("{", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    using JsonDocument document = JsonDocument.Parse(trimmed);
+                    JsonElement root = document.RootElement;
+                    if (!root.TryGetProperty("success", out JsonElement successElement))
+                    {
+                        continue;
+                    }
+
+                    if (successElement.ValueKind == JsonValueKind.True)
+                    {
+                        return true;
+                    }
+
+                    if (successElement.ValueKind == JsonValueKind.String
+                        && string.Equals(successElement.GetString(), "true", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+                catch (JsonException)
+                {
+                    // ignore invalid segment
+                }
+            }
+
+            return payload.Contains("success=true", StringComparison.OrdinalIgnoreCase)
+                || payload.Contains("\"success\":true", StringComparison.OrdinalIgnoreCase);
+        }
+
         public static Task<IpatoolResult> PurchaseAppAsync(string bundleId, string account, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(account))
