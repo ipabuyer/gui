@@ -62,7 +62,7 @@ jobs:
       with:
         name: IPAbuyer_${{ matrix.platform }}
         path: |
-          **/*.msix
+          **/IPAbuyer*.msix
         if-no-files-found: error
 
     - name: Cleanup Certificate
