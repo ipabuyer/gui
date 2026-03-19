@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -13,7 +14,10 @@ namespace IPAbuyer.Common
 {
     public sealed class DownloadQueueService
     {
-        private static readonly Regex ProgressRegex = new(@"(?<!\d)(\d{1,3})(?:\.\d+)?\s*%", RegexOptions.Compiled);
+        private static readonly Regex ProgressRegex = new(@"(?<!\d)(\d{1,3}(?:\.\d+)?)\s*[%％]", RegexOptions.Compiled);
+        private static readonly Regex JsonProgressRegex = new(@"""(?:progress|percent|percentage|completed|completion|fraction)""\s*:\s*(\d+(?:\.\d+)?)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex SuccessFlagRegex = new(@"success\s*[:=]\s*(true|false)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex AnsiEscapeRegex = new(@"\x1B\[[0-9;?]*[ -/]*[@-~]", RegexOptions.Compiled);
         private const int ProgressBufferMaxLength = 256;
         private const int ProgressUiNotifyIntervalMs = 120;
         private readonly ObservableCollection<DownloadQueueItem> _items = new();
@@ -169,29 +173,20 @@ namespace IPAbuyer.Common
                         }
                         else
                         {
-                            int lastProgress = -1;
-                            long lastNotifyTick = 0;
-                            string progressBuffer = string.Empty;
+                            string chunkLogBuffer = string.Empty;
+                            string lastChunkLog = string.Empty;
+                            int lastLoggedPercent = -1;
                             var result = await IpatoolExecution.DownloadAppWithProgressAsync(
                                 item.BundleId,
                                 outputDirectory,
                                 account,
                                 chunk =>
                                 {
-                                    int? progress = TryExtractProgressPercentFromChunk(ref progressBuffer, chunk);
-                                    if (!progress.HasValue || progress.Value == lastProgress)
-                                    {
-                                        return;
-                                    }
-
-                                    lastProgress = progress.Value;
-                                    item.LastMessage = $"下载中 {lastProgress}%";
-                                    if (ShouldNotifyProgress(lastProgress, ref lastNotifyTick))
-                                    {
-                                        NotifyQueueChanged();
-                                    }
+                                    EmitChunkLogLines(ref chunkLogBuffer, chunk, item.Name, ref lastLoggedPercent, ref lastChunkLog);
                                 },
                                 _currentItemCts.Token);
+
+                            EmitChunkLogLines(ref chunkLogBuffer, "\n", item.Name, ref lastLoggedPercent, ref lastChunkLog);
 
                             if (IsDownloadSuccess(result))
                             {
@@ -272,12 +267,17 @@ namespace IPAbuyer.Common
 
         private static bool IsDownloadSuccess(IpatoolExecution.IpatoolResult result)
         {
+            string payload = result.OutputOrError;
+            if (TryExtractSuccessFlag(payload, out bool successByText))
+            {
+                return successByText;
+            }
+
             if (result.IsSuccessResponse)
             {
                 return true;
             }
 
-            string payload = result.OutputOrError;
             if (string.IsNullOrWhiteSpace(payload))
             {
                 return false;
@@ -307,6 +307,30 @@ namespace IPAbuyer.Common
             }
 
             return false;
+        }
+
+        private static bool TryExtractSuccessFlag(string? payload, out bool success)
+        {
+            success = false;
+            if (string.IsNullOrWhiteSpace(payload))
+            {
+                return false;
+            }
+
+            MatchCollection matches = SuccessFlagRegex.Matches(payload);
+            if (matches.Count == 0)
+            {
+                return false;
+            }
+
+            Match match = matches[matches.Count - 1];
+            if (match.Groups.Count < 2)
+            {
+                return false;
+            }
+
+            success = string.Equals(match.Groups[1].Value, "true", StringComparison.OrdinalIgnoreCase);
+            return true;
         }
 
         private static string BuildErrorMessage(IpatoolExecution.IpatoolResult result)
@@ -398,19 +422,35 @@ namespace IPAbuyer.Common
                 return null;
             }
 
+            line = SanitizeForParsing(line);
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                return null;
+            }
+
             MatchCollection matches = ProgressRegex.Matches(line);
-            if (matches.Count == 0)
+            if (matches.Count > 0)
+            {
+                Match match = matches[matches.Count - 1];
+                if (match.Groups.Count >= 2 && TryConvertProgressValue(match.Groups[1].Value, out int percentBySymbol))
+                {
+                    return percentBySymbol;
+                }
+            }
+
+            MatchCollection jsonMatches = JsonProgressRegex.Matches(line);
+            if (jsonMatches.Count == 0)
             {
                 return null;
             }
 
-            Match match = matches[matches.Count - 1];
-            if (match.Groups.Count < 2 || !int.TryParse(match.Groups[1].Value, out int percent))
+            Match jsonMatch = jsonMatches[jsonMatches.Count - 1];
+            if (jsonMatch.Groups.Count < 2 || !TryConvertProgressValue(jsonMatch.Groups[1].Value, out int percentByJson))
             {
                 return null;
             }
 
-            return Math.Clamp(percent, 0, 100);
+            return percentByJson;
         }
 
         private static int? TryExtractProgressPercentFromChunk(ref string buffer, string? chunk)
@@ -420,7 +460,7 @@ namespace IPAbuyer.Common
                 return null;
             }
 
-            buffer += chunk;
+            buffer += SanitizeForParsing(chunk);
             if (buffer.Length > ProgressBufferMaxLength)
             {
                 buffer = buffer.Substring(buffer.Length - ProgressBufferMaxLength, ProgressBufferMaxLength);
@@ -439,6 +479,149 @@ namespace IPAbuyer.Common
             }
 
             return false;
+        }
+
+        private void EmitChunkLogLines(ref string buffer, string? chunk, string appName, ref int lastLoggedPercent, ref string lastChunkLog)
+        {
+            if (string.IsNullOrEmpty(chunk))
+            {
+                return;
+            }
+
+            buffer += chunk;
+            if (buffer.Length > 4096)
+            {
+                buffer = buffer.Substring(buffer.Length - 4096, 4096);
+            }
+
+            int lineBreakIndex;
+            while ((lineBreakIndex = FindLineBreakIndex(buffer)) >= 0)
+            {
+                string line = buffer.Substring(0, lineBreakIndex);
+                int consume = 1;
+                if (lineBreakIndex + 1 < buffer.Length
+                    && buffer[lineBreakIndex] == '\r'
+                    && buffer[lineBreakIndex + 1] == '\n')
+                {
+                    consume = 2;
+                }
+
+                buffer = buffer.Substring(lineBreakIndex + consume);
+                EmitSingleChunkLine(line, appName, ref lastLoggedPercent, ref lastChunkLog);
+            }
+
+            // 无换行时也周期性输出，避免“只有结束/取消才看见日志”。
+            string pending = buffer.Trim();
+            if (pending.Length >= 48)
+            {
+                EmitSingleChunkLine(pending, appName, ref lastLoggedPercent, ref lastChunkLog);
+                buffer = string.Empty;
+            }
+        }
+
+        private static int FindLineBreakIndex(string value)
+        {
+            int rn = value.IndexOf("\r\n", StringComparison.Ordinal);
+            int r = value.IndexOf('\r');
+            int n = value.IndexOf('\n');
+
+            int first = -1;
+            if (rn >= 0)
+            {
+                first = rn;
+            }
+
+            if (r >= 0 && (first < 0 || r < first))
+            {
+                first = r;
+            }
+
+            if (n >= 0 && (first < 0 || n < first))
+            {
+                first = n;
+            }
+
+            return first;
+        }
+
+        private void EmitSingleChunkLine(string rawLine, string appName, ref int lastLoggedPercent, ref string lastChunkLog)
+        {
+            string line = SanitizeForParsing(rawLine).Trim();
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                return;
+            }
+
+            int? percent = TryExtractProgressPercent(line);
+            if (percent.HasValue)
+            {
+                if (percent.Value == lastLoggedPercent)
+                {
+                    return;
+                }
+
+                lastLoggedPercent = percent.Value;
+                EmitUniqueChunkLog(appName, line, ref lastChunkLog);
+                return;
+            }
+
+            EmitUniqueChunkLog(appName, line, ref lastChunkLog);
+        }
+
+        private void EmitUniqueChunkLog(string appName, string line, ref string lastChunkLog)
+        {
+            if (string.Equals(lastChunkLog, line, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            lastChunkLog = line;
+            EmitLog($"[{appName}] {line}");
+        }
+
+        private static string SanitizeForParsing(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return string.Empty;
+            }
+
+            string withoutAnsi = AnsiEscapeRegex.Replace(input, string.Empty);
+            var chars = new char[withoutAnsi.Length];
+            int index = 0;
+
+            foreach (char ch in withoutAnsi)
+            {
+                if (ch == '\r' || ch == '\n' || ch == '\t' || !char.IsControl(ch))
+                {
+                    chars[index++] = ch;
+                }
+            }
+
+            return index == 0 ? string.Empty : new string(chars, 0, index);
+        }
+
+        private static bool TryConvertProgressValue(string raw, out int percent)
+        {
+            percent = 0;
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return false;
+            }
+
+            if (!double.TryParse(raw.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out double value))
+            {
+                return false;
+            }
+
+            // JSON 中常见 0~1 比例值，这里统一转成百分比。
+            if (value >= 0d && value <= 1d)
+            {
+                value *= 100d;
+            }
+
+            percent = Math.Clamp((int)Math.Round(value, MidpointRounding.AwayFromZero), 0, 100);
+            return true;
         }
 
         private void EmitLog(string message)

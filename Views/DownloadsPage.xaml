@@ -211,7 +211,7 @@
                                     <TextBlock
                                         Grid.Column="6"
                                         HorizontalAlignment="Center"
-                                        Text="{x:Bind StatusText}" />
+                                        Text="{x:Bind StatusText, Mode=OneWay}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
