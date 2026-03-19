@@ -226,6 +226,24 @@ namespace IPAbuyer.Common
             }
         }
 
+        public static bool GetOwnedCheckEnabled()
+        {
+            lock (SyncRoot)
+            {
+                return LoadSettingsInternal().OwnedCheckEnabled;
+            }
+        }
+
+        public static void SaveOwnedCheckEnabled(bool enabled)
+        {
+            lock (SyncRoot)
+            {
+                var settings = LoadSettingsInternal();
+                settings.OwnedCheckEnabled = enabled;
+                SaveSettingsInternal(settings);
+            }
+        }
+
         public static bool IsValidCountryCode(string? code)
         {
             if (string.IsNullOrWhiteSpace(code))
@@ -321,6 +339,11 @@ namespace IPAbuyer.Common
                         {
                             model.DetailedIpatoolLogEnabled = verboseValue;
                         }
+
+                        if (TryReadBooleanProperty(root, out bool ownedCheckValue, "owned_check", "OwnedCheckEnabled"))
+                        {
+                            model.OwnedCheckEnabled = ownedCheckValue;
+                        }
                     }
                 }
 
@@ -368,7 +391,8 @@ namespace IPAbuyer.Common
             {
                 CountryCode = DefaultCountryCode,
                 DownloadDirectory = GetDefaultDownloadDirectory(),
-                DetailedIpatoolLogEnabled = false
+                DetailedIpatoolLogEnabled = false,
+                OwnedCheckEnabled = false
             };
         }
 
@@ -454,6 +478,9 @@ namespace IPAbuyer.Common
 
             [JsonPropertyName("verbose")]
             public bool DetailedIpatoolLogEnabled { get; set; }
+
+            [JsonPropertyName("owned_check")]
+            public bool OwnedCheckEnabled { get; set; }
         }
     }
 }

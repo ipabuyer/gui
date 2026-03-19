@@ -17,6 +17,7 @@ namespace IPAbuyer.Views
     public sealed partial class Settings : Page
     {
         private bool _isInitializingDetailedLogOption;
+        private bool _isInitializingOwnedCheckOption;
 
         public Settings()
         {
@@ -24,6 +25,7 @@ namespace IPAbuyer.Views
             InitializeCountryCode();
             InitializeDownloadDirectory();
             InitializeDetailedIpatoolLogOption();
+            InitializeOwnedCheckOption();
         }
 
         private void GithubButton(object sender, RoutedEventArgs e)
@@ -336,6 +338,44 @@ namespace IPAbuyer.Views
             }
 
             KeychainConfig.SaveDetailedIpatoolLogEnabled(false);
+        }
+
+        private void InitializeOwnedCheckOption()
+        {
+            if (OwnedCheckBox == null)
+            {
+                return;
+            }
+
+            _isInitializingOwnedCheckOption = true;
+            try
+            {
+                OwnedCheckBox.IsChecked = KeychainConfig.GetOwnedCheckEnabled();
+            }
+            finally
+            {
+                _isInitializingOwnedCheckOption = false;
+            }
+        }
+
+        private void OwnedCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializingOwnedCheckOption)
+            {
+                return;
+            }
+
+            KeychainConfig.SaveOwnedCheckEnabled(true);
+        }
+
+        private void OwnedCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializingOwnedCheckOption)
+            {
+                return;
+            }
+
+            KeychainConfig.SaveOwnedCheckEnabled(false);
         }
 
         private static string? ResolveBundledIpatoolPath()

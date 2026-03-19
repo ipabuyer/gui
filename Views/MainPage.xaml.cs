@@ -518,11 +518,68 @@ namespace IPAbuyer.Views
                 }
                 else
                 {
-                    app.purchased = StatusOwned;
-                    PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusOwned);
-                    AppendHomeLog($"疑似已拥有，已标记: {app.name ?? app.bundleId}");
+                    if (IsStdqOwnedCandidate(result.OutputOrError))
+                    {
+                        bool shouldMarkOwned = await ConfirmMarkOwnedAsync(app).ConfigureAwait(true);
+                        if (shouldMarkOwned)
+                        {
+                            app.purchased = StatusOwned;
+                            PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusOwned);
+                            AppendHomeLog($"疑似已拥有，已标记: {app.name ?? app.bundleId}");
+                        }
+                        else
+                        {
+                            AppendHomeLog($"疑似已拥有，未标记: {app.name ?? app.bundleId}");
+                        }
+                    }
+                    else
+                    {
+                        string reason = string.IsNullOrWhiteSpace(result.OutputOrError)
+                            ? "未知错误"
+                            : result.OutputOrError;
+                        AppendHomeLog($"购买失败: {app.name ?? app.bundleId} - {reason}");
+                    }
                 }
             }
+        }
+
+        private async Task<bool> ConfirmMarkOwnedAsync(SearchResult app)
+        {
+            if (KeychainConfig.GetOwnedCheckEnabled())
+            {
+                return true;
+            }
+
+            var disablePromptCheckBox = new CheckBox
+            {
+                Content = "不再提示，后续直接标记为已拥有"
+            };
+
+            var contentPanel = new StackPanel { Spacing = 8 };
+            contentPanel.Children.Add(new TextBlock
+            {
+                Text = $"ipatool 返回 STDQ：{app.name ?? app.bundleId} 可能已拥有，是否标记为“已拥有”？",
+                TextWrapping = TextWrapping.Wrap
+            });
+            contentPanel.Children.Add(disablePromptCheckBox);
+
+            var dialog = new ContentDialog
+            {
+                Title = "疑似已拥有",
+                Content = contentPanel,
+                PrimaryButtonText = "标记为已拥有",
+                CloseButtonText = "取消",
+                XamlRoot = XamlRoot
+            };
+
+            ContentDialogResult dialogResult = await dialog.ShowAsync();
+            bool shouldMark = dialogResult == ContentDialogResult.Primary;
+            if (shouldMark && disablePromptCheckBox.IsChecked == true)
+            {
+                KeychainConfig.SaveOwnedCheckEnabled(true);
+            }
+
+            return shouldMark;
         }
 
         private static string NormalizePurchasedStatus(string? status)
@@ -1024,6 +1081,16 @@ namespace IPAbuyer.Views
             {
                 ResultList.ItemsSource = null;
             }
+        }
+
+        private static bool IsStdqOwnedCandidate(string response)
+        {
+            if (string.IsNullOrWhiteSpace(response))
+            {
+                return false;
+            }
+
+            return response.Contains("failed to purchase item with param 'STDQ'", StringComparison.OrdinalIgnoreCase);
         }
 
         private void OnIpatoolCommandExecuting(string command)

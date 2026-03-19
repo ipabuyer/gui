@@ -118,6 +118,30 @@
                         BorderThickness="1"
                         CornerRadius="8">
                         <StackPanel Spacing="10">
+                            <TextBlock
+                                Style="{ThemeResource BodyTextBlockStyle}"
+                                Text="标记为已拥有前的提示"
+                                TextWrapping="Wrap" />
+                            <CheckBox
+                                x:Name="OwnedCheckBox"
+                                Content="标记为已拥有前不弹窗询问"
+                                Checked="OwnedCheckBox_Checked"
+                                Unchecked="OwnedCheckBox_Unchecked" />
+                            <TextBlock
+                                Style="{ThemeResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="勾选后，标记为已拥有将不再弹窗询问。"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border
+                        Padding="20"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                        <StackPanel Spacing="10">
                             <Grid ColumnSpacing="12">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="3*" />
