@@ -10,6 +10,7 @@ using IPAbuyer.Common;
 using IPAbuyer.Data;
 using IPAbuyer.Models;
 using Microsoft.UI;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
@@ -910,8 +911,7 @@ namespace IPAbuyer.Views
             }
 
             RebuildHomeLogView();
-            ScrollLogToBottom(HomeLogScrollViewer);
-            DispatcherQueue.TryEnqueue(() => ScrollLogToBottom(HomeLogScrollViewer));
+            EnsureHomeLogScrollToBottom();
         }
 
         private void SetPurchaseLoading(bool isLoading)
@@ -988,9 +988,29 @@ namespace IPAbuyer.Views
             priceTextBlock.ClearValue(TextBlock.ForegroundProperty);
         }
 
-        private static void ScrollLogToBottom(ScrollViewer scrollViewer)
+        private static void ScrollLogToBottom(ScrollViewer? scrollViewer)
         {
+            if (scrollViewer == null)
+            {
+                return;
+            }
+
             scrollViewer.ChangeView(null, scrollViewer.ScrollableHeight, null, disableAnimation: true);
+        }
+
+        private void EnsureHomeLogScrollToBottom()
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                HomeLogScrollViewer?.UpdateLayout();
+                ScrollLogToBottom(HomeLogScrollViewer);
+
+                DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
+                {
+                    HomeLogScrollViewer?.UpdateLayout();
+                    ScrollLogToBottom(HomeLogScrollViewer);
+                });
+            });
         }
 
         private void RebuildHomeLogView()
