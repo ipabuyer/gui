@@ -170,6 +170,7 @@ namespace IPAbuyer.Views
             }
             catch (Exception ex)
             {
+                ApplyOperationLock(wasLoggedIn);
                 ShowError($"查询登录状态失败: {ex.Message}");
                 AppendLoginLog($"Auth info exception: {ex.Message}");
             }
