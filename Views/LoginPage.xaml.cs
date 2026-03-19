@@ -119,6 +119,7 @@ namespace IPAbuyer.Views
         private async Task QueryAuthInfoAsync()
         {
             string account = SessionState.CurrentAccount;
+            bool wasLoggedIn = SessionState.IsLoggedIn;
 
             try
             {
@@ -161,7 +162,7 @@ namespace IPAbuyer.Views
                 }
                 else
                 {
-                    ApplyOperationLock(false);
+                    ApplyOperationLock(wasLoggedIn);
                     ShowError(string.IsNullOrWhiteSpace(result.OutputOrError) ? "登录状态异常" : result.OutputOrError);
                     AppendLoginLog("Auth info failed.");
                 }
