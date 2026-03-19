@@ -61,7 +61,8 @@ jobs:
       uses: actions/upload-artifact@v7
       with:
         name: IPAbuyer_${{ matrix.platform }}
-        path: "**/AppPackages/**/*.{msix,msixbundle}"
+        path: |
+          **/*.msix
         if-no-files-found: error
 
     - name: Cleanup Certificate
