@@ -464,9 +464,7 @@ namespace IPAbuyer.Views
 
                 if (!IsPriceFree(app.price))
                 {
-                    app.purchased = StatusOwned;
-                    PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusOwned);
-                    AppendHomeLog($"标记为已拥有(非免费): {app.name ?? app.bundleId}");
+                    AppendHomeLog($"非免费应用，已跳过购买: {app.name ?? app.bundleId}");
                     continue;
                 }
 
