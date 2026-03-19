@@ -1,6 +1,8 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using IPAbuyer.Common;
 using IPAbuyer.Data;
@@ -278,6 +280,69 @@ namespace IPAbuyer.Views
             {
                 await ShowDialogAsync("操作失败", $"清空 ipatool 数据失败：{ex.Message}");
             }
+        }
+
+        private async void ExportIpatoolButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string? sourcePath = ResolveBundledIpatoolPath();
+                if (string.IsNullOrWhiteSpace(sourcePath))
+                {
+                    await ShowDialogAsync("操作失败", "未在应用目录中找到可导出的 ipatool.exe。");
+                    return;
+                }
+
+                string outputDirectory = KeychainConfig.GetDownloadDirectory();
+                Directory.CreateDirectory(outputDirectory);
+
+                string targetPath = Path.Combine(outputDirectory, "ipatool.exe");
+                if (string.Equals(Path.GetFullPath(sourcePath), Path.GetFullPath(targetPath), StringComparison.OrdinalIgnoreCase))
+                {
+                    await ShowDialogAsync("操作成功", $"ipatool.exe 已位于目标目录：{targetPath}");
+                    return;
+                }
+
+                File.Copy(sourcePath, targetPath, overwrite: true);
+                await ShowDialogAsync("操作成功", $"ipatool.exe 已导出到：{targetPath}");
+            }
+            catch (Exception ex)
+            {
+                await ShowDialogAsync("操作失败", $"导出 ipatool.exe 失败：{ex.Message}");
+            }
+        }
+
+        private static string? ResolveBundledIpatoolPath()
+        {
+            string baseDirectory = AppContext.BaseDirectory;
+            string defaultPath = Path.Combine(baseDirectory, "ipatool.exe");
+            if (File.Exists(defaultPath))
+            {
+                return defaultPath;
+            }
+
+            string includeDirectory = Path.Combine(baseDirectory, "Include");
+            if (!Directory.Exists(includeDirectory))
+            {
+                return null;
+            }
+
+            string architectureSuffix = RuntimeInformation.ProcessArchitecture switch
+            {
+                Architecture.Arm64 => "arm64",
+                Architecture.X64 => "amd64",
+                _ => string.Empty
+            };
+
+            if (string.IsNullOrWhiteSpace(architectureSuffix))
+            {
+                return null;
+            }
+
+            string pattern = $"ipatool-*-windows-{architectureSuffix}.exe";
+            return Directory.GetFiles(includeDirectory, pattern, SearchOption.TopDirectoryOnly)
+                .OrderByDescending(path => path, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault();
         }
 
         private async Task ShowDialogAsync(string title, string message)
