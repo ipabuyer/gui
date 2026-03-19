@@ -93,6 +93,30 @@
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         BorderThickness="1"
                         CornerRadius="8">
+                        <StackPanel Spacing="10">
+                            <TextBlock
+                                Style="{ThemeResource BodyTextBlockStyle}"
+                                Text="详细日志"
+                                TextWrapping="Wrap" />
+                            <CheckBox
+                                x:Name="DetailedIpatoolLogCheckBox"
+                                Content="显示所有 ipatool 命令（优先显示在软件日志前）"
+                                Checked="DetailedIpatoolLogCheckBox_Checked"
+                                Unchecked="DetailedIpatoolLogCheckBox_Unchecked" />
+                            <TextBlock
+                                Style="{ThemeResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="提示：开启后，登录/购买/下载等执行前会把完整 ipatool 命令写入日志区。"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border
+                        Padding="20"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="3*" />
@@ -135,30 +159,6 @@
                                 HorizontalAlignment="Right"
                                 Click="CopyFeedbackEmailButton_Click" />
                         </Grid>
-                    </Border>
-
-                    <Border
-                        Padding="20"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8">
-                        <StackPanel Spacing="10">
-                            <TextBlock
-                                Style="{ThemeResource BodyTextBlockStyle}"
-                                Text="详细日志"
-                                TextWrapping="Wrap" />
-                            <CheckBox
-                                x:Name="DetailedIpatoolLogCheckBox"
-                                Content="显示所有 ipatool 命令（优先显示在软件日志前）"
-                                Checked="DetailedIpatoolLogCheckBox_Checked"
-                                Unchecked="DetailedIpatoolLogCheckBox_Unchecked" />
-                            <TextBlock
-                                Style="{ThemeResource CaptionTextBlockStyle}"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="提示：开启后，登录/购买/下载等执行前会把完整 ipatool 命令写入日志区。"
-                                TextWrapping="Wrap" />
-                        </StackPanel>
                     </Border>
 
                     <Border
