@@ -38,7 +38,7 @@
 1. 分“全部”、“未购买”、“已购买”和“已拥有”
 2. “已购买”和“已拥有”的区别：“已购买”指通过本软件进行购买的app；“已拥有”指用户购买过的app，但不是通过本软件购买的
 3. “已购买”和“已拥有”需要写入数据库文件
-4. 当ipatool返回`failed to purchase item with param 'STDQ'`时，判断app为疑似已拥有，标记为已拥有
+4. 当ipatool返回`failed to purchase item with param 'STDQ'`时，判断app为疑似已拥有，弹窗询问用户是否要标记为已拥有，并提供不再提示选框
 
 ### 主页右键
 
@@ -105,13 +105,16 @@
 4. 详细日志选框，勾选后所有ipatool命令都显示在日志区，显示在软件日志输出前
    1. 设置名称：verbose
    2. 需要提示用户：勾选后所有ipatool的命令和输出都显示在日志区
-5. 开发者官方网站（按钮跳转<https://ipa.blazesnow.com>）
+5. 标记为已拥有前的提示，取消勾选后，标记为已拥有前要弹窗询问用户
+   1. 设置名称：owned_check
+   2. 需要提示用户：勾选后，标记为已拥有将不再弹窗询问
+6. 开发者官方网站（按钮跳转<https://ipa.blazesnow.com>）
    1. 需要提示用户：打开开发者官方网站，查看Q&A及更多信息
-6. 反馈邮箱（按钮复制<ipa@blazesnow.com>）
+7. 反馈邮箱（按钮复制<ipa@blazesnow.com>）
    1. 需要提示用户：附带屏幕截图和复现步骤，有助于更快地修复问题
-7. 清空本地数据库按钮与介绍
-8. 清空ipatool数据按钮与介绍，ipatool数据目录：`%USERNAME%/.ipatool/`
-9. 导出ipatool.exe功能，默认输出目录为下载目录
+8. 清空本地数据库按钮与介绍
+9. 清空ipatool数据按钮与介绍，ipatool数据目录：`%USERNAME%/.ipatool/`
+10. 导出ipatool.exe功能，默认输出目录为下载目录
 
 ## 搜索功能
 
