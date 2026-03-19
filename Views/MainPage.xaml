@@ -17,7 +17,6 @@
             <Grid Grid.Row="0" RowSpacing="12">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
@@ -52,16 +51,8 @@
                     </ComboBox>
                 </Grid>
 
-                <ProgressBar
-                    x:Name="PurchaseLoadingBar"
-                    Grid.Row="1"
-                    Height="3"
-                    IsIndeterminate="True"
-                    IsHitTestVisible="False"
-                    Visibility="Collapsed" />
-
                 <Border
-                    Grid.Row="2"
+                    Grid.Row="1"
                     Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                     BorderThickness="1"
@@ -69,10 +60,19 @@
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <Grid Grid.Row="0" Padding="12,10,12,8">
+                        <ProgressBar
+                            x:Name="PurchaseLoadingBar"
+                            Grid.Row="0"
+                            Height="3"
+                            IsIndeterminate="True"
+                            IsHitTestVisible="False"
+                            Visibility="Collapsed" />
+
+                        <Grid Grid.Row="1" Padding="12,6,12,6">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="32" />
                                 <ColumnDefinition Width="3*" />
@@ -87,6 +87,8 @@
                                 Grid.Column="1"
                                 Background="Transparent"
                                 BorderThickness="0"
+                                MinHeight="24"
+                                Padding="0"
                                 HorizontalAlignment="Center"
                                 Click="SortHeader_Click"
                                 Tag="name"
@@ -96,6 +98,8 @@
                                 Grid.Column="2"
                                 Background="Transparent"
                                 BorderThickness="0"
+                                MinHeight="24"
+                                Padding="0"
                                 HorizontalAlignment="Center"
                                 Click="SortHeader_Click"
                                 Tag="id"
@@ -105,6 +109,8 @@
                                 Grid.Column="3"
                                 Background="Transparent"
                                 BorderThickness="0"
+                                MinHeight="24"
+                                Padding="0"
                                 HorizontalAlignment="Center"
                                 Click="SortHeader_Click"
                                 Tag="developer"
@@ -114,6 +120,8 @@
                                 Grid.Column="4"
                                 Background="Transparent"
                                 BorderThickness="0"
+                                MinHeight="24"
+                                Padding="0"
                                 HorizontalAlignment="Center"
                                 Click="SortHeader_Click"
                                 Tag="version"
@@ -123,6 +131,8 @@
                                 Grid.Column="5"
                                 Background="Transparent"
                                 BorderThickness="0"
+                                MinHeight="24"
+                                Padding="0"
                                 HorizontalAlignment="Center"
                                 Click="SortHeader_Click"
                                 Tag="price"
@@ -132,6 +142,8 @@
                                 Grid.Column="6"
                                 Background="Transparent"
                                 BorderThickness="0"
+                                MinHeight="24"
+                                Padding="0"
                                 HorizontalAlignment="Center"
                                 Click="SortHeader_Click"
                                 Tag="purchased"
@@ -140,7 +152,7 @@
 
                         <ListView
                             x:Name="ResultList"
-                            Grid.Row="1"
+                            Grid.Row="2"
                             Margin="0,0,0,10"
                             ContainerContentChanging="ResultList_ContainerContentChanging"
                             IsMultiSelectCheckBoxEnabled="True"
