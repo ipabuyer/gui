@@ -587,6 +587,11 @@ namespace IPAbuyer.Common
 
         private void EmitUniqueChunkLog(string appName, string line, ref string lastChunkLog)
         {
+            if (!KeychainConfig.GetDetailedIpatoolLogEnabled())
+            {
+                return;
+            }
+
             if (string.Equals(lastChunkLog, line, StringComparison.Ordinal))
             {
                 return;

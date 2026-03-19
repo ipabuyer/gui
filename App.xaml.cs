@@ -72,6 +72,12 @@ namespace IPAbuyer
                     return;
                 }
 
+                if (string.IsNullOrWhiteSpace(account))
+                {
+                    SessionState.Reset();
+                    return;
+                }
+
                 SessionState.SetLoginState(account, true);
             }
             catch (Exception ex)
