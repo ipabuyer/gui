@@ -35,7 +35,7 @@ namespace IPAbuyer.Views
         private static readonly string[] PurchasedAliases = { "已购买", "宸茶喘涔?" };
         private static readonly string[] OwnedAliases = { "已拥有", "宸叉嫢鏈?" };
         private static readonly string[] CanPurchaseAliases = { "可购买", "未购买", "鍙喘涔?", "鏈喘涔?" };
-        private const string NameHeaderBase = "App 名称(图标)";
+        private const string NameHeaderBase = "App名称";
         private const string IdHeaderBase = "AppID";
         private const string DeveloperHeaderBase = "开发者";
         private const string VersionHeaderBase = "版本号";
