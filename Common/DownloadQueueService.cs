@@ -421,6 +421,11 @@ namespace IPAbuyer.Common
             string account = SessionState.IsLoggedIn ? SessionState.CurrentAccount : string.Empty;
             if (string.IsNullOrWhiteSpace(account))
             {
+                if (SessionState.IsLoggedIn)
+                {
+                    throw new InvalidOperationException("当前登录状态未获取到邮箱，请先在账户页面退出并重新登录");
+                }
+
                 throw new InvalidOperationException("未找到可用账号，请先登录");
             }
 

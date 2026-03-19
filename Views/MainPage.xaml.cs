@@ -480,7 +480,10 @@ namespace IPAbuyer.Views
             string account = GetActiveAccount();
             if (string.IsNullOrWhiteSpace(account))
             {
-                AppendHomeLog("请先在账户页面登录后再购买。");
+                string message = SessionState.IsLoggedIn
+                    ? "当前登录状态未获取到邮箱，请先在账户页面退出并重新登录。"
+                    : "请先在账户页面登录后再购买。";
+                AppendHomeLog(message);
                 return false;
             }
 
