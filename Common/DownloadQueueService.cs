@@ -139,10 +139,6 @@ namespace IPAbuyer.Common
                     return 0;
                 }
 
-                _isRunning = true;
-                _queueCts = new CancellationTokenSource();
-                NotifyQueueChanged();
-
                 string account;
                 try
                 {
@@ -153,6 +149,11 @@ namespace IPAbuyer.Common
                     EmitLog(ex.Message);
                     return 0;
                 }
+
+                _isRunning = true;
+                _queueCts = new CancellationTokenSource();
+                NotifyQueueChanged();
+
                 string outputDirectory = KeychainConfig.GetDownloadDirectory();
                 Directory.CreateDirectory(outputDirectory);
                 bool useMockFlow = SessionState.IsLoggedIn
