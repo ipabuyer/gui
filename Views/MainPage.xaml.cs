@@ -661,6 +661,7 @@ namespace IPAbuyer.Views
             if (!isOddRow)
             {
                 rowGrid.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(0x00, 0x00, 0x00, 0x00));
+                ApplyPurchasedStatusColor(rowGrid, args.Item as SearchResult);
                 return;
             }
 
@@ -670,6 +671,26 @@ namespace IPAbuyer.Views
                 : Windows.UI.Color.FromArgb(0x14, 0x70, 0x70, 0x70);
 
             rowGrid.Background = new SolidColorBrush(stripeColor);
+            ApplyPurchasedStatusColor(rowGrid, args.Item as SearchResult);
+        }
+
+        private void ApplyPurchasedStatusColor(Grid rowGrid, SearchResult? item)
+        {
+            if (rowGrid.FindName("PurchasedTextBlock") is not TextBlock statusTextBlock)
+            {
+                return;
+            }
+
+            if (item != null && (IsPurchasedStatus(item.purchased) || IsOwnedStatus(item.purchased)))
+            {
+                var greenColor = ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0x8D, 0xE6, 0x9A)
+                    : Windows.UI.Color.FromArgb(0xFF, 0x2E, 0xA0, 0x43);
+                statusTextBlock.Foreground = new SolidColorBrush(greenColor);
+                return;
+            }
+
+            statusTextBlock.ClearValue(TextBlock.ForegroundProperty);
         }
 
         private static void ScrollLogToBottom(TextBox textBox)

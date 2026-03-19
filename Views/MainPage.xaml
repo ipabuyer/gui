@@ -142,7 +142,11 @@
                                             ToolTipService.ToolTip="{x:Bind developer}" />
                                         <TextBlock Grid.Column="4" HorizontalAlignment="Center" Text="{x:Bind version}" />
                                         <TextBlock Grid.Column="5" HorizontalAlignment="Center" Text="{x:Bind price}" />
-                                        <TextBlock Grid.Column="6" HorizontalAlignment="Center" Text="{x:Bind purchased}" />
+                                        <TextBlock
+                                            x:Name="PurchasedTextBlock"
+                                            Grid.Column="6"
+                                            HorizontalAlignment="Center"
+                                            Text="{x:Bind purchased}" />
                                     </Grid>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
