@@ -43,6 +43,7 @@ namespace IPAbuyer.Views
             try
             {
                 StartQueueButton.IsEnabled = false;
+                SetDownloadLoading(true);
                 await _queueService.StartQueueAsync();
             }
             catch (Exception ex)
@@ -52,6 +53,7 @@ namespace IPAbuyer.Views
             }
             finally
             {
+                SetDownloadLoading(false);
                 UpdateButtons();
             }
         }
@@ -267,6 +269,17 @@ namespace IPAbuyer.Views
             StartQueueButton.IsEnabled = !running;
             RemoveQueueButton.IsEnabled = !running;
             CancelAllButton.IsEnabled = running;
+            SetDownloadLoading(running);
+        }
+
+        private void SetDownloadLoading(bool isLoading)
+        {
+            if (DownloadLoadingBar == null)
+            {
+                return;
+            }
+
+            DownloadLoadingBar.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void AppendLog(string message)

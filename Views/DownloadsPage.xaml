@@ -16,34 +16,52 @@
         <Grid Grid.Row="0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <StackPanel Grid.Row="0" Margin="0,8,0,0" Orientation="Horizontal" Spacing="8">
+            <Grid Grid.Row="0" ColumnSpacing="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
                 <Button
                     x:Name="StartQueueButton"
+                    Grid.Column="0"
                     MinHeight="36"
                     Content="开始下载队列"
                     Click="StartQueueButton_Click" />
                 <Button
                     x:Name="RemoveQueueButton"
+                    Grid.Column="1"
                     MinHeight="36"
                     Content="移出下载队列"
                     Click="RemoveQueueButton_Click" />
                 <Button
+                    Grid.Column="2"
                     MinHeight="36"
                     Content="打开下载目录"
                     Click="OpenDirectoryButton_Click" />
                 <Button
                     x:Name="CancelAllButton"
+                    Grid.Column="3"
                     MinHeight="36"
                     Content="终止所有下载"
                     Click="CancelAllButton_Click" />
-            </StackPanel>
+            </Grid>
+
+            <ProgressBar
+                x:Name="DownloadLoadingBar"
+                Grid.Row="1"
+                Height="3"
+                IsIndeterminate="True"
+                IsHitTestVisible="False"
+                Visibility="Collapsed" />
 
             <Border
-                Grid.Row="1"
-                Margin="0,12,0,0"
+                Grid.Row="2"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
