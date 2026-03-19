@@ -31,16 +31,11 @@ namespace IPAbuyer.Views
         {
             InitializeComponent();
 
-            string? savedPassphrase = KeychainConfig.GetPassphrase(_account);
-            if (!string.IsNullOrWhiteSpace(savedPassphrase) && PassphraseInput != null)
+            string defaultPassphrase = KeychainConfig.GetPassphrase(null) ?? KeychainConfig.GetDefaultPassphrase();
+            if (PassphraseInput != null)
             {
-                PassphraseInput.Text = savedPassphrase;
-                _passphrase = savedPassphrase;
-            }
-            else if (PassphraseInput != null)
-            {
-                PassphraseInput.Text = "12345678";
-                _passphrase = "12345678";
+                PassphraseInput.Text = defaultPassphrase;
+                _passphrase = defaultPassphrase;
             }
 
             Unloaded += LoginPage_Unloaded;
@@ -161,13 +156,6 @@ namespace IPAbuyer.Views
             if (string.IsNullOrWhiteSpace(account))
             {
                 account = (EmailTextBox?.Text ?? string.Empty).Trim();
-            }
-
-            if (string.IsNullOrWhiteSpace(account))
-            {
-                ShowError("未找到可退出的账户");
-                AppendLoginLog("Logout failed: account is empty.");
-                return;
             }
 
             try

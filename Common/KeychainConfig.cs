@@ -17,6 +17,7 @@ namespace IPAbuyer.Common
         private const string PassphraseFileName = "passphrase.txt";
         private const string LastLoginFileName = "last_login.txt";
         private const string DefaultCountryCode = "cn";
+        private const string DefaultPassphrase = "12345678";
         private static readonly object SyncRoot = new();
 
         private static readonly HashSet<string> ValidCountryCodes = new(StringComparer.OrdinalIgnoreCase)
@@ -176,12 +177,17 @@ namespace IPAbuyer.Common
                 string path = GetPassphraseFilePath();
                 if (!File.Exists(path))
                 {
-                    return null;
+                    return DefaultPassphrase;
                 }
 
                 string content = File.ReadAllText(path, Encoding.UTF8).Trim();
-                return string.IsNullOrWhiteSpace(content) ? null : content;
+                return string.IsNullOrWhiteSpace(content) ? DefaultPassphrase : content;
             }
+        }
+
+        public static string GetDefaultPassphrase()
+        {
+            return DefaultPassphrase;
         }
 
         public static void SaveDownloadDirectory(string directoryPath)
