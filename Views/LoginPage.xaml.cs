@@ -81,10 +81,9 @@ namespace IPAbuyer.Views
         private void RefreshFromSessionState()
         {
             string account = SessionState.CurrentAccount;
-
-            if (!string.IsNullOrWhiteSpace(account) && EmailTextBox != null)
+            if (EmailTextBox != null)
             {
-                EmailTextBox.Text = account;
+                EmailTextBox.Text = account ?? string.Empty;
             }
 
             ApplyOperationLock(SessionState.IsLoggedIn);
@@ -119,11 +118,7 @@ namespace IPAbuyer.Views
 
         private async Task QueryAuthInfoAsync()
         {
-            string account = (EmailTextBox?.Text ?? string.Empty).Trim();
-            if (string.IsNullOrWhiteSpace(account))
-            {
-                account = SessionState.CurrentAccount;
-            }
+            string account = SessionState.CurrentAccount;
 
             try
             {
@@ -149,7 +144,7 @@ namespace IPAbuyer.Views
                         }
                     }
 
-                    string activeAccount = account;
+                    string activeAccount = string.IsNullOrWhiteSpace(payloadEmail) ? account : payloadEmail;
                     if (!string.IsNullOrWhiteSpace(activeAccount))
                     {
                         SessionState.SetLoginState(activeAccount, true);
