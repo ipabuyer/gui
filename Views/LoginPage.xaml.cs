@@ -148,13 +148,16 @@ namespace IPAbuyer.Views
                     if (!string.IsNullOrWhiteSpace(activeAccount))
                     {
                         SessionState.SetLoginState(activeAccount, true);
+                        ApplyOperationLock(true);
+                        ShowSuccess("登录状态正常");
+                        AppendLoginLog($"Auth info success: {activeAccount}");
                     }
-
-                    ApplyOperationLock(true);
-                    ShowSuccess("登录状态正常");
-                    AppendLoginLog(string.IsNullOrWhiteSpace(activeAccount)
-                        ? "Auth info success."
-                        : $"Auth info success: {activeAccount}");
+                    else
+                    {
+                        ApplyOperationLock(false);
+                        ShowError("已查询到登录状态，但未获取到邮箱，请重新登录后再试。");
+                        AppendLoginLog("Auth info success but email missing.");
+                    }
                 }
                 else
                 {
