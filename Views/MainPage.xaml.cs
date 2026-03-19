@@ -476,6 +476,7 @@ namespace IPAbuyer.Views
             string account = GetActiveAccount();
             if (string.IsNullOrWhiteSpace(account))
             {
+                AppendHomeLog("请先在账户页面登录后再购买。");
                 return;
             }
 
