@@ -14,6 +14,7 @@ namespace IPAbuyer.Common
     {
         private const int MaxPreviewLength = 200;
         private static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(2);
+        private const string DefaultPassphrase = "12345678";
         private static readonly HttpClient HttpClient = new();
 
         public sealed record IpatoolResult(string? Output, string? Error, int ExitCode, bool TimedOut)
@@ -394,7 +395,17 @@ namespace IPAbuyer.Common
                 return existingKey;
             }
 
-            return KeychainConfig.GenerateAndSaveSecretKey(account);
+            // 与产品约定保持一致：缺省 keychain-passphrase 为固定值 12345678。
+            try
+            {
+                KeychainConfig.SavePassphrase(account, DefaultPassphrase);
+            }
+            catch
+            {
+                // 写入失败不阻断执行，继续使用默认值。
+            }
+
+            return DefaultPassphrase;
         }
 
         private static void TryTerminateProcess(Process process)

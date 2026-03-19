@@ -176,17 +176,24 @@ namespace IPAbuyer.Common
                             string chunkLogBuffer = string.Empty;
                             string lastChunkLog = string.Empty;
                             int lastLoggedPercent = -1;
+                            object chunkLogSync = new();
                             var result = await IpatoolExecution.DownloadAppWithProgressAsync(
                                 item.BundleId,
                                 outputDirectory,
                                 account,
                                 chunk =>
                                 {
-                                    EmitChunkLogLines(ref chunkLogBuffer, chunk, item.Name, ref lastLoggedPercent, ref lastChunkLog);
+                                    lock (chunkLogSync)
+                                    {
+                                        EmitChunkLogLines(ref chunkLogBuffer, chunk, item.Name, ref lastLoggedPercent, ref lastChunkLog);
+                                    }
                                 },
                                 _currentItemCts.Token);
 
-                            EmitChunkLogLines(ref chunkLogBuffer, "\n", item.Name, ref lastLoggedPercent, ref lastChunkLog);
+                            lock (chunkLogSync)
+                            {
+                                EmitChunkLogLines(ref chunkLogBuffer, "\n", item.Name, ref lastLoggedPercent, ref lastChunkLog);
+                            }
 
                             if (IsDownloadSuccess(result))
                             {
