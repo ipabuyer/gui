@@ -135,7 +135,10 @@ namespace IPAbuyer.Views
                 _currentOperationCts = CancellationTokenSource.CreateLinkedTokenSource(_pageCts.Token);
                 SetBusyState(true, "正在查询登录状态...");
 
-                var result = await IpatoolExecution.AuthInfoAsync(_currentOperationCts.Token);
+                string inputPassphrase = PassphraseInput?.Text?.Trim() ?? string.Empty;
+                var result = await IpatoolExecution.AuthInfoAsync(
+                    passphrase: string.IsNullOrWhiteSpace(inputPassphrase) ? null : inputPassphrase,
+                    cancellationToken: _currentOperationCts.Token);
                 DisposeCurrentOperation();
 
                 if (result.IsSuccessResponse)

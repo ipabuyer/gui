@@ -105,12 +105,12 @@ namespace IPAbuyer.Common
             }
         }
 
-        public static Task<IpatoolResult> AuthInfoAsync(CancellationToken cancellationToken = default, bool silent = false)
+        public static Task<IpatoolResult> AuthInfoAsync(string? passphrase = null, CancellationToken cancellationToken = default, bool silent = false)
         {
             return ExecuteIpatoolAsync(
                 new[] { "auth", "info" },
                 account: string.Empty,
-                passphrase: null,
+                passphrase: passphrase,
                 cancellationToken,
                 suppressLogEvents: silent);
         }
