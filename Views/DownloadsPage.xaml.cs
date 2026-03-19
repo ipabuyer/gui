@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using IPAbuyer.Common;
 using IPAbuyer.Models;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
@@ -323,13 +324,32 @@ namespace IPAbuyer.Views
             }
 
             RebuildLogView();
-            ScrollLogToBottom(LogScrollViewer);
-            DispatcherQueue.TryEnqueue(() => ScrollLogToBottom(LogScrollViewer));
+            EnsureDownloadLogScrollToBottom();
         }
 
-        private static void ScrollLogToBottom(ScrollViewer scrollViewer)
+        private static void ScrollLogToBottom(ScrollViewer? scrollViewer)
         {
+            if (scrollViewer == null)
+            {
+                return;
+            }
+
             scrollViewer.ChangeView(null, scrollViewer.ScrollableHeight, null, disableAnimation: true);
+        }
+
+        private void EnsureDownloadLogScrollToBottom()
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                LogScrollViewer?.UpdateLayout();
+                ScrollLogToBottom(LogScrollViewer);
+
+                DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
+                {
+                    LogScrollViewer?.UpdateLayout();
+                    ScrollLogToBottom(LogScrollViewer);
+                });
+            });
         }
 
         private static ScrollViewer? FindDescendantScrollViewer(DependencyObject root)
