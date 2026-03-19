@@ -98,9 +98,10 @@
 2. 修改和重置下载目录功能，默认为当前用户的下载文件夹
 3. 开发者官方网站（按钮跳转<https://ipa.blazesnow.com>）
 4. 反馈邮箱（按钮复制<ipa@blazesnow.com>）
-5. 清空本地数据库按钮与介绍
-6. 清空ipatool数据按钮与介绍，ipatool数据目录：`%USERNAME%/.ipatool/`
-7. 导出ipatool.exe功能，默认输出目录为下载目录
+5. 详细日志选框，勾选后所有ipatool命令都显示在日志区，显示在软件日志输出前
+6. 清空本地数据库按钮与介绍
+7. 清空ipatool数据按钮与介绍，ipatool数据目录：`%USERNAME%/.ipatool/`
+8. 导出ipatool.exe功能，默认输出目录为下载目录
 
 ## 搜索功能
 
