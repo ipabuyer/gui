@@ -261,14 +261,16 @@
                         Click="CancelCurrentButton_Click" />
                 </StackPanel>
 
-                <TextBox
-                    x:Name="LogTextBox"
+                <ScrollViewer
+                    x:Name="LogScrollViewer"
                     Grid.Row="1"
                     Margin="0,8,0,0"
-                    AcceptsReturn="True"
-                    IsReadOnly="True"
-                    TextWrapping="Wrap"
-                    ScrollViewer.VerticalScrollBarVisibility="Auto" />
+                    VerticalScrollBarVisibility="Auto">
+                    <RichTextBlock
+                        x:Name="LogTextBlock"
+                        IsTextSelectionEnabled="True"
+                        TextWrapping="WrapWholeWords" />
+                </ScrollViewer>
             </Grid>
         </Border>
     </Grid>

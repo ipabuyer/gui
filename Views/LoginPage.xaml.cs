@@ -1,6 +1,7 @@
 using IPAbuyer.Common;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using System;
@@ -601,7 +602,7 @@ namespace IPAbuyer.Views
 
         private void CopyLoginLog_Click(object sender, RoutedEventArgs e)
         {
-            string text = LoginLogOutput?.Text ?? string.Empty;
+            string text = _loginLogBuilder.ToString();
             if (string.IsNullOrWhiteSpace(text))
             {
                 AppendLoginLog("Log is empty; nothing to copy.");
@@ -620,7 +621,7 @@ namespace IPAbuyer.Views
             _loginLogBuilder.Clear();
             if (LoginLogOutput != null)
             {
-                LoginLogOutput.Text = string.Empty;
+                LoginLogOutput.Blocks.Clear();
             }
 
             AppendLoginLog("Log cleared.");
@@ -633,43 +634,55 @@ namespace IPAbuyer.Views
                 return;
             }
 
-            _loginLogBuilder.Append('[')
-                .Append(DateTime.Now.ToString("HH:mm:ss"))
-                .Append("] ")
-                .AppendLine(message);
-
-            LoginLogOutput.Text = _loginLogBuilder.ToString();
-            ScrollLogToBottom(LoginLogOutput);
+            UiLogEntry entry = UiLogFormatter.Build(message);
+            _loginLogBuilder.AppendLine(entry.FormattedText);
+            AppendRichLogLine(LoginLogOutput, entry);
+            ScrollLogToBottom(LoginLogScrollViewer);
         }
 
-        private static void ScrollLogToBottom(TextBox textBox)
+        private static void ScrollLogToBottom(ScrollViewer scrollViewer)
         {
-            textBox.SelectionStart = textBox.Text.Length;
-            textBox.SelectionLength = 0;
-
-            var scrollViewer = FindDescendantScrollViewer(textBox);
-            scrollViewer?.ChangeView(null, scrollViewer.ScrollableHeight, null, disableAnimation: true);
+            scrollViewer.ChangeView(null, scrollViewer.ScrollableHeight, null, disableAnimation: true);
         }
 
-        private static ScrollViewer? FindDescendantScrollViewer(DependencyObject root)
+        private void AppendRichLogLine(RichTextBlock richTextBlock, UiLogEntry entry)
         {
-            int childrenCount = VisualTreeHelper.GetChildrenCount(root);
-            for (int i = 0; i < childrenCount; i++)
+            if (richTextBlock.Blocks.LastOrDefault() is not Paragraph paragraph)
             {
-                DependencyObject child = VisualTreeHelper.GetChild(root, i);
-                if (child is ScrollViewer scrollViewer)
-                {
-                    return scrollViewer;
-                }
-
-                ScrollViewer? nested = FindDescendantScrollViewer(child);
-                if (nested != null)
-                {
-                    return nested;
-                }
+                paragraph = new Paragraph();
+                richTextBlock.Blocks.Add(paragraph);
             }
 
-            return null;
+            var run = new Run
+            {
+                Text = entry.FormattedText,
+                Foreground = new SolidColorBrush(GetLogColor(entry.Level))
+            };
+
+            paragraph.Inlines.Add(run);
+            paragraph.Inlines.Add(new LineBreak());
+        }
+
+        private Windows.UI.Color GetLogColor(UiLogLevel level)
+        {
+            return level switch
+            {
+                UiLogLevel.Tip => ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0xFF, 0xD5, 0x8A)
+                    : Windows.UI.Color.FromArgb(0xFF, 0x9A, 0x67, 0x00),
+                UiLogLevel.Success => ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0x8D, 0xE6, 0x9A)
+                    : Windows.UI.Color.FromArgb(0xFF, 0x2E, 0xA0, 0x43),
+                UiLogLevel.Error => ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0xFF, 0x99, 0x99)
+                    : Windows.UI.Color.FromArgb(0xFF, 0xC4, 0x2B, 0x1C),
+                UiLogLevel.Ipatool => ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0x9C, 0xC8, 0xFF)
+                    : Windows.UI.Color.FromArgb(0xFF, 0x00, 0x55, 0xAA),
+                _ => ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0xD8, 0xD8, 0xD8)
+                    : Windows.UI.Color.FromArgb(0xFF, 0x44, 0x44, 0x44)
+            };
         }
 
         private void CancelCurrentOperation()
