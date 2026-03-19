@@ -102,6 +102,24 @@ namespace IPAbuyer.Views
             AppendLog("[提示] 已请求终止所有下载任务");
         }
 
+        private void RemoveSuccessItemsButton_Click(object sender, RoutedEventArgs e)
+        {
+            var successItems = _queueService.Items
+                .Where(item => item.Status == DownloadQueueStatus.Success)
+                .ToList();
+
+            if (successItems.Count == 0)
+            {
+                AppendLog("[提示] 当前没有可移除的下载成功项");
+                return;
+            }
+
+            int removed = _queueService.RemoveItems(successItems);
+            AppendLog($"[提示] 已移除下载成功项: {removed} 项");
+            RefreshQueueView();
+            UpdateButtons();
+        }
+
         private void CopyLogButton_Click(object sender, RoutedEventArgs e)
         {
             string text = LogTextBox.Text ?? string.Empty;
@@ -266,8 +284,10 @@ namespace IPAbuyer.Views
         private void UpdateButtons()
         {
             bool running = _queueService.IsRunning;
+            bool hasSuccessItems = _queueService.Items.Any(item => item.Status == DownloadQueueStatus.Success);
             StartQueueButton.IsEnabled = !running;
             RemoveQueueButton.IsEnabled = !running;
+            RemoveSuccessItemsButton.IsEnabled = !running && hasSuccessItems;
             CancelAllButton.IsEnabled = running;
             SetDownloadLoading(running);
         }

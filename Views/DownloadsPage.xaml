@@ -25,6 +25,7 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <Button
                     x:Name="StartQueueButton"
@@ -39,13 +40,19 @@
                     Content="移出下载队列"
                     Click="RemoveQueueButton_Click" />
                 <Button
+                    x:Name="RemoveSuccessItemsButton"
                     Grid.Column="2"
+                    MinHeight="36"
+                    Content="移除下载成功项"
+                    Click="RemoveSuccessItemsButton_Click" />
+                <Button
+                    Grid.Column="3"
                     MinHeight="36"
                     Content="打开下载目录"
                     Click="OpenDirectoryButton_Click" />
                 <Button
                     x:Name="CancelAllButton"
-                    Grid.Column="3"
+                    Grid.Column="4"
                     MinHeight="36"
                     Content="终止所有下载"
                     Click="CancelAllButton_Click" />
