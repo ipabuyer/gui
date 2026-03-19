@@ -85,11 +85,12 @@
                             x:Name="ResultList"
                             Grid.Row="1"
                             Margin="0,0,0,10"
+                            ContainerContentChanging="ResultList_ContainerContentChanging"
                             IsMultiSelectCheckBoxEnabled="True"
                             SelectionMode="Multiple">
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="models:SearchResult">
-                                    <Grid Padding="12,6,12,6">
+                                    <Grid Margin="-40,0,0,0" Padding="52,10,12,10">
                                         <Grid.ContextFlyout>
                                             <MenuFlyout>
                                                 <MenuFlyoutItem Text="购买" Click="ContextMenuPurchase_Click" />

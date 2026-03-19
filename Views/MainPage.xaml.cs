@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using IPAbuyer.Common;
 using IPAbuyer.Data;
 using IPAbuyer.Models;
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -647,6 +648,28 @@ namespace IPAbuyer.Views
 
             HomeLogTextBox.Text = _homeLogBuilder.ToString();
             ScrollLogToBottom(HomeLogTextBox);
+        }
+
+        private void ResultList_ContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
+        {
+            if (args.ItemContainer?.ContentTemplateRoot is not Grid rowGrid)
+            {
+                return;
+            }
+
+            bool isOddRow = args.ItemIndex % 2 == 1;
+            if (!isOddRow)
+            {
+                rowGrid.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(0x00, 0x00, 0x00, 0x00));
+                return;
+            }
+
+            // Use neutral gray striping and keep it independent from pointer visual states.
+            var stripeColor = ActualTheme == ElementTheme.Dark
+                ? Windows.UI.Color.FromArgb(0x1A, 0x80, 0x80, 0x80)
+                : Windows.UI.Color.FromArgb(0x14, 0x70, 0x70, 0x70);
+
+            rowGrid.Background = new SolidColorBrush(stripeColor);
         }
 
         private static void ScrollLogToBottom(TextBox textBox)
