@@ -197,6 +197,14 @@ namespace IPAbuyer.Views
                 await PurchaseAppsAsync(selectedApps);
                 AppendHomeLog("批量购买执行完成。");
             }
+            catch (OperationCanceledException)
+            {
+                AppendHomeLog("批量购买已取消。");
+            }
+            catch (Exception ex)
+            {
+                AppendHomeLog($"批量购买异常: {ex.Message}");
+            }
             finally
             {
                 if (BatchPurchaseButton != null)
@@ -244,6 +252,14 @@ namespace IPAbuyer.Views
             {
                 AppendHomeLog($"右键购买，共 {selectedApps.Count} 项。");
                 await PurchaseAppsAsync(selectedApps);
+            }
+            catch (OperationCanceledException)
+            {
+                AppendHomeLog("右键购买已取消。");
+            }
+            catch (Exception ex)
+            {
+                AppendHomeLog($"右键购买异常: {ex.Message}");
             }
             finally
             {

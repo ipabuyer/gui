@@ -71,15 +71,24 @@ namespace IPAbuyer.Views
 
         private async void NextButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_isTwoFactorPending)
+            try
             {
-                AppendLoginLog("Start verifying two-factor code.");
-                await ValidateAuthCodeAsync();
-                return;
-            }
+                if (_isTwoFactorPending)
+                {
+                    AppendLoginLog("Start verifying two-factor code.");
+                    await ValidateAuthCodeAsync();
+                    return;
+                }
 
-            AppendLoginLog("Start login.");
-            await TriggerLoginAsync();
+                AppendLoginLog("Start login.");
+                await TriggerLoginAsync();
+            }
+            catch (Exception ex)
+            {
+                ShowError($"登录流程异常: {ex.Message}");
+                AppendLoginLog($"Login flow exception: {ex.Message}");
+                RestoreIdleState();
+            }
         }
 
         private async void AuthInfoButton_Click(object sender, RoutedEventArgs e)
@@ -321,9 +330,25 @@ namespace IPAbuyer.Views
             SetInputControlsEnabled(false);
             SetBusyState(true, hasLocalValidationIssue ? string.Empty : "正在登录...");
 
-            var result = await LoginService.LoginAsync(_account, _password, _passphrase, _currentOperationCts.Token);
-            DisposeCurrentOperation();
-            await HandleLoginResultAsync(result, isTwoFactorStep: false);
+            try
+            {
+                var result = await LoginService.LoginAsync(_account, _password, _passphrase, _currentOperationCts.Token);
+                DisposeCurrentOperation();
+                await HandleLoginResultAsync(result, isTwoFactorStep: false);
+            }
+            catch (OperationCanceledException)
+            {
+                DisposeCurrentOperation();
+                AppendLoginLog("登录请求已取消。");
+                RestoreIdleState();
+            }
+            catch (Exception ex)
+            {
+                DisposeCurrentOperation();
+                ShowError($"登录失败: {ex.Message}");
+                AppendLoginLog($"Login exception: {ex.Message}");
+                RestoreIdleState();
+            }
         }
 
         private async Task<bool> ValidateAuthCodeAsync()
@@ -358,8 +383,27 @@ namespace IPAbuyer.Views
             SetInputControlsEnabled(false);
             SetBusyState(true, "正在验证...");
 
-            var result = await LoginService.VerifyAuthCodeAsync(_account, _password, _passphrase, authCode, _currentOperationCts.Token);
-            DisposeCurrentOperation();
+            LoginResult result;
+            try
+            {
+                result = await LoginService.VerifyAuthCodeAsync(_account, _password, _passphrase, authCode, _currentOperationCts.Token);
+                DisposeCurrentOperation();
+            }
+            catch (OperationCanceledException)
+            {
+                DisposeCurrentOperation();
+                AppendLoginLog("验证码验证已取消。");
+                RestoreIdleState();
+                return false;
+            }
+            catch (Exception ex)
+            {
+                DisposeCurrentOperation();
+                ShowAuthError($"验证失败: {ex.Message}");
+                AppendLoginLog($"Code validation exception: {ex.Message}");
+                RestoreIdleState();
+                return false;
+            }
 
             if (result.Status == LoginStatus.AuthCodeInvalid)
             {

@@ -30,10 +30,10 @@ namespace IPAbuyer.Common
                 throw new ArgumentException("account 不能为空", nameof(account));
             }
 
-            string arguments = $"auth login --email \"{account}\" --password \"{password}\"";
+            string arguments = $"auth login --email {QuoteArgument(account)} --password {QuoteArgument(password)}";
             if (!string.IsNullOrWhiteSpace(authCode))
             {
-                arguments += $" --auth-code \"{authCode}\"";
+                arguments += $" --auth-code {QuoteArgument(authCode)}";
             }
 
             return ExecuteIpatoolAsync(arguments, account, passphrase, cancellationToken);
@@ -119,7 +119,7 @@ namespace IPAbuyer.Common
                 throw new ArgumentException("bundleId 不能为空", nameof(bundleId));
             }
 
-            string arguments = $"purchase --bundle-identifier \"{bundleId}\"";
+            string arguments = $"purchase --bundle-identifier {QuoteArgument(bundleId)}";
             return ExecuteIpatoolAsync(arguments, account, null, cancellationToken);
         }
 
@@ -151,12 +151,12 @@ namespace IPAbuyer.Common
             }
 
             Directory.CreateDirectory(outputDirectory);
-            string arguments = $"download --output \"{outputDirectory}\" --bundle-identifier \"{bundleId}\"";
+            string arguments = $"download --output {QuoteArgument(outputDirectory)} --bundle-identifier {QuoteArgument(bundleId)}";
 
             string ipatoolPath = ResolveIpatoolPath();
             string workingDirectory = Path.GetDirectoryName(ipatoolPath) ?? AppContext.BaseDirectory;
             string effectivePassphrase = EnsurePassphrase(account, null);
-            string finalArguments = $"{arguments} --keychain-passphrase {effectivePassphrase} --format json --non-interactive --verbose";
+            string finalArguments = $"{arguments} --keychain-passphrase {QuoteArgument(effectivePassphrase)} --format json --non-interactive --verbose";
 
             var psi = new ProcessStartInfo
             {
@@ -260,7 +260,7 @@ namespace IPAbuyer.Common
 
             string finalArguments = isLogout
                 ? $"{arguments} --format json --non-interactive --verbose"
-                : $"{arguments} --keychain-passphrase {effectivePassphrase} --format json --non-interactive --verbose";
+                : $"{arguments} --keychain-passphrase {QuoteArgument(effectivePassphrase)} --format json --non-interactive --verbose";
 
             var psi = new ProcessStartInfo
             {
@@ -534,6 +534,17 @@ namespace IPAbuyer.Common
             {
                 Debug.WriteLine($"删除 ipatool cookies.lock 失败: {ex.Message}");
             }
+        }
+
+        private static string QuoteArgument(string value)
+        {
+            if (value == null)
+            {
+                return "\"\"";
+            }
+
+            string escaped = value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+            return $"\"{escaped}\"";
         }
     }
 }
