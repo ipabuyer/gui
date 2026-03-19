@@ -45,6 +45,7 @@
           <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <TextBlock
+          x:Name="TitleBarTextBlock"
           Grid.Column="0"
           Margin="0,0,16,0"
           VerticalAlignment="Center"
