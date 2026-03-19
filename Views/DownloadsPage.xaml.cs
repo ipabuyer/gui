@@ -17,6 +17,7 @@ namespace IPAbuyer.Views
     {
         private readonly DownloadQueueService _queueService = DownloadQueueService.Instance;
         private readonly StringBuilder _logBuilder = new();
+        private readonly List<UiLogEntry> _logEntries = new();
         private string? _sortKey;
         private SortDirection _sortDirection = SortDirection.None;
 
@@ -26,6 +27,7 @@ namespace IPAbuyer.Views
         private const string VersionHeaderBase = "版本号";
         private const string PriceHeaderBase = "价格";
         private const string StatusHeaderBase = "下载状态";
+        private const int MaxLogLines = 1000;
 
         public DownloadsPage()
         {
@@ -140,6 +142,7 @@ namespace IPAbuyer.Views
         private void ClearLogButton_Click(object sender, RoutedEventArgs e)
         {
             _logBuilder.Clear();
+            _logEntries.Clear();
             LogTextBlock?.Blocks.Clear();
         }
 
@@ -150,11 +153,11 @@ namespace IPAbuyer.Views
             AppendLog("[提示] 已请求终止当前下载任务");
         }
 
-        private void OnLogReceived(string log)
+        private void OnLogReceived(UiLogMessage log)
         {
             DispatcherQueue.TryEnqueue(() =>
             {
-                AppendLog(log);
+                AppendLog(log.Message, log.Source);
             });
         }
 
@@ -303,16 +306,21 @@ namespace IPAbuyer.Views
             DownloadLoadingBar.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        private void AppendLog(string message)
+        private void AppendLog(string message, UiLogSource source = UiLogSource.App)
         {
             if (string.IsNullOrWhiteSpace(message) || LogTextBlock == null)
             {
                 return;
             }
 
-            UiLogEntry entry = UiLogFormatter.Build(message);
-            _logBuilder.AppendLine(entry.FormattedText);
-            AppendRichLogLine(LogTextBlock, entry);
+            UiLogEntry entry = UiLogFormatter.Build(message, source);
+            _logEntries.Add(entry);
+            if (_logEntries.Count > MaxLogLines)
+            {
+                _logEntries.RemoveAt(0);
+            }
+
+            RebuildLogView();
             ScrollLogToBottom(LogScrollViewer);
         }
 
@@ -380,22 +388,29 @@ namespace IPAbuyer.Views
             statusTextBlock.ClearValue(TextBlock.ForegroundProperty);
         }
 
-        private void AppendRichLogLine(RichTextBlock richTextBlock, UiLogEntry entry)
+        private void RebuildLogView()
         {
-            if (richTextBlock.Blocks.LastOrDefault() is not Paragraph paragraph)
+            _logBuilder.Clear();
+            if (LogTextBlock == null)
             {
-                paragraph = new Paragraph();
-                richTextBlock.Blocks.Add(paragraph);
+                return;
             }
 
-            var run = new Run
+            LogTextBlock.Blocks.Clear();
+            var paragraph = new Paragraph();
+            foreach (UiLogEntry entry in _logEntries)
             {
-                Text = entry.FormattedText,
-                Foreground = new SolidColorBrush(GetLogColor(entry.Level))
-            };
+                _logBuilder.AppendLine(entry.FormattedText);
+                var run = new Run
+                {
+                    Text = entry.FormattedText,
+                    Foreground = new SolidColorBrush(GetLogColor(entry.Level))
+                };
+                paragraph.Inlines.Add(run);
+                paragraph.Inlines.Add(new LineBreak());
+            }
 
-            paragraph.Inlines.Add(run);
-            paragraph.Inlines.Add(new LineBreak());
+            LogTextBlock.Blocks.Add(paragraph);
         }
 
         private Windows.UI.Color GetLogColor(UiLogLevel level)
