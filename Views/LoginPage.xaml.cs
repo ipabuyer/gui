@@ -135,6 +135,7 @@ namespace IPAbuyer.Views
 
                 string payloadEmail = IpatoolExecution.ExtractEmailFromPayload(result.OutputOrError);
                 bool isAuthSuccess = result.IsSuccessResponse
+                    && !IpatoolExecution.HasExplicitFailureFlag(result.OutputOrError)
                     && (IpatoolExecution.IsPayloadSuccess(result.OutputOrError) || !string.IsNullOrWhiteSpace(payloadEmail));
 
                 if (isAuthSuccess)

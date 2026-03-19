@@ -213,6 +213,53 @@ namespace IPAbuyer.Common
                 || payload.Contains("\"success\":true", StringComparison.OrdinalIgnoreCase);
         }
 
+        public static bool HasExplicitFailureFlag(string? payload)
+        {
+            if (string.IsNullOrWhiteSpace(payload))
+            {
+                return false;
+            }
+
+            string normalized = payload.Replace("}{", "}\n{");
+            string[] lines = normalized.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string line in lines)
+            {
+                string trimmed = line.Trim();
+                if (!trimmed.StartsWith("{", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    using JsonDocument document = JsonDocument.Parse(trimmed);
+                    JsonElement root = document.RootElement;
+                    if (!root.TryGetProperty("success", out JsonElement successElement))
+                    {
+                        continue;
+                    }
+
+                    if (successElement.ValueKind == JsonValueKind.False)
+                    {
+                        return true;
+                    }
+
+                    if (successElement.ValueKind == JsonValueKind.String
+                        && string.Equals(successElement.GetString(), "false", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+                catch (JsonException)
+                {
+                    // ignore invalid segment
+                }
+            }
+
+            return payload.Contains("success=false", StringComparison.OrdinalIgnoreCase)
+                || payload.Contains("\"success\":false", StringComparison.OrdinalIgnoreCase);
+        }
+
         public static Task<IpatoolResult> PurchaseAppAsync(string bundleId, string account, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(account))

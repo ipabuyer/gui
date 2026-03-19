@@ -65,6 +65,7 @@ namespace IPAbuyer
                     silent: true).ConfigureAwait(false);
                 string account = IpatoolExecution.ExtractEmailFromPayload(result.OutputOrError);
                 bool isAuthSuccess = result.IsSuccessResponse
+                    && !IpatoolExecution.HasExplicitFailureFlag(result.OutputOrError)
                     && (IpatoolExecution.IsPayloadSuccess(result.OutputOrError) || !string.IsNullOrWhiteSpace(account));
                 if (!isAuthSuccess)
                 {
