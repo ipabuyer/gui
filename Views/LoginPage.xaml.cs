@@ -57,6 +57,11 @@ namespace IPAbuyer.Views
 
         private async void LoginPage_Loaded(object sender, RoutedEventArgs e)
         {
+            IpatoolExecution.CommandExecuting -= OnIpatoolCommandExecuting;
+            IpatoolExecution.CommandExecuting += OnIpatoolCommandExecuting;
+            IpatoolExecution.CommandOutputReceived -= OnIpatoolCommandOutputReceived;
+            IpatoolExecution.CommandOutputReceived += OnIpatoolCommandOutputReceived;
+
             if (_pageCts.IsCancellationRequested)
             {
                 _pageCts.Dispose();
@@ -68,6 +73,8 @@ namespace IPAbuyer.Views
 
         private void LoginPage_Unloaded(object sender, RoutedEventArgs e)
         {
+            IpatoolExecution.CommandExecuting -= OnIpatoolCommandExecuting;
+            IpatoolExecution.CommandOutputReceived -= OnIpatoolCommandOutputReceived;
             CancelCurrentOperation();
             if (!_pageCts.IsCancellationRequested)
             {
@@ -780,6 +787,22 @@ namespace IPAbuyer.Views
                 _currentOperationCts.Dispose();
                 _currentOperationCts = null;
             }
+        }
+
+        private void OnIpatoolCommandExecuting(string command)
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                AppendLoginLog(command, UiLogSource.Ipatool);
+            });
+        }
+
+        private void OnIpatoolCommandOutputReceived(string line)
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                AppendLoginLog(line, UiLogSource.Ipatool);
+            });
         }
 
         private TextBox? EmailTextBox => GetControl<TextBox>("EmailComboBox");

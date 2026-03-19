@@ -55,6 +55,10 @@ namespace IPAbuyer.Views
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
+            IpatoolExecution.CommandExecuting -= OnIpatoolCommandExecuting;
+            IpatoolExecution.CommandExecuting += OnIpatoolCommandExecuting;
+            IpatoolExecution.CommandOutputReceived -= OnIpatoolCommandOutputReceived;
+            IpatoolExecution.CommandOutputReceived += OnIpatoolCommandOutputReceived;
 
             if (MainPageCacheState.ConsumeSearchCacheInvalidation())
             {
@@ -1002,6 +1006,8 @@ namespace IPAbuyer.Views
         protected override void OnNavigatedFrom(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedFrom(e);
+            IpatoolExecution.CommandExecuting -= OnIpatoolCommandExecuting;
+            IpatoolExecution.CommandOutputReceived -= OnIpatoolCommandOutputReceived;
             if (!_pageCts.IsCancellationRequested)
             {
                 _pageCts.Cancel();
@@ -1018,6 +1024,22 @@ namespace IPAbuyer.Views
             {
                 ResultList.ItemsSource = null;
             }
+        }
+
+        private void OnIpatoolCommandExecuting(string command)
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                AppendHomeLog(command, UiLogSource.Ipatool);
+            });
+        }
+
+        private void OnIpatoolCommandOutputReceived(string line)
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                AppendHomeLog(line, UiLogSource.Ipatool);
+            });
         }
 
         private enum SortDirection

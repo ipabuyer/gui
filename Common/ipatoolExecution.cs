@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -15,7 +16,6 @@ namespace IPAbuyer.Common
     {
         private const int MaxPreviewLength = 200;
         private static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(2);
-        private const string DefaultPassphrase = "12345678";
         private static readonly HttpClient HttpClient = new();
 
         public sealed record IpatoolResult(string? Output, string? Error, int ExitCode, bool TimedOut)
@@ -23,6 +23,9 @@ namespace IPAbuyer.Common
             public string OutputOrError => string.IsNullOrWhiteSpace(Output) ? Error ?? string.Empty : Output;
             public bool IsSuccessResponse => !TimedOut && ExitCode == 0;
         }
+
+        public static event Action<string>? CommandExecuting;
+        public static event Action<string>? CommandOutputReceived;
 
         public static Task<IpatoolResult> AuthLoginAsync(string account, string password, string authCode, string passphrase, CancellationToken cancellationToken = default)
         {
@@ -189,6 +192,7 @@ namespace IPAbuyer.Common
 
             try
             {
+                EmitCommandLog(finalArguments);
                 process = new Process { StartInfo = psi, EnableRaisingEvents = true };
                 if (!process.Start())
                 {
@@ -217,6 +221,10 @@ namespace IPAbuyer.Common
 
                 string output = outputBuilder.ToString();
                 string error = errorBuilder.ToString();
+                if (outputChunkCallback == null)
+                {
+                    EmitDetailedOutputLogs(output, error);
+                }
 
                 Debug.WriteLine($"ipatool output: {Preview(output)}");
                 Debug.WriteLine($"ipatool stderr: {Preview(error)}");
@@ -299,6 +307,7 @@ namespace IPAbuyer.Common
                     DeleteCookieLockFile();
                 }
 
+                EmitCommandLog(finalArguments);
                 process = new Process { StartInfo = psi, EnableRaisingEvents = true };
 
                 if (!process.Start())
@@ -324,6 +333,7 @@ namespace IPAbuyer.Common
 
                 string output = await outputTask.ConfigureAwait(false);
                 string error = await errorTask.ConfigureAwait(false);
+                EmitDetailedOutputLogs(output, error);
 
                 Debug.WriteLine($"ipatool output: {Preview(output)}");
                 Debug.WriteLine($"ipatool stderr: {Preview(error)}");
@@ -400,24 +410,14 @@ namespace IPAbuyer.Common
                 return filePassphrase;
             }
 
-            // 兼容旧实现：若 passphrase.txt 不存在，回退到历史数据库密钥。
-            string? existingKey = KeychainConfig.GetSecretKey(account);
-            if (!string.IsNullOrEmpty(existingKey))
+            // 账号不匹配时，尝试读取 passphrase.txt 中的默认值，避免误回退到无效密钥。
+            string? fallbackPassphrase = KeychainConfig.GetPassphrase(null);
+            if (!string.IsNullOrWhiteSpace(fallbackPassphrase))
             {
-                return existingKey;
+                return fallbackPassphrase;
             }
 
-            // 与产品约定保持一致：缺省 keychain-passphrase 为固定值 12345678。
-            try
-            {
-                KeychainConfig.SavePassphrase(account, DefaultPassphrase);
-            }
-            catch
-            {
-                // 写入失败不阻断执行，继续使用默认值。
-            }
-
-            return DefaultPassphrase;
+            throw new InvalidOperationException("未找到可用的加密密钥，请先在账户页面重新登录后再试。");
         }
 
         private static void TryTerminateProcess(Process process)
@@ -591,6 +591,68 @@ namespace IPAbuyer.Common
             }
 
             return $"ipatool {arguments[0]} {arguments[1]}";
+        }
+
+        private static void EmitCommandLog(IReadOnlyList<string> arguments)
+        {
+            if (!KeychainConfig.GetDetailedIpatoolLogEnabled())
+            {
+                return;
+            }
+
+            string rendered = string.Join(" ", arguments.Select(FormatArgForDisplay));
+            CommandExecuting?.Invoke($"ipatool.exe {rendered}");
+        }
+
+        private static void EmitDetailedOutputLogs(string? output, string? error)
+        {
+            if (!KeychainConfig.GetDetailedIpatoolLogEnabled())
+            {
+                return;
+            }
+
+            foreach (string line in EnumerateLines(output))
+            {
+                CommandOutputReceived?.Invoke(line);
+            }
+
+            foreach (string line in EnumerateLines(error))
+            {
+                CommandOutputReceived?.Invoke(line);
+            }
+        }
+
+        private static IEnumerable<string> EnumerateLines(string? text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                yield break;
+            }
+
+            string[] lines = text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string rawLine in lines)
+            {
+                string line = rawLine.Trim();
+                if (!string.IsNullOrWhiteSpace(line))
+                {
+                    yield return line;
+                }
+            }
+        }
+
+        private static string FormatArgForDisplay(string argument)
+        {
+            if (string.IsNullOrEmpty(argument))
+            {
+                return "\"\"";
+            }
+
+            if (!argument.Any(char.IsWhiteSpace) && !argument.Contains('"'))
+            {
+                return argument;
+            }
+
+            return "\"" + argument.Replace("\"", "\\\"") + "\"";
         }
     }
 }

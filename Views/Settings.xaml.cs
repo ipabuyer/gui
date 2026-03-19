@@ -16,11 +16,14 @@ namespace IPAbuyer.Views
 {
     public sealed partial class Settings : Page
     {
+        private bool _isInitializingDetailedLogOption;
+
         public Settings()
         {
             InitializeComponent();
             InitializeCountryCode();
             InitializeDownloadDirectory();
+            InitializeDetailedIpatoolLogOption();
         }
 
         private void GithubButton(object sender, RoutedEventArgs e)
@@ -299,6 +302,44 @@ namespace IPAbuyer.Views
             {
                 await ShowDialogAsync("操作失败", $"导出 ipatool.exe 失败：{ex.Message}");
             }
+        }
+
+        private void InitializeDetailedIpatoolLogOption()
+        {
+            if (DetailedIpatoolLogCheckBox == null)
+            {
+                return;
+            }
+
+            _isInitializingDetailedLogOption = true;
+            try
+            {
+                DetailedIpatoolLogCheckBox.IsChecked = KeychainConfig.GetDetailedIpatoolLogEnabled();
+            }
+            finally
+            {
+                _isInitializingDetailedLogOption = false;
+            }
+        }
+
+        private void DetailedIpatoolLogCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializingDetailedLogOption)
+            {
+                return;
+            }
+
+            KeychainConfig.SaveDetailedIpatoolLogEnabled(true);
+        }
+
+        private void DetailedIpatoolLogCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializingDetailedLogOption)
+            {
+                return;
+            }
+
+            KeychainConfig.SaveDetailedIpatoolLogEnabled(false);
         }
 
         private static string? ResolveBundledIpatoolPath()

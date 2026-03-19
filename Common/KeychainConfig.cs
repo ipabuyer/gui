@@ -20,6 +20,7 @@ namespace IPAbuyer.Common
         private const string LastLoginKey = "LastLoginUsername";
         private const string CountryCodeKey = "CountryCode";
         private const string DownloadDirectoryKey = "DownloadDirectory";
+        private const string DetailedIpatoolLogKey = "DetailedIpatoolLogEnabled";
         private const string PassphraseFileName = "passphrase.txt";
         private const string DefaultCountryCode = "cn";
         private static readonly HashSet<string> ValidCountryCodes = new(StringComparer.OrdinalIgnoreCase)
@@ -450,6 +451,54 @@ namespace IPAbuyer.Common
             {
                 throw new Exception($"保存下载目录失败: {ex.Message}", ex);
             }
+        }
+
+        public static bool GetDetailedIpatoolLogEnabled()
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(_connectionString))
+                {
+                    InitializeDatabase();
+                }
+
+                using var connection = new SqliteConnection(_connectionString);
+                connection.Open();
+
+                string? value = ReadSettingValue(connection, DetailedIpatoolLogKey);
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    return false;
+                }
+
+                return value.Equals("1", StringComparison.Ordinal)
+                    || value.Equals("true", StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static void SaveDetailedIpatoolLogEnabled(bool enabled)
+        {
+            if (string.IsNullOrEmpty(_connectionString))
+            {
+                InitializeDatabase();
+            }
+
+            using var connection = new SqliteConnection(_connectionString);
+            connection.Open();
+
+            var insertCmd = connection.CreateCommand();
+            insertCmd.CommandText = @"
+                INSERT INTO Settings (Key, Value)
+                VALUES (@key, @value)
+                ON CONFLICT(Key)
+                DO UPDATE SET Value = @value";
+            insertCmd.Parameters.AddWithValue("@key", DetailedIpatoolLogKey);
+            insertCmd.Parameters.AddWithValue("@value", enabled ? "1" : "0");
+            insertCmd.ExecuteNonQuery();
         }
 
         /// <summary>

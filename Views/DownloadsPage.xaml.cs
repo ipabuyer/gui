@@ -37,6 +37,8 @@ namespace IPAbuyer.Views
             UpdateSortHeaderTexts();
             _queueService.LogReceived += OnLogReceived;
             _queueService.QueueChanged += OnQueueChanged;
+            IpatoolExecution.CommandExecuting += OnIpatoolCommandExecuting;
+            IpatoolExecution.CommandOutputReceived += OnIpatoolCommandOutputReceived;
 
             UpdateButtons();
         }
@@ -441,6 +443,24 @@ namespace IPAbuyer.Views
 
             _queueService.LogReceived -= OnLogReceived;
             _queueService.QueueChanged -= OnQueueChanged;
+            IpatoolExecution.CommandExecuting -= OnIpatoolCommandExecuting;
+            IpatoolExecution.CommandOutputReceived -= OnIpatoolCommandOutputReceived;
+        }
+
+        private void OnIpatoolCommandExecuting(string command)
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                AppendLog(command, UiLogSource.Ipatool);
+            });
+        }
+
+        private void OnIpatoolCommandOutputReceived(string line)
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                AppendLog(line, UiLogSource.Ipatool);
+            });
         }
 
         private enum SortDirection
