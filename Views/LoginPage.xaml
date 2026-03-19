@@ -1,4 +1,4 @@
-<Page
+﻿<Page
     x:Class="IPAbuyer.Views.LoginPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
@@ -42,8 +42,8 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="140" />
-                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="130" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
 
                                 <TextBlock
@@ -55,7 +55,7 @@
                                     x:Name="EmailComboBox"
                                     Grid.Row="0"
                                     Grid.Column="1"
-                                    MinWidth="360"
+                                    Width="300"
                                     MinHeight="36"
                                     InputScope="EmailSmtpAddress"
                                     IsSpellCheckEnabled="False"
@@ -71,27 +71,27 @@
                                     x:Name="PasswordBox"
                                     Grid.Row="1"
                                     Grid.Column="1"
-                                    MinWidth="360"
+                                    Width="300"
                                     MinHeight="36"
                                     KeyUp="Input_KeyUp"
                                     PasswordRevealMode="Peek"
                                     PlaceholderText="请输入密码" />
 
-                            <TextBlock
-                                Grid.Row="2"
-                                Grid.Column="0"
-                                VerticalAlignment="Center"
-                                Text="双重验证码" />
-                            <StackPanel
-                                x:Name="AuthCodeInlinePanel"
-                                Grid.Row="2"
-                                Grid.Column="1"
-                                Spacing="6"
-                                VerticalAlignment="Center"
-                                Visibility="Visible">
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Text="双重验证码" />
+                                <StackPanel
+                                    x:Name="AuthCodeInlinePanel"
+                                    Grid.Row="2"
+                                    Grid.Column="1"
+                                    Spacing="6"
+                                    VerticalAlignment="Center"
+                                    Visibility="Visible">
                                     <PasswordBox
                                         x:Name="CodeBox"
-                                        MinWidth="260"
+                                        Width="300"
                                         MinHeight="36"
                                         KeyUp="CodeBox_KeyUp"
                                         PasswordRevealMode="Peek"
@@ -107,7 +107,7 @@
                                     x:Name="PassphraseBox"
                                     Grid.Row="3"
                                     Grid.Column="1"
-                                    MinWidth="360"
+                                    Width="300"
                                     MinHeight="36"
                                     KeyUp="Input_KeyUp"
                                     PlaceholderText="用于 ipatool keychain-passphrase" />
