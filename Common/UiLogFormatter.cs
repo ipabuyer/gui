@@ -50,8 +50,9 @@ namespace IPAbuyer.Common
 
         public static UiLogEntry Build(string message, UiLogSource source = UiLogSource.Auto)
         {
-            string normalized = NormalizeMessage(message);
-            UiLogLevel level = DetectLevel(normalized, source);
+            string raw = message?.Trim() ?? string.Empty;
+            string normalized = NormalizeMessage(raw);
+            UiLogLevel level = DetectLevel(raw, normalized, source);
             string tag = level switch
             {
                 UiLogLevel.Tip => "TIP",
@@ -73,35 +74,38 @@ namespace IPAbuyer.Common
             return normalized;
         }
 
-        private static UiLogLevel DetectLevel(string message, UiLogSource source)
+        private static UiLogLevel DetectLevel(string rawMessage, string normalizedMessage, UiLogSource source)
         {
             if (source == UiLogSource.Ipatool)
             {
                 return UiLogLevel.Ipatool;
             }
 
-            if (message.Contains("[错误]", StringComparison.OrdinalIgnoreCase)
-                || message.Contains(" exception", StringComparison.OrdinalIgnoreCase)
-                || message.Contains("失败", StringComparison.OrdinalIgnoreCase)
-                || message.Contains("错误", StringComparison.OrdinalIgnoreCase)
-                || message.Contains("ERR ", StringComparison.OrdinalIgnoreCase))
+            if (rawMessage.Contains("[错误]", StringComparison.OrdinalIgnoreCase)
+                || rawMessage.Contains("[验证码错误]", StringComparison.OrdinalIgnoreCase)
+                || normalizedMessage.Contains(" exception", StringComparison.OrdinalIgnoreCase)
+                || normalizedMessage.Contains(" failed", StringComparison.OrdinalIgnoreCase)
+                || normalizedMessage.Contains("失败", StringComparison.OrdinalIgnoreCase)
+                || normalizedMessage.Contains("错误", StringComparison.OrdinalIgnoreCase)
+                || normalizedMessage.Contains("ERR ", StringComparison.OrdinalIgnoreCase))
             {
                 return UiLogLevel.Error;
             }
 
-            if (message.Contains("[提示]", StringComparison.OrdinalIgnoreCase)
-                || message.Contains("提示", StringComparison.OrdinalIgnoreCase))
+            if (rawMessage.Contains("[提示]", StringComparison.OrdinalIgnoreCase)
+                || rawMessage.Contains("[验证码提示]", StringComparison.OrdinalIgnoreCase)
+                || normalizedMessage.Contains("提示", StringComparison.OrdinalIgnoreCase))
             {
                 return UiLogLevel.Tip;
             }
 
-            if (message.Contains("[成功]", StringComparison.OrdinalIgnoreCase)
-                || message.Contains("成功", StringComparison.OrdinalIgnoreCase))
+            if (rawMessage.Contains("[成功]", StringComparison.OrdinalIgnoreCase)
+                || normalizedMessage.Contains("成功", StringComparison.OrdinalIgnoreCase))
             {
                 return UiLogLevel.Success;
             }
 
-            if (source == UiLogSource.Auto && IsIpatoolMessage(message))
+            if (source == UiLogSource.Auto && IsIpatoolMessage(normalizedMessage))
             {
                 return UiLogLevel.Ipatool;
             }

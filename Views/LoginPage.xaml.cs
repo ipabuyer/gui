@@ -311,6 +311,13 @@ namespace IPAbuyer.Views
                 }
             }
 
+            if (hasLocalValidationIssue)
+            {
+                RestoreIdleState();
+                DisposeCurrentOperation();
+                return;
+            }
+
             SetInputControlsEnabled(false);
             SetBusyState(true, hasLocalValidationIssue ? string.Empty : "正在登录...");
 
