@@ -161,6 +161,7 @@
                         x:Name="QueueListView"
                         Grid.Row="2"
                         Margin="0,0,0,10"
+                        ContainerContentChanging="QueueListView_ContainerContentChanging"
                         SelectionMode="Multiple">
                         <ListView.ItemTemplate>
                             <DataTemplate x:DataType="models:DownloadQueueItem">
@@ -216,6 +217,7 @@
                                         Text="{x:Bind Price}"
                                         TextTrimming="CharacterEllipsis" />
                                     <TextBlock
+                                        x:Name="DownloadStatusTextBlock"
                                         Grid.Column="6"
                                         HorizontalAlignment="Center"
                                         Text="{x:Bind StatusText, Mode=OneWay}" />

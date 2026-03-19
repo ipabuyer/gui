@@ -344,6 +344,44 @@ namespace IPAbuyer.Views
             return null;
         }
 
+        private void QueueListView_ContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
+        {
+            if (args.ItemContainer?.ContentTemplateRoot is not Grid rowGrid)
+            {
+                return;
+            }
+
+            ApplyDownloadStatusColor(rowGrid, args.Item as DownloadQueueItem);
+        }
+
+        private void ApplyDownloadStatusColor(Grid rowGrid, DownloadQueueItem? item)
+        {
+            if (rowGrid.FindName("DownloadStatusTextBlock") is not TextBlock statusTextBlock)
+            {
+                return;
+            }
+
+            if (item?.Status == DownloadQueueStatus.Success)
+            {
+                var greenColor = ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0x8D, 0xE6, 0x9A)
+                    : Windows.UI.Color.FromArgb(0xFF, 0x2E, 0xA0, 0x43);
+                statusTextBlock.Foreground = new SolidColorBrush(greenColor);
+                return;
+            }
+
+            if (item?.Status == DownloadQueueStatus.Failed)
+            {
+                var redColor = ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0xFF, 0x99, 0x99)
+                    : Windows.UI.Color.FromArgb(0xFF, 0xC4, 0x2B, 0x1C);
+                statusTextBlock.Foreground = new SolidColorBrush(redColor);
+                return;
+            }
+
+            statusTextBlock.ClearValue(TextBlock.ForegroundProperty);
+        }
+
         protected override void OnNavigatedFrom(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedFrom(e);
