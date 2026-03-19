@@ -155,6 +155,7 @@ namespace IPAbuyer.Views
                     }
                     else
                     {
+                        SessionState.SetLoginState(string.Empty, true);
                         ApplyOperationLock(true);
                         ShowError("已查询到登录状态，但未获取到邮箱。请先退出登录并重新登录。");
                         AppendLoginLog("Auth info success but email missing.");

@@ -49,19 +49,16 @@ namespace IPAbuyer.Common
 
         public static void SetLoginState(string account, bool isLoggedIn, bool isMockAccount = false)
         {
-            if (string.IsNullOrWhiteSpace(account))
-            {
-                throw new ArgumentException("account cannot be empty", nameof(account));
-            }
+            string normalizedAccount = account?.Trim() ?? string.Empty;
 
             bool changed;
             lock (_syncRoot)
             {
                 EnsureInitialized();
-                changed = !string.Equals(_currentAccount, account, StringComparison.Ordinal)
+                changed = !string.Equals(_currentAccount, normalizedAccount, StringComparison.Ordinal)
                     || _isLoggedIn != isLoggedIn
                     || _isMockAccount != isMockAccount;
-                _currentAccount = account;
+                _currentAccount = normalizedAccount;
                 _isLoggedIn = isLoggedIn;
                 _isMockAccount = isMockAccount;
             }

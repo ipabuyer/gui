@@ -69,11 +69,6 @@ namespace IPAbuyer
                 }
 
                 string account = IpatoolExecution.ExtractEmailFromPayload(result.OutputOrError);
-                if (string.IsNullOrWhiteSpace(account))
-                {
-                    return;
-                }
-
                 SessionState.SetLoginState(account, true);
             }
             catch (Exception ex)
