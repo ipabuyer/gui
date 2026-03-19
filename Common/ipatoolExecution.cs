@@ -7,6 +7,7 @@ using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -17,6 +18,9 @@ namespace IPAbuyer.Common
         private const int MaxPreviewLength = 200;
         private static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(2);
         private static readonly HttpClient HttpClient = new();
+        private static readonly Regex EmailRegex = new(
+            @"[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         public sealed record IpatoolResult(string? Output, string? Error, int ExitCode, bool TimedOut)
         {
@@ -113,6 +117,47 @@ namespace IPAbuyer.Common
                 passphrase: passphrase,
                 cancellationToken,
                 suppressLogEvents: silent);
+        }
+
+        public static string ExtractEmailFromPayload(string? payload)
+        {
+            if (string.IsNullOrWhiteSpace(payload))
+            {
+                return string.Empty;
+            }
+
+            string normalized = payload.Replace("}{", "}\n{");
+            string[] lines = normalized.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string line in lines)
+            {
+                string trimmed = line.Trim();
+                if (!trimmed.StartsWith("{", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    using JsonDocument document = JsonDocument.Parse(trimmed);
+                    JsonElement root = document.RootElement;
+                    if (TryReadEmailProperty(root, "email", out string email))
+                    {
+                        return email;
+                    }
+
+                    if (TryReadEmailProperty(root, "eamil", out email))
+                    {
+                        return email;
+                    }
+                }
+                catch (JsonException)
+                {
+                    // ignore invalid segment
+                }
+            }
+
+            Match match = EmailRegex.Match(payload);
+            return match.Success ? match.Value : string.Empty;
         }
 
         public static Task<IpatoolResult> PurchaseAppAsync(string bundleId, string account, CancellationToken cancellationToken = default)
@@ -424,6 +469,22 @@ namespace IPAbuyer.Common
             }
 
             throw new InvalidOperationException("未找到可用的加密密钥，请先在账户页面重新登录后再试。");
+        }
+
+        private static bool TryReadEmailProperty(JsonElement root, string propertyName, out string email)
+        {
+            if (root.TryGetProperty(propertyName, out JsonElement element) && element.ValueKind == JsonValueKind.String)
+            {
+                string? value = element.GetString()?.Trim();
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    email = value;
+                    return true;
+                }
+            }
+
+            email = string.Empty;
+            return false;
         }
 
         private static void TryTerminateProcess(Process process)

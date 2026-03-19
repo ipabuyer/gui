@@ -8,7 +8,6 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -135,7 +134,7 @@ namespace IPAbuyer.Views
 
                 if (result.IsSuccessResponse)
                 {
-                    string payloadEmail = ExtractEmailFromAuthInfoPayload(result.OutputOrError);
+                    string payloadEmail = IpatoolExecution.ExtractEmailFromPayload(result.OutputOrError);
                     if (!string.IsNullOrWhiteSpace(payloadEmail))
                     {
                         account = payloadEmail;
@@ -177,74 +176,6 @@ namespace IPAbuyer.Views
                 DisposeCurrentOperation();
                 RestoreIdleState();
             }
-        }
-
-        private static string ExtractEmailFromAuthInfoPayload(string? payload)
-        {
-            if (string.IsNullOrWhiteSpace(payload))
-            {
-                return string.Empty;
-            }
-
-            string normalized = payload.Replace("}{", "}\n{");
-            string[] lines = normalized.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (string line in lines)
-            {
-                string trimmed = line.Trim();
-                if (!trimmed.StartsWith("{", StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                try
-                {
-                    using JsonDocument document = JsonDocument.Parse(trimmed);
-                    JsonElement root = document.RootElement;
-                    if (TryReadEmailFromJson(root, out string email))
-                    {
-                        return email;
-                    }
-                }
-                catch (JsonException)
-                {
-                    // ignore invalid segment
-                }
-            }
-
-            return string.Empty;
-        }
-
-        private static bool TryReadEmailFromJson(JsonElement root, out string email)
-        {
-            if (TryReadEmailProperty(root, "email", out email))
-            {
-                return true;
-            }
-
-            // 兼容指导文档中的拼写（eamil）
-            if (TryReadEmailProperty(root, "eamil", out email))
-            {
-                return true;
-            }
-
-            email = string.Empty;
-            return false;
-        }
-
-        private static bool TryReadEmailProperty(JsonElement root, string propertyName, out string email)
-        {
-            if (root.TryGetProperty(propertyName, out JsonElement element) && element.ValueKind == JsonValueKind.String)
-            {
-                string? value = element.GetString()?.Trim();
-                if (!string.IsNullOrWhiteSpace(value))
-                {
-                    email = value;
-                    return true;
-                }
-            }
-
-            email = string.Empty;
-            return false;
         }
 
         private async void LogoutButton_Click(object sender, RoutedEventArgs e)

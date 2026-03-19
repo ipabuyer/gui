@@ -10,7 +10,6 @@ using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Text.Json;
 using System.Threading.Tasks;
 using WinRT.Interop;
 
@@ -69,7 +68,7 @@ namespace IPAbuyer
                     return;
                 }
 
-                string account = ExtractEmailFromAuthInfoPayload(result.OutputOrError);
+                string account = IpatoolExecution.ExtractEmailFromPayload(result.OutputOrError);
                 if (string.IsNullOrWhiteSpace(account))
                 {
                     return;
@@ -81,62 +80,6 @@ namespace IPAbuyer
             {
                 Debug.WriteLine($"静默查询登录状态失败: {ex.Message}");
             }
-        }
-
-        private static string ExtractEmailFromAuthInfoPayload(string? payload)
-        {
-            if (string.IsNullOrWhiteSpace(payload))
-            {
-                return string.Empty;
-            }
-
-            string normalized = payload.Replace("}{", "}\n{");
-            string[] lines = normalized.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (string line in lines)
-            {
-                string trimmed = line.Trim();
-                if (!trimmed.StartsWith("{", StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                try
-                {
-                    using JsonDocument document = JsonDocument.Parse(trimmed);
-                    JsonElement root = document.RootElement;
-                    if (TryReadEmailProperty(root, "email", out string email))
-                    {
-                        return email;
-                    }
-
-                    if (TryReadEmailProperty(root, "eamil", out email))
-                    {
-                        return email;
-                    }
-                }
-                catch (JsonException)
-                {
-                    // ignore invalid segment
-                }
-            }
-
-            return string.Empty;
-        }
-
-        private static bool TryReadEmailProperty(JsonElement root, string propertyName, out string email)
-        {
-            if (root.TryGetProperty(propertyName, out JsonElement element) && element.ValueKind == JsonValueKind.String)
-            {
-                string? value = element.GetString()?.Trim();
-                if (!string.IsNullOrWhiteSpace(value))
-                {
-                    email = value;
-                    return true;
-                }
-            }
-
-            email = string.Empty;
-            return false;
         }
     }
 }
