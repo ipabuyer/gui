@@ -124,8 +124,12 @@ namespace IPAbuyer.Common
                     return 0;
                 }
 
-                var pending = _items.Where(i => i.Status == DownloadQueueStatus.Pending).ToList();
-                if (pending.Count == 0)
+                var candidates = _items
+                    .Where(i => i.Status == DownloadQueueStatus.Pending
+                        || i.Status == DownloadQueueStatus.Failed
+                        || i.Status == DownloadQueueStatus.Canceled)
+                    .ToList();
+                if (candidates.Count == 0)
                 {
                     EmitLog("没有待下载项目");
                     return 0;
@@ -142,10 +146,10 @@ namespace IPAbuyer.Common
                     && SessionState.IsMockAccount
                     && string.Equals(SessionState.CurrentAccount, account, StringComparison.OrdinalIgnoreCase);
 
-                EmitLog($"开始下载队列，共 {pending.Count} 项，输出目录: {outputDirectory}");
+                EmitLog($"开始下载队列，共 {candidates.Count} 项，输出目录: {outputDirectory}");
 
                 int completed = 0;
-                foreach (var item in pending)
+                foreach (var item in candidates)
                 {
                     _queueCts.Token.ThrowIfCancellationRequested();
 
@@ -225,7 +229,7 @@ namespace IPAbuyer.Common
                     }
                 }
 
-                EmitLog($"下载队列完成，成功 {completed}/{pending.Count}");
+                EmitLog($"下载队列完成，成功 {completed}/{candidates.Count}");
                 return completed;
             }
             catch (OperationCanceledException)
