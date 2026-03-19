@@ -17,6 +17,7 @@ namespace IPAbuyer.Views
     {
         private readonly CancellationTokenSource _pageCts = new();
         private readonly StringBuilder _loginLogBuilder = new();
+        private readonly System.Collections.Generic.List<UiLogEntry> _loginLogEntries = new();
         private CancellationTokenSource? _currentOperationCts;
 
         private string? _lastLoginUsername;
@@ -25,6 +26,7 @@ namespace IPAbuyer.Views
         private string _passphrase = string.Empty;
         private bool _isTwoFactorPending;
         private bool _operationLocked;
+        private const int MaxLogLines = 1000;
 
         public LoginPage()
         {
@@ -619,6 +621,7 @@ namespace IPAbuyer.Views
         private void ClearLoginLog_Click(object sender, RoutedEventArgs e)
         {
             _loginLogBuilder.Clear();
+            _loginLogEntries.Clear();
             if (LoginLogOutput != null)
             {
                 LoginLogOutput.Blocks.Clear();
@@ -627,16 +630,21 @@ namespace IPAbuyer.Views
             AppendLoginLog("Log cleared.");
         }
 
-        private void AppendLoginLog(string message)
+        private void AppendLoginLog(string message, UiLogSource source = UiLogSource.App)
         {
             if (string.IsNullOrWhiteSpace(message) || LoginLogOutput == null)
             {
                 return;
             }
 
-            UiLogEntry entry = UiLogFormatter.Build(message);
-            _loginLogBuilder.AppendLine(entry.FormattedText);
-            AppendRichLogLine(LoginLogOutput, entry);
+            UiLogEntry entry = UiLogFormatter.Build(message, source);
+            _loginLogEntries.Add(entry);
+            if (_loginLogEntries.Count > MaxLogLines)
+            {
+                _loginLogEntries.RemoveAt(0);
+            }
+
+            RebuildLoginLogView();
             ScrollLogToBottom(LoginLogScrollViewer);
         }
 
@@ -645,22 +653,30 @@ namespace IPAbuyer.Views
             scrollViewer.ChangeView(null, scrollViewer.ScrollableHeight, null, disableAnimation: true);
         }
 
-        private void AppendRichLogLine(RichTextBlock richTextBlock, UiLogEntry entry)
+        private void RebuildLoginLogView()
         {
-            if (richTextBlock.Blocks.LastOrDefault() is not Paragraph paragraph)
+            _loginLogBuilder.Clear();
+            if (LoginLogOutput == null)
             {
-                paragraph = new Paragraph();
-                richTextBlock.Blocks.Add(paragraph);
+                return;
             }
 
-            var run = new Run
+            LoginLogOutput.Blocks.Clear();
+            var paragraph = new Paragraph();
+            foreach (UiLogEntry entry in _loginLogEntries)
             {
-                Text = entry.FormattedText,
-                Foreground = new SolidColorBrush(GetLogColor(entry.Level))
-            };
+                _loginLogBuilder.AppendLine(entry.FormattedText);
+                var run = new Run
+                {
+                    Text = entry.FormattedText,
+                    Foreground = new SolidColorBrush(GetLogColor(entry.Level))
+                };
 
-            paragraph.Inlines.Add(run);
-            paragraph.Inlines.Add(new LineBreak());
+                paragraph.Inlines.Add(run);
+                paragraph.Inlines.Add(new LineBreak());
+            }
+
+            LoginLogOutput.Blocks.Add(paragraph);
         }
 
         private Windows.UI.Color GetLogColor(UiLogLevel level)

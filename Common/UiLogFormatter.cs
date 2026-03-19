@@ -12,6 +12,13 @@ namespace IPAbuyer.Common
         Ipatool = 4
     }
 
+    public enum UiLogSource
+    {
+        Auto = 0,
+        App = 1,
+        Ipatool = 2
+    }
+
     public readonly struct UiLogEntry
     {
         public UiLogEntry(string formattedText, UiLogLevel level)
@@ -24,15 +31,27 @@ namespace IPAbuyer.Common
         public UiLogLevel Level { get; }
     }
 
+    public readonly struct UiLogMessage
+    {
+        public UiLogMessage(string message, UiLogSource source)
+        {
+            Message = message;
+            Source = source;
+        }
+
+        public string Message { get; }
+        public UiLogSource Source { get; }
+    }
+
     public static class UiLogFormatter
     {
         private static readonly Regex TimePrefixRegex = new(@"^\[\d{1,2}:\d{2}:\d{2}\]\s*", RegexOptions.Compiled);
         private static readonly Regex LegacyLevelPrefixRegex = new(@"^\[(提示|错误|成功|验证码错误|验证码提示)\]\s*", RegexOptions.Compiled);
 
-        public static UiLogEntry Build(string message)
+        public static UiLogEntry Build(string message, UiLogSource source = UiLogSource.Auto)
         {
             string normalized = NormalizeMessage(message);
-            UiLogLevel level = DetectLevel(normalized);
+            UiLogLevel level = DetectLevel(normalized, source);
             string tag = level switch
             {
                 UiLogLevel.Tip => "TIP",
@@ -54,9 +73,9 @@ namespace IPAbuyer.Common
             return normalized;
         }
 
-        private static UiLogLevel DetectLevel(string message)
+        private static UiLogLevel DetectLevel(string message, UiLogSource source)
         {
-            if (IsIpatoolMessage(message))
+            if (source == UiLogSource.Ipatool)
             {
                 return UiLogLevel.Ipatool;
             }
@@ -80,6 +99,11 @@ namespace IPAbuyer.Common
                 || message.Contains("成功", StringComparison.OrdinalIgnoreCase))
             {
                 return UiLogLevel.Success;
+            }
+
+            if (source == UiLogSource.Auto && IsIpatoolMessage(message))
+            {
+                return UiLogLevel.Ipatool;
             }
 
             return UiLogLevel.Info;

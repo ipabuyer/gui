@@ -22,6 +22,7 @@ namespace IPAbuyer.Views
         private readonly List<SearchResult> _allResults = new();
         private readonly DownloadQueueService _downloadQueueService = DownloadQueueService.Instance;
         private readonly StringBuilder _homeLogBuilder = new();
+        private readonly List<UiLogEntry> _homeLogEntries = new();
         private CancellationTokenSource _pageCts = new();
         private string _selectedFilter = "All";
         private string? _sortKey;
@@ -41,6 +42,7 @@ namespace IPAbuyer.Views
         private const string VersionHeaderBase = "版本号";
         private const string PriceHeaderBase = "价格";
         private const string PurchasedHeaderBase = "购买状态";
+        private const int MaxLogLines = 1000;
 
         public int SearchLimitNum { get; set; } = 100;
 
@@ -811,21 +813,26 @@ namespace IPAbuyer.Views
         private void ClearHomeLog_Click(object sender, RoutedEventArgs e)
         {
             _homeLogBuilder.Clear();
+            _homeLogEntries.Clear();
             HomeLogTextBlock?.Blocks.Clear();
             AppendHomeLog("日志已清空。");
         }
 
-        private void AppendHomeLog(string message)
+        private void AppendHomeLog(string message, UiLogSource source = UiLogSource.App)
         {
             if (string.IsNullOrWhiteSpace(message) || HomeLogTextBlock == null)
             {
                 return;
             }
 
-            UiLogEntry entry = UiLogFormatter.Build(message);
-            _homeLogBuilder.AppendLine(entry.FormattedText);
+            UiLogEntry entry = UiLogFormatter.Build(message, source);
+            _homeLogEntries.Add(entry);
+            if (_homeLogEntries.Count > MaxLogLines)
+            {
+                _homeLogEntries.RemoveAt(0);
+            }
 
-            AppendRichLogLine(HomeLogTextBlock, entry);
+            RebuildHomeLogView();
             ScrollLogToBottom(HomeLogScrollViewer);
         }
 
@@ -908,22 +915,29 @@ namespace IPAbuyer.Views
             scrollViewer.ChangeView(null, scrollViewer.ScrollableHeight, null, disableAnimation: true);
         }
 
-        private void AppendRichLogLine(RichTextBlock richTextBlock, UiLogEntry entry)
+        private void RebuildHomeLogView()
         {
-            if (richTextBlock.Blocks.LastOrDefault() is not Paragraph paragraph)
+            _homeLogBuilder.Clear();
+            if (HomeLogTextBlock == null)
             {
-                paragraph = new Paragraph();
-                richTextBlock.Blocks.Add(paragraph);
+                return;
             }
 
-            var run = new Run
+            HomeLogTextBlock.Blocks.Clear();
+            var paragraph = new Paragraph();
+            foreach (UiLogEntry entry in _homeLogEntries)
             {
-                Text = entry.FormattedText
-            };
+                _homeLogBuilder.AppendLine(entry.FormattedText);
+                var run = new Run
+                {
+                    Text = entry.FormattedText,
+                    Foreground = new SolidColorBrush(GetLogColor(entry.Level))
+                };
+                paragraph.Inlines.Add(run);
+                paragraph.Inlines.Add(new LineBreak());
+            }
 
-            run.Foreground = new SolidColorBrush(GetLogColor(entry.Level));
-            paragraph.Inlines.Add(run);
-            paragraph.Inlines.Add(new LineBreak());
+            HomeLogTextBlock.Blocks.Add(paragraph);
         }
 
         private Windows.UI.Color GetLogColor(UiLogLevel level)

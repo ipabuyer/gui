@@ -35,7 +35,7 @@ namespace IPAbuyer.Common
         public ObservableCollection<DownloadQueueItem> Items => _items;
         public bool IsRunning => _isRunning;
 
-        public event Action<string>? LogReceived;
+        public event Action<UiLogMessage>? LogReceived;
         public event Action? QueueChanged;
 
         public void AddOrUpdateFromSearchResult(SearchResult app)
@@ -576,7 +576,7 @@ namespace IPAbuyer.Common
             }
 
             lastChunkLog = line;
-            EmitLog($"[{appName}] {line}");
+            EmitLog($"[{appName}] {line}", UiLogSource.Ipatool);
         }
 
         private static string SanitizeForParsing(string input)
@@ -624,10 +624,9 @@ namespace IPAbuyer.Common
             return true;
         }
 
-        private void EmitLog(string message)
+        private void EmitLog(string message, UiLogSource source = UiLogSource.App)
         {
-            string log = $"[{DateTime.Now:HH:mm:ss}] {message}";
-            LogReceived?.Invoke(log);
+            LogReceived?.Invoke(new UiLogMessage(message, source));
         }
 
         private void NotifyQueueChanged()
