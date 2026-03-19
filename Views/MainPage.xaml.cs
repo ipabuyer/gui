@@ -12,6 +12,7 @@ using IPAbuyer.Models;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 
 namespace IPAbuyer.Views
@@ -47,6 +48,16 @@ namespace IPAbuyer.Views
         {
             InitializeComponent();
             NavigationCacheMode = Microsoft.UI.Xaml.Navigation.NavigationCacheMode.Enabled;
+        }
+
+        protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
+
+            if (MainPageCacheState.ConsumeSearchCacheInvalidation())
+            {
+                ClearSearchCache();
+            }
         }
 
         public async void PerformSearchFromMainWindow(string appName)
@@ -109,9 +120,19 @@ namespace IPAbuyer.Views
                     return;
                 }
 
-                var purchasedDict = string.IsNullOrWhiteSpace(account)
-                    ? new Dictionary<string, string>()
-                    : PurchasedAppDb.GetPurchasedApps(account).ToDictionary(x => x.appID, x => x.status);
+                var purchasedDict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                if (!string.IsNullOrWhiteSpace(account))
+                {
+                    foreach (var record in PurchasedAppDb.GetPurchasedApps(account))
+                    {
+                        if (string.IsNullOrWhiteSpace(record.appID))
+                        {
+                            continue;
+                        }
+
+                        purchasedDict[record.appID] = record.status;
+                    }
+                }
 
                 _allResults.Clear();
                 foreach (var appElement in resultsElement.EnumerateArray())
@@ -454,9 +475,7 @@ namespace IPAbuyer.Views
 
                 if (!IsPriceFree(app.price))
                 {
-                    app.purchased = StatusOwned;
-                    PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusOwned);
-                    AppendHomeLog($"标记为已拥有(非免费): {app.name ?? app.bundleId}");
+                    AppendHomeLog($"非免费应用，已跳过购买: {app.name ?? app.bundleId}");
                     continue;
                 }
 
@@ -775,7 +794,7 @@ namespace IPAbuyer.Views
 
         private void CopyHomeLog_Click(object sender, RoutedEventArgs e)
         {
-            string text = HomeLogTextBox.Text ?? string.Empty;
+            string text = _homeLogBuilder.ToString();
             if (string.IsNullOrWhiteSpace(text))
             {
                 AppendHomeLog("日志为空，无可复制内容。");
@@ -792,24 +811,22 @@ namespace IPAbuyer.Views
         private void ClearHomeLog_Click(object sender, RoutedEventArgs e)
         {
             _homeLogBuilder.Clear();
-            HomeLogTextBox.Text = string.Empty;
+            HomeLogTextBlock?.Blocks.Clear();
             AppendHomeLog("日志已清空。");
         }
 
         private void AppendHomeLog(string message)
         {
-            if (string.IsNullOrWhiteSpace(message) || HomeLogTextBox == null)
+            if (string.IsNullOrWhiteSpace(message) || HomeLogTextBlock == null)
             {
                 return;
             }
 
-            _homeLogBuilder.Append('[')
-                .Append(DateTime.Now.ToString("HH:mm:ss"))
-                .Append("] ")
-                .AppendLine(message);
+            UiLogEntry entry = UiLogFormatter.Build(message);
+            _homeLogBuilder.AppendLine(entry.FormattedText);
 
-            HomeLogTextBox.Text = _homeLogBuilder.ToString();
-            ScrollLogToBottom(HomeLogTextBox);
+            AppendRichLogLine(HomeLogTextBlock, entry);
+            ScrollLogToBottom(HomeLogScrollViewer);
         }
 
         private void SetPurchaseLoading(bool isLoading)
@@ -886,13 +903,49 @@ namespace IPAbuyer.Views
             priceTextBlock.ClearValue(TextBlock.ForegroundProperty);
         }
 
-        private static void ScrollLogToBottom(TextBox textBox)
+        private static void ScrollLogToBottom(ScrollViewer scrollViewer)
         {
-            textBox.SelectionStart = textBox.Text.Length;
-            textBox.SelectionLength = 0;
+            scrollViewer.ChangeView(null, scrollViewer.ScrollableHeight, null, disableAnimation: true);
+        }
 
-            var scrollViewer = FindDescendantScrollViewer(textBox);
-            scrollViewer?.ChangeView(null, scrollViewer.ScrollableHeight, null, disableAnimation: true);
+        private void AppendRichLogLine(RichTextBlock richTextBlock, UiLogEntry entry)
+        {
+            if (richTextBlock.Blocks.LastOrDefault() is not Paragraph paragraph)
+            {
+                paragraph = new Paragraph();
+                richTextBlock.Blocks.Add(paragraph);
+            }
+
+            var run = new Run
+            {
+                Text = entry.FormattedText
+            };
+
+            run.Foreground = new SolidColorBrush(GetLogColor(entry.Level));
+            paragraph.Inlines.Add(run);
+            paragraph.Inlines.Add(new LineBreak());
+        }
+
+        private Windows.UI.Color GetLogColor(UiLogLevel level)
+        {
+            return level switch
+            {
+                UiLogLevel.Tip => ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0xFF, 0xD5, 0x8A)
+                    : Windows.UI.Color.FromArgb(0xFF, 0x9A, 0x67, 0x00),
+                UiLogLevel.Success => ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0x8D, 0xE6, 0x9A)
+                    : Windows.UI.Color.FromArgb(0xFF, 0x2E, 0xA0, 0x43),
+                UiLogLevel.Error => ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0xFF, 0x99, 0x99)
+                    : Windows.UI.Color.FromArgb(0xFF, 0xC4, 0x2B, 0x1C),
+                UiLogLevel.Ipatool => ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0x9C, 0xC8, 0xFF)
+                    : Windows.UI.Color.FromArgb(0xFF, 0x00, 0x55, 0xAA),
+                _ => ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0xD8, 0xD8, 0xD8)
+                    : Windows.UI.Color.FromArgb(0xFF, 0x44, 0x44, 0x44)
+            };
         }
 
         private static ScrollViewer? FindDescendantScrollViewer(DependencyObject root)
@@ -926,6 +979,15 @@ namespace IPAbuyer.Views
 
             _pageCts.Dispose();
             _pageCts = new CancellationTokenSource();
+        }
+
+        private void ClearSearchCache()
+        {
+            _allResults.Clear();
+            if (ResultList != null)
+            {
+                ResultList.ItemsSource = null;
+            }
         }
 
         private enum SortDirection

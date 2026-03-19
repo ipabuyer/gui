@@ -198,14 +198,16 @@
                         Click="ClearLoginLog_Click" />
                 </StackPanel>
 
-                <TextBox
-                    x:Name="LoginLogOutput"
+                <ScrollViewer
+                    x:Name="LoginLogScrollViewer"
                     Grid.Row="1"
                     Margin="0,8,0,0"
-                    AcceptsReturn="True"
-                    IsReadOnly="True"
-                    TextWrapping="Wrap"
-                    ScrollViewer.VerticalScrollBarVisibility="Auto" />
+                    VerticalScrollBarVisibility="Auto">
+                    <RichTextBlock
+                        x:Name="LoginLogOutput"
+                        IsTextSelectionEnabled="True"
+                        TextWrapping="WrapWholeWords" />
+                </ScrollViewer>
             </Grid>
         </Border>
     </Grid>

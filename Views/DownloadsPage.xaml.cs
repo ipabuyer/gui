@@ -7,6 +7,7 @@ using IPAbuyer.Common;
 using IPAbuyer.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Windows.ApplicationModel.DataTransfer;
 
@@ -102,9 +103,27 @@ namespace IPAbuyer.Views
             AppendLog("[提示] 已请求终止所有下载任务");
         }
 
+        private void RemoveSuccessItemsButton_Click(object sender, RoutedEventArgs e)
+        {
+            var successItems = _queueService.Items
+                .Where(item => item.Status == DownloadQueueStatus.Success)
+                .ToList();
+
+            if (successItems.Count == 0)
+            {
+                AppendLog("[提示] 当前没有可移除的下载成功项");
+                return;
+            }
+
+            int removed = _queueService.RemoveItems(successItems);
+            AppendLog($"[提示] 已移除下载成功项: {removed} 项");
+            RefreshQueueView();
+            UpdateButtons();
+        }
+
         private void CopyLogButton_Click(object sender, RoutedEventArgs e)
         {
-            string text = LogTextBox.Text ?? string.Empty;
+            string text = _logBuilder.ToString();
             if (string.IsNullOrWhiteSpace(text))
             {
                 AppendLog("[提示] 日志为空，无可复制内容");
@@ -121,7 +140,7 @@ namespace IPAbuyer.Views
         private void ClearLogButton_Click(object sender, RoutedEventArgs e)
         {
             _logBuilder.Clear();
-            LogTextBox.Text = string.Empty;
+            LogTextBlock?.Blocks.Clear();
         }
 
         private void CancelCurrentButton_Click(object sender, RoutedEventArgs e)
@@ -266,8 +285,10 @@ namespace IPAbuyer.Views
         private void UpdateButtons()
         {
             bool running = _queueService.IsRunning;
+            bool hasSuccessItems = _queueService.Items.Any(item => item.Status == DownloadQueueStatus.Success);
             StartQueueButton.IsEnabled = !running;
             RemoveQueueButton.IsEnabled = !running;
+            RemoveSuccessItemsButton.IsEnabled = !running && hasSuccessItems;
             CancelAllButton.IsEnabled = running;
             SetDownloadLoading(running);
         }
@@ -284,23 +305,20 @@ namespace IPAbuyer.Views
 
         private void AppendLog(string message)
         {
-            if (string.IsNullOrWhiteSpace(message))
+            if (string.IsNullOrWhiteSpace(message) || LogTextBlock == null)
             {
                 return;
             }
 
-            _logBuilder.AppendLine(message);
-            LogTextBox.Text = _logBuilder.ToString();
-            ScrollLogToBottom(LogTextBox);
+            UiLogEntry entry = UiLogFormatter.Build(message);
+            _logBuilder.AppendLine(entry.FormattedText);
+            AppendRichLogLine(LogTextBlock, entry);
+            ScrollLogToBottom(LogScrollViewer);
         }
 
-        private static void ScrollLogToBottom(TextBox textBox)
+        private static void ScrollLogToBottom(ScrollViewer scrollViewer)
         {
-            textBox.SelectionStart = textBox.Text.Length;
-            textBox.SelectionLength = 0;
-
-            var scrollViewer = FindDescendantScrollViewer(textBox);
-            scrollViewer?.ChangeView(null, scrollViewer.ScrollableHeight, null, disableAnimation: true);
+            scrollViewer.ChangeView(null, scrollViewer.ScrollableHeight, null, disableAnimation: true);
         }
 
         private static ScrollViewer? FindDescendantScrollViewer(DependencyObject root)
@@ -322,6 +340,84 @@ namespace IPAbuyer.Views
             }
 
             return null;
+        }
+
+        private void QueueListView_ContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
+        {
+            if (args.ItemContainer?.ContentTemplateRoot is not Grid rowGrid)
+            {
+                return;
+            }
+
+            ApplyDownloadStatusColor(rowGrid, args.Item as DownloadQueueItem);
+        }
+
+        private void ApplyDownloadStatusColor(Grid rowGrid, DownloadQueueItem? item)
+        {
+            if (rowGrid.FindName("DownloadStatusTextBlock") is not TextBlock statusTextBlock)
+            {
+                return;
+            }
+
+            if (item?.Status == DownloadQueueStatus.Success)
+            {
+                var greenColor = ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0x8D, 0xE6, 0x9A)
+                    : Windows.UI.Color.FromArgb(0xFF, 0x2E, 0xA0, 0x43);
+                statusTextBlock.Foreground = new SolidColorBrush(greenColor);
+                return;
+            }
+
+            if (item?.Status == DownloadQueueStatus.Failed)
+            {
+                var redColor = ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0xFF, 0x99, 0x99)
+                    : Windows.UI.Color.FromArgb(0xFF, 0xC4, 0x2B, 0x1C);
+                statusTextBlock.Foreground = new SolidColorBrush(redColor);
+                return;
+            }
+
+            statusTextBlock.ClearValue(TextBlock.ForegroundProperty);
+        }
+
+        private void AppendRichLogLine(RichTextBlock richTextBlock, UiLogEntry entry)
+        {
+            if (richTextBlock.Blocks.LastOrDefault() is not Paragraph paragraph)
+            {
+                paragraph = new Paragraph();
+                richTextBlock.Blocks.Add(paragraph);
+            }
+
+            var run = new Run
+            {
+                Text = entry.FormattedText,
+                Foreground = new SolidColorBrush(GetLogColor(entry.Level))
+            };
+
+            paragraph.Inlines.Add(run);
+            paragraph.Inlines.Add(new LineBreak());
+        }
+
+        private Windows.UI.Color GetLogColor(UiLogLevel level)
+        {
+            return level switch
+            {
+                UiLogLevel.Tip => ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0xFF, 0xD5, 0x8A)
+                    : Windows.UI.Color.FromArgb(0xFF, 0x9A, 0x67, 0x00),
+                UiLogLevel.Success => ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0x8D, 0xE6, 0x9A)
+                    : Windows.UI.Color.FromArgb(0xFF, 0x2E, 0xA0, 0x43),
+                UiLogLevel.Error => ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0xFF, 0x99, 0x99)
+                    : Windows.UI.Color.FromArgb(0xFF, 0xC4, 0x2B, 0x1C),
+                UiLogLevel.Ipatool => ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0x9C, 0xC8, 0xFF)
+                    : Windows.UI.Color.FromArgb(0xFF, 0x00, 0x55, 0xAA),
+                _ => ActualTheme == ElementTheme.Dark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0xD8, 0xD8, 0xD8)
+                    : Windows.UI.Color.FromArgb(0xFF, 0x44, 0x44, 0x44)
+            };
         }
 
         protected override void OnNavigatedFrom(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)

@@ -1,13 +1,17 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Input;
 using IPAbuyer;
 using System;
+using System.Collections.Generic;
+using Windows.Graphics;
 
 namespace IPAbuyer.Views
 {
     public sealed partial class MainWindow : Window
     {
         private MainPage? _currentMainPage;
+        private readonly InputNonClientPointerSource _nonClientPointerSource;
 
         public MainWindow()
         {
@@ -15,6 +19,9 @@ namespace IPAbuyer.Views
 
             ExtendsContentIntoTitleBar = true;
             SetTitleBar(CustomTitleBar);
+            IntPtr hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+            var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hwnd);
+            _nonClientPointerSource = InputNonClientPointerSource.GetForWindowId(windowId);
 
             Title = "IPAbuyer - 快速购买 AppStore 中的应用";
             SetWindowIcon(this);
@@ -29,6 +36,13 @@ namespace IPAbuyer.Views
                     break;
                 }
             }
+
+            UpdateSearchBoxState();
+            CustomTitleBar.Loaded += TitleBar_Loaded;
+            SizeChanged += MainWindow_SizeChanged;
+            CustomTitleBar.SizeChanged += TitleBarElement_SizeChanged;
+            PaneToggleButton.SizeChanged += TitleBarElement_SizeChanged;
+            AppNameBox.SizeChanged += TitleBarElement_SizeChanged;
         }
 
         private void PaneToggleButton_Click(object sender, RoutedEventArgs e)
@@ -43,6 +57,11 @@ namespace IPAbuyer.Views
 
         private void TriggerSearch()
         {
+            if (_currentMainPage == null)
+            {
+                return;
+            }
+
             string appName = AppNameBox.Text?.Trim() ?? string.Empty;
             if (ContentFrame.Content is MainPage mainPage)
             {
@@ -66,6 +85,8 @@ namespace IPAbuyer.Views
             {
                 SearchLoadingBar.Visibility = Visibility.Collapsed;
             }
+
+            UpdateSearchBoxState();
         }
 
         private void MainPage_SearchLoadingChanged(bool isLoading)
@@ -117,5 +138,60 @@ namespace IPAbuyer.Views
                 }
             }
         }
+
+        private void UpdateSearchBoxState()
+        {
+            bool isMainPage = _currentMainPage != null;
+            AppNameBox.IsEnabled = isMainPage;
+            AppNameBox.Opacity = isMainPage ? 1.0 : 0.65;
+            UpdateNonClientPassthroughRegions();
+        }
+
+        private void TitleBar_Loaded(object sender, RoutedEventArgs e)
+        {
+            UpdateNonClientPassthroughRegions();
+        }
+
+        private void MainWindow_SizeChanged(object sender, WindowSizeChangedEventArgs args)
+        {
+            UpdateNonClientPassthroughRegions();
+        }
+
+        private void TitleBarElement_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            UpdateNonClientPassthroughRegions();
+        }
+
+        private void UpdateNonClientPassthroughRegions()
+        {
+            double scale = CustomTitleBar.XamlRoot?.RasterizationScale ?? 1.0;
+            if (scale <= 0 || CustomTitleBar.ActualWidth <= 0 || CustomTitleBar.ActualHeight <= 0)
+            {
+                return;
+            }
+
+            var passthroughRects = new List<RectInt32>();
+            TryAddPassthroughRect(PaneToggleButton, scale, passthroughRects);
+            TryAddPassthroughRect(AppNameBox, scale, passthroughRects);
+            _nonClientPointerSource.SetRegionRects(NonClientRegionKind.Passthrough, passthroughRects.ToArray());
+        }
+
+        private void TryAddPassthroughRect(FrameworkElement element, double scale, List<RectInt32> rects)
+        {
+            if (element.ActualWidth <= 0 || element.ActualHeight <= 0)
+            {
+                return;
+            }
+
+            var transform = element.TransformToVisual(CustomTitleBar);
+            Windows.Foundation.Point origin = transform.TransformPoint(new Windows.Foundation.Point(0, 0));
+            int x = Math.Max(0, (int)Math.Round(origin.X * scale));
+            int y = Math.Max(0, (int)Math.Round(origin.Y * scale));
+            int width = Math.Max(1, (int)Math.Round(element.ActualWidth * scale));
+            int height = Math.Max(1, (int)Math.Round(element.ActualHeight * scale));
+
+            rects.Add(new RectInt32(x, y, width, height));
+        }
+
     }
 }

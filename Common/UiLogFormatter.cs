@@ -1,0 +1,101 @@
+using System;
+using System.Text.RegularExpressions;
+
+namespace IPAbuyer.Common
+{
+    public enum UiLogLevel
+    {
+        Info = 0,
+        Tip = 1,
+        Success = 2,
+        Error = 3,
+        Ipatool = 4
+    }
+
+    public readonly struct UiLogEntry
+    {
+        public UiLogEntry(string formattedText, UiLogLevel level)
+        {
+            FormattedText = formattedText;
+            Level = level;
+        }
+
+        public string FormattedText { get; }
+        public UiLogLevel Level { get; }
+    }
+
+    public static class UiLogFormatter
+    {
+        private static readonly Regex TimePrefixRegex = new(@"^\[\d{1,2}:\d{2}:\d{2}\]\s*", RegexOptions.Compiled);
+        private static readonly Regex LegacyLevelPrefixRegex = new(@"^\[(提示|错误|成功|验证码错误|验证码提示)\]\s*", RegexOptions.Compiled);
+
+        public static UiLogEntry Build(string message)
+        {
+            string normalized = NormalizeMessage(message);
+            UiLogLevel level = DetectLevel(normalized);
+            string tag = level switch
+            {
+                UiLogLevel.Tip => "TIP",
+                UiLogLevel.Success => "SUCCESS",
+                UiLogLevel.Error => "ERROR",
+                UiLogLevel.Ipatool => "ipatool",
+                _ => "INFO"
+            };
+
+            string formatted = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [{tag}] {normalized}";
+            return new UiLogEntry(formatted, level);
+        }
+
+        private static string NormalizeMessage(string message)
+        {
+            string normalized = message?.Trim() ?? string.Empty;
+            normalized = TimePrefixRegex.Replace(normalized, string.Empty).Trim();
+            normalized = LegacyLevelPrefixRegex.Replace(normalized, string.Empty).Trim();
+            return normalized;
+        }
+
+        private static UiLogLevel DetectLevel(string message)
+        {
+            if (IsIpatoolMessage(message))
+            {
+                return UiLogLevel.Ipatool;
+            }
+
+            if (message.Contains("[错误]", StringComparison.OrdinalIgnoreCase)
+                || message.Contains(" exception", StringComparison.OrdinalIgnoreCase)
+                || message.Contains("失败", StringComparison.OrdinalIgnoreCase)
+                || message.Contains("错误", StringComparison.OrdinalIgnoreCase)
+                || message.Contains("ERR ", StringComparison.OrdinalIgnoreCase))
+            {
+                return UiLogLevel.Error;
+            }
+
+            if (message.Contains("[提示]", StringComparison.OrdinalIgnoreCase)
+                || message.Contains("提示", StringComparison.OrdinalIgnoreCase))
+            {
+                return UiLogLevel.Tip;
+            }
+
+            if (message.Contains("[成功]", StringComparison.OrdinalIgnoreCase)
+                || message.Contains("成功", StringComparison.OrdinalIgnoreCase))
+            {
+                return UiLogLevel.Success;
+            }
+
+            return UiLogLevel.Info;
+        }
+
+        private static bool IsIpatoolMessage(string message)
+        {
+            if (message.Contains("\"level\"", StringComparison.OrdinalIgnoreCase)
+                || message.Contains("success=true", StringComparison.OrdinalIgnoreCase)
+                || message.Contains("error=", StringComparison.OrdinalIgnoreCase)
+                || message.Contains("ipatool", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return false;
+        }
+    }
+}

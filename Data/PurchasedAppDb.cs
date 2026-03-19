@@ -59,19 +59,38 @@ namespace IPAbuyer.Data
                 return;
             }
 
+            EnsureDatabaseReady();
+            string normalizedAppId = NormalizeAppId(appID);
+            string normalizedAccount = NormalizeAccount(account);
+
             using (var conn = new SqliteConnection(_connectionString))
             {
                 conn.Open();
-                var cmd = conn.CreateCommand();
-                cmd.CommandText = @"
-                    INSERT INTO PurchasedApp (AppID, Account, Status) 
-                    VALUES ($appid, $account, $status)
-                    ON CONFLICT(AppID, Account) 
-                    DO UPDATE SET Status = $status";
-                cmd.Parameters.AddWithValue("$appid", appID);
-                cmd.Parameters.AddWithValue("$account", account);
-                cmd.Parameters.AddWithValue("$status", status);
-                cmd.ExecuteNonQuery();
+                // 先按规范化键更新，兼容历史大小写/空白差异数据。
+                var updateCmd = conn.CreateCommand();
+                updateCmd.CommandText = @"
+                    UPDATE PurchasedApp
+                    SET Status = $status
+                    WHERE LOWER(TRIM(AppID)) = $appid
+                      AND LOWER(TRIM(Account)) = $account";
+                updateCmd.Parameters.AddWithValue("$appid", normalizedAppId);
+                updateCmd.Parameters.AddWithValue("$account", normalizedAccount);
+                updateCmd.Parameters.AddWithValue("$status", status);
+                int affected = updateCmd.ExecuteNonQuery();
+
+                if (affected == 0)
+                {
+                    var insertCmd = conn.CreateCommand();
+                    insertCmd.CommandText = @"
+                        INSERT INTO PurchasedApp (AppID, Account, Status)
+                        VALUES ($appid, $account, $status)
+                        ON CONFLICT(AppID, Account)
+                        DO UPDATE SET Status = $status";
+                    insertCmd.Parameters.AddWithValue("$appid", normalizedAppId);
+                    insertCmd.Parameters.AddWithValue("$account", normalizedAccount);
+                    insertCmd.Parameters.AddWithValue("$status", status);
+                    insertCmd.ExecuteNonQuery();
+                }
             }
         }
 
@@ -89,22 +108,40 @@ namespace IPAbuyer.Data
                 return list;
             }
 
+            EnsureDatabaseReady();
+            string normalizedAccount = NormalizeAccount(account);
+            var deduplicated = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
             using (var conn = new SqliteConnection(_connectionString))
             {
                 conn.Open();
                 var cmd = conn.CreateCommand();
-                cmd.CommandText = "SELECT AppID, Status FROM PurchasedApp WHERE Account = $account";
-                cmd.Parameters.AddWithValue("$account", account);
+                cmd.CommandText = @"
+                    SELECT AppID, Status
+                    FROM PurchasedApp
+                    WHERE LOWER(TRIM(Account)) = $account
+                    ORDER BY Id";
+                cmd.Parameters.AddWithValue("$account", normalizedAccount);
 
                 using (var reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        var appId = reader.IsDBNull(0) ? string.Empty : reader.GetString(0);
+                        var appId = reader.IsDBNull(0) ? string.Empty : NormalizeAppId(reader.GetString(0));
                         var status = reader.IsDBNull(1) ? "已购买" : reader.GetString(1);
-                        list.Add((appId, status));
+                        if (string.IsNullOrWhiteSpace(appId))
+                        {
+                            continue;
+                        }
+
+                        deduplicated[appId] = status;
                     }
                 }
+            }
+
+            foreach (var pair in deduplicated)
+            {
+                list.Add((pair.Key, pair.Value));
             }
             return list;
         }
@@ -122,13 +159,23 @@ namespace IPAbuyer.Data
                 return null;
             }
 
+            EnsureDatabaseReady();
+            string normalizedAppId = NormalizeAppId(appID);
+            string normalizedAccount = NormalizeAccount(account);
+
             using (var conn = new SqliteConnection(_connectionString))
             {
                 conn.Open();
                 var cmd = conn.CreateCommand();
-                cmd.CommandText = "SELECT Status FROM PurchasedApp WHERE AppID = $appid AND Account = $account";
-                cmd.Parameters.AddWithValue("$appid", appID);
-                cmd.Parameters.AddWithValue("$account", account);
+                cmd.CommandText = @"
+                    SELECT Status
+                    FROM PurchasedApp
+                    WHERE LOWER(TRIM(AppID)) = $appid
+                      AND LOWER(TRIM(Account)) = $account
+                    ORDER BY Id DESC
+                    LIMIT 1";
+                cmd.Parameters.AddWithValue("$appid", normalizedAppId);
+                cmd.Parameters.AddWithValue("$account", normalizedAccount);
 
                 var result = cmd.ExecuteScalar();
                 return result?.ToString();
@@ -142,13 +189,20 @@ namespace IPAbuyer.Data
                 return;
             }
 
+            EnsureDatabaseReady();
+            string normalizedAppId = NormalizeAppId(appID);
+            string normalizedAccount = NormalizeAccount(account);
+
             using (var conn = new SqliteConnection(_connectionString))
             {
                 conn.Open();
                 var cmd = conn.CreateCommand();
-                cmd.CommandText = "DELETE FROM PurchasedApp WHERE AppID = $appid AND Account = $account";
-                cmd.Parameters.AddWithValue("$appid", appID);
-                cmd.Parameters.AddWithValue("$account", account);
+                cmd.CommandText = @"
+                    DELETE FROM PurchasedApp
+                    WHERE LOWER(TRIM(AppID)) = $appid
+                      AND LOWER(TRIM(Account)) = $account";
+                cmd.Parameters.AddWithValue("$appid", normalizedAppId);
+                cmd.Parameters.AddWithValue("$account", normalizedAccount);
                 cmd.ExecuteNonQuery();
             }
         }
@@ -159,6 +213,7 @@ namespace IPAbuyer.Data
         /// <param name="account">账户名，如果为空则清除所有记录</param>
         public static void ClearPurchasedApps(string? account = null)
         {
+            EnsureDatabaseReady();
             using (var conn = new SqliteConnection(_connectionString))
             {
                 conn.Open();
@@ -170,8 +225,8 @@ namespace IPAbuyer.Data
                 }
                 else
                 {
-                    cmd.CommandText = "DELETE FROM PurchasedApp WHERE Account = $account";
-                    cmd.Parameters.AddWithValue("$account", account);
+                    cmd.CommandText = "DELETE FROM PurchasedApp WHERE LOWER(TRIM(Account)) = $account";
+                    cmd.Parameters.AddWithValue("$account", NormalizeAccount(account));
                 }
 
                 cmd.ExecuteNonQuery();
@@ -183,6 +238,7 @@ namespace IPAbuyer.Data
         /// </summary>
         public static int GetTotalCount(string? account = null)
         {
+            EnsureDatabaseReady();
             using (var conn = new SqliteConnection(_connectionString))
             {
                 conn.Open();
@@ -194,13 +250,31 @@ namespace IPAbuyer.Data
                 }
                 else
                 {
-                    cmd.CommandText = "SELECT COUNT(*) FROM PurchasedApp WHERE Account = $account";
-                    cmd.Parameters.AddWithValue("$account", account);
+                    cmd.CommandText = "SELECT COUNT(*) FROM PurchasedApp WHERE LOWER(TRIM(Account)) = $account";
+                    cmd.Parameters.AddWithValue("$account", NormalizeAccount(account));
                 }
 
                 var result = cmd.ExecuteScalar();
                 return result != null ? Convert.ToInt32(result) : 0;
             }
+        }
+
+        private static void EnsureDatabaseReady()
+        {
+            if (string.IsNullOrWhiteSpace(_connectionString))
+            {
+                InitDb();
+            }
+        }
+
+        private static string NormalizeAccount(string account)
+        {
+            return account.Trim().ToLowerInvariant();
+        }
+
+        private static string NormalizeAppId(string appId)
+        {
+            return appId.Trim().ToLowerInvariant();
         }
 
         private static string ResolveDataDirectory()

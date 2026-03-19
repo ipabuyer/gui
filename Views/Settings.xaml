@@ -37,8 +37,7 @@
                                 Style="{ThemeResource BodyTextBlockStyle}"
                                 TextWrapping="Wrap" />
                             <TextBox
-                                x:Name="CountryCodeTextBox"
-                                KeyUp="CountryCodeTextBox_KeyUp" />
+                                x:Name="CountryCodeTextBox" />
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <Button
                                     x:Uid="/SettingPage/About_Country_Code_Button"
@@ -49,6 +48,11 @@
                                     Content="恢复默认"
                                     Click="ResetCountryCodeButton_Click" />
                             </StackPanel>
+                            <TextBlock
+                                Style="{ThemeResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="提示：跨地区购买时，应用可能被标记为“疑似已拥有”。"
+                                TextWrapping="Wrap" />
                         </StackPanel>
                     </Border>
 
@@ -202,6 +206,39 @@
                                 Style="{ThemeResource CaptionTextBlockStyle}"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 Text="说明：该操作会删除 ipatool 的认证缓存与配置，请在需要重新登录时使用。" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border
+                        Padding="20"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8">
+                        <StackPanel Spacing="12">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="3*" />
+                                    <ColumnDefinition Width="2*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Style="{ThemeResource BodyTextBlockStyle}"
+                                    Text="导出当前架构的 ipatool.exe 到下载目录。"
+                                    TextWrapping="Wrap" />
+                                <Button
+                                    Grid.Column="1"
+                                    HorizontalAlignment="Right"
+                                    Content="导出 ipatool.exe"
+                                    Click="ExportIpatoolButton_Click"
+                                    FontWeight="SemiBold" />
+                            </Grid>
+
+                            <TextBlock
+                                Style="{ThemeResource CaptionTextBlockStyle}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="说明：默认导出到当前下载目录，文件名为 ipatool.exe，已存在时会覆盖。" />
                         </StackPanel>
                     </Border>
                 </StackPanel>

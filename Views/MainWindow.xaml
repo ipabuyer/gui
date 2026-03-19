@@ -45,10 +45,10 @@
           <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <TextBlock
+          x:Name="TitleBarTextBlock"
           Grid.Column="0"
           Margin="0,0,16,0"
           VerticalAlignment="Center"
-          FontSize="18"
           FontWeight="SemiBold"
           Text="IPAbuyer - 快速购买 AppStore 中的应用"
           TextTrimming="CharacterEllipsis" />

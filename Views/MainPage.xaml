@@ -258,14 +258,16 @@
                             Click="ClearHomeLog_Click" />
                     </StackPanel>
 
-                    <TextBox
-                        x:Name="HomeLogTextBox"
+                    <ScrollViewer
+                        x:Name="HomeLogScrollViewer"
                         Grid.Row="1"
                         Margin="0,8,0,0"
-                        AcceptsReturn="True"
-                        IsReadOnly="True"
-                        TextWrapping="Wrap"
-                        ScrollViewer.VerticalScrollBarVisibility="Auto" />
+                        VerticalScrollBarVisibility="Auto">
+                        <RichTextBlock
+                            x:Name="HomeLogTextBlock"
+                            IsTextSelectionEnabled="True"
+                            TextWrapping="WrapWholeWords" />
+                    </ScrollViewer>
                 </Grid>
             </Border>
         </Grid>
