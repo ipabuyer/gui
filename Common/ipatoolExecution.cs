@@ -18,6 +18,12 @@ namespace IPAbuyer.Common
         private const int MaxPreviewLength = 200;
         private static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(2);
         private static readonly HttpClient HttpClient = new();
+        private static readonly HashSet<string> SensitiveSwitches = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "--password",
+            "--auth-code",
+            "--keychain-passphrase"
+        };
         private static readonly Regex EmailRegex = new(
             @"[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -667,7 +673,7 @@ namespace IPAbuyer.Common
                 return;
             }
 
-            string rendered = string.Join(" ", arguments.Select(FormatArgForDisplay));
+            string rendered = RenderArgumentsForDisplay(arguments);
             CommandExecuting?.Invoke($"ipatool.exe {rendered}");
         }
 
@@ -720,6 +726,32 @@ namespace IPAbuyer.Common
             }
 
             return "\"" + argument.Replace("\"", "\\\"") + "\"";
+        }
+
+        private static string RenderArgumentsForDisplay(IReadOnlyList<string> arguments)
+        {
+            var rendered = new List<string>(arguments.Count);
+            for (int i = 0; i < arguments.Count; i++)
+            {
+                string arg = arguments[i];
+                rendered.Add(FormatArgForDisplay(arg));
+
+                if (!SensitiveSwitches.Contains(arg))
+                {
+                    continue;
+                }
+
+                int nextIndex = i + 1;
+                if (nextIndex >= arguments.Count)
+                {
+                    continue;
+                }
+
+                rendered.Add("\"***\"");
+                i++;
+            }
+
+            return string.Join(" ", rendered);
         }
     }
 }
