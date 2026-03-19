@@ -9,6 +9,7 @@ namespace IPAbuyer.Common
         private static bool _isLoggedIn;
         private static bool _isMockAccount;
         private static bool _initialized;
+        public static event Action? LoginStateChanged;
 
         public static string CurrentAccount
         {
@@ -53,23 +54,41 @@ namespace IPAbuyer.Common
                 throw new ArgumentException("account cannot be empty", nameof(account));
             }
 
+            bool changed;
             lock (_syncRoot)
             {
                 EnsureInitialized();
+                changed = !string.Equals(_currentAccount, account, StringComparison.Ordinal)
+                    || _isLoggedIn != isLoggedIn
+                    || _isMockAccount != isMockAccount;
                 _currentAccount = account;
                 _isLoggedIn = isLoggedIn;
                 _isMockAccount = isMockAccount;
+            }
+
+            if (changed)
+            {
+                LoginStateChanged?.Invoke();
             }
         }
 
         public static void Reset()
         {
+            bool changed;
             lock (_syncRoot)
             {
                 EnsureInitialized();
+                changed = _isLoggedIn
+                    || !string.IsNullOrWhiteSpace(_currentAccount)
+                    || _isMockAccount;
                 _isLoggedIn = false;
                 _currentAccount = string.Empty;
                 _isMockAccount = false;
+            }
+
+            if (changed)
+            {
+                LoginStateChanged?.Invoke();
             }
         }
 

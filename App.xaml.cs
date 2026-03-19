@@ -61,7 +61,7 @@ namespace IPAbuyer
         {
             try
             {
-                var result = await IpatoolExecution.AuthInfoAsync().ConfigureAwait(false);
+                var result = await IpatoolExecution.AuthInfoAsync(silent: true).ConfigureAwait(false);
                 if (!result.IsSuccessResponse)
                 {
                     return;

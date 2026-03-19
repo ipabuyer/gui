@@ -105,9 +105,14 @@ namespace IPAbuyer.Common
             }
         }
 
-        public static Task<IpatoolResult> AuthInfoAsync(CancellationToken cancellationToken = default)
+        public static Task<IpatoolResult> AuthInfoAsync(CancellationToken cancellationToken = default, bool silent = false)
         {
-            return ExecuteIpatoolAsync(new[] { "auth", "info" }, account: string.Empty, passphrase: null, cancellationToken);
+            return ExecuteIpatoolAsync(
+                new[] { "auth", "info" },
+                account: string.Empty,
+                passphrase: null,
+                cancellationToken,
+                suppressLogEvents: silent);
         }
 
         public static Task<IpatoolResult> PurchaseAppAsync(string bundleId, string account, CancellationToken cancellationToken = default)
@@ -258,7 +263,12 @@ namespace IPAbuyer.Common
             }
         }
 
-        private static async Task<IpatoolResult> ExecuteIpatoolAsync(IReadOnlyList<string> arguments, string account, string? passphrase, CancellationToken cancellationToken)
+        private static async Task<IpatoolResult> ExecuteIpatoolAsync(
+            IReadOnlyList<string> arguments,
+            string account,
+            string? passphrase,
+            CancellationToken cancellationToken,
+            bool suppressLogEvents = false)
         {
             bool isLogout = arguments.Count >= 2
                 && string.Equals(arguments[0], "auth", StringComparison.OrdinalIgnoreCase)
@@ -297,7 +307,10 @@ namespace IPAbuyer.Common
                     DeleteCookieLockFile();
                 }
 
-                EmitCommandLog(finalArguments);
+                if (!suppressLogEvents)
+                {
+                    EmitCommandLog(finalArguments);
+                }
                 process = new Process { StartInfo = psi, EnableRaisingEvents = true };
 
                 if (!process.Start())
@@ -323,7 +336,10 @@ namespace IPAbuyer.Common
 
                 string output = await outputTask.ConfigureAwait(false);
                 string error = await errorTask.ConfigureAwait(false);
-                EmitDetailedOutputLogs(output, error);
+                if (!suppressLogEvents)
+                {
+                    EmitDetailedOutputLogs(output, error);
+                }
 
                 Debug.WriteLine($"ipatool output: {Preview(output)}");
                 Debug.WriteLine($"ipatool stderr: {Preview(error)}");

@@ -49,6 +49,8 @@ namespace IPAbuyer.Views
             IpatoolExecution.CommandExecuting += OnIpatoolCommandExecuting;
             IpatoolExecution.CommandOutputReceived -= OnIpatoolCommandOutputReceived;
             IpatoolExecution.CommandOutputReceived += OnIpatoolCommandOutputReceived;
+            SessionState.LoginStateChanged -= OnSessionStateChanged;
+            SessionState.LoginStateChanged += OnSessionStateChanged;
 
             if (_pageCts.IsCancellationRequested)
             {
@@ -56,6 +58,28 @@ namespace IPAbuyer.Views
                 _pageCts = new CancellationTokenSource();
             }
 
+            RefreshFromSessionState();
+        }
+
+        private void LoginPage_Unloaded(object sender, RoutedEventArgs e)
+        {
+            IpatoolExecution.CommandExecuting -= OnIpatoolCommandExecuting;
+            IpatoolExecution.CommandOutputReceived -= OnIpatoolCommandOutputReceived;
+            SessionState.LoginStateChanged -= OnSessionStateChanged;
+            CancelCurrentOperation();
+            if (!_pageCts.IsCancellationRequested)
+            {
+                _pageCts.Cancel();
+            }
+        }
+
+        private void OnSessionStateChanged()
+        {
+            DispatcherQueue.TryEnqueue(RefreshFromSessionState);
+        }
+
+        private void RefreshFromSessionState()
+        {
             string account = SessionState.CurrentAccount;
             if (string.IsNullOrWhiteSpace(account))
             {
@@ -68,17 +92,6 @@ namespace IPAbuyer.Views
             }
 
             ApplyOperationLock(SessionState.IsLoggedIn);
-        }
-
-        private void LoginPage_Unloaded(object sender, RoutedEventArgs e)
-        {
-            IpatoolExecution.CommandExecuting -= OnIpatoolCommandExecuting;
-            IpatoolExecution.CommandOutputReceived -= OnIpatoolCommandOutputReceived;
-            CancelCurrentOperation();
-            if (!_pageCts.IsCancellationRequested)
-            {
-                _pageCts.Cancel();
-            }
         }
 
         private async void NextButton_Click(object sender, RoutedEventArgs e)
