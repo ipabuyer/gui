@@ -8,10 +8,8 @@ using IPAbuyer.Common;
 using IPAbuyer.Data;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage.Pickers;
-using Windows.System;
 using WinRT.Interop;
 
 namespace IPAbuyer.Views
@@ -100,17 +98,6 @@ namespace IPAbuyer.Views
             await HandleCountryCodeSubmissionAsync();
         }
 
-        private async void CountryCodeTextBox_KeyUp(object sender, KeyRoutedEventArgs e)
-        {
-            if (e.Key != VirtualKey.Enter)
-            {
-                return;
-            }
-
-            e.Handled = true;
-            await HandleCountryCodeSubmissionAsync();
-        }
-
         private async Task HandleCountryCodeSubmissionAsync()
         {
             if (CountryCodeTextBoxControl == null)
@@ -135,6 +122,7 @@ namespace IPAbuyer.Views
             {
                 KeychainConfig.SaveCountryCode(normalized, account);
                 CountryCodeTextBoxControl.Text = normalized;
+                MainPageCacheState.InvalidateSearchCache();
 
                 string message = inputWasEmpty
                     ? "国家/地区代码为空，已恢复为默认值 cn"
@@ -161,6 +149,7 @@ namespace IPAbuyer.Views
             {
                 KeychainConfig.SaveCountryCode("cn", account);
                 CountryCodeTextBoxControl.Text = "cn";
+                MainPageCacheState.InvalidateSearchCache();
                 await ShowDialogAsync("操作成功", "国家/地区代码已恢复默认值 cn");
             }
             catch (Exception ex)

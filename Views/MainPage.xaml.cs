@@ -49,6 +49,16 @@ namespace IPAbuyer.Views
             NavigationCacheMode = Microsoft.UI.Xaml.Navigation.NavigationCacheMode.Enabled;
         }
 
+        protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
+
+            if (MainPageCacheState.ConsumeSearchCacheInvalidation())
+            {
+                ClearSearchCache();
+            }
+        }
+
         public async void PerformSearchFromMainWindow(string appName)
         {
             if (string.IsNullOrWhiteSpace(appName))
@@ -934,6 +944,15 @@ namespace IPAbuyer.Views
 
             _pageCts.Dispose();
             _pageCts = new CancellationTokenSource();
+        }
+
+        private void ClearSearchCache()
+        {
+            _allResults.Clear();
+            if (ResultList != null)
+            {
+                ResultList.ItemsSource = null;
+            }
         }
 
         private enum SortDirection
