@@ -51,9 +51,9 @@ jobs:
           -c Release `
           /p:WindowsPackageType=MSIX `
           /p:GenerateAppxPackageOnBuild=true `
-          "/p:RuntimeIdentifiers=win-x64;win-arm64" `
-          /p:GenerateAppxBundle=Always `
-          "/p:Platform=x64;arm64" `
+          /p:AppxBundle=Always `
+          "/p:AppxBundlePlatforms=x64|ARM64" `
+          /p:Platform=x64 `
           /p:AppxPackageSigningEnabled=true `
           /p:PackageCertificateThumbprint="${{ steps.cert.outputs.THUMBPRINT }}"
 
