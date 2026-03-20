@@ -11,6 +11,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using Windows.Storage;
 using WinRT.Interop;
 
 namespace IPAbuyer
@@ -105,7 +106,20 @@ namespace IPAbuyer
         {
             try
             {
-                string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IPAbuyer");
+                string dir;
+                try
+                {
+                    dir = ApplicationData.Current.LocalFolder.Path;
+                    if (string.IsNullOrWhiteSpace(dir))
+                    {
+                        throw new InvalidOperationException("LocalFolder path is empty.");
+                    }
+                }
+                catch
+                {
+                    dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IPAbuyer");
+                }
+
                 Directory.CreateDirectory(dir);
                 string path = Path.Combine(dir, "crash.log");
                 File.AppendAllText(path, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}{Environment.NewLine}");

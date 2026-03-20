@@ -33,6 +33,21 @@ namespace IPAbuyer.Models
             catch (Exception ex)
             {
                 Debug.WriteLine($"数据库错误: {ex.Message}");
+                try
+                {
+                    string fallback = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IPAbuyer");
+                    Directory.CreateDirectory(fallback);
+                    path = fallback;
+                    appDb = Path.Combine(path, appDbName);
+                    if (!File.Exists(appDb))
+                    {
+                        File.Create(appDb).Close();
+                    }
+                }
+                catch (Exception fallbackEx)
+                {
+                    Debug.WriteLine($"数据库兜底路径初始化失败: {fallbackEx.Message}");
+                }
             }
         }
 
