@@ -25,12 +25,27 @@ namespace IPAbuyer
         {
             try
             {
-                // 初始化数据库
-                PurchasedAppDb.InitDb();
-                // KeychainConfig 改为文件配置（无 KeychainConfig.db），保留初始化入口用于创建默认配置文件。
-                KeychainConfig.InitializeDatabase();
+                try
+                {
+                    // 初始化数据库
+                    PurchasedAppDb.InitDb();
+                }
+                catch (Exception ex)
+                {
+                    WriteStartupLog($"[InitDb] {ex.GetType().FullName}: {ex.Message}");
+                }
 
-                this.InitializeComponent();
+                try
+                {
+                    // KeychainConfig 改为文件配置（无 KeychainConfig.db），保留初始化入口用于创建默认配置文件。
+                    KeychainConfig.InitializeDatabase();
+                }
+                catch (Exception ex)
+                {
+                    WriteStartupLog($"[InitConfig] {ex.GetType().FullName}: {ex.Message}");
+                }
+
+                InitializeComponent();
             }
             catch (Exception ex)
             {
@@ -83,6 +98,21 @@ namespace IPAbuyer
             catch (Exception ex)
             {
                 Debug.WriteLine($"静默查询登录状态失败: {ex.Message}");
+            }
+        }
+
+        private static void WriteStartupLog(string message)
+        {
+            try
+            {
+                string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IPAbuyer");
+                Directory.CreateDirectory(dir);
+                string path = Path.Combine(dir, "crash.log");
+                File.AppendAllText(path, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}{Environment.NewLine}");
+            }
+            catch
+            {
+                // ignore startup logging failures
             }
         }
     }
