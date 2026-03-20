@@ -11,7 +11,7 @@ namespace IPAbuyer.Common
     /// <summary>
     /// 本地配置读写（文件版，不使用 KeychainConfig.db）
     /// </summary>
-    public static class KeychainConfig
+    public static partial class KeychainConfig
     {
         private const string SettingsFileName = "settings.json";
         private const string PassphraseFileName = "passphrase.txt";
@@ -309,10 +309,7 @@ namespace IPAbuyer.Common
         {
             NormalizeSettings(settings);
             string path = GetSettingsFilePath();
-            string json = JsonSerializer.Serialize(settings, new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
+            string json = JsonSerializer.Serialize(settings, LocalSettingsJsonContext.Default.LocalSettingsModel);
             File.WriteAllText(path, json, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
         }
 
@@ -427,6 +424,12 @@ namespace IPAbuyer.Common
 
             [JsonPropertyName("owned_check")]
             public bool OwnedCheckEnabled { get; set; }
+        }
+
+        [JsonSourceGenerationOptions(WriteIndented = true)]
+        [JsonSerializable(typeof(LocalSettingsModel))]
+        private partial class LocalSettingsJsonContext : JsonSerializerContext
+        {
         }
     }
 }

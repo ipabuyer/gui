@@ -13,6 +13,7 @@ AppPackages/
 # 编译和打包输出目录
 bin/
 obj/
+BundleArtifacts/
 
 # 用户专属项目文件
 *.user

@@ -44,6 +44,11 @@ namespace IPAbuyer.Common
                 throw new ArgumentException("account 不能为空", nameof(account));
             }
 
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                throw new ArgumentException("password 不能为空", nameof(password));
+            }
+
             var arguments = new List<string>
             {
                 "auth",

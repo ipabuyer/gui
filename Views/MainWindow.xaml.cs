@@ -11,7 +11,7 @@ namespace IPAbuyer.Views
     public sealed partial class MainWindow : Window
     {
         private MainPage? _currentMainPage;
-        private readonly InputNonClientPointerSource _nonClientPointerSource;
+        private readonly InputNonClientPointerSource? _nonClientPointerSource;
 
         public MainWindow()
         {
@@ -19,9 +19,16 @@ namespace IPAbuyer.Views
 
             ExtendsContentIntoTitleBar = true;
             SetTitleBar(CustomTitleBar);
-            IntPtr hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-            var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hwnd);
-            _nonClientPointerSource = InputNonClientPointerSource.GetForWindowId(windowId);
+            try
+            {
+                IntPtr hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+                var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hwnd);
+                _nonClientPointerSource = InputNonClientPointerSource.GetForWindowId(windowId);
+            }
+            catch
+            {
+                _nonClientPointerSource = null;
+            }
 
             Title = "IPAbuyer - 快速购买 AppStore 中的应用";
             SetWindowIcon(this);
@@ -164,16 +171,28 @@ namespace IPAbuyer.Views
 
         private void UpdateNonClientPassthroughRegions()
         {
+            if (_nonClientPointerSource == null)
+            {
+                return;
+            }
+
             double scale = CustomTitleBar.XamlRoot?.RasterizationScale ?? 1.0;
             if (scale <= 0 || CustomTitleBar.ActualWidth <= 0 || CustomTitleBar.ActualHeight <= 0)
             {
                 return;
             }
 
-            var passthroughRects = new List<RectInt32>();
-            TryAddPassthroughRect(PaneToggleButton, scale, passthroughRects);
-            TryAddPassthroughRect(AppNameBox, scale, passthroughRects);
-            _nonClientPointerSource.SetRegionRects(NonClientRegionKind.Passthrough, passthroughRects.ToArray());
+            try
+            {
+                var passthroughRects = new List<RectInt32>();
+                TryAddPassthroughRect(PaneToggleButton, scale, passthroughRects);
+                TryAddPassthroughRect(AppNameBox, scale, passthroughRects);
+                _nonClientPointerSource.SetRegionRects(NonClientRegionKind.Passthrough, passthroughRects.ToArray());
+            }
+            catch
+            {
+                // 忽略区域更新失败，避免在特定系统环境下触发启动崩溃。
+            }
         }
 
         private void TryAddPassthroughRect(FrameworkElement element, double scale, List<RectInt32> rects)
