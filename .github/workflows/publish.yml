@@ -1,4 +1,4 @@
-name: IPAbuyer Publish
+name: Publish
 
 on:
   workflow_dispatch:
