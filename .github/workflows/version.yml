@@ -16,10 +16,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         lfs: true
 
-    - uses: ncipollo/release-action@v1
+    - name: Run ReleaseZip
+      uses: BlazeSnow/ReleaseZip@v1
+      with:
+        artifact_name: ${{ github.event.repository.name }}-${{ inputs.tag }}
+        retention_days: 7
+
+    - name: Create Release
+      uses: ncipollo/release-action@v1
       with:
         tag: ${{ inputs.tag }}
