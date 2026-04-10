@@ -6,8 +6,9 @@
 ## 软件框架
 
 1. winui 3作为软件框架
-2. 调用ipatool.exe执行命令
-3. 最终发布至Microsoft Store
+2. 软件UI界面尽可能多的采用CommunityToolkit.WinUI包内容，避免自绘
+3. 调用ipatool.exe执行命令
+4. 最终发布至Microsoft Store
 
 ## 数据库
 
