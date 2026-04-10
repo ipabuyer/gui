@@ -3,8 +3,8 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Padding="24" Spacing="16">
             <controls:SettingsCard x:Uid="Settings/Card/CountryCode">
-                <StackPanel Spacing="10">
-                    <TextBlock x:Name="CountryCodeValueTextBlock" TextWrapping="WrapWholeWords" />
+                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <TextBlock x:Name="CountryCodeValueTextBlock" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Button x:Uid="Settings/Button/EditCountryCode" Click="CountryCodeButton" />
                         <Button x:Uid="Settings/Button/ResetCountryCode" Click="ResetCountryCodeButton_Click" />
@@ -12,8 +12,8 @@
                 </StackPanel>
             </controls:SettingsCard>
             <controls:SettingsCard x:Uid="Settings/Card/DownloadDirectory">
-                <StackPanel Spacing="10">
-                    <TextBlock x:Name="DownloadDirectoryValueTextBlock" TextWrapping="WrapWholeWords" />
+                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <TextBlock x:Name="DownloadDirectoryValueTextBlock" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Button x:Uid="Settings/Button/PickDownloadDirectory" Click="PickDownloadDirectoryButton_Click" />
                         <Button x:Uid="Settings/Button/ResetDownloadDirectory" Click="ResetDownloadDirectoryButton_Click" />

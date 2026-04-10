@@ -150,7 +150,7 @@
     <comment>设置页面的子标题：软件相关</comment>
   </data>
   <data name="Settings/Button/EditCountryCode.Content" xml:space="preserve">
-    <value>确认</value>
+    <value>修改</value>
     <comment>设置页面的子标题：软件相关，的内容：国家地区代码，的按钮</comment>
   </data>
   <data name="Settings/Button/OpenDeveloperSite.Content" xml:space="preserve">
