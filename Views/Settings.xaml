@@ -14,10 +14,13 @@
             Margin="28,16,28,28"
             HorizontalAlignment="Center">
             <StackPanel Spacing="16">
-                <controls:SettingsCard Header="国家/地区代码" Description="用于查询、购买和状态判断。">
+                <controls:SettingsCard
+                    x:Uid="SettingsCardCountryCode"
+                    Header="国家/地区代码"
+                    Description="用于查询、购买和状态判断。">
                     <StackPanel Spacing="10">
                         <TextBlock
-                            x:Uid="/SettingPage/About_Country_Code"
+                            x:Uid="About_Country_Code"
                             Style="{ThemeResource BodyTextBlockStyle}"
                             TextWrapping="Wrap" />
                         <TextBlock
@@ -25,19 +28,23 @@
                             TextWrapping="WrapWholeWords" />
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <Button
-                                x:Uid="/SettingPage/About_Country_Code_Button"
+                                x:Uid="About_Country_Code_Button"
                                 Click="CountryCodeButton" />
                             <Button
+                                x:Uid="SettingsResetCountryCodeButton"
                                 Content="恢复默认"
                                 Click="ResetCountryCodeButton_Click" />
                         </StackPanel>
                     </StackPanel>
                 </controls:SettingsCard>
 
-                <controls:SettingsCard Header="下载目录" Description="用于保存下载到本地的文件。">
+                <controls:SettingsCard
+                    x:Uid="SettingsCardDownloadDirectory"
+                    Header="下载目录"
+                    Description="用于保存下载到本地的文件。">
                     <StackPanel Spacing="10">
                         <TextBlock
-                            x:Uid="/SettingPage/About_Download_Directory"
+                            x:Uid="About_Download_Directory"
                             Style="{ThemeResource BodyTextBlockStyle}"
                             TextWrapping="Wrap" />
                         <TextBlock
@@ -45,66 +52,83 @@
                             TextWrapping="WrapWholeWords" />
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <Button
-                                x:Uid="/SettingPage/About_Download_Directory_Button"
+                                x:Uid="About_Download_Directory_Button"
                                 Click="PickDownloadDirectoryButton_Click" />
                             <Button
-                                x:Uid="/SettingPage/About_Download_Directory_Default_Button"
+                                x:Uid="About_Download_Directory_Default_Button"
                                 Click="ResetDownloadDirectoryButton_Click" />
                         </StackPanel>
                     </StackPanel>
                 </controls:SettingsCard>
 
-                <controls:SettingsCard Header="详细 ipatool 日志" Description="开启后会输出全部命令和返回内容。">
+                <controls:SettingsCard
+                    x:Uid="SettingsCardDetailedLog"
+                    Header="详细 ipatool 日志"
+                    Description="开启后会输出全部命令和返回内容。">
                     <CheckBox
+                        x:Uid="SettingsDetailedLogCheckBox"
                         x:Name="DetailedIpatoolLogCheckBox"
                         Content="显示所有 ipatool 命令"
                         Checked="DetailedIpatoolLogCheckBox_Checked"
                         Unchecked="DetailedIpatoolLogCheckBox_Unchecked" />
                 </controls:SettingsCard>
 
-                <controls:SettingsCard Header="已拥有标记提示" Description="关闭提示后，标记为已拥有时不再弹窗确认。">
+                <controls:SettingsCard
+                    x:Uid="SettingsCardOwnedPrompt"
+                    Header="已拥有标记提示"
+                    Description="关闭提示后，标记为已拥有时不再弹窗确认。">
                     <CheckBox
+                        x:Uid="SettingsOwnedPromptCheckBox"
                         x:Name="OwnedCheckBox"
                         Content="标记为已拥有前不再提示"
                         Checked="OwnedCheckBox_Checked"
                         Unchecked="OwnedCheckBox_Unchecked" />
                 </controls:SettingsCard>
 
-                <controls:SettingsCard Header="开发者网站" Description="查看 Q&amp;A 与项目说明。">
+                <controls:SettingsCard
+                    x:Uid="SettingsCardDeveloperSite"
+                    Header="开发者网站"
+                    Description="查看 Q&amp;A 与项目说明。">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <TextBlock
-                            x:Uid="/SettingPage/About_Developer"
+                            x:Uid="About_Developer"
                             VerticalAlignment="Center"
                             Style="{ThemeResource BodyTextBlockStyle}"
                             TextWrapping="Wrap" />
                         <Button
-                            x:Uid="/SettingPage/About_Developer_Button"
+                            x:Uid="About_Developer_Button"
                             Click="GithubButton" />
                     </StackPanel>
                 </controls:SettingsCard>
 
-                <controls:SettingsCard Header="反馈邮箱" Description="复制邮箱后可直接发邮件反馈问题。">
+                <controls:SettingsCard
+                    x:Uid="SettingsCardFeedbackEmail"
+                    Header="反馈邮箱"
+                    Description="复制邮箱后可直接发邮件反馈问题。">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <TextBlock
-                            x:Uid="/SettingPage/About_Feedback_Email"
+                            x:Uid="About_Feedback_Email"
                             VerticalAlignment="Center"
                             Style="{ThemeResource BodyTextBlockStyle}"
                             TextWrapping="Wrap" />
                         <Button
-                            x:Uid="/SettingPage/About_Feedback_Email_Button"
+                            x:Uid="About_Feedback_Email_Button"
                             Click="CopyFeedbackEmailButton_Click" />
                     </StackPanel>
                 </controls:SettingsCard>
 
-                <controls:SettingsCard Header="清空本地购买数据库" Description="仅清空本地记录，不影响 Apple 账户真实购买历史。">
+                <controls:SettingsCard
+                    x:Uid="SettingsCardClearLocalDb"
+                    Header="清空本地购买数据库"
+                    Description="仅清空本地记录，不影响 Apple 账户真实购买历史。">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <TextBlock
-                            x:Uid="/SettingPage/About_Remove_Database"
+                            x:Uid="About_Remove_Database"
                             VerticalAlignment="Center"
                             Style="{ThemeResource BodyTextBlockStyle}"
                             TextWrapping="Wrap" />
                         <Button
-                            x:Uid="/SettingPage/About_Remove_Database_Button"
+                            x:Uid="About_Remove_Database_Button"
                             Background="#C42B1C"
                             BorderBrush="#C42B1C"
                             Click="DeleteDataBase"
@@ -113,8 +137,12 @@
                     </StackPanel>
                 </controls:SettingsCard>
 
-                <controls:SettingsCard Header="清空 ipatool 本地数据" Description="清理 %USERPROFILE%\\.ipatool 下的本地缓存与认证数据。">
+                <controls:SettingsCard
+                    x:Uid="SettingsCardClearIpatoolData"
+                    Header="清空 ipatool 本地数据"
+                    Description="清理 %USERPROFILE%\\.ipatool 下的本地缓存与认证数据。">
                     <Button
+                        x:Uid="SettingsClearIpatoolDataButton"
                         Background="#C42B1C"
                         BorderBrush="#C42B1C"
                         Content="清空 ipatool 数据"
@@ -123,8 +151,12 @@
                         Foreground="White" />
                 </controls:SettingsCard>
 
-                <controls:SettingsCard Header="导出 ipatool.exe" Description="导出当前架构对应的可执行文件到下载目录。">
+                <controls:SettingsCard
+                    x:Uid="SettingsCardExportIpatool"
+                    Header="导出 ipatool.exe"
+                    Description="导出当前架构对应的可执行文件到下载目录。">
                     <Button
+                        x:Uid="SettingsExportIpatoolButton"
                         Content="导出 ipatool.exe"
                         Click="ExportIpatoolButton_Click"
                         FontWeight="SemiBold" />

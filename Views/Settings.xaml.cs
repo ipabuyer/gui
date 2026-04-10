@@ -8,6 +8,7 @@ using IPAbuyer.Common;
 using IPAbuyer.Data;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.Windows.ApplicationModel.Resources;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
@@ -16,6 +17,7 @@ namespace IPAbuyer.Views
 {
     public sealed partial class Settings : Page
     {
+        private static readonly ResourceLoader Loader = new();
         private bool _isInitializingDetailedLogOption;
         private bool _isInitializingOwnedCheckOption;
 
@@ -42,10 +44,14 @@ namespace IPAbuyer.Views
             int totalBefore = PurchasedAppDb.GetTotalCount();
             var dialog = new ContentDialog
             {
-                Title = "确认操作",
-                Content = $"确定要清空本地数据库中的已购买记录吗？{Environment.NewLine}当前记录数：{totalBefore} 条。{Environment.NewLine}此操作不可恢复。",
-                PrimaryButtonText = "确认清空",
-                CloseButtonText = "取消",
+                Title = L("Settings.Dialog.ConfirmAction.Title", "确认操作"),
+                Content = LF(
+                    "Settings.Db.Clear.ConfirmMessage",
+                    "确定要清空本地数据库中的已购买记录吗？{0}当前记录数：{1} 条。{0}此操作不可恢复。",
+                    Environment.NewLine,
+                    totalBefore),
+                PrimaryButtonText = L("Settings.Dialog.ConfirmAction.Primary", "确认清空"),
+                CloseButtonText = L("Settings.Dialog.ConfirmAction.Close", "取消"),
                 XamlRoot = XamlRoot
             };
 
@@ -58,11 +64,20 @@ namespace IPAbuyer.Views
             {
                 PurchasedAppDb.ClearPurchasedApps();
                 int totalAfter = PurchasedAppDb.GetTotalCount();
-                await ShowDialogAsync("操作成功", $"本地记录已清空。{Environment.NewLine}清空前：{totalBefore} 条，清空后：{totalAfter} 条。");
+                await ShowDialogAsync(
+                    L("Settings.Dialog.SuccessTitle", "操作成功"),
+                    LF(
+                        "Settings.Db.Clear.SuccessMessage",
+                        "本地记录已清空。{0}清空前：{1} 条，清空后：{2} 条。",
+                        Environment.NewLine,
+                        totalBefore,
+                        totalAfter));
             }
             catch (Exception ex)
             {
-                await ShowDialogAsync("错误", $"清空失败：{ex.Message}");
+                await ShowDialogAsync(
+                    L("Settings.Dialog.ErrorTitle", "错误"),
+                    LF("Settings.Db.Clear.FailMessage", "清空失败：{0}", ex.Message));
             }
         }
 
@@ -73,7 +88,7 @@ namespace IPAbuyer.Views
                 string currentCode = KeychainConfig.GetCountryCode();
                 if (CountryCodeValueTextBlockControl != null)
                 {
-                    CountryCodeValueTextBlockControl.Text = $"当前: {currentCode}";
+                    CountryCodeValueTextBlockControl.Text = LF("Settings.CountryCode.CurrentFormat", "当前: {0}", currentCode);
                 }
             }
             catch (Exception ex)
@@ -109,17 +124,17 @@ namespace IPAbuyer.Views
             var inputBox = new TextBox
             {
                 Text = currentCode,
-                PlaceholderText = "请输入两位国家/地区代码，例如 cn",
+                PlaceholderText = L("Settings.CountryCode.InputPlaceholder", "请输入两位国家/地区代码，例如 cn"),
                 MaxLength = 2,
                 Width = 220
             };
 
             var dialog = new ContentDialog
             {
-                Title = "设置国家/地区代码",
+                Title = L("Settings.CountryCode.DialogTitle", "设置国家/地区代码"),
                 Content = inputBox,
-                PrimaryButtonText = "保存",
-                CloseButtonText = "取消",
+                PrimaryButtonText = L("Settings.CountryCode.SaveButton", "保存"),
+                CloseButtonText = L("Settings.CountryCode.CancelButton", "取消"),
                 XamlRoot = XamlRoot
             };
 
@@ -134,7 +149,9 @@ namespace IPAbuyer.Views
 
             if (!IsValidCountryCode(normalizedInput))
             {
-                await ShowDialogAsync("操作失败", "请输入合法的 ISO 3166-1 Alpha-2 国家/地区代码（2 位英文字母）。");
+                await ShowDialogAsync(
+                    L("Settings.Dialog.OperationFailedTitle", "操作失败"),
+                    L("Settings.CountryCode.InvalidMessage", "请输入合法的 ISO 3166-1 Alpha-2 国家/地区代码（2 位英文字母）。"));
                 return;
             }
 
@@ -145,20 +162,22 @@ namespace IPAbuyer.Views
                 KeychainConfig.SaveCountryCode(normalized);
                 if (CountryCodeValueTextBlockControl != null)
                 {
-                    CountryCodeValueTextBlockControl.Text = $"当前: {normalized}";
+                    CountryCodeValueTextBlockControl.Text = LF("Settings.CountryCode.CurrentFormat", "当前: {0}", normalized);
                 }
 
                 MainPageCacheState.InvalidateSearchCache();
 
                 string message = inputWasEmpty
-                    ? "国家/地区代码为空，已恢复为默认值 cn"
-                    : $"国家/地区代码已更新为 {normalized}";
+                    ? L("Settings.CountryCode.EmptyResetMessage", "国家/地区代码为空，已恢复为默认值 cn")
+                    : LF("Settings.CountryCode.UpdatedMessage", "国家/地区代码已更新为 {0}", normalized);
 
-                await ShowDialogAsync("操作成功", message);
+                await ShowDialogAsync(L("Settings.Dialog.SuccessTitle", "操作成功"), message);
             }
             catch (Exception ex)
             {
-                await ShowDialogAsync("操作失败", $"保存失败：{ex.Message}");
+                await ShowDialogAsync(
+                    L("Settings.Dialog.OperationFailedTitle", "操作失败"),
+                    LF("Settings.CountryCode.SaveFailMessage", "保存失败：{0}", ex.Message));
             }
         }
 
@@ -169,15 +188,19 @@ namespace IPAbuyer.Views
                 KeychainConfig.SaveCountryCode("cn");
                 if (CountryCodeValueTextBlockControl != null)
                 {
-                    CountryCodeValueTextBlockControl.Text = "当前: cn";
+                    CountryCodeValueTextBlockControl.Text = LF("Settings.CountryCode.CurrentFormat", "当前: {0}", "cn");
                 }
 
                 MainPageCacheState.InvalidateSearchCache();
-                await ShowDialogAsync("操作成功", "国家/地区代码已恢复默认值 cn");
+                await ShowDialogAsync(
+                    L("Settings.Dialog.SuccessTitle", "操作成功"),
+                    L("Settings.CountryCode.ResetSuccessMessage", "国家/地区代码已恢复默认值 cn"));
             }
             catch (Exception ex)
             {
-                await ShowDialogAsync("操作失败", $"恢复默认失败：{ex.Message}");
+                await ShowDialogAsync(
+                    L("Settings.Dialog.OperationFailedTitle", "操作失败"),
+                    LF("Settings.CountryCode.ResetFailMessage", "恢复默认失败：{0}", ex.Message));
             }
         }
 
@@ -214,11 +237,15 @@ namespace IPAbuyer.Views
                     DownloadDirectoryValueTextBlockControl.Text = folder.Path;
                 }
 
-                await ShowDialogAsync("操作成功", "下载目录已更新");
+                await ShowDialogAsync(
+                    L("Settings.Dialog.SuccessTitle", "操作成功"),
+                    L("Settings.DownloadDir.UpdatedMessage", "下载目录已更新"));
             }
             catch (Exception ex)
             {
-                await ShowDialogAsync("操作失败", $"保存失败：{ex.Message}");
+                await ShowDialogAsync(
+                    L("Settings.Dialog.OperationFailedTitle", "操作失败"),
+                    LF("Settings.DownloadDir.SaveFailMessage", "保存失败：{0}", ex.Message));
             }
         }
 
@@ -233,11 +260,15 @@ namespace IPAbuyer.Views
                     DownloadDirectoryValueTextBlockControl.Text = defaultDirectory;
                 }
 
-                await ShowDialogAsync("操作成功", $"已恢复默认下载目录：{defaultDirectory}");
+                await ShowDialogAsync(
+                    L("Settings.Dialog.SuccessTitle", "操作成功"),
+                    LF("Settings.DownloadDir.ResetSuccessMessage", "已恢复默认下载目录：{0}", defaultDirectory));
             }
             catch (Exception ex)
             {
-                await ShowDialogAsync("操作失败", $"恢复默认目录失败：{ex.Message}");
+                await ShowDialogAsync(
+                    L("Settings.Dialog.OperationFailedTitle", "操作失败"),
+                    LF("Settings.DownloadDir.ResetFailMessage", "恢复默认目录失败：{0}", ex.Message));
             }
         }
 
@@ -250,11 +281,15 @@ namespace IPAbuyer.Views
                 dataPackage.SetText(feedbackEmail);
                 Clipboard.SetContent(dataPackage);
                 Clipboard.Flush();
-                await ShowDialogAsync("操作成功", $"反馈邮箱已复制：{feedbackEmail}");
+                await ShowDialogAsync(
+                    L("Settings.Dialog.SuccessTitle", "操作成功"),
+                    LF("Settings.Feedback.CopiedMessage", "反馈邮箱已复制：{0}", feedbackEmail));
             }
             catch (Exception ex)
             {
-                await ShowDialogAsync("操作失败", $"复制邮箱失败：{ex.Message}");
+                await ShowDialogAsync(
+                    L("Settings.Dialog.OperationFailedTitle", "操作失败"),
+                    LF("Settings.Feedback.CopyFailMessage", "复制邮箱失败：{0}", ex.Message));
             }
         }
 
@@ -266,10 +301,14 @@ namespace IPAbuyer.Views
 
             var dialog = new ContentDialog
             {
-                Title = "确认操作",
-                Content = $"确定要清空以下目录吗？{Environment.NewLine}{ipatoolDirectory}{Environment.NewLine}此操作不可恢复。",
-                PrimaryButtonText = "确认清空",
-                CloseButtonText = "取消",
+                Title = L("Settings.Dialog.ConfirmAction.Title", "确认操作"),
+                Content = LF(
+                    "Settings.IpatoolData.ClearConfirmMessage",
+                    "确定要清空以下目录吗？{0}{1}{0}此操作不可恢复。",
+                    Environment.NewLine,
+                    ipatoolDirectory),
+                PrimaryButtonText = L("Settings.Dialog.ConfirmAction.Primary", "确认清空"),
+                CloseButtonText = L("Settings.Dialog.ConfirmAction.Close", "取消"),
                 XamlRoot = XamlRoot
             };
 
@@ -286,11 +325,15 @@ namespace IPAbuyer.Views
                 }
 
                 Directory.CreateDirectory(ipatoolDirectory);
-                await ShowDialogAsync("操作成功", "ipatool 数据目录已清空。");
+                await ShowDialogAsync(
+                    L("Settings.Dialog.SuccessTitle", "操作成功"),
+                    L("Settings.IpatoolData.ClearSuccessMessage", "ipatool 数据目录已清空。"));
             }
             catch (Exception ex)
             {
-                await ShowDialogAsync("操作失败", $"清空 ipatool 数据失败：{ex.Message}");
+                await ShowDialogAsync(
+                    L("Settings.Dialog.OperationFailedTitle", "操作失败"),
+                    LF("Settings.IpatoolData.ClearFailMessage", "清空 ipatool 数据失败：{0}", ex.Message));
             }
         }
 
@@ -301,7 +344,9 @@ namespace IPAbuyer.Views
                 string? sourcePath = ResolveBundledIpatoolPath();
                 if (string.IsNullOrWhiteSpace(sourcePath))
                 {
-                    await ShowDialogAsync("操作失败", "未在应用目录中找到可导出的 ipatool.exe。");
+                    await ShowDialogAsync(
+                        L("Settings.Dialog.OperationFailedTitle", "操作失败"),
+                        L("Settings.IpatoolExport.NotFoundMessage", "未在应用目录中找到可导出的 ipatool.exe。"));
                     return;
                 }
 
@@ -311,16 +356,22 @@ namespace IPAbuyer.Views
                 string targetPath = Path.Combine(outputDirectory, "ipatool.exe");
                 if (string.Equals(Path.GetFullPath(sourcePath), Path.GetFullPath(targetPath), StringComparison.OrdinalIgnoreCase))
                 {
-                    await ShowDialogAsync("操作成功", $"ipatool.exe 已位于目标目录：{targetPath}");
+                    await ShowDialogAsync(
+                        L("Settings.Dialog.SuccessTitle", "操作成功"),
+                        LF("Settings.IpatoolExport.AlreadyInTargetMessage", "ipatool.exe 已位于目标目录：{0}", targetPath));
                     return;
                 }
 
                 File.Copy(sourcePath, targetPath, overwrite: true);
-                await ShowDialogAsync("操作成功", $"ipatool.exe 已导出到：{targetPath}");
+                await ShowDialogAsync(
+                    L("Settings.Dialog.SuccessTitle", "操作成功"),
+                    LF("Settings.IpatoolExport.SuccessMessage", "ipatool.exe 已导出到：{0}", targetPath));
             }
             catch (Exception ex)
             {
-                await ShowDialogAsync("操作失败", $"导出 ipatool.exe 失败：{ex.Message}");
+                await ShowDialogAsync(
+                    L("Settings.Dialog.OperationFailedTitle", "操作失败"),
+                    LF("Settings.IpatoolExport.FailMessage", "导出 ipatool.exe 失败：{0}", ex.Message));
             }
         }
 
@@ -439,7 +490,7 @@ namespace IPAbuyer.Views
             {
                 Title = title,
                 Content = message,
-                CloseButtonText = "确定",
+                CloseButtonText = L("Settings.Dialog.CloseButton", "确定"),
                 XamlRoot = XamlRoot
             };
 
@@ -448,5 +499,17 @@ namespace IPAbuyer.Views
 
         private TextBlock? CountryCodeValueTextBlockControl => FindName("CountryCodeValueTextBlock") as TextBlock;
         private TextBlock? DownloadDirectoryValueTextBlockControl => FindName("DownloadDirectoryValueTextBlock") as TextBlock;
+
+        private static string L(string key, string fallback)
+        {
+            string value = Loader.GetString(key);
+            return string.IsNullOrWhiteSpace(value) ? fallback : value;
+        }
+
+        private static string LF(string key, string fallback, params object[] args)
+        {
+            string format = L(key, fallback);
+            return string.Format(format, args);
+        }
     }
 }
