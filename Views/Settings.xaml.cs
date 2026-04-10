@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -71,9 +71,9 @@ namespace IPAbuyer.Views
             try
             {
                 string currentCode = KeychainConfig.GetCountryCode();
-                if (CountryCodeTextBoxControl != null)
+                if (CountryCodeValueTextBlockControl != null)
                 {
-                    CountryCodeTextBoxControl.Text = currentCode;
+                    CountryCodeValueTextBlockControl.Text = $"当前: {currentCode}";
                 }
             }
             catch (Exception ex)
@@ -86,9 +86,9 @@ namespace IPAbuyer.Views
         {
             try
             {
-                if (DownloadDirectoryTextBoxControl != null)
+                if (DownloadDirectoryValueTextBlockControl != null)
                 {
-                    DownloadDirectoryTextBoxControl.Text = KeychainConfig.GetDownloadDirectory();
+                    DownloadDirectoryValueTextBlockControl.Text = KeychainConfig.GetDownloadDirectory();
                 }
             }
             catch (Exception ex)
@@ -104,18 +104,37 @@ namespace IPAbuyer.Views
 
         private async Task HandleCountryCodeSubmissionAsync()
         {
-            if (CountryCodeTextBoxControl == null)
+            string currentCode = KeychainConfig.GetCountryCode();
+
+            var inputBox = new TextBox
+            {
+                Text = currentCode,
+                PlaceholderText = "请输入两位国家/地区代码，例如 cn",
+                MaxLength = 2,
+                Width = 220
+            };
+
+            var dialog = new ContentDialog
+            {
+                Title = "设置国家/地区代码",
+                Content = inputBox,
+                PrimaryButtonText = "保存",
+                CloseButtonText = "取消",
+                XamlRoot = XamlRoot
+            };
+
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary)
             {
                 return;
             }
 
-            string rawInput = CountryCodeTextBoxControl.Text?.Trim() ?? string.Empty;
+            string rawInput = inputBox.Text?.Trim() ?? string.Empty;
             bool inputWasEmpty = string.IsNullOrWhiteSpace(rawInput);
             string normalizedInput = inputWasEmpty ? "cn" : rawInput;
 
             if (!IsValidCountryCode(normalizedInput))
             {
-                await ShowDialogAsync("操作失败", "请输入合法的 ISO 3166-1 Alpha-2 国家/地区代码（2 位英文字母）");
+                await ShowDialogAsync("操作失败", "请输入合法的 ISO 3166-1 Alpha-2 国家/地区代码（2 位英文字母）。");
                 return;
             }
 
@@ -124,7 +143,11 @@ namespace IPAbuyer.Views
             try
             {
                 KeychainConfig.SaveCountryCode(normalized);
-                CountryCodeTextBoxControl.Text = normalized;
+                if (CountryCodeValueTextBlockControl != null)
+                {
+                    CountryCodeValueTextBlockControl.Text = $"当前: {normalized}";
+                }
+
                 MainPageCacheState.InvalidateSearchCache();
 
                 string message = inputWasEmpty
@@ -141,15 +164,14 @@ namespace IPAbuyer.Views
 
         private async void ResetCountryCodeButton_Click(object sender, RoutedEventArgs e)
         {
-            if (CountryCodeTextBoxControl == null)
-            {
-                return;
-            }
-
             try
             {
                 KeychainConfig.SaveCountryCode("cn");
-                CountryCodeTextBoxControl.Text = "cn";
+                if (CountryCodeValueTextBlockControl != null)
+                {
+                    CountryCodeValueTextBlockControl.Text = "当前: cn";
+                }
+
                 MainPageCacheState.InvalidateSearchCache();
                 await ShowDialogAsync("操作成功", "国家/地区代码已恢复默认值 cn");
             }
@@ -187,9 +209,9 @@ namespace IPAbuyer.Views
                 }
 
                 KeychainConfig.SaveDownloadDirectory(folder.Path);
-                if (DownloadDirectoryTextBoxControl != null)
+                if (DownloadDirectoryValueTextBlockControl != null)
                 {
-                    DownloadDirectoryTextBoxControl.Text = folder.Path;
+                    DownloadDirectoryValueTextBlockControl.Text = folder.Path;
                 }
 
                 await ShowDialogAsync("操作成功", "下载目录已更新");
@@ -206,9 +228,9 @@ namespace IPAbuyer.Views
             {
                 string defaultDirectory = KeychainConfig.GetDefaultDownloadDirectory();
                 KeychainConfig.SaveDownloadDirectory(defaultDirectory);
-                if (DownloadDirectoryTextBoxControl != null)
+                if (DownloadDirectoryValueTextBlockControl != null)
                 {
-                    DownloadDirectoryTextBoxControl.Text = defaultDirectory;
+                    DownloadDirectoryValueTextBlockControl.Text = defaultDirectory;
                 }
 
                 await ShowDialogAsync("操作成功", $"已恢复默认下载目录：{defaultDirectory}");
@@ -424,8 +446,7 @@ namespace IPAbuyer.Views
             await dialog.ShowAsync();
         }
 
-        private TextBox? CountryCodeTextBoxControl => FindName("CountryCodeTextBox") as TextBox;
-        private TextBox? DownloadDirectoryTextBoxControl => FindName("DownloadDirectoryTextBox") as TextBox;
-
+        private TextBlock? CountryCodeValueTextBlockControl => FindName("CountryCodeValueTextBlock") as TextBlock;
+        private TextBlock? DownloadDirectoryValueTextBlockControl => FindName("DownloadDirectoryValueTextBlock") as TextBlock;
     }
 }
