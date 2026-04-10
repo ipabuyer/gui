@@ -338,6 +338,21 @@ namespace IPAbuyer.Views
         {
             try
             {
+                string outputDirectory = KeychainConfig.GetDownloadDirectory();
+                var confirmDialog = new ContentDialog
+                {
+                    Title = L("Settings/IpatoolExport/ConfirmTitle"),
+                    Content = LF("Settings/IpatoolExport/ConfirmMessage", outputDirectory),
+                    PrimaryButtonText = L("Settings/IpatoolExport/ConfirmPrimary"),
+                    CloseButtonText = L("Settings/Dialog/ConfirmAction/Close"),
+                    XamlRoot = XamlRoot
+                };
+
+                if (await confirmDialog.ShowAsync() != ContentDialogResult.Primary)
+                {
+                    return;
+                }
+
                 string? sourcePath = ResolveBundledIpatoolPath();
                 if (string.IsNullOrWhiteSpace(sourcePath))
                 {
@@ -347,7 +362,6 @@ namespace IPAbuyer.Views
                     return;
                 }
 
-                string outputDirectory = KeychainConfig.GetDownloadDirectory();
                 Directory.CreateDirectory(outputDirectory);
 
                 string targetPath = Path.Combine(outputDirectory, "ipatool.exe");

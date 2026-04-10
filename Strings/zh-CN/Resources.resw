@@ -313,6 +313,15 @@
   <data name="Settings/IpatoolExport/AlreadyInTargetMessage" xml:space="preserve">
     <value>ipatool.exe 已位于目标目录：{0}</value>
   </data>
+  <data name="Settings/IpatoolExport/ConfirmMessage" xml:space="preserve">
+    <value>将导出 ipatool.exe 到以下目录：{0}</value>
+  </data>
+  <data name="Settings/IpatoolExport/ConfirmPrimary" xml:space="preserve">
+    <value>导出</value>
+  </data>
+  <data name="Settings/IpatoolExport/ConfirmTitle" xml:space="preserve">
+    <value>确认导出</value>
+  </data>
   <data name="Settings/IpatoolExport/FailMessage" xml:space="preserve">
     <value>导出 ipatool.exe 失败：{0}</value>
   </data>
