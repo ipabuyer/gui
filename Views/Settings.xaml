@@ -1,53 +1,49 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Page x:Class="IPAbuyer.Views.Settings" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:controls="using:CommunityToolkit.WinUI.Controls" mc:Ignorable="d">
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <Grid Margin="20" HorizontalAlignment="Stretch">
-            <Grid HorizontalAlignment="Center">
-                <StackPanel Spacing="16">
-                    <controls:SettingsCard x:Uid="Settings/Card/CountryCode">
-                        <StackPanel Spacing="10">
-                            <TextBlock x:Name="CountryCodeValueTextBlock" TextWrapping="WrapWholeWords" />
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <Button x:Uid="Settings/Button/EditCountryCode" Click="CountryCodeButton" />
-                                <Button x:Uid="Settings/Button/ResetCountryCode" Click="ResetCountryCodeButton_Click" />
-                            </StackPanel>
-                        </StackPanel>
-                    </controls:SettingsCard>
-                    <controls:SettingsCard x:Uid="Settings/Card/DownloadDirectory">
-                        <StackPanel Spacing="10">
-                            <TextBlock x:Name="DownloadDirectoryValueTextBlock" TextWrapping="WrapWholeWords" />
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <Button x:Uid="Settings/Button/PickDownloadDirectory" Click="PickDownloadDirectoryButton_Click" />
-                                <Button x:Uid="Settings/Button/ResetDownloadDirectory" Click="ResetDownloadDirectoryButton_Click" />
-                            </StackPanel>
-                        </StackPanel>
-                    </controls:SettingsCard>
-                    <controls:SettingsCard x:Uid="Settings/Card/DetailedIpatoolLog">
-                        <ToggleSwitch x:Name="DetailedIpatoolLogCheckBox" Toggled="DetailedIpatoolLogCheckBox_Toggled" />
-                    </controls:SettingsCard>
-                    <controls:SettingsCard x:Uid="Settings/Card/OwnedPrompt">
-                        <ToggleSwitch x:Name="OwnedCheckBox" Toggled="OwnedCheckBox_Toggled" />
-                    </controls:SettingsCard>
-                    <controls:SettingsCard x:Uid="Settings/Card/DeveloperSite">
-                        <Button x:Uid="Settings/Button/OpenDeveloperSite" Click="GithubButton" HorizontalAlignment="Right" />
-                    </controls:SettingsCard>
-                    <controls:SettingsCard x:Uid="Settings/Card/FeedbackEmail">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock x:Uid="Settings/Text/FeedbackEmailDescription" VerticalAlignment="Center" Style="{ThemeResource BodyTextBlockStyle}" TextWrapping="Wrap" />
-                            <Button x:Uid="Settings/Button/CopyFeedbackEmail" Click="CopyFeedbackEmailButton_Click" />
-                        </StackPanel>
-                    </controls:SettingsCard>
-                    <controls:SettingsCard x:Uid="Settings/Card/ClearLocalDatabase">
-                        <Button x:Uid="Settings/Button/ClearLocalDatabase" Background="#C42B1C" BorderBrush="#C42B1C" Click="DeleteDataBase" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Right" />
-                    </controls:SettingsCard>
-                    <controls:SettingsCard x:Uid="Settings/Card/ClearIpatoolData">
-                        <Button x:Uid="Settings/Button/ClearIpatoolData" Background="#C42B1C" BorderBrush="#C42B1C" Click="ClearIpatoolDataButton_Click" FontWeight="SemiBold" Foreground="White" />
-                    </controls:SettingsCard>
-                    <controls:SettingsCard x:Uid="Settings/Card/ExportIpatool">
-                        <Button x:Uid="Settings/Button/ExportIpatool" Click="ExportIpatoolButton_Click" FontWeight="SemiBold" />
-                    </controls:SettingsCard>
+        <StackPanel Padding="24" Spacing="16">
+            <controls:SettingsCard x:Uid="Settings/Card/CountryCode">
+                <StackPanel Spacing="10">
+                    <TextBlock x:Name="CountryCodeValueTextBlock" TextWrapping="WrapWholeWords" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button x:Uid="Settings/Button/EditCountryCode" Click="CountryCodeButton" />
+                        <Button x:Uid="Settings/Button/ResetCountryCode" Click="ResetCountryCodeButton_Click" />
+                    </StackPanel>
                 </StackPanel>
-            </Grid>
-        </Grid>
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="Settings/Card/DownloadDirectory">
+                <StackPanel Spacing="10">
+                    <TextBlock x:Name="DownloadDirectoryValueTextBlock" TextWrapping="WrapWholeWords" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button x:Uid="Settings/Button/PickDownloadDirectory" Click="PickDownloadDirectoryButton_Click" />
+                        <Button x:Uid="Settings/Button/ResetDownloadDirectory" Click="ResetDownloadDirectoryButton_Click" />
+                    </StackPanel>
+                </StackPanel>
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="Settings/Card/DetailedIpatoolLog">
+                <ToggleSwitch x:Name="DetailedIpatoolLogCheckBox" Toggled="DetailedIpatoolLogCheckBox_Toggled" />
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="Settings/Card/OwnedPrompt">
+                <ToggleSwitch x:Name="OwnedCheckBox" Toggled="OwnedCheckBox_Toggled" />
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="Settings/Card/DeveloperSite">
+                <Button x:Uid="Settings/Button/OpenDeveloperSite" Click="GithubButton" HorizontalAlignment="Right" />
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="Settings/Card/FeedbackEmail">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock x:Uid="Settings/Text/FeedbackEmailDescription" VerticalAlignment="Center" Style="{ThemeResource BodyTextBlockStyle}" TextWrapping="Wrap" />
+                    <Button x:Uid="Settings/Button/CopyFeedbackEmail" Click="CopyFeedbackEmailButton_Click" />
+                </StackPanel>
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="Settings/Card/ClearLocalDatabase">
+                <Button x:Uid="Settings/Button/ClearLocalDatabase" Background="#C42B1C" BorderBrush="#C42B1C" Click="DeleteDataBase" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Right" />
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="Settings/Card/ClearIpatoolData">
+                <Button x:Uid="Settings/Button/ClearIpatoolData" Background="#C42B1C" BorderBrush="#C42B1C" Click="ClearIpatoolDataButton_Click" FontWeight="SemiBold" Foreground="White" />
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="Settings/Card/ExportIpatool">
+                <Button x:Uid="Settings/Button/ExportIpatool" Click="ExportIpatoolButton_Click" FontWeight="SemiBold" />
+            </controls:SettingsCard>
+        </StackPanel>
     </ScrollViewer>
 </Page>
