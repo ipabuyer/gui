@@ -130,17 +130,6 @@
 3. 使用`ipatool.exe download --keychain-passphrase 加密密钥 --output 输出位置 --bundle-identifier APPID`进行下载
 4. 需要捕获ipatool的输出信息并进行处理
 
-## 变量命名
-
-遵循驼峰命名规则
-
-## 发布MSIX
-
-1. Name="IPAbuyer.IPAbuyer"
-2. Publisher="CN=68F867E4-B304-4B5D-9818-31B1910E0771"
-3. Version="2026.3.17.0"
-4. Language="zh-CN"
-
 ## exe可执行文件
 
 1. ipatool.exe位于Include目录，注意区分amd64和arm64
