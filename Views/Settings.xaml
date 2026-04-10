@@ -1,168 +1,59 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Page
-    x:Class="IPAbuyer.Views.Settings"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
-    mc:Ignorable="d">
-
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid
-            MaxWidth="980"
-            Margin="28,16,28,28"
-            HorizontalAlignment="Center">
-            <StackPanel Spacing="16">
-                <controls:SettingsCard
-                    x:Uid="SettingsCardCountryCode"
-                    Header="国家/地区代码"
-                    Description="用于查询、购买和状态判断。">
-                    <StackPanel Spacing="10">
-                        <TextBlock
-                            x:Uid="About_Country_Code"
-                            Style="{ThemeResource BodyTextBlockStyle}"
-                            TextWrapping="Wrap" />
-                        <TextBlock
-                            x:Name="CountryCodeValueTextBlock"
-                            TextWrapping="WrapWholeWords" />
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Button
-                                x:Uid="About_Country_Code_Button"
-                                Click="CountryCodeButton" />
-                            <Button
-                                x:Uid="SettingsResetCountryCodeButton"
-                                Content="恢复默认"
-                                Click="ResetCountryCodeButton_Click" />
-                        </StackPanel>
-                    </StackPanel>
-                </controls:SettingsCard>
-
-                <controls:SettingsCard
-                    x:Uid="SettingsCardDownloadDirectory"
-                    Header="下载目录"
-                    Description="用于保存下载到本地的文件。">
-                    <StackPanel Spacing="10">
-                        <TextBlock
-                            x:Uid="About_Download_Directory"
-                            Style="{ThemeResource BodyTextBlockStyle}"
-                            TextWrapping="Wrap" />
-                        <TextBlock
-                            x:Name="DownloadDirectoryValueTextBlock"
-                            TextWrapping="WrapWholeWords" />
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Button
-                                x:Uid="About_Download_Directory_Button"
-                                Click="PickDownloadDirectoryButton_Click" />
-                            <Button
-                                x:Uid="About_Download_Directory_Default_Button"
-                                Click="ResetDownloadDirectoryButton_Click" />
-                        </StackPanel>
-                    </StackPanel>
-                </controls:SettingsCard>
-
-                <controls:SettingsCard
-                    x:Uid="SettingsCardDetailedLog"
-                    Header="详细 ipatool 日志"
-                    Description="开启后会输出全部命令和返回内容。">
-                    <CheckBox
-                        x:Uid="SettingsDetailedLogCheckBox"
-                        x:Name="DetailedIpatoolLogCheckBox"
-                        Content="显示所有 ipatool 命令"
-                        Checked="DetailedIpatoolLogCheckBox_Checked"
-                        Unchecked="DetailedIpatoolLogCheckBox_Unchecked" />
-                </controls:SettingsCard>
-
-                <controls:SettingsCard
-                    x:Uid="SettingsCardOwnedPrompt"
-                    Header="已拥有标记提示"
-                    Description="关闭提示后，标记为已拥有时不再弹窗确认。">
-                    <CheckBox
-                        x:Uid="SettingsOwnedPromptCheckBox"
-                        x:Name="OwnedCheckBox"
-                        Content="标记为已拥有前不再提示"
-                        Checked="OwnedCheckBox_Checked"
-                        Unchecked="OwnedCheckBox_Unchecked" />
-                </controls:SettingsCard>
-
-                <controls:SettingsCard
-                    x:Uid="SettingsCardDeveloperSite"
-                    Header="开发者网站"
-                    Description="查看 Q&amp;A 与项目说明。">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <TextBlock
-                            x:Uid="About_Developer"
-                            VerticalAlignment="Center"
-                            Style="{ThemeResource BodyTextBlockStyle}"
-                            TextWrapping="Wrap" />
-                        <Button
-                            x:Uid="About_Developer_Button"
-                            Click="GithubButton" />
-                    </StackPanel>
-                </controls:SettingsCard>
-
-                <controls:SettingsCard
-                    x:Uid="SettingsCardFeedbackEmail"
-                    Header="反馈邮箱"
-                    Description="复制邮箱后可直接发邮件反馈问题。">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <TextBlock
-                            x:Uid="About_Feedback_Email"
-                            VerticalAlignment="Center"
-                            Style="{ThemeResource BodyTextBlockStyle}"
-                            TextWrapping="Wrap" />
-                        <Button
-                            x:Uid="About_Feedback_Email_Button"
-                            Click="CopyFeedbackEmailButton_Click" />
-                    </StackPanel>
-                </controls:SettingsCard>
-
-                <controls:SettingsCard
-                    x:Uid="SettingsCardClearLocalDb"
-                    Header="清空本地购买数据库"
-                    Description="仅清空本地记录，不影响 Apple 账户真实购买历史。">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <TextBlock
-                            x:Uid="About_Remove_Database"
-                            VerticalAlignment="Center"
-                            Style="{ThemeResource BodyTextBlockStyle}"
-                            TextWrapping="Wrap" />
-                        <Button
-                            x:Uid="About_Remove_Database_Button"
-                            Background="#C42B1C"
-                            BorderBrush="#C42B1C"
-                            Click="DeleteDataBase"
-                            FontWeight="SemiBold"
-                            Foreground="White" />
-                    </StackPanel>
-                </controls:SettingsCard>
-
-                <controls:SettingsCard
-                    x:Uid="SettingsCardClearIpatoolData"
-                    Header="清空 ipatool 本地数据"
-                    Description="清理 %USERPROFILE%\\.ipatool 下的本地缓存与认证数据。">
-                    <Button
-                        x:Uid="SettingsClearIpatoolDataButton"
-                        Background="#C42B1C"
-                        BorderBrush="#C42B1C"
-                        Content="清空 ipatool 数据"
-                        Click="ClearIpatoolDataButton_Click"
-                        FontWeight="SemiBold"
-                        Foreground="White" />
-                </controls:SettingsCard>
-
-                <controls:SettingsCard
-                    x:Uid="SettingsCardExportIpatool"
-                    Header="导出 ipatool.exe"
-                    Description="导出当前架构对应的可执行文件到下载目录。">
-                    <Button
-                        x:Uid="SettingsExportIpatoolButton"
-                        Content="导出 ipatool.exe"
-                        Click="ExportIpatoolButton_Click"
-                        FontWeight="SemiBold" />
-                </controls:SettingsCard>
+<Page x:Class="IPAbuyer.Views.Settings" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:controls="using:CommunityToolkit.WinUI.Controls" mc:Ignorable="d">
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <Grid MaxWidth="980" Margin="28,16,28,28" HorizontalAlignment="Center">
+      <StackPanel Spacing="16">
+        <controls:SettingsCard x:Uid="Settings/Card/CountryCode">
+          <StackPanel Spacing="10">
+            <TextBlock x:Uid="Settings/Text/CountryCodeDescription" Style="{ThemeResource BodyTextBlockStyle}" TextWrapping="Wrap" />
+            <TextBlock x:Name="CountryCodeValueTextBlock" TextWrapping="WrapWholeWords" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button x:Uid="Settings/Button/EditCountryCode" Click="CountryCodeButton" />
+              <Button x:Uid="Settings/Button/ResetCountryCode" Click="ResetCountryCodeButton_Click" />
             </StackPanel>
-        </Grid>
-    </ScrollViewer>
+          </StackPanel>
+        </controls:SettingsCard>
+        <controls:SettingsCard x:Uid="Settings/Card/DownloadDirectory">
+          <StackPanel Spacing="10">
+            <TextBlock x:Uid="Settings/Text/DownloadDirectoryDescription" Style="{ThemeResource BodyTextBlockStyle}" TextWrapping="Wrap" />
+            <TextBlock x:Name="DownloadDirectoryValueTextBlock" TextWrapping="WrapWholeWords" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button x:Uid="Settings/Button/PickDownloadDirectory" Click="PickDownloadDirectoryButton_Click" />
+              <Button x:Uid="Settings/Button/ResetDownloadDirectory" Click="ResetDownloadDirectoryButton_Click" />
+            </StackPanel>
+          </StackPanel>
+        </controls:SettingsCard>
+        <controls:SettingsCard x:Uid="Settings/Card/DetailedIpatoolLog">
+          <CheckBox x:Uid="Settings/CheckBox/DetailedIpatoolLog" x:Name="DetailedIpatoolLogCheckBox" Checked="DetailedIpatoolLogCheckBox_Checked" Unchecked="DetailedIpatoolLogCheckBox_Unchecked" />
+        </controls:SettingsCard>
+        <controls:SettingsCard x:Uid="Settings/Card/OwnedPrompt">
+          <CheckBox x:Uid="Settings/CheckBox/OwnedPrompt" x:Name="OwnedCheckBox" Checked="OwnedCheckBox_Checked" Unchecked="OwnedCheckBox_Unchecked" />
+        </controls:SettingsCard>
+        <controls:SettingsCard x:Uid="Settings/Card/DeveloperSite">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock x:Uid="Settings/Text/DeveloperSiteDescription" VerticalAlignment="Center" Style="{ThemeResource BodyTextBlockStyle}" TextWrapping="Wrap" />
+            <Button x:Uid="Settings/Button/OpenDeveloperSite" Click="GithubButton" />
+          </StackPanel>
+        </controls:SettingsCard>
+        <controls:SettingsCard x:Uid="Settings/Card/FeedbackEmail">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock x:Uid="Settings/Text/FeedbackEmailDescription" VerticalAlignment="Center" Style="{ThemeResource BodyTextBlockStyle}" TextWrapping="Wrap" />
+            <Button x:Uid="Settings/Button/CopyFeedbackEmail" Click="CopyFeedbackEmailButton_Click" />
+          </StackPanel>
+        </controls:SettingsCard>
+        <controls:SettingsCard x:Uid="Settings/Card/ClearLocalDatabase">
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock x:Uid="Settings/Text/ClearLocalDatabaseDescription" VerticalAlignment="Center" Style="{ThemeResource BodyTextBlockStyle}" TextWrapping="Wrap" />
+            <Button x:Uid="Settings/Button/ClearLocalDatabase" Background="#C42B1C" BorderBrush="#C42B1C" Click="DeleteDataBase" FontWeight="SemiBold" Foreground="White" />
+          </StackPanel>
+        </controls:SettingsCard>
+        <controls:SettingsCard x:Uid="Settings/Card/ClearIpatoolData">
+          <Button x:Uid="Settings/Button/ClearIpatoolData" Background="#C42B1C" BorderBrush="#C42B1C" Click="ClearIpatoolDataButton_Click" FontWeight="SemiBold" Foreground="White" />
+        </controls:SettingsCard>
+        <controls:SettingsCard x:Uid="Settings/Card/ExportIpatool">
+          <Button x:Uid="Settings/Button/ExportIpatool" Click="ExportIpatoolButton_Click" FontWeight="SemiBold" />
+        </controls:SettingsCard>
+      </StackPanel>
+    </Grid>
+  </ScrollViewer>
 </Page>
-

@@ -30,7 +30,7 @@ namespace IPAbuyer.Views
                 _nonClientPointerSource = null;
             }
 
-            Title = "IPAbuyer - 快速购买 AppStore 中的应用";
+            Title = TitleBarTextBlock.Text;
             SetWindowIcon(this);
 
             ContentFrame.Navigated += ContentFrame_Navigated;
@@ -191,7 +191,7 @@ namespace IPAbuyer.Views
             }
             catch
             {
-                // 忽略区域更新失败，避免在特定系统环境下触发启动崩溃。
+                // 蹇界暐鍖哄煙鏇存柊澶辫触锛岄伩鍏嶅湪鐗瑰畾绯荤粺鐜涓嬭Е鍙戝惎鍔ㄥ穿婧冦€?
             }
         }
 
@@ -214,3 +214,5 @@ namespace IPAbuyer.Views
 
     }
 }
+
+
