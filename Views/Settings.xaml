@@ -24,10 +24,10 @@
           </StackPanel>
         </controls:SettingsCard>
         <controls:SettingsCard x:Uid="Settings/Card/DetailedIpatoolLog">
-          <CheckBox x:Uid="Settings/CheckBox/DetailedIpatoolLog" x:Name="DetailedIpatoolLogCheckBox" Checked="DetailedIpatoolLogCheckBox_Checked" Unchecked="DetailedIpatoolLogCheckBox_Unchecked" />
+          <ToggleSwitch x:Uid="Settings/CheckBox/DetailedIpatoolLog" x:Name="DetailedIpatoolLogCheckBox" Toggled="DetailedIpatoolLogCheckBox_Toggled" />
         </controls:SettingsCard>
         <controls:SettingsCard x:Uid="Settings/Card/OwnedPrompt">
-          <CheckBox x:Uid="Settings/CheckBox/OwnedPrompt" x:Name="OwnedCheckBox" Checked="OwnedCheckBox_Checked" Unchecked="OwnedCheckBox_Unchecked" />
+          <ToggleSwitch x:Uid="Settings/CheckBox/OwnedPrompt" x:Name="OwnedCheckBox" Toggled="OwnedCheckBox_Toggled" />
         </controls:SettingsCard>
         <controls:SettingsCard x:Uid="Settings/Card/DeveloperSite">
           <StackPanel Orientation="Horizontal" Spacing="8">

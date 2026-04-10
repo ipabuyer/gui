@@ -403,13 +403,13 @@
   <data name="Settings/Button/ClearIpatoolData.Content" xml:space="preserve">
     <value>清空 ipatool 数据</value>
   </data>
-  <data name="Settings/CheckBox/DetailedIpatoolLog.Content" xml:space="preserve">
+  <data name="Settings/CheckBox/DetailedIpatoolLog.Header" xml:space="preserve">
     <value>显示所有 ipatool 命令</value>
   </data>
   <data name="Settings/Button/ExportIpatool.Content" xml:space="preserve">
     <value>导出 ipatool.exe</value>
   </data>
-  <data name="Settings/CheckBox/OwnedPrompt.Content" xml:space="preserve">
+  <data name="Settings/CheckBox/OwnedPrompt.Header" xml:space="preserve">
     <value>标记为已拥有前不再提示</value>
   </data>
   <data name="Settings/Button/ResetCountryCode.Content" xml:space="preserve">

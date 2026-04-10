@@ -382,7 +382,7 @@ namespace IPAbuyer.Views
             _isInitializingDetailedLogOption = true;
             try
             {
-                DetailedIpatoolLogCheckBox.IsChecked = KeychainConfig.GetDetailedIpatoolLogEnabled();
+                DetailedIpatoolLogCheckBox.IsOn = KeychainConfig.GetDetailedIpatoolLogEnabled();
             }
             finally
             {
@@ -390,24 +390,14 @@ namespace IPAbuyer.Views
             }
         }
 
-        private void DetailedIpatoolLogCheckBox_Checked(object sender, RoutedEventArgs e)
+        private void DetailedIpatoolLogCheckBox_Toggled(object sender, RoutedEventArgs e)
         {
             if (_isInitializingDetailedLogOption)
             {
                 return;
             }
 
-            KeychainConfig.SaveDetailedIpatoolLogEnabled(true);
-        }
-
-        private void DetailedIpatoolLogCheckBox_Unchecked(object sender, RoutedEventArgs e)
-        {
-            if (_isInitializingDetailedLogOption)
-            {
-                return;
-            }
-
-            KeychainConfig.SaveDetailedIpatoolLogEnabled(false);
+            KeychainConfig.SaveDetailedIpatoolLogEnabled(DetailedIpatoolLogCheckBox.IsOn);
         }
 
         private void InitializeOwnedCheckOption()
@@ -420,7 +410,7 @@ namespace IPAbuyer.Views
             _isInitializingOwnedCheckOption = true;
             try
             {
-                OwnedCheckBox.IsChecked = KeychainConfig.GetOwnedCheckEnabled();
+                OwnedCheckBox.IsOn = KeychainConfig.GetOwnedCheckEnabled();
             }
             finally
             {
@@ -428,24 +418,14 @@ namespace IPAbuyer.Views
             }
         }
 
-        private void OwnedCheckBox_Checked(object sender, RoutedEventArgs e)
+        private void OwnedCheckBox_Toggled(object sender, RoutedEventArgs e)
         {
             if (_isInitializingOwnedCheckOption)
             {
                 return;
             }
 
-            KeychainConfig.SaveOwnedCheckEnabled(true);
-        }
-
-        private void OwnedCheckBox_Unchecked(object sender, RoutedEventArgs e)
-        {
-            if (_isInitializingOwnedCheckOption)
-            {
-                return;
-            }
-
-            KeychainConfig.SaveOwnedCheckEnabled(false);
+            KeychainConfig.SaveOwnedCheckEnabled(OwnedCheckBox.IsOn);
         }
 
         private static string? ResolveBundledIpatoolPath()
