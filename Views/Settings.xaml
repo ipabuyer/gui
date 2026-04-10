@@ -30,10 +30,7 @@
                 <Button x:Uid="Settings/Button/OpenDeveloperSite" Click="GithubButton" HorizontalAlignment="Right" />
             </controls:SettingsCard>
             <controls:SettingsCard x:Uid="Settings/Card/FeedbackEmail">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <TextBlock x:Uid="Settings/Text/FeedbackEmailDescription" VerticalAlignment="Center" Style="{ThemeResource BodyTextBlockStyle}" TextWrapping="Wrap" />
-                    <Button x:Uid="Settings/Button/CopyFeedbackEmail" Click="CopyFeedbackEmailButton_Click" />
-                </StackPanel>
+                <Button x:Uid="Settings/Button/CopyFeedbackEmail" Click="CopyFeedbackEmailButton_Click" HorizontalAlignment="Right" />
             </controls:SettingsCard>
             <controls:SettingsCard x:Uid="Settings/Card/ClearLocalDatabase">
                 <Button x:Uid="Settings/Button/ClearLocalDatabase" Background="#C42B1C" BorderBrush="#C42B1C" Click="DeleteDataBase" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Right" />

@@ -22,10 +22,8 @@
     <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
         <value>[base64 mime encoded serialized .NET Framework object]</value>
     </data>
-    <data name="Icon1" type="System.Drawing.Icon, System.Drawing"
-  mimetype="application/x-microsoft.net.object.bytearray.base64">
-        <value>[base64 mime encoded string representing a byte array form of the .NET Framework
-  object]</value>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
                 
@@ -114,12 +112,10 @@
     <value>2.0</value>
   </resheader>
   <resheader name="reader">
-    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0,
-      Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <resheader name="writer">
-    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0,
-      Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Main/Actions/SearchButton.Content" xml:space="preserve">
     <value>搜索</value>
@@ -164,10 +160,6 @@
   <data name="Settings/Button/ResetDownloadDirectory.Content" xml:space="preserve">
     <value>恢复默认</value>
     <comment>设置页面下载目录的恢复默认按钮</comment>
-  </data>
-  <data name="Settings/Text/FeedbackEmailDescription.Text" xml:space="preserve">
-    <value>ipa@blazesnow.com</value>
-    <comment>设置页面反馈邮箱说明</comment>
   </data>
   <data name="Settings/Button/CopyFeedbackEmail.Content" xml:space="preserve">
     <value>复制</value>
@@ -373,7 +365,7 @@
     <value>导出 ipatool.exe</value>
   </data>
   <data name="Settings/Card/FeedbackEmail.Description" xml:space="preserve">
-    <value>问题反馈邮箱。</value>
+    <value>使用本软件时遇到问题，欢迎反馈</value>
   </data>
   <data name="Settings/Card/FeedbackEmail.Header" xml:space="preserve">
     <value>反馈邮箱</value>
