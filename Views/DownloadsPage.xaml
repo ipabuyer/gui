@@ -1,11 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Page x:Class="IPAbuyer.Views.DownloadsPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:models="using:IPAbuyer.Models" mc:Ignorable="d">
   <Grid Margin="24" RowSpacing="12">
-    <Grid.RowDefinitions>
-      <RowDefinition Height="7*" />
-      <RowDefinition Height="3*" />
-    </Grid.RowDefinitions>
-    <Grid Grid.Row="0" RowSpacing="12">
+    <Grid RowSpacing="12">
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto" />
         <RowDefinition Height="*" />
@@ -17,12 +13,15 @@
           <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
         <Button x:Uid="DownloadsPage/Action/StartQueueButton" x:Name="StartQueueButton" Grid.Column="0" MinHeight="36" Click="StartQueueButton_Click" />
         <Button x:Uid="DownloadsPage/Action/RemoveQueueButton" x:Name="RemoveQueueButton" Grid.Column="1" MinHeight="36" Click="RemoveQueueButton_Click" />
         <Button x:Uid="DownloadsPage/Action/RemoveSuccessItemsButton" x:Name="RemoveSuccessItemsButton" Grid.Column="2" MinHeight="36" Click="RemoveSuccessItemsButton_Click" />
         <Button x:Uid="DownloadsPage/Action/OpenDirectoryButton" Grid.Column="3" MinHeight="36" Click="OpenDirectoryButton_Click" />
         <Button x:Uid="DownloadsPage/Action/CancelAllButton" x:Name="CancelAllButton" Grid.Column="4" MinHeight="36" Click="CancelAllButton_Click" />
+        <Button x:Uid="DownloadsPage/Action/OpenLogDialogButton" x:Name="OpenDownloadLogButton" Grid.Column="6" MinHeight="36" MinWidth="120" Click="ShowDownloadLogDialog_Click" />
       </Grid>
       <Border Grid.Row="1" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4">
         <Grid>
@@ -78,22 +77,5 @@
         </Grid>
       </Border>
     </Grid>
-    <Border Grid.Row="1" Padding="10" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4">
-      <Grid>
-        <Grid.RowDefinitions>
-          <RowDefinition Height="Auto" />
-          <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8">
-          <TextBlock x:Uid="DownloadsPage/Log/TitleText" VerticalAlignment="Center" Style="{ThemeResource BodyStrongTextBlockStyle}" />
-          <Button x:Uid="DownloadsPage/Log/CopyButton" MinHeight="36" Click="CopyLogButton_Click" />
-          <Button x:Uid="DownloadsPage/Log/ClearButton" MinHeight="36" Click="ClearLogButton_Click" />
-          <Button x:Uid="DownloadsPage/Log/CancelCurrentButton" MinHeight="36" Click="CancelCurrentButton_Click" />
-        </StackPanel>
-        <ScrollViewer x:Name="LogScrollViewer" Grid.Row="1" Margin="0,8,0,0" VerticalScrollBarVisibility="Auto">
-          <RichTextBlock x:Name="LogTextBlock" IsTextSelectionEnabled="True" TextWrapping="WrapWholeWords" />
-        </ScrollViewer>
-      </Grid>
-    </Border>
   </Grid>
 </Page>

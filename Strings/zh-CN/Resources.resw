@@ -453,6 +453,9 @@
   <data name="DownloadsPage/Log/CancelCurrentButton.Content" xml:space="preserve">
     <value>终止当前app下载</value>
   </data>
+  <data name="DownloadsPage/Action/OpenLogDialogButton.Content" xml:space="preserve">
+    <value>日志</value>
+  </data>
   <data name="LoginPage/TitleText.Text" xml:space="preserve">
     <value>账户登录</value>
   </data>
@@ -500,6 +503,9 @@
   </data>
   <data name="LoginPage/LogoutButton.Content" xml:space="preserve">
     <value>退出登录</value>
+  </data>
+  <data name="LoginPage/Action/OpenLogDialogButton.Content" xml:space="preserve">
+    <value>日志</value>
   </data>
   <data name="LoginPage/TwoFactorHelpText.Text" xml:space="preserve">
     <value>收不到验证码时，请点击“打开苹果账户官网”前往 account.apple.com 获取验证码。</value>

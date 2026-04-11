@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -8,7 +8,6 @@ using IPAbuyer.Models;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Windows.ApplicationModel.DataTransfer;
 
@@ -69,13 +68,13 @@ namespace IPAbuyer.Views
             var selected = QueueListView.SelectedItems.OfType<DownloadQueueItem>().ToList();
             if (selected.Count == 0)
             {
-                const string message = "请先选择要移出的队列项";
+                const string message = "请先选择要移除的队列项。";
                 AppendLog($"[提示] {message}");
                 return;
             }
 
             int removed = _queueService.RemoveItems(selected);
-            string removedMessage = $"已移出 {removed} 项";
+            string removedMessage = $"已移除 {removed} 项。";
             AppendLog($"[提示] {removedMessage}");
             RefreshQueueView();
         }
@@ -105,7 +104,7 @@ namespace IPAbuyer.Views
             _queueService.CancelAll();
             RefreshQueueView();
             UpdateButtons();
-            AppendLog("[提示] 已请求终止所有下载任务");
+            AppendLog("[提示] 已请求终止所有下载任务。");
         }
 
         private void RemoveSuccessItemsButton_Click(object sender, RoutedEventArgs e)
@@ -116,22 +115,34 @@ namespace IPAbuyer.Views
 
             if (successItems.Count == 0)
             {
-                AppendLog("[提示] 当前没有可移除的下载成功项");
+                AppendLog("[提示] 当前没有可移除的下载成功项。");
                 return;
             }
 
             int removed = _queueService.RemoveItems(successItems);
-            AppendLog($"[提示] 已移除下载成功项: {removed} 项");
+            AppendLog($"[提示] 已移除下载成功项: {removed} 项。");
             RefreshQueueView();
             UpdateButtons();
         }
 
-        private void CopyLogButton_Click(object sender, RoutedEventArgs e)
+        private async void ShowDownloadLogDialog_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new LogViewerDialog(
+                _logEntries,
+                GetLogColor,
+                CopyLog,
+                ClearLog,
+                XamlRoot);
+
+            await dialog.ShowAsync();
+        }
+
+        private void CopyLog()
         {
             string text = _logBuilder.ToString();
             if (string.IsNullOrWhiteSpace(text))
             {
-                AppendLog("[提示] 日志为空，无可复制内容");
+                AppendLog("[提示] 日志为空，无可复制内容。");
                 return;
             }
 
@@ -139,21 +150,21 @@ namespace IPAbuyer.Views
             dataPackage.SetText(text);
             Clipboard.SetContent(dataPackage);
             Clipboard.Flush();
-            AppendLog("[提示] 日志已复制到剪贴板");
+            AppendLog("[提示] 日志已复制到剪贴板。");
         }
 
-        private void ClearLogButton_Click(object sender, RoutedEventArgs e)
+        private void ClearLog()
         {
             _logBuilder.Clear();
             _logEntries.Clear();
-            LogTextBlock?.Blocks.Clear();
+            AppendLog("[提示] 日志已清空。");
         }
 
         private void CancelCurrentButton_Click(object sender, RoutedEventArgs e)
         {
             _queueService.CancelCurrent();
             RefreshQueueView();
-            AppendLog("[提示] 已请求终止当前下载任务");
+            AppendLog("[提示] 已请求终止当前下载任务。");
         }
 
         private void OnLogReceived(UiLogMessage log)
@@ -311,7 +322,7 @@ namespace IPAbuyer.Views
 
         private void AppendLog(string message, UiLogSource source = UiLogSource.App)
         {
-            if (string.IsNullOrWhiteSpace(message) || LogTextBlock == null)
+            if (string.IsNullOrWhiteSpace(message))
             {
                 return;
             }
@@ -323,54 +334,7 @@ namespace IPAbuyer.Views
                 _logEntries.RemoveAt(0);
             }
 
-            RebuildLogView();
-            EnsureDownloadLogScrollToBottom();
-        }
-
-        private static void ScrollLogToBottom(ScrollViewer? scrollViewer)
-        {
-            if (scrollViewer == null)
-            {
-                return;
-            }
-
-            scrollViewer.ChangeView(null, scrollViewer.ScrollableHeight, null, disableAnimation: true);
-        }
-
-        private void EnsureDownloadLogScrollToBottom()
-        {
-            DispatcherQueue.TryEnqueue(() =>
-            {
-                LogScrollViewer?.UpdateLayout();
-                ScrollLogToBottom(LogScrollViewer);
-
-                DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
-                {
-                    LogScrollViewer?.UpdateLayout();
-                    ScrollLogToBottom(LogScrollViewer);
-                });
-            });
-        }
-
-        private static ScrollViewer? FindDescendantScrollViewer(DependencyObject root)
-        {
-            int childrenCount = VisualTreeHelper.GetChildrenCount(root);
-            for (int i = 0; i < childrenCount; i++)
-            {
-                DependencyObject child = VisualTreeHelper.GetChild(root, i);
-                if (child is ScrollViewer scrollViewer)
-                {
-                    return scrollViewer;
-                }
-
-                ScrollViewer? nested = FindDescendantScrollViewer(child);
-                if (nested != null)
-                {
-                    return nested;
-                }
-            }
-
-            return null;
+            RebuildLogText();
         }
 
         private void QueueListView_ContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
@@ -411,29 +375,13 @@ namespace IPAbuyer.Views
             statusTextBlock.ClearValue(TextBlock.ForegroundProperty);
         }
 
-        private void RebuildLogView()
+        private void RebuildLogText()
         {
             _logBuilder.Clear();
-            if (LogTextBlock == null)
-            {
-                return;
-            }
-
-            LogTextBlock.Blocks.Clear();
-            var paragraph = new Paragraph();
             foreach (UiLogEntry entry in _logEntries)
             {
                 _logBuilder.AppendLine(entry.FormattedText);
-                var run = new Run
-                {
-                    Text = entry.FormattedText,
-                    Foreground = new SolidColorBrush(GetLogColor(entry.Level))
-                };
-                paragraph.Inlines.Add(run);
-                paragraph.Inlines.Add(new LineBreak());
             }
-
-            LogTextBlock.Blocks.Add(paragraph);
         }
 
         private Windows.UI.Color GetLogColor(UiLogLevel level)
@@ -492,3 +440,4 @@ namespace IPAbuyer.Views
         }
     }
 }
+
