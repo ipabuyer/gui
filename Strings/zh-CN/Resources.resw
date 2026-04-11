@@ -342,6 +342,9 @@
   <data name="MainPage/Action/AddToQueueButton.Content" xml:space="preserve">
     <value>加入下载队列</value>
   </data>
+  <data name="MainPage/Action/OpenLogButton.Content" xml:space="preserve">
+    <value>日志</value>
+  </data>
   <data name="MainPage/Filter/AllItem.Content" xml:space="preserve">
     <value>全部</value>
   </data>
@@ -509,5 +512,20 @@
   </data>
   <data name="LoginPage/Log/ClearButton.Content" xml:space="preserve">
     <value>清空</value>
+  </data>
+  <data name="Common/LogDialog/Title" xml:space="preserve">
+    <value>日志</value>
+  </data>
+  <data name="Common/LogDialog/Subtitle" xml:space="preserve">
+    <value>实时日志</value>
+  </data>
+  <data name="Common/LogDialog/CopyButton" xml:space="preserve">
+    <value>复制日志</value>
+  </data>
+  <data name="Common/LogDialog/ClearButton" xml:space="preserve">
+    <value>清空日志</value>
+  </data>
+  <data name="Common/LogDialog/CloseButton" xml:space="preserve">
+    <value>关闭</value>
   </data>
 </root>
