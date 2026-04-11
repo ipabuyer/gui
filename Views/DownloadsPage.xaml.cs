@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using IPAbuyer.Common;
 using IPAbuyer.Models;
 using Microsoft.UI.Dispatching;
@@ -18,6 +19,7 @@ namespace IPAbuyer.Views
         private readonly DownloadQueueService _queueService = DownloadQueueService.Instance;
         private readonly StringBuilder _logBuilder = new();
         private readonly List<UiLogEntry> _logEntries = new();
+        private bool _isDownloadLogDialogOpen;
         private string? _sortKey;
         private SortDirection _sortDirection = SortDirection.None;
 
@@ -45,6 +47,8 @@ namespace IPAbuyer.Views
 
         private async void StartQueueButton_Click(object sender, RoutedEventArgs e)
         {
+            _ = TryShowDownloadLogDialogAsync();
+
             try
             {
                 StartQueueButton.IsEnabled = false;
@@ -101,6 +105,8 @@ namespace IPAbuyer.Views
 
         private void CancelAllButton_Click(object sender, RoutedEventArgs e)
         {
+            _ = TryShowDownloadLogDialogAsync();
+
             _queueService.CancelAll();
             RefreshQueueView();
             UpdateButtons();
@@ -127,6 +133,19 @@ namespace IPAbuyer.Views
 
         private async void ShowDownloadLogDialog_Click(object sender, RoutedEventArgs e)
         {
+            await TryShowDownloadLogDialogAsync();
+        }
+
+        private async Task TryShowDownloadLogDialogAsync()
+        {
+            if (_isDownloadLogDialogOpen || XamlRoot == null)
+            {
+                return;
+            }
+
+            _isDownloadLogDialogOpen = true;
+            try
+            {
             var dialog = new LogViewerDialog(
                 _logEntries,
                 GetLogColor,
@@ -135,6 +154,11 @@ namespace IPAbuyer.Views
                 XamlRoot);
 
             await dialog.ShowAsync();
+            }
+            finally
+            {
+                _isDownloadLogDialogOpen = false;
+            }
         }
 
         private void CopyLog()

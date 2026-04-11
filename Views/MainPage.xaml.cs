@@ -25,6 +25,7 @@ namespace IPAbuyer.Views
         private readonly StringBuilder _homeLogBuilder = new();
         private readonly List<UiLogEntry> _homeLogEntries = new();
         private CancellationTokenSource _pageCts = new();
+        private bool _isHomeLogDialogOpen;
         private string _selectedFilter = "All";
         private string? _sortKey;
         private SortDirection _sortDirection = SortDirection.None;
@@ -178,6 +179,8 @@ namespace IPAbuyer.Views
 
         private async void BatchPurchaseButton_Click(object sender, RoutedEventArgs e)
         {
+            _ = TryShowHomeLogDialogAsync();
+
             if (ResultList == null)
             {
                 return;
@@ -877,6 +880,11 @@ namespace IPAbuyer.Views
 
         private void CopyHomeLog_Click(object sender, RoutedEventArgs e)
         {
+            CopyHomeLog();
+        }
+
+        private void CopyHomeLog()
+        {
             string text = _homeLogBuilder.ToString();
             if (string.IsNullOrWhiteSpace(text))
             {
@@ -893,6 +901,11 @@ namespace IPAbuyer.Views
 
         private void ClearHomeLog_Click(object sender, RoutedEventArgs e)
         {
+            ClearHomeLog();
+        }
+
+        private void ClearHomeLog()
+        {
             _homeLogBuilder.Clear();
             _homeLogEntries.Clear();
             AppendHomeLog("日志已清空。");
@@ -900,14 +913,32 @@ namespace IPAbuyer.Views
 
         private async void ShowHomeLogDialog_Click(object sender, RoutedEventArgs e)
         {
+            await TryShowHomeLogDialogAsync();
+        }
+
+        private async Task TryShowHomeLogDialogAsync()
+        {
+            if (_isHomeLogDialogOpen || XamlRoot == null)
+            {
+                return;
+            }
+
+            _isHomeLogDialogOpen = true;
+            try
+            {
             var dialog = new LogViewerDialog(
                 _homeLogEntries,
                 GetLogColor,
-                () => CopyHomeLog_Click(sender, e),
-                () => ClearHomeLog_Click(sender, e),
+                CopyHomeLog,
+                ClearHomeLog,
                 XamlRoot);
 
             await dialog.ShowAsync();
+            }
+            finally
+            {
+                _isHomeLogDialogOpen = false;
+            }
         }
 
         private void AppendHomeLog(string message, UiLogSource source = UiLogSource.App)

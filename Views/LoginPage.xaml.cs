@@ -24,6 +24,7 @@ namespace IPAbuyer.Views
         private string _passphrase = string.Empty;
         private bool _isTwoFactorPending;
         private bool _operationLocked;
+        private bool _isLoginLogDialogOpen;
         private const int MaxLogLines = 1000;
 
         public LoginPage()
@@ -89,6 +90,8 @@ namespace IPAbuyer.Views
 
         private async void NextButton_Click(object sender, RoutedEventArgs e)
         {
+            _ = TryShowLoginLogDialogAsync();
+
             try
             {
                 if (_isTwoFactorPending)
@@ -111,6 +114,7 @@ namespace IPAbuyer.Views
 
         private async void AuthInfoButton_Click(object sender, RoutedEventArgs e)
         {
+            _ = TryShowLoginLogDialogAsync();
             await QueryAuthInfoAsync();
         }
 
@@ -670,6 +674,19 @@ namespace IPAbuyer.Views
 
         private async void ShowLoginLogDialog_Click(object sender, RoutedEventArgs e)
         {
+            await TryShowLoginLogDialogAsync();
+        }
+
+        private async Task TryShowLoginLogDialogAsync()
+        {
+            if (_isLoginLogDialogOpen || XamlRoot == null)
+            {
+                return;
+            }
+
+            _isLoginLogDialogOpen = true;
+            try
+            {
             var dialog = new LogViewerDialog(
                 _loginLogEntries,
                 GetLogColor,
@@ -678,6 +695,11 @@ namespace IPAbuyer.Views
                 XamlRoot);
 
             await dialog.ShowAsync();
+            }
+            finally
+            {
+                _isLoginLogDialogOpen = false;
+            }
         }
 
         private void CopyLoginLog()
