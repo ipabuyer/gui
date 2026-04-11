@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Input;
 using IPAbuyer;
 using System;
@@ -16,6 +17,7 @@ namespace IPAbuyer.Views
         public MainWindow()
         {
             InitializeComponent();
+            ConfigureSystemBackdrop();
 
             ExtendsContentIntoTitleBar = true;
             SetTitleBar(CustomTitleBar);
@@ -50,6 +52,18 @@ namespace IPAbuyer.Views
             CustomTitleBar.SizeChanged += TitleBarElement_SizeChanged;
             PaneToggleButton.SizeChanged += TitleBarElement_SizeChanged;
             AppNameBox.SizeChanged += TitleBarElement_SizeChanged;
+        }
+
+        private void ConfigureSystemBackdrop()
+        {
+            try
+            {
+                SystemBackdrop = new MicaBackdrop();
+            }
+            catch
+            {
+                // ignore on unsupported systems
+            }
         }
 
         private void PaneToggleButton_Click(object sender, RoutedEventArgs e)
