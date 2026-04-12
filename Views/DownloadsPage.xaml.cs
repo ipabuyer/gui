@@ -186,6 +186,8 @@ namespace IPAbuyer.Views
 
         private void CancelCurrentButton_Click(object sender, RoutedEventArgs e)
         {
+            _ = TryShowDownloadLogDialogAsync();
+
             _queueService.CancelCurrent();
             RefreshQueueView();
             AppendLog("[提示] 已请求终止当前下载任务。");

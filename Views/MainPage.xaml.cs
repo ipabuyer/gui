@@ -247,6 +247,8 @@ namespace IPAbuyer.Views
 
         private async void ContextMenuPurchase_Click(object sender, RoutedEventArgs e)
         {
+            _ = TryShowHomeLogDialogAsync();
+
             var selectedApps = GetContextTargetApps(sender);
             if (selectedApps.Count == 0)
             {
