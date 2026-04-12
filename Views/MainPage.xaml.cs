@@ -235,6 +235,8 @@ namespace IPAbuyer.Views
 
         private async void AddToDownloadQueueButton_Click(object sender, RoutedEventArgs e)
         {
+            _ = TryShowHomeLogDialogAsync();
+
             if (ResultList == null)
             {
                 return;
@@ -253,7 +255,6 @@ namespace IPAbuyer.Views
                 return;
             }
 
-            _ = TryShowHomeLogDialogAsync();
             AppendHomeLog($"已加入下载队列: {added} 项。");
             await StartDownloadQueueFromMainAsync();
         }
