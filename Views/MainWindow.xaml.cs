@@ -150,9 +150,6 @@ namespace IPAbuyer.Views
                     case "LoginPage":
                         ContentFrame.Navigate(typeof(LoginPage));
                         break;
-                    case "DownloadsPage":
-                        ContentFrame.Navigate(typeof(DownloadsPage));
-                        break;
                     case "SettingsPage":
                         ContentFrame.Navigate(typeof(Settings));
                         break;

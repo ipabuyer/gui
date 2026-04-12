@@ -38,11 +38,11 @@
                 <TextBlock
                     x:Uid="MainWindow/TitleBar/TitleText"
                     x:Name="TitleBarTextBlock"
-                    Grid.Column="2"
+                    Grid.Column="1"
                     Margin="10"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Left"/>
-                <Grid Grid.Column="3" Width="300" MinWidth="200" MaxWidth="300" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid Grid.Column="2" Width="360" MinWidth="220" MaxWidth="420" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <AutoSuggestBox
                         x:Uid="MainWindow/SearchBox"
                         x:Name="AppNameBox"
@@ -71,7 +71,6 @@
             <NavigationView.MenuItems>
                 <NavigationViewItem x:Uid="MainWindow/Nav/Main" Icon="Home" Tag="MainPage" />
                 <NavigationViewItem x:Uid="MainWindow/Nav/Account" Icon="Contact" Tag="LoginPage" />
-                <NavigationViewItem x:Uid="MainWindow/Nav/Downloads" Icon="Download" Tag="DownloadsPage" />
                 <NavigationViewItem x:Uid="MainWindow/Nav/Settings" Icon="Setting" Tag="SettingsPage" />
             </NavigationView.MenuItems>
             <Frame x:Name="ContentFrame" />

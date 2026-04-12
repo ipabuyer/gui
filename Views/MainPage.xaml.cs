@@ -61,6 +61,11 @@ namespace IPAbuyer.Views
             IpatoolExecution.CommandExecuting += OnIpatoolCommandExecuting;
             IpatoolExecution.CommandOutputReceived -= OnIpatoolCommandOutputReceived;
             IpatoolExecution.CommandOutputReceived += OnIpatoolCommandOutputReceived;
+            _downloadQueueService.LogReceived -= OnDownloadQueueLogReceived;
+            _downloadQueueService.LogReceived += OnDownloadQueueLogReceived;
+            _downloadQueueService.QueueChanged -= OnDownloadQueueChanged;
+            _downloadQueueService.QueueChanged += OnDownloadQueueChanged;
+            UpdateDownloadActionState();
 
             if (MainPageCacheState.ConsumeSearchCacheInvalidation())
             {
@@ -228,7 +233,7 @@ namespace IPAbuyer.Views
             }
         }
 
-        private void AddToDownloadQueueButton_Click(object sender, RoutedEventArgs e)
+        private async void AddToDownloadQueueButton_Click(object sender, RoutedEventArgs e)
         {
             if (ResultList == null)
             {
@@ -242,7 +247,15 @@ namespace IPAbuyer.Views
                 added++;
             }
 
-            AppendHomeLog(added == 0 ? "未选择应用，未加入下载队列。" : $"已加入下载队列: {added} 项。");
+            if (added == 0)
+            {
+                AppendHomeLog("未选择应用，无法开始下载。");
+                return;
+            }
+
+            _ = TryShowHomeLogDialogAsync();
+            AppendHomeLog($"已加入下载队列: {added} 项。");
+            await StartDownloadQueueFromMainAsync();
         }
 
         private async void ContextMenuPurchase_Click(object sender, RoutedEventArgs e)
@@ -286,7 +299,7 @@ namespace IPAbuyer.Views
             }
         }
 
-        private void ContextMenuAddToQueue_Click(object sender, RoutedEventArgs e)
+        private async void ContextMenuAddToQueue_Click(object sender, RoutedEventArgs e)
         {
             var selectedApps = GetContextTargetApps(sender);
             if (selectedApps.Count == 0)
@@ -300,6 +313,65 @@ namespace IPAbuyer.Views
             }
 
             AppendHomeLog($"右键加入下载队列: {selectedApps.Count} 项。");
+            _ = TryShowHomeLogDialogAsync();
+            await StartDownloadQueueFromMainAsync();
+        }
+
+        private async Task StartDownloadQueueFromMainAsync()
+        {
+            if (_downloadQueueService.IsRunning)
+            {
+                AppendHomeLog("下载队列已在运行。");
+                UpdateDownloadActionState();
+                return;
+            }
+
+            try
+            {
+                UpdateDownloadActionState();
+                _ = await _downloadQueueService.StartQueueAsync();
+            }
+            catch (Exception ex)
+            {
+                AppendHomeLog($"开始下载失败: {ex.Message}");
+            }
+            finally
+            {
+                UpdateDownloadActionState();
+            }
+        }
+
+        private void CancelAllDownloadsButton_Click(object sender, RoutedEventArgs e)
+        {
+            _ = TryShowHomeLogDialogAsync();
+            _downloadQueueService.CancelAll();
+            UpdateDownloadActionState();
+        }
+
+        private void OnDownloadQueueChanged()
+        {
+            DispatcherQueue.TryEnqueue(UpdateDownloadActionState);
+        }
+
+        private void OnDownloadQueueLogReceived(UiLogMessage log)
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                AppendHomeLog(log.Message, log.Source);
+            });
+        }
+
+        private void UpdateDownloadActionState()
+        {
+            if (CancelAllDownloadsButton == null)
+            {
+                return;
+            }
+
+            bool isRunning = _downloadQueueService.IsRunning;
+            CancelAllDownloadsButton.Visibility = isRunning ? Visibility.Visible : Visibility.Collapsed;
+            CancelAllDownloadsButton.IsEnabled = isRunning;
+            AddToDownloadQueueButton.IsEnabled = !isRunning;
         }
 
         private SearchResult? ResolveContextItem(object sender)
@@ -1095,6 +1167,8 @@ namespace IPAbuyer.Views
             base.OnNavigatedFrom(e);
             IpatoolExecution.CommandExecuting -= OnIpatoolCommandExecuting;
             IpatoolExecution.CommandOutputReceived -= OnIpatoolCommandOutputReceived;
+            _downloadQueueService.LogReceived -= OnDownloadQueueLogReceived;
+            _downloadQueueService.QueueChanged -= OnDownloadQueueChanged;
             if (!_pageCts.IsCancellationRequested)
             {
                 _pageCts.Cancel();
