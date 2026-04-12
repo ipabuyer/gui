@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Input;
 using IPAbuyer;
 using System;
@@ -16,6 +17,7 @@ namespace IPAbuyer.Views
         public MainWindow()
         {
             InitializeComponent();
+            ConfigureSystemBackdrop();
 
             ExtendsContentIntoTitleBar = true;
             SetTitleBar(CustomTitleBar);
@@ -30,7 +32,7 @@ namespace IPAbuyer.Views
                 _nonClientPointerSource = null;
             }
 
-            Title = "IPAbuyer - 快速购买 AppStore 中的应用";
+            Title = TitleBarTextBlock.Text;
             SetWindowIcon(this);
 
             ContentFrame.Navigated += ContentFrame_Navigated;
@@ -50,6 +52,18 @@ namespace IPAbuyer.Views
             CustomTitleBar.SizeChanged += TitleBarElement_SizeChanged;
             PaneToggleButton.SizeChanged += TitleBarElement_SizeChanged;
             AppNameBox.SizeChanged += TitleBarElement_SizeChanged;
+        }
+
+        private void ConfigureSystemBackdrop()
+        {
+            try
+            {
+                SystemBackdrop = new MicaBackdrop();
+            }
+            catch
+            {
+                // ignore on unsupported systems
+            }
         }
 
         private void PaneToggleButton_Click(object sender, RoutedEventArgs e)
@@ -191,7 +205,7 @@ namespace IPAbuyer.Views
             }
             catch
             {
-                // 忽略区域更新失败，避免在特定系统环境下触发启动崩溃。
+                // 蹇界暐鍖哄煙鏇存柊澶辫触锛岄伩鍏嶅湪鐗瑰畾绯荤粺鐜涓嬭Е鍙戝惎鍔ㄥ穿婧冦€?
             }
         }
 
@@ -214,3 +228,5 @@ namespace IPAbuyer.Views
 
     }
 }
+
+

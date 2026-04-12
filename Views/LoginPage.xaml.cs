@@ -1,10 +1,8 @@
-using IPAbuyer.Common;
+﻿using IPAbuyer.Common;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -26,6 +24,7 @@ namespace IPAbuyer.Views
         private string _passphrase = string.Empty;
         private bool _isTwoFactorPending;
         private bool _operationLocked;
+        private bool _isLoginLogDialogOpen;
         private const int MaxLogLines = 1000;
 
         public LoginPage()
@@ -91,6 +90,8 @@ namespace IPAbuyer.Views
 
         private async void NextButton_Click(object sender, RoutedEventArgs e)
         {
+            _ = TryShowLoginLogDialogAsync();
+
             try
             {
                 if (_isTwoFactorPending)
@@ -113,6 +114,7 @@ namespace IPAbuyer.Views
 
         private async void AuthInfoButton_Click(object sender, RoutedEventArgs e)
         {
+            _ = TryShowLoginLogDialogAsync();
             await QueryAuthInfoAsync();
         }
 
@@ -670,7 +672,37 @@ namespace IPAbuyer.Views
             }
         }
 
-        private void CopyLoginLog_Click(object sender, RoutedEventArgs e)
+        private async void ShowLoginLogDialog_Click(object sender, RoutedEventArgs e)
+        {
+            await TryShowLoginLogDialogAsync();
+        }
+
+        private async Task TryShowLoginLogDialogAsync()
+        {
+            if (_isLoginLogDialogOpen || XamlRoot == null)
+            {
+                return;
+            }
+
+            _isLoginLogDialogOpen = true;
+            try
+            {
+            var dialog = new LogViewerDialog(
+                _loginLogEntries,
+                GetLogColor,
+                CopyLoginLog,
+                ClearLoginLog,
+                XamlRoot);
+
+            await dialog.ShowAsync();
+            }
+            finally
+            {
+                _isLoginLogDialogOpen = false;
+            }
+        }
+
+        private void CopyLoginLog()
         {
             string text = _loginLogBuilder.ToString();
             if (string.IsNullOrWhiteSpace(text))
@@ -686,21 +718,16 @@ namespace IPAbuyer.Views
             AppendLoginLog("Log copied to clipboard.");
         }
 
-        private void ClearLoginLog_Click(object sender, RoutedEventArgs e)
+        private void ClearLoginLog()
         {
             _loginLogBuilder.Clear();
             _loginLogEntries.Clear();
-            if (LoginLogOutput != null)
-            {
-                LoginLogOutput.Blocks.Clear();
-            }
-
             AppendLoginLog("Log cleared.");
         }
 
         private void AppendLoginLog(string message, UiLogSource source = UiLogSource.App)
         {
-            if (string.IsNullOrWhiteSpace(message) || LoginLogOutput == null)
+            if (string.IsNullOrWhiteSpace(message))
             {
                 return;
             }
@@ -712,60 +739,16 @@ namespace IPAbuyer.Views
                 _loginLogEntries.RemoveAt(0);
             }
 
-            RebuildLoginLogView();
-            ScrollLogToBottom(LoginLogScrollViewer);
-            EnsureLoginLogScrollToBottom();
+            RebuildLoginLogText();
         }
 
-        private static void ScrollLogToBottom(ScrollViewer? scrollViewer)
-        {
-            if (scrollViewer == null)
-            {
-                return;
-            }
-
-            scrollViewer.ChangeView(null, scrollViewer.ScrollableHeight, null, disableAnimation: true);
-        }
-
-        private void EnsureLoginLogScrollToBottom()
-        {
-            DispatcherQueue.TryEnqueue(() =>
-            {
-                LoginLogScrollViewer?.UpdateLayout();
-                ScrollLogToBottom(LoginLogScrollViewer);
-
-                DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
-                {
-                    LoginLogScrollViewer?.UpdateLayout();
-                    ScrollLogToBottom(LoginLogScrollViewer);
-                });
-            });
-        }
-
-        private void RebuildLoginLogView()
+        private void RebuildLoginLogText()
         {
             _loginLogBuilder.Clear();
-            if (LoginLogOutput == null)
-            {
-                return;
-            }
-
-            LoginLogOutput.Blocks.Clear();
-            var paragraph = new Paragraph();
             foreach (UiLogEntry entry in _loginLogEntries)
             {
                 _loginLogBuilder.AppendLine(entry.FormattedText);
-                var run = new Run
-                {
-                    Text = entry.FormattedText,
-                    Foreground = new SolidColorBrush(GetLogColor(entry.Level))
-                };
-
-                paragraph.Inlines.Add(run);
-                paragraph.Inlines.Add(new LineBreak());
             }
-
-            LoginLogOutput.Blocks.Add(paragraph);
         }
 
         private Windows.UI.Color GetLogColor(UiLogLevel level)

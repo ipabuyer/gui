@@ -9,7 +9,7 @@
         <!-- WinUI 3 -->
         <UseWinUI>true</UseWinUI>
         <EnableMsixTooling>true</EnableMsixTooling>
-        <WindowsPackageType>None</WindowsPackageType>
+        <WindowsPackageType>MSIX</WindowsPackageType>
 
         <!-- Project Options -->
         <Nullable>enable</Nullable>
@@ -22,12 +22,17 @@
         <Platforms>x64;ARM64</Platforms>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <PublishProfile>win-$(Platform).pubxml</PublishProfile>
-        <RuntimeIdentifiers
-            Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &gt;= 8">
+        <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &gt;= 8">
             win-x64;win-arm64</RuntimeIdentifiers>
-        <RuntimeIdentifiers
-            Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &lt; 8">
+        <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &lt; 8">
             win10-x64;win10-arm64</RuntimeIdentifiers>
+        <PackageLicenseExpression>AGPL-3.0-only</PackageLicenseExpression>
+        <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+        <PackageReleaseNotes>更新日志见：https://github.com/ipabuyer/.github/blob/main/CHANGELOG.md</PackageReleaseNotes>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://github.com/ipabuyer/gui</RepositoryUrl>
+        <Copyright>Copyright © 2025-2026 IPAbuyer. 保留所有权利。</Copyright>
+        <PackageProjectUrl>https://github.com/ipabuyer/gui</PackageProjectUrl>
     </PropertyGroup>
 
     <ItemGroup>
@@ -39,6 +44,7 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Data.Sqlite" Version="10.*" />
+        <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.250402" />
         <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.*" />
         <PackageReference Include="Microsoft.Web.WebView2" Version="1.*" />
         <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.*" />
@@ -63,8 +69,7 @@
         Tools extension to be activated for this project even if the Windows App SDK Nuget
         package has not yet been restored.
     -->
-    <ItemGroup
-        Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
         <ProjectCapability Include="Msix" />
     </ItemGroup>
     <ItemGroup>
@@ -78,8 +83,7 @@
         Explorer "Package and Publish" context menu entry to be enabled for this project even if 
         the Windows App SDK Nuget package has not yet been restored.
     -->
-    <PropertyGroup
-        Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
         <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
         <ApplicationIcon>Assets\Icon.ico</ApplicationIcon>
     </PropertyGroup>

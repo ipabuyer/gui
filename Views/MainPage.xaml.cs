@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -25,6 +25,7 @@ namespace IPAbuyer.Views
         private readonly StringBuilder _homeLogBuilder = new();
         private readonly List<UiLogEntry> _homeLogEntries = new();
         private CancellationTokenSource _pageCts = new();
+        private bool _isHomeLogDialogOpen;
         private string _selectedFilter = "All";
         private string? _sortKey;
         private SortDirection _sortDirection = SortDirection.None;
@@ -178,6 +179,8 @@ namespace IPAbuyer.Views
 
         private async void BatchPurchaseButton_Click(object sender, RoutedEventArgs e)
         {
+            _ = TryShowHomeLogDialogAsync();
+
             if (ResultList == null)
             {
                 return;
@@ -244,6 +247,8 @@ namespace IPAbuyer.Views
 
         private async void ContextMenuPurchase_Click(object sender, RoutedEventArgs e)
         {
+            _ = TryShowHomeLogDialogAsync();
+
             var selectedApps = GetContextTargetApps(sender);
             if (selectedApps.Count == 0)
             {
@@ -877,6 +882,11 @@ namespace IPAbuyer.Views
 
         private void CopyHomeLog_Click(object sender, RoutedEventArgs e)
         {
+            CopyHomeLog();
+        }
+
+        private void CopyHomeLog()
+        {
             string text = _homeLogBuilder.ToString();
             if (string.IsNullOrWhiteSpace(text))
             {
@@ -893,15 +903,49 @@ namespace IPAbuyer.Views
 
         private void ClearHomeLog_Click(object sender, RoutedEventArgs e)
         {
+            ClearHomeLog();
+        }
+
+        private void ClearHomeLog()
+        {
             _homeLogBuilder.Clear();
             _homeLogEntries.Clear();
-            HomeLogTextBlock?.Blocks.Clear();
             AppendHomeLog("日志已清空。");
+        }
+
+        private async void ShowHomeLogDialog_Click(object sender, RoutedEventArgs e)
+        {
+            await TryShowHomeLogDialogAsync();
+        }
+
+        private async Task TryShowHomeLogDialogAsync()
+        {
+            if (_isHomeLogDialogOpen || XamlRoot == null)
+            {
+                return;
+            }
+
+            _isHomeLogDialogOpen = true;
+            try
+            {
+            var dialog = new LogViewerDialog(
+                _homeLogEntries,
+                GetLogColor,
+                CopyHomeLog,
+                ClearHomeLog,
+                XamlRoot);
+
+            await dialog.ShowAsync();
+            }
+            finally
+            {
+                _isHomeLogDialogOpen = false;
+            }
         }
 
         private void AppendHomeLog(string message, UiLogSource source = UiLogSource.App)
         {
-            if (string.IsNullOrWhiteSpace(message) || HomeLogTextBlock == null)
+            if (string.IsNullOrWhiteSpace(message))
             {
                 return;
             }
@@ -991,54 +1035,18 @@ namespace IPAbuyer.Views
             priceTextBlock.ClearValue(TextBlock.ForegroundProperty);
         }
 
-        private static void ScrollLogToBottom(ScrollViewer? scrollViewer)
-        {
-            if (scrollViewer == null)
-            {
-                return;
-            }
-
-            scrollViewer.ChangeView(null, scrollViewer.ScrollableHeight, null, disableAnimation: true);
-        }
-
         private void EnsureHomeLogScrollToBottom()
         {
-            DispatcherQueue.TryEnqueue(() =>
-            {
-                HomeLogScrollViewer?.UpdateLayout();
-                ScrollLogToBottom(HomeLogScrollViewer);
-
-                DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
-                {
-                    HomeLogScrollViewer?.UpdateLayout();
-                    ScrollLogToBottom(HomeLogScrollViewer);
-                });
-            });
+            // Popup log mode does not need in-page auto scrolling.
         }
 
         private void RebuildHomeLogView()
         {
             _homeLogBuilder.Clear();
-            if (HomeLogTextBlock == null)
-            {
-                return;
-            }
-
-            HomeLogTextBlock.Blocks.Clear();
-            var paragraph = new Paragraph();
             foreach (UiLogEntry entry in _homeLogEntries)
             {
                 _homeLogBuilder.AppendLine(entry.FormattedText);
-                var run = new Run
-                {
-                    Text = entry.FormattedText,
-                    Foreground = new SolidColorBrush(GetLogColor(entry.Level))
-                };
-                paragraph.Inlines.Add(run);
-                paragraph.Inlines.Add(new LineBreak());
             }
-
-            HomeLogTextBlock.Blocks.Add(paragraph);
         }
 
         private Windows.UI.Color GetLogColor(UiLogLevel level)
@@ -1057,9 +1065,7 @@ namespace IPAbuyer.Views
                 UiLogLevel.Ipatool => ActualTheme == ElementTheme.Dark
                     ? Windows.UI.Color.FromArgb(0xFF, 0x9C, 0xC8, 0xFF)
                     : Windows.UI.Color.FromArgb(0xFF, 0x00, 0x55, 0xAA),
-                _ => ActualTheme == ElementTheme.Dark
-                    ? Windows.UI.Color.FromArgb(0xFF, 0xD8, 0xD8, 0xD8)
-                    : Windows.UI.Color.FromArgb(0xFF, 0x44, 0x44, 0x44)
+                _ => Windows.UI.Color.FromArgb(0xFF, 0xE6, 0xE6, 0xE6)
             };
         }
 

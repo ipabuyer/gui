@@ -1,0 +1,537 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Settings/Button/EditCountryCode.Content" xml:space="preserve">
+    <value>修改</value>
+    <comment>设置页面的子标题：软件相关，的内容：国家地区代码，的按钮</comment>
+  </data>
+  <data name="Settings/Button/OpenDeveloperSite.Content" xml:space="preserve">
+    <value>打开网站</value>
+    <comment>设置页面的子标题：软件相关，的内容：开发者信息，的按钮</comment>
+  </data>
+  <data name="Settings/Button/PickDownloadDirectory.Content" xml:space="preserve">
+    <value>修改路径</value>
+    <comment>设置页面下载目录的保存按钮</comment>
+  </data>
+  <data name="Settings/Button/ResetDownloadDirectory.Content" xml:space="preserve">
+    <value>恢复默认</value>
+    <comment>设置页面下载目录的恢复默认按钮</comment>
+  </data>
+  <data name="Settings/Button/CopyFeedbackEmail.Content" xml:space="preserve">
+    <value>复制</value>
+    <comment>设置页面复制反馈邮箱按钮</comment>
+  </data>
+  <data name="Settings/Button/ClearLocalDatabase.Content" xml:space="preserve">
+    <value>清空记录</value>
+    <comment>设置页面的子标题：软件相关，的内容：清除本地数据库，的按钮</comment>
+  </data>
+  <data name="Common/AppleAccount/OpenButton.Content" xml:space="preserve">
+    <value>打开苹果账户官网</value>
+  </data>
+  <data name="Settings/CountryCode/CancelButton" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="Settings/CountryCode/CurrentFormat" xml:space="preserve">
+    <value>当前: {0}</value>
+  </data>
+  <data name="Settings/CountryCode/DialogTitle" xml:space="preserve">
+    <value>设置国家/地区代码</value>
+  </data>
+  <data name="Settings/CountryCode/EmptyResetMessage" xml:space="preserve">
+    <value>国家/地区代码为空，已恢复为默认值 cn</value>
+  </data>
+  <data name="Settings/CountryCode/InputPlaceholder" xml:space="preserve">
+    <value>请输入两位国家/地区代码，例如 cn</value>
+  </data>
+  <data name="Settings/CountryCode/InvalidMessage" xml:space="preserve">
+    <value>请输入合法的 ISO 3166-1 Alpha-2 国家/地区代码（2 位英文字母）。</value>
+  </data>
+  <data name="Settings/CountryCode/ResetFailMessage" xml:space="preserve">
+    <value>恢复默认失败：{0}</value>
+  </data>
+  <data name="Settings/CountryCode/ResetSuccessMessage" xml:space="preserve">
+    <value>国家/地区代码已恢复默认值 cn</value>
+  </data>
+  <data name="Settings/CountryCode/SaveButton" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="Settings/CountryCode/SaveFailMessage" xml:space="preserve">
+    <value>保存失败：{0}</value>
+  </data>
+  <data name="Settings/CountryCode/UpdatedMessage" xml:space="preserve">
+    <value>国家/地区代码已更新为 {0}</value>
+  </data>
+  <data name="Settings/Database/Clear/ConfirmMessage" xml:space="preserve">
+    <value>确定要清空本地数据库中的已购买记录吗？{0}当前记录数：{1} 条。{0}此操作不可恢复。</value>
+  </data>
+  <data name="Settings/Database/Clear/FailMessage" xml:space="preserve">
+    <value>清空失败：{0}</value>
+  </data>
+  <data name="Settings/Database/Clear/SuccessMessage" xml:space="preserve">
+    <value>本地记录已清空。{0}清空前：{1} 条，清空后：{2} 条。</value>
+  </data>
+  <data name="Settings/Dialog/CloseButton" xml:space="preserve">
+    <value>确定</value>
+  </data>
+  <data name="Settings/Dialog/ConfirmAction/Close" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="Settings/Dialog/ConfirmAction/Primary" xml:space="preserve">
+    <value>确认清空</value>
+  </data>
+  <data name="Settings/Dialog/ConfirmAction/Title" xml:space="preserve">
+    <value>确认操作</value>
+  </data>
+  <data name="Settings/Dialog/ErrorTitle" xml:space="preserve">
+    <value>错误</value>
+  </data>
+  <data name="Settings/Dialog/OperationFailedTitle" xml:space="preserve">
+    <value>操作失败</value>
+  </data>
+  <data name="Settings/Dialog/SuccessTitle" xml:space="preserve">
+    <value>操作成功</value>
+  </data>
+  <data name="Settings/DownloadDirectory/ResetFailMessage" xml:space="preserve">
+    <value>恢复默认目录失败：{0}</value>
+  </data>
+  <data name="Settings/DownloadDirectory/ResetSuccessMessage" xml:space="preserve">
+    <value>已恢复默认下载目录：{0}</value>
+  </data>
+  <data name="Settings/DownloadDirectory/SaveFailMessage" xml:space="preserve">
+    <value>保存失败：{0}</value>
+  </data>
+  <data name="Settings/DownloadDirectory/UpdatedMessage" xml:space="preserve">
+    <value>下载目录已更新</value>
+  </data>
+  <data name="Settings/Feedback/CopiedMessage" xml:space="preserve">
+    <value>反馈邮箱已复制：{0}</value>
+  </data>
+  <data name="Settings/Feedback/CopyFailMessage" xml:space="preserve">
+    <value>复制邮箱失败：{0}</value>
+  </data>
+  <data name="Settings/IpatoolData/ClearConfirmMessage" xml:space="preserve">
+    <value>确定要清空以下目录吗？{0}{1}{0}此操作不可恢复。</value>
+  </data>
+  <data name="Settings/IpatoolData/ClearFailMessage" xml:space="preserve">
+    <value>清空 ipatool 数据失败：{0}</value>
+  </data>
+  <data name="Settings/IpatoolData/ClearSuccessMessage" xml:space="preserve">
+    <value>ipatool 数据目录已清空。</value>
+  </data>
+  <data name="Settings/IpatoolExport/AlreadyInTargetMessage" xml:space="preserve">
+    <value>ipatool.exe 已位于目标目录：{0}</value>
+  </data>
+  <data name="Settings/IpatoolExport/ConfirmMessage" xml:space="preserve">
+    <value>将导出 ipatool.exe 到以下目录：{0}</value>
+  </data>
+  <data name="Settings/IpatoolExport/ConfirmPrimary" xml:space="preserve">
+    <value>导出</value>
+  </data>
+  <data name="Settings/IpatoolExport/ConfirmTitle" xml:space="preserve">
+    <value>确认导出</value>
+  </data>
+  <data name="Settings/IpatoolExport/FailMessage" xml:space="preserve">
+    <value>导出 ipatool.exe 失败：{0}</value>
+  </data>
+  <data name="Settings/IpatoolExport/NotFoundMessage" xml:space="preserve">
+    <value>未在应用目录中找到可导出的 ipatool.exe。</value>
+  </data>
+  <data name="Settings/IpatoolExport/SuccessMessage" xml:space="preserve">
+    <value>ipatool.exe 已导出到：{0}</value>
+  </data>
+  <data name="Settings/Card/ClearIpatoolData.Description" xml:space="preserve">
+    <value>清除本机缓存与认证数据。</value>
+  </data>
+  <data name="Settings/Card/ClearIpatoolData.Header" xml:space="preserve">
+    <value>清空 ipatool 数据</value>
+  </data>
+  <data name="Settings/Card/ClearLocalDatabase.Description" xml:space="preserve">
+    <value>仅清除本地记录，不影响 Apple 购买历史。</value>
+  </data>
+  <data name="Settings/Card/ClearLocalDatabase.Header" xml:space="preserve">
+    <value>清空本地购买记录</value>
+  </data>
+  <data name="Settings/Card/CountryCode.Description" xml:space="preserve">
+    <value>用于查询与购买，默认值为 cn。</value>
+  </data>
+  <data name="Settings/Card/CountryCode.Header" xml:space="preserve">
+    <value>国家/地区代码</value>
+  </data>
+  <data name="Settings/Card/DetailedIpatoolLog.Description" xml:space="preserve">
+    <value>显示完整的 ipatool 命令与输出。</value>
+  </data>
+  <data name="Settings/Card/DetailedIpatoolLog.Header" xml:space="preserve">
+    <value>显示详细日志</value>
+  </data>
+  <data name="Settings/Card/DeveloperSite.Description" xml:space="preserve">
+    <value>查看项目说明与常见问题。</value>
+  </data>
+  <data name="Settings/Card/DeveloperSite.Header" xml:space="preserve">
+    <value>开发者网站</value>
+  </data>
+  <data name="Settings/Card/DownloadDirectory.Description" xml:space="preserve">
+    <value>下载文件保存位置。</value>
+  </data>
+  <data name="Settings/Card/DownloadDirectory.Header" xml:space="preserve">
+    <value>下载目录</value>
+  </data>
+  <data name="Settings/Card/ExportIpatool.Description" xml:space="preserve">
+    <value>导出当前架构对应的可执行文件到下载目录。</value>
+  </data>
+  <data name="Settings/Card/ExportIpatool.Header" xml:space="preserve">
+    <value>导出 ipatool.exe</value>
+  </data>
+  <data name="Settings/Card/FeedbackEmail.Description" xml:space="preserve">
+    <value>使用本软件时遇到问题，欢迎反馈</value>
+  </data>
+  <data name="Settings/Card/FeedbackEmail.Header" xml:space="preserve">
+    <value>反馈邮箱</value>
+  </data>
+  <data name="Settings/Card/OwnedPrompt.Description" xml:space="preserve">
+    <value>关闭后，标记“已拥有”时不再确认。</value>
+  </data>
+  <data name="Settings/Card/OwnedPrompt.Header" xml:space="preserve">
+    <value>标记“已拥有”前提示</value>
+  </data>
+  <data name="Settings/Button/ClearIpatoolData.Content" xml:space="preserve">
+    <value>清空数据</value>
+  </data>
+  <data name="Settings/Button/ExportIpatool.Content" xml:space="preserve">
+    <value>导出 ipatool.exe</value>
+  </data>
+  <data name="Settings/Button/ResetCountryCode.Content" xml:space="preserve">
+    <value>恢复默认</value>
+  </data>
+  <data name="MainWindow/TitleBar/TitleText.Text" xml:space="preserve">
+    <value>IPAbuyer</value>
+  </data>
+  <data name="MainWindow/SearchBox.PlaceholderText" xml:space="preserve">
+    <value>搜索 App 名称</value>
+  </data>
+  <data name="MainWindow/Nav/Main.Content" xml:space="preserve">
+    <value>主页</value>
+  </data>
+  <data name="MainWindow/Nav/Account.Content" xml:space="preserve">
+    <value>账户</value>
+  </data>
+  <data name="MainWindow/Nav/Downloads.Content" xml:space="preserve">
+    <value>下载</value>
+  </data>
+  <data name="MainWindow/Nav/Settings.Content" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="MainPage/Action/BatchPurchaseButton.Content" xml:space="preserve">
+    <value>购买</value>
+  </data>
+  <data name="MainPage/Action/AddToQueueButton.Content" xml:space="preserve">
+    <value>加入下载队列</value>
+  </data>
+  <data name="MainPage/Action/OpenLogButton.Content" xml:space="preserve">
+    <value>日志</value>
+  </data>
+  <data name="MainPage/Filter/AllItem.Content" xml:space="preserve">
+    <value>全部</value>
+  </data>
+  <data name="MainPage/Filter/OnlyNotPurchasedItem.Content" xml:space="preserve">
+    <value>仅未购买</value>
+  </data>
+  <data name="MainPage/Filter/OnlyPurchasedItem.Content" xml:space="preserve">
+    <value>仅已购买</value>
+  </data>
+  <data name="MainPage/Filter/OnlyOwnedItem.Content" xml:space="preserve">
+    <value>仅已拥有</value>
+  </data>
+  <data name="MainPage/Header/NameButton.Content" xml:space="preserve">
+    <value>App名称</value>
+  </data>
+  <data name="MainPage/Header/IdButton.Content" xml:space="preserve">
+    <value>AppID</value>
+  </data>
+  <data name="MainPage/Header/DeveloperButton.Content" xml:space="preserve">
+    <value>开发者</value>
+  </data>
+  <data name="MainPage/Header/VersionButton.Content" xml:space="preserve">
+    <value>版本号</value>
+  </data>
+  <data name="MainPage/Header/PriceButton.Content" xml:space="preserve">
+    <value>价格</value>
+  </data>
+  <data name="MainPage/Header/PurchasedButton.Content" xml:space="preserve">
+    <value>购买状态</value>
+  </data>
+  <data name="MainPage/Context/PurchaseItem.Text" xml:space="preserve">
+    <value>购买</value>
+  </data>
+  <data name="MainPage/Context/AddToQueueItem.Text" xml:space="preserve">
+    <value>加入下载队列</value>
+  </data>
+  <data name="MainPage/Context/MarkNotPurchasedItem.Text" xml:space="preserve">
+    <value>标记为未购买</value>
+  </data>
+  <data name="MainPage/Context/MarkPurchasedItem.Text" xml:space="preserve">
+    <value>标记为已购买</value>
+  </data>
+  <data name="MainPage/Context/MarkOwnedItem.Text" xml:space="preserve">
+    <value>标记为已拥有</value>
+  </data>
+  <data name="MainPage/Context/CopyNameItem.Text" xml:space="preserve">
+    <value>复制App名称</value>
+  </data>
+  <data name="MainPage/Context/CopyIdItem.Text" xml:space="preserve">
+    <value>复制ID</value>
+  </data>
+  <data name="MainPage/Context/CopyVersionItem.Text" xml:space="preserve">
+    <value>复制版本号</value>
+  </data>
+  <data name="MainPage/Log/TitleText.Text" xml:space="preserve">
+    <value>日志</value>
+  </data>
+  <data name="MainPage/Log/CopyButton.Content" xml:space="preserve">
+    <value>复制</value>
+  </data>
+  <data name="MainPage/Log/ClearButton.Content" xml:space="preserve">
+    <value>清空</value>
+  </data>
+  <data name="DownloadsPage/Action/StartQueueButton.Content" xml:space="preserve">
+    <value>开始下载队列</value>
+  </data>
+  <data name="DownloadsPage/Action/RemoveQueueButton.Content" xml:space="preserve">
+    <value>移出下载队列</value>
+  </data>
+  <data name="DownloadsPage/Action/RemoveSuccessItemsButton.Content" xml:space="preserve">
+    <value>移除下载成功项</value>
+  </data>
+  <data name="DownloadsPage/Action/OpenDirectoryButton.Content" xml:space="preserve">
+    <value>打开下载目录</value>
+  </data>
+  <data name="DownloadsPage/Action/CancelAllButton.Content" xml:space="preserve">
+    <value>终止所有下载</value>
+  </data>
+  <data name="DownloadsPage/Header/NameButton.Content" xml:space="preserve">
+    <value>App名称</value>
+  </data>
+  <data name="DownloadsPage/Header/IdButton.Content" xml:space="preserve">
+    <value>AppID</value>
+  </data>
+  <data name="DownloadsPage/Header/DeveloperButton.Content" xml:space="preserve">
+    <value>开发者</value>
+  </data>
+  <data name="DownloadsPage/Header/VersionButton.Content" xml:space="preserve">
+    <value>版本号</value>
+  </data>
+  <data name="DownloadsPage/Header/PriceButton.Content" xml:space="preserve">
+    <value>价格</value>
+  </data>
+  <data name="DownloadsPage/Header/StatusButton.Content" xml:space="preserve">
+    <value>下载状态</value>
+  </data>
+  <data name="DownloadsPage/Log/TitleText.Text" xml:space="preserve">
+    <value>日志</value>
+  </data>
+  <data name="DownloadsPage/Log/CopyButton.Content" xml:space="preserve">
+    <value>复制</value>
+  </data>
+  <data name="DownloadsPage/Log/ClearButton.Content" xml:space="preserve">
+    <value>清空</value>
+  </data>
+  <data name="DownloadsPage/Log/CancelCurrentButton.Content" xml:space="preserve">
+    <value>终止当前app下载</value>
+  </data>
+  <data name="DownloadsPage/Action/OpenLogDialogButton.Content" xml:space="preserve">
+    <value>日志</value>
+  </data>
+  <data name="LoginPage/TitleText.Text" xml:space="preserve">
+    <value>账户登录</value>
+  </data>
+  <data name="LoginPage/SubtitleText.Text" xml:space="preserve">
+    <value>输入 Apple ID、密码和加密密钥，完成登录后即可购买与下载。</value>
+  </data>
+  <data name="LoginPage/PassphraseChangeHintText.Text" xml:space="preserve">
+    <value>如需修改加密密钥，请先退出登录并重新登录。</value>
+  </data>
+  <data name="LoginPage/NewAccountHintText.Text" xml:space="preserve">
+    <value>提示：新创建的 Apple 账号需先在苹果设备 App Store 完成一次购买后，才能正常使用下载与购买功能。</value>
+  </data>
+  <data name="LoginPage/EmailLabel.Text" xml:space="preserve">
+    <value>电子邮箱地址</value>
+  </data>
+  <data name="LoginPage/EmailInput.PlaceholderText" xml:space="preserve">
+    <value>example@icloud.com</value>
+  </data>
+  <data name="LoginPage/PasswordLabel.Text" xml:space="preserve">
+    <value>密码</value>
+  </data>
+  <data name="LoginPage/PasswordInput.PlaceholderText" xml:space="preserve">
+    <value>请输入密码</value>
+  </data>
+  <data name="LoginPage/TwoFactorCodeLabel.Text" xml:space="preserve">
+    <value>双重验证码</value>
+  </data>
+  <data name="LoginPage/TwoFactorCodeInput.PlaceholderText" xml:space="preserve">
+    <value>请输入双重验证码</value>
+  </data>
+  <data name="LoginPage/PassphraseLabel.Text" xml:space="preserve">
+    <value>加密密钥</value>
+  </data>
+  <data name="LoginPage/PassphraseInput.PlaceholderText" xml:space="preserve">
+    <value>用于 ipatool keychain-passphrase</value>
+  </data>
+  <data name="LoginPage/LockedOverlayText.Text" xml:space="preserve">
+    <value>当前为已登录状态，操作区已锁定</value>
+  </data>
+  <data name="LoginPage/LoginButton.Content" xml:space="preserve">
+    <value>登录</value>
+  </data>
+  <data name="LoginPage/QueryAuthInfoButton.Content" xml:space="preserve">
+    <value>查询登录状态</value>
+  </data>
+  <data name="LoginPage/LogoutButton.Content" xml:space="preserve">
+    <value>退出登录</value>
+  </data>
+  <data name="LoginPage/Action/OpenLogDialogButton.Content" xml:space="preserve">
+    <value>日志</value>
+  </data>
+  <data name="LoginPage/TwoFactorHelpText.Text" xml:space="preserve">
+    <value>收不到验证码时，请点击“打开苹果账户官网”前往 account.apple.com 获取验证码。</value>
+  </data>
+  <data name="LoginPage/Log/TitleText.Text" xml:space="preserve">
+    <value>日志</value>
+  </data>
+  <data name="LoginPage/Log/CopyButton.Content" xml:space="preserve">
+    <value>复制</value>
+  </data>
+  <data name="LoginPage/Log/ClearButton.Content" xml:space="preserve">
+    <value>清空</value>
+  </data>
+  <data name="Common/LogDialog/Title" xml:space="preserve">
+    <value>日志</value>
+  </data>
+  <data name="Common/LogDialog/Subtitle" xml:space="preserve">
+    <value>实时日志</value>
+  </data>
+  <data name="Common/LogDialog/CopyButton" xml:space="preserve">
+    <value>复制日志</value>
+  </data>
+  <data name="Common/LogDialog/ClearButton" xml:space="preserve">
+    <value>清空日志</value>
+  </data>
+  <data name="Common/LogDialog/CloseButton" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+</root>

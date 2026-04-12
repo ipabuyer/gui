@@ -1,312 +1,46 @@
-<?xml version="1.0" encoding="utf-8" ?>
-<Page
-    x:Class="IPAbuyer.Views.Settings"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d">
-
-    <Grid>
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <Grid
-                MaxWidth="920"
-                Margin="32,20,32,40"
-                HorizontalAlignment="Center">
-                <StackPanel Spacing="12">
-                    <StackPanel Margin="0,0,0,8" Spacing="4">
-                        <TextBlock
-                            x:Uid="/SettingPage/Title"
-                            FontSize="38"
-                            FontWeight="SemiBold" />
-                        <TextBlock
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Style="{ThemeResource BodyTextBlockStyle}"
-                            Text="管理国家代码、下载目录与本地数据。" />
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Page x:Class="IPAbuyer.Views.Settings" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:controls="using:CommunityToolkit.WinUI.Controls" mc:Ignorable="d">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Padding="24" Spacing="16">
+            <controls:SettingsCard x:Uid="Settings/Card/CountryCode">
+                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <TextBlock x:Name="CountryCodeValueTextBlock" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button x:Uid="Settings/Button/EditCountryCode" Click="CountryCodeButton" />
+                        <Button x:Uid="Settings/Button/ResetCountryCode" Click="ResetCountryCodeButton_Click" />
                     </StackPanel>
-
-                    <Border
-                        Padding="20"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8">
-                        <StackPanel Spacing="10">
-                            <TextBlock
-                                x:Uid="/SettingPage/About_Country_Code"
-                                Style="{ThemeResource BodyTextBlockStyle}"
-                                TextWrapping="Wrap" />
-                            <TextBox
-                                x:Name="CountryCodeTextBox" />
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <Button
-                                    x:Uid="/SettingPage/About_Country_Code_Button"
-                                    HorizontalAlignment="Left"
-                                    Click="CountryCodeButton" />
-                                <Button
-                                    HorizontalAlignment="Left"
-                                    Content="恢复默认"
-                                    Click="ResetCountryCodeButton_Click" />
-                            </StackPanel>
-                            <TextBlock
-                                Style="{ThemeResource CaptionTextBlockStyle}"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="跨地区购买时，应用可能被标记为“疑似已拥有”。"
-                                TextWrapping="Wrap" />
-                        </StackPanel>
-                    </Border>
-
-                    <Border
-                        Padding="20"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8">
-                        <StackPanel Spacing="10">
-                            <TextBlock
-                                x:Uid="/SettingPage/About_Download_Directory"
-                                Style="{ThemeResource BodyTextBlockStyle}"
-                                TextWrapping="Wrap" />
-                            <TextBox
-                                x:Name="DownloadDirectoryTextBox"
-                                IsReadOnly="True" />
-                            <Grid ColumnSpacing="8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <Button
-                                    x:Uid="/SettingPage/About_Download_Directory_Button"
-                                    Grid.Column="0"
-                                    Click="PickDownloadDirectoryButton_Click" />
-                                <Button
-                                    x:Uid="/SettingPage/About_Download_Directory_Default_Button"
-                                    Grid.Column="1"
-                                    Click="ResetDownloadDirectoryButton_Click" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-
-                    <Border
-                        Padding="20"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8">
-                        <StackPanel Spacing="10">
-                            <TextBlock
-                                Style="{ThemeResource BodyTextBlockStyle}"
-                                Text="详细日志"
-                                TextWrapping="Wrap" />
-                            <CheckBox
-                                x:Name="DetailedIpatoolLogCheckBox"
-                                Content="显示所有 ipatool 命令"
-                                Checked="DetailedIpatoolLogCheckBox_Checked"
-                                Unchecked="DetailedIpatoolLogCheckBox_Unchecked" />
-                            <TextBlock
-                                Style="{ThemeResource CaptionTextBlockStyle}"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="勾选后，所有 ipatool 的命令和输出都显示在日志区。"
-                                TextWrapping="Wrap" />
-                        </StackPanel>
-                    </Border>
-
-                    <Border
-                        Padding="20"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8">
-                        <StackPanel Spacing="10">
-                            <TextBlock
-                                Style="{ThemeResource BodyTextBlockStyle}"
-                                Text="标记为已拥有前的提示"
-                                TextWrapping="Wrap" />
-                            <CheckBox
-                                x:Name="OwnedCheckBox"
-                                Content="标记为已拥有前不弹窗询问"
-                                Checked="OwnedCheckBox_Checked"
-                                Unchecked="OwnedCheckBox_Unchecked" />
-                            <TextBlock
-                                Style="{ThemeResource CaptionTextBlockStyle}"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="勾选后，标记为已拥有将不再弹窗询问。"
-                                TextWrapping="Wrap" />
-                        </StackPanel>
-                    </Border>
-
-                    <Border
-                        Padding="20"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8">
-                        <StackPanel Spacing="10">
-                            <Grid ColumnSpacing="12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="3*" />
-                                    <ColumnDefinition Width="2*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    x:Uid="/SettingPage/About_Developer"
-                                    Grid.Column="0"
-                                    VerticalAlignment="Center"
-                                    Style="{ThemeResource BodyTextBlockStyle}"
-                                    TextWrapping="Wrap" />
-                                <Button
-                                    x:Uid="/SettingPage/About_Developer_Button"
-                                    Grid.Column="1"
-                                    HorizontalAlignment="Right"
-                                    Click="GithubButton" />
-                            </Grid>
-                            <TextBlock
-                                Style="{ThemeResource CaptionTextBlockStyle}"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="打开开发者官方网站，查看 Q&amp;A 及更多信息。"
-                                TextWrapping="Wrap" />
-                        </StackPanel>
-                    </Border>
-
-                    <Border
-                        Padding="20"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8">
-                        <StackPanel Spacing="10">
-                            <Grid ColumnSpacing="12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="3*" />
-                                    <ColumnDefinition Width="2*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    x:Uid="/SettingPage/About_Feedback_Email"
-                                    Grid.Column="0"
-                                    VerticalAlignment="Center"
-                                    Style="{ThemeResource BodyTextBlockStyle}"
-                                    TextWrapping="Wrap" />
-                                <Button
-                                    x:Uid="/SettingPage/About_Feedback_Email_Button"
-                                    Grid.Column="1"
-                                    HorizontalAlignment="Right"
-                                    Click="CopyFeedbackEmailButton_Click" />
-                            </Grid>
-                            <TextBlock
-                                Style="{ThemeResource CaptionTextBlockStyle}"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="附带屏幕截图和复现步骤，有助于更快地修复问题。"
-                                TextWrapping="Wrap" />
-                        </StackPanel>
-                    </Border>
-
-                    <Border
-                        Padding="20"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8">
-                        <StackPanel Spacing="12">
-                            <Grid ColumnSpacing="12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="3*" />
-                                    <ColumnDefinition Width="2*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    x:Uid="/SettingPage/About_Remove_Database"
-                                    Grid.Column="0"
-                                    VerticalAlignment="Center"
-                                    Style="{ThemeResource BodyTextBlockStyle}"
-                                    TextWrapping="Wrap" />
-                                <Button
-                                    x:Uid="/SettingPage/About_Remove_Database_Button"
-                                    Grid.Column="1"
-                                    HorizontalAlignment="Right"
-                                    Background="#C42B1C"
-                                    BorderBrush="#C42B1C"
-                                    Click="DeleteDataBase"
-                                    FontWeight="SemiBold"
-                                    Foreground="White" />
-                            </Grid>
-
-                            <TextBlock
-                                Style="{ThemeResource CaptionTextBlockStyle}"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="仅清空本地已购买/已拥有记录，不会影响 Apple 账户购买历史。" />
-                        </StackPanel>
-                    </Border>
-
-                    <Border
-                        Padding="20"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8">
-                        <StackPanel Spacing="12">
-                            <Grid ColumnSpacing="12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="3*" />
-                                    <ColumnDefinition Width="2*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    Grid.Column="0"
-                                    VerticalAlignment="Center"
-                                    Style="{ThemeResource BodyTextBlockStyle}"
-                                    Text="清空 ipatool 本地数据目录（%USERPROFILE%\.ipatool\）。"
-                                    TextWrapping="Wrap" />
-                                <Button
-                                    Grid.Column="1"
-                                    HorizontalAlignment="Right"
-                                    Background="#C42B1C"
-                                    BorderBrush="#C42B1C"
-                                    Content="清空 ipatool 数据"
-                                    Click="ClearIpatoolDataButton_Click"
-                                    FontWeight="SemiBold"
-                                    Foreground="White" />
-                            </Grid>
-
-                            <TextBlock
-                                Style="{ThemeResource CaptionTextBlockStyle}"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="将清空 %USERNAME%/.ipatool/ 目录下的本地认证缓存与配置。"
-                                TextWrapping="Wrap" />
-                        </StackPanel>
-                    </Border>
-
-                    <Border
-                        Padding="20"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8">
-                        <StackPanel Spacing="12">
-                            <Grid ColumnSpacing="12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="3*" />
-                                    <ColumnDefinition Width="2*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock
-                                    Grid.Column="0"
-                                    VerticalAlignment="Center"
-                                    Style="{ThemeResource BodyTextBlockStyle}"
-                                    Text="导出当前架构的 ipatool.exe 到下载目录。"
-                                    TextWrapping="Wrap" />
-                                <Button
-                                    Grid.Column="1"
-                                    HorizontalAlignment="Right"
-                                    Content="导出 ipatool.exe"
-                                    Click="ExportIpatoolButton_Click"
-                                    FontWeight="SemiBold" />
-                            </Grid>
-
-                            <TextBlock
-                                Style="{ThemeResource CaptionTextBlockStyle}"
-                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="默认导出到当前下载目录，文件名为 ipatool.exe，已存在时会覆盖。"
-                                TextWrapping="Wrap" />
-                        </StackPanel>
-                    </Border>
                 </StackPanel>
-            </Grid>
-        </ScrollViewer>
-    </Grid>
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="Settings/Card/DownloadDirectory">
+                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <TextBlock x:Name="DownloadDirectoryValueTextBlock" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button x:Uid="Settings/Button/PickDownloadDirectory" Click="PickDownloadDirectoryButton_Click" />
+                        <Button x:Uid="Settings/Button/ResetDownloadDirectory" Click="ResetDownloadDirectoryButton_Click" />
+                    </StackPanel>
+                </StackPanel>
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="Settings/Card/DetailedIpatoolLog">
+                <ToggleSwitch x:Name="DetailedIpatoolLogCheckBox" Toggled="DetailedIpatoolLogCheckBox_Toggled" />
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="Settings/Card/OwnedPrompt">
+                <ToggleSwitch x:Name="OwnedCheckBox" Toggled="OwnedCheckBox_Toggled" />
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="Settings/Card/DeveloperSite">
+                <Button x:Uid="Settings/Button/OpenDeveloperSite" Click="GithubButton" HorizontalAlignment="Right" />
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="Settings/Card/FeedbackEmail">
+                <Button x:Uid="Settings/Button/CopyFeedbackEmail" Click="CopyFeedbackEmailButton_Click" HorizontalAlignment="Right" />
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="Settings/Card/ClearLocalDatabase">
+                <Button x:Uid="Settings/Button/ClearLocalDatabase" Background="#C42B1C" BorderBrush="#C42B1C" Click="DeleteDataBase" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Right" />
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="Settings/Card/ClearIpatoolData">
+                <Button x:Uid="Settings/Button/ClearIpatoolData" Background="#C42B1C" BorderBrush="#C42B1C" Click="ClearIpatoolDataButton_Click" FontWeight="SemiBold" Foreground="White" />
+            </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="Settings/Card/ExportIpatool">
+                <Button x:Uid="Settings/Button/ExportIpatool" Click="ExportIpatoolButton_Click" FontWeight="SemiBold" />
+            </controls:SettingsCard>
+        </StackPanel>
+    </ScrollViewer>
 </Page>
