@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+using Microsoft.Windows.ApplicationModel.Resources;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -18,6 +19,7 @@ namespace IPAbuyer
 {
     public partial class App : Application
     {
+        private static readonly ResourceLoader Loader = new();
         private Window? _window;
         public Window? MainWindowInstance => _window;
 
@@ -50,7 +52,7 @@ namespace IPAbuyer
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"启动错误: {ex.Message}");
+                Debug.WriteLine(LF("App/Debug/StartupError", ex.Message));
                 throw;
             }
         }
@@ -67,7 +69,7 @@ namespace IPAbuyer
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"启动错误: {ex.Message}");
+                Debug.WriteLine(LF("App/Debug/StartupError", ex.Message));
                 throw;
             }
         }
@@ -98,8 +100,13 @@ namespace IPAbuyer
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"静默查询登录状态失败: {ex.Message}");
+                Debug.WriteLine(LF("App/Debug/WarmupAuthInfoFailed", ex.Message));
             }
+        }
+
+        private static string LF(string key, params object[] args)
+        {
+            return string.Format(System.Globalization.CultureInfo.CurrentCulture, Loader.GetString(key), args);
         }
 
         private static void WriteStartupLog(string message)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Windows.ApplicationModel.Resources;
 
 namespace IPAbuyer.Common
 {
@@ -26,6 +27,7 @@ namespace IPAbuyer.Common
 
     public static class LoginService
     {
+        private static readonly ResourceLoader Loader = new();
         private static readonly TimeSpan TestLoginDelay = TimeSpan.FromMilliseconds(1000);
 
         public static Task<LoginResult> LoginAsync(string account, string password, string passphrase, CancellationToken cancellationToken)
@@ -48,10 +50,10 @@ namespace IPAbuyer.Common
                 }
                 catch (OperationCanceledException)
                 {
-                    return new LoginResult(LoginStatus.UnknownError, "登录已取消。");
+                    return new LoginResult(LoginStatus.UnknownError, L("LoginService/Status/Canceled"));
                 }
 
-                return new LoginResult(LoginStatus.Success, "登录成功。");
+                return new LoginResult(LoginStatus.Success, L("LoginService/Status/Success"));
             }
 
             try
@@ -60,24 +62,24 @@ namespace IPAbuyer.Common
 
                 if (response.TimedOut)
                 {
-                    return new LoginResult(LoginStatus.Timeout, "登录请求超时，请稍后重试。");
+                    return new LoginResult(LoginStatus.Timeout, L("LoginService/Status/Timeout"));
                 }
 
                 string payload = response.OutputOrError ?? string.Empty;
                 if (string.IsNullOrWhiteSpace(payload))
                 {
-                    return new LoginResult(LoginStatus.UnknownError, "未收到登录响应，请稍后重试。", payload);
+                    return new LoginResult(LoginStatus.UnknownError, L("LoginService/Status/EmptyResponse"), payload);
                 }
 
                 return InterpretPayload(payload, isTwoFactor);
             }
             catch (OperationCanceledException)
             {
-                return new LoginResult(LoginStatus.UnknownError, "登录已取消。");
+                return new LoginResult(LoginStatus.UnknownError, L("LoginService/Status/Canceled"));
             }
             catch (Exception ex)
             {
-                return new LoginResult(LoginStatus.UnknownError, $"登录失败: {ex.Message}");
+                return new LoginResult(LoginStatus.UnknownError, LF("LoginService/Status/Exception", ex.Message));
             }
         }
 
@@ -94,7 +96,7 @@ namespace IPAbuyer.Common
 
             if (DetectTwoFactorRequirement(payload))
             {
-                return new LoginResult(LoginStatus.RequiresTwoFactor, "需要输入两步验证码。", payload);
+                return new LoginResult(LoginStatus.RequiresTwoFactor, L("LoginService/Status/RequiresTwoFactor"), payload);
             }
 
             return ClassifyFailure(payload, payload, isTwoFactor);
@@ -112,7 +114,7 @@ namespace IPAbuyer.Common
                     bool success = successElement.ValueKind == JsonValueKind.True && successElement.GetBoolean();
                     if (success)
                     {
-                        return new LoginResult(LoginStatus.Success, "登录成功。", segment);
+                        return new LoginResult(LoginStatus.Success, L("LoginService/Status/Success"), segment);
                     }
 
                     string error = ExtractErrorMessage(root);
@@ -131,7 +133,7 @@ namespace IPAbuyer.Common
 
                 if (DetectTwoFactorRequirement(segment))
                 {
-                    return new LoginResult(LoginStatus.RequiresTwoFactor, "需要输入两步验证码。", segment);
+                    return new LoginResult(LoginStatus.RequiresTwoFactor, L("LoginService/Status/RequiresTwoFactor"), segment);
                 }
             }
             catch (JsonException)
@@ -200,25 +202,25 @@ namespace IPAbuyer.Common
 
             if (DetectTwoFactorRequirement(message))
             {
-                return new LoginResult(LoginStatus.RequiresTwoFactor, "需要输入两步验证码。", payload);
+                return new LoginResult(LoginStatus.RequiresTwoFactor, L("LoginService/Status/RequiresTwoFactor"), payload);
             }
 
             if (DetectInvalidCredential(message))
             {
-                return new LoginResult(LoginStatus.InvalidCredential, "用户名或密码不正确。", payload);
+                return new LoginResult(LoginStatus.InvalidCredential, L("LoginService/Status/InvalidCredential"), payload);
             }
 
             if (DetectAuthCodeInvalid(message) && isTwoFactor)
             {
-                return new LoginResult(LoginStatus.AuthCodeInvalid, "验证码错误，请重新输入。", payload);
+                return new LoginResult(LoginStatus.AuthCodeInvalid, L("LoginService/Status/AuthCodeInvalid"), payload);
             }
 
             if (DetectNetworkIssue(message))
             {
-                return new LoginResult(LoginStatus.NetworkError, "网络异常，请稍后重试。", payload);
+                return new LoginResult(LoginStatus.NetworkError, L("LoginService/Status/NetworkError"), payload);
             }
 
-            return new LoginResult(LoginStatus.UnknownError, string.IsNullOrWhiteSpace(message) ? "登录失败，请稍后重试。" : message, payload);
+            return new LoginResult(LoginStatus.UnknownError, string.IsNullOrWhiteSpace(message) ? L("LoginService/Status/FailedRetry") : message, payload);
         }
 
         private static bool DetectTwoFactorRequirement(string message)
@@ -277,6 +279,16 @@ namespace IPAbuyer.Common
                 || message.Contains("timed out")
                 || message.Contains("connection")
                 || message.Contains("ssl");
+        }
+
+        private static string L(string key)
+        {
+            return Loader.GetString(key);
+        }
+
+        private static string LF(string key, params object[] args)
+        {
+            return string.Format(System.Globalization.CultureInfo.CurrentCulture, L(key), args);
         }
 
     }

@@ -438,11 +438,290 @@
   <data name="MainPage/DownloadQueue/AddSummaryUpdated" xml:space="preserve">
     <value>已更新下载队列: {0} 项。</value>
   </data>
+  <data name="MainPage/DownloadQueue/StartFailed" xml:space="preserve">
+    <value>开始下载失败: {0}</value>
+  </data>
+  <data name="MainPage/Log/SearchEmptyIgnored" xml:space="preserve">
+    <value>搜索词为空，已忽略。</value>
+  </data>
+  <data name="MainPage/Log/SearchStarted" xml:space="preserve">
+    <value>开始搜索: {0}</value>
+  </data>
+  <data name="MainPage/Log/SearchException" xml:space="preserve">
+    <value>搜索异常: {0}</value>
+  </data>
+  <data name="MainPage/Log/SearchTimeoutOrEmpty" xml:space="preserve">
+    <value>搜索超时或无返回结果。</value>
+  </data>
+  <data name="MainPage/Log/SearchCompleted" xml:space="preserve">
+    <value>搜索完成，共 {0} 条结果。</value>
+  </data>
+  <data name="MainPage/Log/SearchParseFailed" xml:space="preserve">
+    <value>搜索结果解析失败。</value>
+  </data>
+  <data name="MainPage/Log/BatchPurchaseEmpty" xml:space="preserve">
+    <value>未选择应用，无法批量购买。</value>
+  </data>
+  <data name="MainPage/Log/BatchPurchaseStarted" xml:space="preserve">
+    <value>开始批量购买，共 {0} 项。</value>
+  </data>
+  <data name="MainPage/Log/BatchPurchaseCompleted" xml:space="preserve">
+    <value>批量购买执行完成。</value>
+  </data>
+  <data name="MainPage/Log/BatchPurchaseCanceled" xml:space="preserve">
+    <value>批量购买已取消。</value>
+  </data>
+  <data name="MainPage/Log/BatchPurchaseException" xml:space="preserve">
+    <value>批量购买异常: {0}</value>
+  </data>
+  <data name="MainPage/Log/ContextPurchaseStarted" xml:space="preserve">
+    <value>右键购买，共 {0} 项。</value>
+  </data>
+  <data name="MainPage/Log/ContextPurchaseCanceled" xml:space="preserve">
+    <value>右键购买已取消。</value>
+  </data>
+  <data name="MainPage/Log/ContextPurchaseException" xml:space="preserve">
+    <value>右键购买异常: {0}</value>
+  </data>
+  <data name="MainPage/Log/MarkedStatus" xml:space="preserve">
+    <value>已标记 {0} 项为 {1}。</value>
+  </data>
+  <data name="MainPage/Log/CopyFieldEmpty" xml:space="preserve">
+    <value>复制失败：{0}为空。</value>
+  </data>
+  <data name="MainPage/Log/CopyFieldSuccess" xml:space="preserve">
+    <value>已复制{0}，共 {1} 项。</value>
+  </data>
+  <data name="MainPage/Log/FilterChanged" xml:space="preserve">
+    <value>切换筛选: {0}</value>
+  </data>
+  <data name="MainPage/Log/CopyEmptyLog" xml:space="preserve">
+    <value>日志为空，无可复制内容。</value>
+  </data>
+  <data name="MainPage/Log/CopiedToClipboard" xml:space="preserve">
+    <value>日志已复制到剪贴板。</value>
+  </data>
+  <data name="MainPage/Log/Cleared" xml:space="preserve">
+    <value>日志已清空。</value>
+  </data>
+  <data name="MainPage/Field/Name" xml:space="preserve">
+    <value>App 名称</value>
+  </data>
+  <data name="MainPage/Field/Id" xml:space="preserve">
+    <value>ID</value>
+  </data>
+  <data name="MainPage/Field/Version" xml:space="preserve">
+    <value>版本号</value>
+  </data>
+  <data name="MainPage/Purchase/MissingSessionEmail" xml:space="preserve">
+    <value>当前登录状态未获取到邮箱，请先在账户页面退出并重新登录。</value>
+  </data>
+  <data name="MainPage/Purchase/LoginRequired" xml:space="preserve">
+    <value>请先在账户页面登录后再购买。</value>
+  </data>
+  <data name="MainPage/Purchase/SkipNonFree" xml:space="preserve">
+    <value>非免费应用，已跳过购买: {0}</value>
+  </data>
+  <data name="MainPage/Purchase/MockSuccess" xml:space="preserve">
+    <value>测试账户购买成功: {0}</value>
+  </data>
+  <data name="MainPage/Purchase/Success" xml:space="preserve">
+    <value>购买成功: {0}</value>
+  </data>
+  <data name="MainPage/Purchase/OwnedMarked" xml:space="preserve">
+    <value>疑似已拥有，已标记: {0}</value>
+  </data>
+  <data name="MainPage/Purchase/OwnedNotMarked" xml:space="preserve">
+    <value>疑似已拥有，未标记: {0}</value>
+  </data>
+  <data name="MainPage/Purchase/UnknownError" xml:space="preserve">
+    <value>未知错误</value>
+  </data>
+  <data name="MainPage/Purchase/Failed" xml:space="preserve">
+    <value>购买失败: {0} - {1}</value>
+  </data>
+  <data name="MainPage/OwnedPrompt/DisablePrompt" xml:space="preserve">
+    <value>不再提示，后续直接标记为已拥有</value>
+  </data>
+  <data name="MainPage/OwnedPrompt/Message" xml:space="preserve">
+    <value>ipatool 返回 STDQ：{0} 可能已拥有，是否标记为“已拥有”？</value>
+  </data>
+  <data name="MainPage/OwnedPrompt/Title" xml:space="preserve">
+    <value>疑似已拥有</value>
+  </data>
+  <data name="MainPage/OwnedPrompt/PrimaryButton" xml:space="preserve">
+    <value>标记为已拥有</value>
+  </data>
+  <data name="Common/Cancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="Common/Status/Purchased" xml:space="preserve">
+    <value>已购买</value>
+  </data>
+  <data name="Common/Status/Owned" xml:space="preserve">
+    <value>已拥有</value>
+  </data>
+  <data name="Common/Status/NotPurchased" xml:space="preserve">
+    <value>未购买</value>
+  </data>
+  <data name="Common/Status/CanPurchase" xml:space="preserve">
+    <value>可购买</value>
+  </data>
+  <data name="Common/Price/Free" xml:space="preserve">
+    <value>免费</value>
+  </data>
+  <data name="DownloadQueue/Status/Pending" xml:space="preserve">
+    <value>等待下载</value>
+  </data>
+  <data name="DownloadQueue/Status/Downloading" xml:space="preserve">
+    <value>下载中</value>
+  </data>
+  <data name="DownloadQueue/Status/Success" xml:space="preserve">
+    <value>下载成功</value>
+  </data>
+  <data name="DownloadQueue/Status/Failed" xml:space="preserve">
+    <value>下载失败</value>
+  </data>
+  <data name="DownloadQueue/Status/Canceled" xml:space="preserve">
+    <value>下载已终止</value>
+  </data>
+  <data name="DownloadQueue/Status/CanceledShort" xml:space="preserve">
+    <value>已终止</value>
+  </data>
+  <data name="DownloadQueue/Status/QueueCanceled" xml:space="preserve">
+    <value>队列已终止</value>
+  </data>
   <data name="DownloadQueue/Status/Requeued" xml:space="preserve">
     <value>已重新加入下载队列</value>
   </data>
+  <data name="DownloadQueue/Log/Updated" xml:space="preserve">
+    <value>队列更新: {0} ({1})</value>
+  </data>
+  <data name="DownloadQueue/Log/Added" xml:space="preserve">
+    <value>已加入下载队列: {0} ({1})</value>
+  </data>
   <data name="DownloadQueue/Log/Requeued" xml:space="preserve">
     <value>已重新加入下载队列: {0} ({1})</value>
+  </data>
+  <data name="DownloadQueue/Log/Removed" xml:space="preserve">
+    <value>已移出下载队列: {0} 项</value>
+  </data>
+  <data name="DownloadQueue/Log/AlreadyRunning" xml:space="preserve">
+    <value>下载队列已在运行</value>
+  </data>
+  <data name="DownloadQueue/Log/NoPendingItems" xml:space="preserve">
+    <value>没有待下载项目</value>
+  </data>
+  <data name="DownloadQueue/Log/StartQueue" xml:space="preserve">
+    <value>开始下载队列，共 {0} 项，输出目录: {1}</value>
+  </data>
+  <data name="DownloadQueue/Log/MockSuccess" xml:space="preserve">
+    <value>下载成功(测试账户): {0}</value>
+  </data>
+  <data name="DownloadQueue/Log/Success" xml:space="preserve">
+    <value>下载成功: {0}</value>
+  </data>
+  <data name="DownloadQueue/Log/Failed" xml:space="preserve">
+    <value>下载失败: {0} - {1}</value>
+  </data>
+  <data name="DownloadQueue/Log/Canceled" xml:space="preserve">
+    <value>下载已终止: {0}</value>
+  </data>
+  <data name="DownloadQueue/Log/Exception" xml:space="preserve">
+    <value>下载异常: {0} - {1}</value>
+  </data>
+  <data name="DownloadQueue/Log/Completed" xml:space="preserve">
+    <value>下载队列完成，成功 {0}/{1}</value>
+  </data>
+  <data name="DownloadQueue/Log/QueueCanceled" xml:space="preserve">
+    <value>下载队列已终止</value>
+  </data>
+  <data name="DownloadQueue/Log/CancelCurrentRequested" xml:space="preserve">
+    <value>已请求终止当前下载任务</value>
+  </data>
+  <data name="DownloadQueue/Log/CancelAllRequested" xml:space="preserve">
+    <value>已请求终止所有下载任务</value>
+  </data>
+  <data name="DownloadQueue/Error/Timeout" xml:space="preserve">
+    <value>下载超时</value>
+  </data>
+  <data name="DownloadQueue/Error/ExitCode" xml:space="preserve">
+    <value>退出码 {0}</value>
+  </data>
+  <data name="DownloadQueue/Error/MissingSessionEmail" xml:space="preserve">
+    <value>当前登录状态未获取到邮箱，请先在账户页面退出并重新登录</value>
+  </data>
+  <data name="DownloadQueue/Error/MissingAccount" xml:space="preserve">
+    <value>未找到可用账号，请先登录</value>
+  </data>
+  <data name="Ipatool/Error/RequiredArgument" xml:space="preserve">
+    <value>{0} 不能为空</value>
+  </data>
+  <data name="Ipatool/Error/AppNameRequired" xml:space="preserve">
+    <value>应用名称不能为空</value>
+  </data>
+  <data name="Ipatool/Error/HttpRequestFailed" xml:space="preserve">
+    <value>请求失败: {0} {1}</value>
+  </data>
+  <data name="Ipatool/Error/ExecutionTimeout" xml:space="preserve">
+    <value>执行超时: {0}</value>
+  </data>
+  <data name="Ipatool/Error/ProcessStartFailed" xml:space="preserve">
+    <value>无法启动 ipatool 进程</value>
+  </data>
+  <data name="Ipatool/Error/MissingPassphrase" xml:space="preserve">
+    <value>未找到可用的加密密钥，请先在账户页面重新登录后再试。</value>
+  </data>
+  <data name="Ipatool/Error/ReadableJsonError" xml:space="preserve">
+    <value>ipatool 错误: {0} (exit: {1})</value>
+  </data>
+  <data name="Ipatool/Error/ExecutionFailed" xml:space="preserve">
+    <value>ipatool 执行失败 (exit: {0})</value>
+  </data>
+  <data name="Ipatool/Debug/FallbackToPath" xml:space="preserve">
+    <value>未在应用目录中找到专用 ipatool，可执行文件将从 PATH 中解析。</value>
+  </data>
+  <data name="Ipatool/Debug/DeleteCookieLock" xml:space="preserve">
+    <value>删除 ipatool cookies.lock: {0}</value>
+  </data>
+  <data name="Ipatool/Debug/DeleteCookieLockFailed" xml:space="preserve">
+    <value>删除 ipatool cookies.lock 失败: {0}</value>
+  </data>
+  <data name="KeychainConfig/Error/CountryCodeRequired" xml:space="preserve">
+    <value>国家/地区代码不能为空</value>
+  </data>
+  <data name="KeychainConfig/Error/CountryCodeInvalid" xml:space="preserve">
+    <value>国家/地区代码格式无效</value>
+  </data>
+  <data name="KeychainConfig/Error/PassphraseRequired" xml:space="preserve">
+    <value>加密密钥不能为空</value>
+  </data>
+  <data name="KeychainConfig/Error/DownloadDirectoryRequired" xml:space="preserve">
+    <value>下载目录不能为空</value>
+  </data>
+  <data name="PurchasedAppDb/Error/DatabasePathNotInitialized" xml:space="preserve">
+    <value>App 数据库路径未初始化</value>
+  </data>
+  <data name="PurchasedAppDb/Debug/AppIdOrAccountRequired" xml:space="preserve">
+    <value>AppID 或 Account 不能为空</value>
+  </data>
+  <data name="Database/Debug/Error" xml:space="preserve">
+    <value>数据库错误: {0}</value>
+  </data>
+  <data name="Database/Debug/FallbackFailed" xml:space="preserve">
+    <value>数据库兜底路径初始化失败: {0}</value>
+  </data>
+  <data name="Settings/Debug/InitializeCountryCodeFailed" xml:space="preserve">
+    <value>初始化国家代码失败: {0}</value>
+  </data>
+  <data name="Settings/Debug/InitializeDownloadDirectoryFailed" xml:space="preserve">
+    <value>初始化下载目录失败: {0}</value>
+  </data>
+  <data name="App/Debug/StartupError" xml:space="preserve">
+    <value>启动错误: {0}</value>
+  </data>
+  <data name="App/Debug/WarmupAuthInfoFailed" xml:space="preserve">
+    <value>静默查询登录状态失败: {0}</value>
   </data>
   <data name="DownloadsPage/Action/StartQueueButton.Content" xml:space="preserve">
     <value>开始下载队列</value>
@@ -494,6 +773,36 @@
   </data>
   <data name="LoginPage/TitleText.Text" xml:space="preserve">
     <value>账户登录</value>
+  </data>
+  <data name="LoginService/Status/Canceled" xml:space="preserve">
+    <value>登录已取消。</value>
+  </data>
+  <data name="LoginService/Status/Success" xml:space="preserve">
+    <value>登录成功。</value>
+  </data>
+  <data name="LoginService/Status/Timeout" xml:space="preserve">
+    <value>登录请求超时，请稍后重试。</value>
+  </data>
+  <data name="LoginService/Status/EmptyResponse" xml:space="preserve">
+    <value>未收到登录响应，请稍后重试。</value>
+  </data>
+  <data name="LoginService/Status/Exception" xml:space="preserve">
+    <value>登录失败: {0}</value>
+  </data>
+  <data name="LoginService/Status/RequiresTwoFactor" xml:space="preserve">
+    <value>需要输入两步验证码。</value>
+  </data>
+  <data name="LoginService/Status/InvalidCredential" xml:space="preserve">
+    <value>用户名或密码不正确。</value>
+  </data>
+  <data name="LoginService/Status/AuthCodeInvalid" xml:space="preserve">
+    <value>验证码错误，请重新输入。</value>
+  </data>
+  <data name="LoginService/Status/NetworkError" xml:space="preserve">
+    <value>网络异常，请稍后重试。</value>
+  </data>
+  <data name="LoginService/Status/FailedRetry" xml:space="preserve">
+    <value>登录失败，请稍后重试。</value>
   </data>
   <data name="LoginPage/SubtitleText.Text" xml:space="preserve">
     <value>输入 Apple ID、密码和加密密钥，完成登录后即可购买与下载。</value>

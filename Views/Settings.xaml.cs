@@ -91,7 +91,7 @@ namespace IPAbuyer.Views
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"初始化国家代码失败: {ex.Message}");
+                Debug.WriteLine(LF("Settings/Debug/InitializeCountryCodeFailed", ex.Message));
             }
         }
 
@@ -106,7 +106,7 @@ namespace IPAbuyer.Views
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"初始化下载目录失败: {ex.Message}");
+                Debug.WriteLine(LF("Settings/Debug/InitializeDownloadDirectoryFailed", ex.Message));
             }
         }
 

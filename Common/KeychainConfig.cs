@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Windows.ApplicationModel.Resources;
 using Windows.Storage;
 
 namespace IPAbuyer.Common
@@ -13,6 +14,7 @@ namespace IPAbuyer.Common
     /// </summary>
     public static partial class KeychainConfig
     {
+        private static readonly ResourceLoader Loader = new();
         private const string SettingsFileName = "settings.json";
         private const string PassphraseFileName = "passphrase.txt";
         private const string DefaultCountryCode = "cn";
@@ -80,13 +82,13 @@ namespace IPAbuyer.Common
         {
             if (string.IsNullOrWhiteSpace(countryCode))
             {
-                throw new ArgumentException("国家/地区代码不能为空", nameof(countryCode));
+                throw new ArgumentException(L("KeychainConfig/Error/CountryCodeRequired"), nameof(countryCode));
             }
 
             string normalized = countryCode.Trim().ToLowerInvariant();
             if (!IsValidCountryCode(normalized))
             {
-                throw new ArgumentException("国家/地区代码格式无效", nameof(countryCode));
+                throw new ArgumentException(L("KeychainConfig/Error/CountryCodeInvalid"), nameof(countryCode));
             }
 
             lock (SyncRoot)
@@ -121,7 +123,7 @@ namespace IPAbuyer.Common
         {
             if (string.IsNullOrWhiteSpace(passphrase))
             {
-                throw new ArgumentException("加密密钥不能为空", nameof(passphrase));
+                throw new ArgumentException(L("KeychainConfig/Error/PassphraseRequired"), nameof(passphrase));
             }
 
             lock (SyncRoot)
@@ -155,7 +157,7 @@ namespace IPAbuyer.Common
         {
             if (string.IsNullOrWhiteSpace(directoryPath))
             {
-                throw new ArgumentException("下载目录不能为空", nameof(directoryPath));
+                throw new ArgumentException(L("KeychainConfig/Error/DownloadDirectoryRequired"), nameof(directoryPath));
             }
 
             string normalized = Path.GetFullPath(directoryPath.Trim());
@@ -430,6 +432,11 @@ namespace IPAbuyer.Common
         [JsonSerializable(typeof(LocalSettingsModel))]
         private partial class LocalSettingsJsonContext : JsonSerializerContext
         {
+        }
+
+        private static string L(string key)
+        {
+            return Loader.GetString(key);
         }
     }
 }

@@ -75,7 +75,7 @@ namespace IPAbuyer.Common
 
                 EmitLog(requeued
                     ? LF("DownloadQueue/Log/Requeued", existing.Name, existing.BundleId)
-                    : $"队列更新: {existing.Name} ({existing.BundleId})");
+                    : LF("DownloadQueue/Log/Updated", existing.Name, existing.BundleId));
                 NotifyQueueChanged();
                 return requeued ? DownloadQueueAddResult.Requeued : DownloadQueueAddResult.Updated;
             }
@@ -90,11 +90,11 @@ namespace IPAbuyer.Common
                 Price = app.price ?? string.Empty,
                 ArtworkUrl = app.artworkUrl ?? string.Empty,
                 Status = DownloadQueueStatus.Pending,
-                LastMessage = "等待下载"
+                LastMessage = L("DownloadQueue/Status/Pending")
             };
 
             _items.Add(item);
-            EmitLog($"已加入下载队列: {item.Name} ({item.BundleId})");
+            EmitLog(LF("DownloadQueue/Log/Added", item.Name, item.BundleId));
             NotifyQueueChanged();
             return DownloadQueueAddResult.Added;
         }
@@ -124,7 +124,7 @@ namespace IPAbuyer.Common
 
             if (removed > 0)
             {
-                EmitLog($"已移出下载队列: {removed} 项");
+                EmitLog(LF("DownloadQueue/Log/Removed", removed));
                 NotifyQueueChanged();
             }
 
@@ -138,14 +138,14 @@ namespace IPAbuyer.Common
             {
                 if (_isRunning)
                 {
-                    EmitLog("下载队列已在运行");
+                    EmitLog(L("DownloadQueue/Log/AlreadyRunning"));
                     return 0;
                 }
 
                 int initialCount = CountRunnableItems();
                 if (initialCount == 0)
                 {
-                    EmitLog("没有待下载项目");
+                    EmitLog(L("DownloadQueue/Log/NoPendingItems"));
                     return 0;
                 }
 
@@ -170,7 +170,7 @@ namespace IPAbuyer.Common
                     && SessionState.IsMockAccount
                     && string.Equals(SessionState.CurrentAccount, account, StringComparison.OrdinalIgnoreCase);
 
-                EmitLog($"开始下载队列，共 {initialCount} 项，输出目录: {outputDirectory}");
+                EmitLog(LF("DownloadQueue/Log/StartQueue", initialCount, outputDirectory));
 
                 int completed = 0;
                 int processed = 0;
@@ -182,7 +182,7 @@ namespace IPAbuyer.Common
                     processedItems.Add(item);
 
                     item.Status = DownloadQueueStatus.Downloading;
-                    item.LastMessage = "下载中";
+                    item.LastMessage = L("DownloadQueue/Status/Downloading");
                     NotifyQueueChanged();
 
                     _currentItemCts = CancellationTokenSource.CreateLinkedTokenSource(_queueCts.Token);
@@ -191,9 +191,9 @@ namespace IPAbuyer.Common
                         if (useMockFlow)
                         {
                             item.Status = DownloadQueueStatus.Success;
-                            item.LastMessage = "下载成功";
+                            item.LastMessage = L("DownloadQueue/Status/Success");
                             completed++;
-                            EmitLog($"下载成功(测试账户): {item.Name}");
+                            EmitLog(LF("DownloadQueue/Log/MockSuccess", item.Name));
                         }
                         else
                         {
@@ -222,30 +222,30 @@ namespace IPAbuyer.Common
                             if (IsDownloadSuccess(result))
                             {
                                 item.Status = DownloadQueueStatus.Success;
-                                item.LastMessage = "下载成功";
+                                item.LastMessage = L("DownloadQueue/Status/Success");
                                 completed++;
-                                EmitLog($"下载成功: {item.Name}");
+                                EmitLog(LF("DownloadQueue/Log/Success", item.Name));
                             }
                             else
                             {
                                 string message = BuildErrorMessage(result);
                                 item.Status = DownloadQueueStatus.Failed;
                                 item.LastMessage = message;
-                                EmitLog($"下载失败: {item.Name} - {message}");
+                                EmitLog(LF("DownloadQueue/Log/Failed", item.Name, message));
                             }
                         }
                     }
                     catch (OperationCanceledException)
                     {
                         item.Status = DownloadQueueStatus.Canceled;
-                        item.LastMessage = "下载已终止";
-                        EmitLog($"下载已终止: {item.Name}");
+                        item.LastMessage = L("DownloadQueue/Status/Canceled");
+                        EmitLog(LF("DownloadQueue/Log/Canceled", item.Name));
                     }
                     catch (Exception ex)
                     {
                         item.Status = DownloadQueueStatus.Failed;
                         item.LastMessage = ex.Message;
-                        EmitLog($"下载异常: {item.Name} - {ex.Message}");
+                        EmitLog(LF("DownloadQueue/Log/Exception", item.Name, ex.Message));
                     }
                     finally
                     {
@@ -255,12 +255,12 @@ namespace IPAbuyer.Common
                     }
                 }
 
-                EmitLog($"下载队列完成，成功 {completed}/{processed}");
+                EmitLog(LF("DownloadQueue/Log/Completed", completed, processed));
                 return completed;
             }
             catch (OperationCanceledException)
             {
-                EmitLog("下载队列已终止");
+                EmitLog(L("DownloadQueue/Log/QueueCanceled"));
                 return 0;
             }
             finally
@@ -278,7 +278,7 @@ namespace IPAbuyer.Common
         public void CancelCurrent()
         {
             _currentItemCts?.Cancel();
-            EmitLog("已请求终止当前下载任务");
+            EmitLog(L("DownloadQueue/Log/CancelCurrentRequested"));
         }
 
         public void CancelAll()
@@ -289,10 +289,10 @@ namespace IPAbuyer.Common
             foreach (var item in _items.Where(i => i.Status == DownloadQueueStatus.Pending))
             {
                 item.Status = DownloadQueueStatus.Canceled;
-                item.LastMessage = "队列已终止";
+                item.LastMessage = L("DownloadQueue/Status/QueueCanceled");
             }
 
-            EmitLog("已请求终止所有下载任务");
+            EmitLog(L("DownloadQueue/Log/CancelAllRequested"));
             NotifyQueueChanged();
         }
 
@@ -393,13 +393,13 @@ namespace IPAbuyer.Common
         {
             if (result.TimedOut)
             {
-                return "下载超时";
+                return L("DownloadQueue/Error/Timeout");
             }
 
             string payload = result.OutputOrError;
             if (string.IsNullOrWhiteSpace(payload))
             {
-                return $"退出码 {result.ExitCode}";
+                return LF("DownloadQueue/Error/ExitCode", result.ExitCode);
             }
 
             foreach (string segment in EnumerateJsonSegments(payload))
@@ -462,10 +462,10 @@ namespace IPAbuyer.Common
             {
                 if (SessionState.IsLoggedIn)
                 {
-                    throw new InvalidOperationException("当前登录状态未获取到邮箱，请先在账户页面退出并重新登录");
+                    throw new InvalidOperationException(L("DownloadQueue/Error/MissingSessionEmail"));
                 }
 
-                throw new InvalidOperationException("未找到可用账号，请先登录");
+                throw new InvalidOperationException(L("DownloadQueue/Error/MissingAccount"));
             }
 
             return account.Trim();

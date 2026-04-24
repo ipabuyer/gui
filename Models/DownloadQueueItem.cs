@@ -1,11 +1,13 @@
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using Microsoft.Windows.ApplicationModel.Resources;
 
 namespace IPAbuyer.Models
 {
     public sealed class DownloadQueueItem : INotifyPropertyChanged
     {
+        private static readonly ResourceLoader Loader = new();
         private DownloadQueueStatus _status = DownloadQueueStatus.Pending;
         private string _lastMessage = string.Empty;
 
@@ -53,11 +55,11 @@ namespace IPAbuyer.Models
 
         public string StatusText => Status switch
         {
-            DownloadQueueStatus.Pending => "等待下载",
-            DownloadQueueStatus.Downloading => string.IsNullOrWhiteSpace(LastMessage) ? "下载中" : LastMessage,
-            DownloadQueueStatus.Success => "下载成功",
-            DownloadQueueStatus.Failed => "下载失败",
-            DownloadQueueStatus.Canceled => "已终止",
+            DownloadQueueStatus.Pending => L("DownloadQueue/Status/Pending"),
+            DownloadQueueStatus.Downloading => string.IsNullOrWhiteSpace(LastMessage) ? L("DownloadQueue/Status/Downloading") : LastMessage,
+            DownloadQueueStatus.Success => L("DownloadQueue/Status/Success"),
+            DownloadQueueStatus.Failed => L("DownloadQueue/Status/Failed"),
+            DownloadQueueStatus.Canceled => L("DownloadQueue/Status/CanceledShort"),
             _ => Status.ToString()
         };
 
@@ -66,6 +68,11 @@ namespace IPAbuyer.Models
         private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private static string L(string key)
+        {
+            return Loader.GetString(key);
         }
     }
 }

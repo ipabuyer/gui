@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using Microsoft.Windows.ApplicationModel.Resources;
 using Windows.ApplicationModel;
 using Windows.Storage;
 
@@ -8,6 +9,7 @@ namespace IPAbuyer.Models
 {
     public class Database
     {
+        private static readonly ResourceLoader Loader = new();
         public string? path { get; }
         public string appDbName { get; } = "PurchasedAppDb.db";
         public string? appDb { get; }
@@ -32,7 +34,7 @@ namespace IPAbuyer.Models
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"数据库错误: {ex.Message}");
+                Debug.WriteLine(LF("Database/Debug/Error", ex.Message));
                 try
                 {
                     string fallback = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IPAbuyer");
@@ -46,7 +48,7 @@ namespace IPAbuyer.Models
                 }
                 catch (Exception fallbackEx)
                 {
-                    Debug.WriteLine($"数据库兜底路径初始化失败: {fallbackEx.Message}");
+                    Debug.WriteLine(LF("Database/Debug/FallbackFailed", fallbackEx.Message));
                 }
             }
         }
@@ -87,6 +89,11 @@ namespace IPAbuyer.Models
             {
                 return false;
             }
+        }
+
+        private static string LF(string key, params object[] args)
+        {
+            return string.Format(System.Globalization.CultureInfo.CurrentCulture, Loader.GetString(key), args);
         }
     }
 }
