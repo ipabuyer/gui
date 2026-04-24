@@ -9,8 +9,8 @@
             <Grid RowSpacing="12">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <Border Grid.Row="0" Style="{StaticResource AppCommandBarSurfaceStyle}">
                     <Grid ColumnSpacing="10">
@@ -32,8 +32,7 @@
                         <Button Grid.Column="1" x:Uid="MainPage/Action/CancelAllDownloadsButton" x:Name="CancelAllDownloadsButton" Click="CancelAllDownloadsButton_Click" Visibility="Collapsed" />
                     </Grid>
                 </Border>
-                <InfoBar x:Name="HomeStatusInfoBar" Grid.Row="1" IsOpen="True" IsClosable="False" Severity="Informational" />
-                <Border Grid.Row="2" Style="{StaticResource AppSurfaceBorderStyle}">
+                <Border Grid.Row="1" Style="{StaticResource AppSurfaceBorderStyle}">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -113,6 +112,7 @@
                             Canvas.ZIndex="10" />
                     </Grid>
                 </Border>
+                <InfoBar x:Name="HomeStatusInfoBar" Grid.Row="2" IsOpen="True" IsClosable="True" Severity="Informational" />
             </Grid>
         </Grid>
     </Page.Content>
