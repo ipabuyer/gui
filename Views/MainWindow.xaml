@@ -68,14 +68,6 @@
             </NavigationView.MenuItems>
             <Grid>
                 <Frame x:Name="ContentFrame" />
-                <ProgressBar
-                    x:Name="SearchLoadingBar"
-                    Height="2"
-                    VerticalAlignment="Top"
-                    IsIndeterminate="True"
-                    IsHitTestVisible="False"
-                    Visibility="Collapsed"
-                    Canvas.ZIndex="10" />
             </Grid>
         </NavigationView>
     </Grid>

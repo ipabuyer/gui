@@ -35,11 +35,9 @@
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
-                        <ProgressBar x:Name="PurchaseLoadingBar" Grid.Row="0" Height="3" IsIndeterminate="True" IsHitTestVisible="False" Visibility="Collapsed" />
-                        <Border Grid.Row="1" Background="{ThemeResource LayerFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,0,0,1">
+                        <Border Grid.Row="0" Background="{ThemeResource LayerFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,0,0,1">
                         <Grid Padding="14,8,14,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="32" />
@@ -58,7 +56,7 @@
                             <Button x:Uid="MainPage/Header/PurchasedButton" x:Name="PurchasedHeaderText" Grid.Column="6" Background="Transparent" BorderThickness="0" MinHeight="24" Padding="0" HorizontalAlignment="Center" Click="SortHeader_Click" Tag="purchased" />
                         </Grid>
                         </Border>
-                        <ListView x:Name="ResultList" Grid.Row="2" Margin="0,0,0,8" Background="Transparent" ContainerContentChanging="ResultList_ContainerContentChanging" IsMultiSelectCheckBoxEnabled="True" SelectionMode="Multiple">
+                        <ListView x:Name="ResultList" Grid.Row="1" Margin="0,0,0,8" Background="Transparent" ContainerContentChanging="ResultList_ContainerContentChanging" IsMultiSelectCheckBoxEnabled="True" SelectionMode="Multiple">
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="models:SearchResult">
                                     <Grid Margin="-40,0,0,0" Padding="52,12,14,12">
@@ -100,6 +98,17 @@
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>
+                        <ProgressRing
+                            x:Name="TableLoadingRing"
+                            Grid.RowSpan="2"
+                            Width="44"
+                            Height="44"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            IsActive="False"
+                            IsHitTestVisible="False"
+                            Visibility="Collapsed"
+                            Canvas.ZIndex="10" />
                     </Grid>
                 </Border>
             </Grid>

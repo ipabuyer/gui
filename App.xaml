@@ -15,7 +15,7 @@
 
             <x:Double x:Key="StandardControlHeight">36</x:Double>
             <CornerRadius x:Key="AppControlCornerRadius">8</CornerRadius>
-            <Thickness x:Key="AppPagePadding">24</Thickness>
+            <Thickness x:Key="AppPagePadding">16</Thickness>
 
             <Style x:Key="AppSurfaceBorderStyle" TargetType="Border">
                 <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />

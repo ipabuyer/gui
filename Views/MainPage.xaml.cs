@@ -29,8 +29,6 @@ namespace IPAbuyer.Views
         private string _selectedFilter = "All";
         private string? _sortKey;
         private SortDirection _sortDirection = SortDirection.None;
-        public event Action<bool>? SearchLoadingChanged;
-
         private const string StatusPurchased = "已购买";
         private const string StatusOwned = "已拥有";
         private const string StatusCanPurchase = "未购买";
@@ -82,7 +80,7 @@ namespace IPAbuyer.Views
             }
 
             AppendHomeLog($"开始搜索: {appName.Trim()}");
-            SearchLoadingChanged?.Invoke(true);
+            SetTableLoading(true);
             try
             {
                 await PerformSearchAsync(appName.Trim(), _pageCts.Token);
@@ -93,7 +91,7 @@ namespace IPAbuyer.Views
             }
             finally
             {
-                SearchLoadingChanged?.Invoke(false);
+                SetTableLoading(false);
             }
         }
 
@@ -202,7 +200,7 @@ namespace IPAbuyer.Views
             {
                 BatchPurchaseButton.IsEnabled = false;
             }
-            SetPurchaseLoading(true);
+            SetTableLoading(true);
 
             try
             {
@@ -227,7 +225,7 @@ namespace IPAbuyer.Views
                 {
                     BatchPurchaseButton.IsEnabled = true;
                 }
-                SetPurchaseLoading(false);
+                SetTableLoading(false);
 
                 ApplyFilterAndRefresh(preserveScrollPosition: true);
             }
@@ -273,7 +271,7 @@ namespace IPAbuyer.Views
             {
                 BatchPurchaseButton.IsEnabled = false;
             }
-            SetPurchaseLoading(true);
+            SetTableLoading(true);
 
             try
             {
@@ -294,7 +292,7 @@ namespace IPAbuyer.Views
                 {
                     BatchPurchaseButton.IsEnabled = true;
                 }
-                SetPurchaseLoading(false);
+                SetTableLoading(false);
 
                 ApplyFilterAndRefresh(preserveScrollPosition: true);
             }
@@ -1034,14 +1032,15 @@ namespace IPAbuyer.Views
             EnsureHomeLogScrollToBottom();
         }
 
-        private void SetPurchaseLoading(bool isLoading)
+        private void SetTableLoading(bool isLoading)
         {
-            if (PurchaseLoadingBar == null)
+            if (TableLoadingRing == null)
             {
                 return;
             }
 
-            PurchaseLoadingBar.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
+            TableLoadingRing.IsActive = isLoading;
+            TableLoadingRing.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void ResultList_ContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)

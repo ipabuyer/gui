@@ -73,30 +73,9 @@ namespace IPAbuyer.Views
 
         private void ContentFrame_Navigated(object sender, Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
-            if (_currentMainPage != null)
-            {
-                _currentMainPage.SearchLoadingChanged -= MainPage_SearchLoadingChanged;
-            }
-
             _currentMainPage = ContentFrame.Content as MainPage;
-            if (_currentMainPage != null)
-            {
-                _currentMainPage.SearchLoadingChanged += MainPage_SearchLoadingChanged;
-            }
-            else
-            {
-                SearchLoadingBar.Visibility = Visibility.Collapsed;
-            }
 
             UpdateSearchBoxState();
-        }
-
-        private void MainPage_SearchLoadingChanged(bool isLoading)
-        {
-            DispatcherQueue.TryEnqueue(() =>
-            {
-                SearchLoadingBar.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
-            });
         }
 
         private static void SetWindowIcon(Window window)
