@@ -9,8 +9,12 @@
             <TextBlock x:Uid="LoginPage/TitleText" Style="{ThemeResource TitleTextBlockStyle}" />
           </StackPanel>
           <Grid>
-            <Border Padding="20" Style="{StaticResource AppSurfaceBorderStyle}">
-              <Grid ColumnSpacing="12" RowSpacing="12">
+              <Grid ColumnSpacing="12" Margin="24,8,0,8">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="130" />
+                  <ColumnDefinition Width="300" />
+                </Grid.ColumnDefinitions>
+              <Grid x:Name="LoginFormGrid" Grid.ColumnSpan="2" ColumnSpacing="12" RowSpacing="12">
                 <Grid.RowDefinitions>
                   <RowDefinition Height="Auto" />
                   <RowDefinition Height="Auto" />
@@ -19,7 +23,7 @@
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="130" />
-                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="300" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                   <TextBlock x:Uid="LoginPage/EmailLabel" VerticalAlignment="Center" />
@@ -61,13 +65,13 @@
                 </StackPanel>
                 <TextBox x:Uid="LoginPage/PassphraseInput" x:Name="PassphraseBox" Grid.Row="3" Grid.Column="1" Width="300" MinHeight="36" KeyUp="Input_KeyUp" />
               </Grid>
-            </Border>
-            <Border x:Name="OperationLockOverlay" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="{StaticResource AppControlCornerRadius}" Visibility="Collapsed">
-              <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-                <FontIcon FontSize="24" Glyph="&#xE72E;" />
-                <TextBlock x:Uid="LoginPage/LockedOverlayText" />
-              </StackPanel>
-            </Border>
+              <Border x:Name="OperationLockOverlay" Grid.Column="1" Margin="-10,-8,-10,-8" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="{StaticResource AppControlCornerRadius}" Visibility="Collapsed">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+                  <FontIcon FontSize="24" Glyph="&#xE72E;" />
+                  <TextBlock x:Uid="LoginPage/LockedOverlayText" />
+                </StackPanel>
+              </Border>
+              </Grid>
           </Grid>
           <StackPanel Orientation="Horizontal" Spacing="8">
             <Button x:Uid="LoginPage/LoginButton" x:Name="NextButton" HorizontalAlignment="Left" Click="NextButton_Click" />
