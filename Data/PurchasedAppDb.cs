@@ -7,18 +7,20 @@ using Windows.ApplicationModel;
 using Windows.Storage;
 using System.Diagnostics;
 using IPAbuyer.Models;
+using Microsoft.Windows.ApplicationModel.Resources;
 
 namespace IPAbuyer.Data
 {
     public class PurchasedAppDb
     {
+        private static readonly ResourceLoader Loader = new();
         private static string _dbPath = string.Empty;
         private static string _connectionString = string.Empty;
 
         public static void InitDb()
         {
             Database database = new Database();
-            _dbPath = database.appDb ?? throw new InvalidOperationException("App 数据库路径未初始化");
+            _dbPath = database.appDb ?? throw new InvalidOperationException(L("PurchasedAppDb/Error/DatabasePathNotInitialized"));
             _connectionString = $"Data Source={_dbPath}";
             using (var conn = new SqliteConnection(_connectionString))
             {
@@ -51,11 +53,12 @@ namespace IPAbuyer.Data
         /// <param name="appID">应用ID (bundleID)</param>
         /// <param name="account">购买账户</param>
         /// <param name="status">状态：已购买 或 已拥有</param>
-        public static void SavePurchasedApp(string appID, string account, string status = "已购买")
+        public static void SavePurchasedApp(string appID, string account, string? status = null)
         {
+            status ??= L("Common/Status/Purchased");
             if (string.IsNullOrWhiteSpace(appID) || string.IsNullOrWhiteSpace(account))
             {
-                Debug.WriteLine("AppID 或 Account 不能为空");
+                Debug.WriteLine(L("PurchasedAppDb/Debug/AppIdOrAccountRequired"));
                 return;
             }
 
@@ -128,7 +131,7 @@ namespace IPAbuyer.Data
                     while (reader.Read())
                     {
                         var appId = reader.IsDBNull(0) ? string.Empty : NormalizeAppId(reader.GetString(0));
-                        var status = reader.IsDBNull(1) ? "已购买" : reader.GetString(1);
+                        var status = reader.IsDBNull(1) ? L("Common/Status/Purchased") : reader.GetString(1);
                         if (string.IsNullOrWhiteSpace(appId))
                         {
                             continue;
@@ -296,6 +299,11 @@ namespace IPAbuyer.Data
             string fallback = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IPAbuyer");
             Directory.CreateDirectory(fallback);
             return fallback;
+        }
+
+        private static string L(string key)
+        {
+            return Loader.GetString(key);
         }
     }
 }

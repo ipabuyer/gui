@@ -51,13 +51,13 @@
 
         <Manifest Include="$(ApplicationManifest)" />
 
-        <Content Include="Include\*amd64.exe" Condition="'$(Platform)' == 'x64'">
+        <Content Include="Include\ipatool-main-windows-amd64.exe" Condition="'$(Platform)' == 'x64'">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <TargetPath>ipatool.exe</TargetPath>
             <IncludeInPackage>true</IncludeInPackage>
         </Content>
 
-        <Content Include="Include\*arm64.exe" Condition="'$(Platform)' == 'ARM64'">
+        <Content Include="Include\ipatool-main-windows-arm64.exe" Condition="'$(Platform)' == 'ARM64'">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <TargetPath>ipatool.exe</TargetPath>
             <IncludeInPackage>true</IncludeInPackage>

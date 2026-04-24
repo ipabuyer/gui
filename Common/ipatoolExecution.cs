@@ -10,11 +10,13 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Windows.ApplicationModel.Resources;
 
 namespace IPAbuyer.Common
 {
     public static class IpatoolExecution
     {
+        private static readonly ResourceLoader Loader = new();
         private const int MaxPreviewLength = 200;
         private static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(2);
         private static readonly HttpClient HttpClient = new();
@@ -41,12 +43,12 @@ namespace IPAbuyer.Common
         {
             if (string.IsNullOrWhiteSpace(account))
             {
-                throw new ArgumentException("account 不能为空", nameof(account));
+                throw new ArgumentException(LF("Ipatool/Error/RequiredArgument", "account"), nameof(account));
             }
 
             if (string.IsNullOrWhiteSpace(password))
             {
-                throw new ArgumentException("password 不能为空", nameof(password));
+                throw new ArgumentException(LF("Ipatool/Error/RequiredArgument", "password"), nameof(password));
             }
 
             var arguments = new List<string>
@@ -77,7 +79,7 @@ namespace IPAbuyer.Common
             string safeName = name?.Trim() ?? string.Empty;
             if (safeName.Length == 0)
             {
-                throw new ArgumentException("应用名称不能为空", nameof(name));
+                throw new ArgumentException(L("Ipatool/Error/AppNameRequired"), nameof(name));
             }
 
             int cappedLimit = Math.Max(1, limit);
@@ -100,7 +102,7 @@ namespace IPAbuyer.Common
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    string errorMessage = $"请求失败: {(int)response.StatusCode} {response.ReasonPhrase}";
+                    string errorMessage = LF("Ipatool/Error/HttpRequestFailed", (int)response.StatusCode, response.ReasonPhrase);
                     return new IpatoolResult(null, string.IsNullOrWhiteSpace(content) ? errorMessage : content, (int)response.StatusCode, TimedOut: false);
                 }
 
@@ -108,7 +110,7 @@ namespace IPAbuyer.Common
             }
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
-                return new IpatoolResult(null, $"执行超时: {requestUri}", ExitCode: -1, TimedOut: true);
+                return new IpatoolResult(null, LF("Ipatool/Error/ExecutionTimeout", requestUri), ExitCode: -1, TimedOut: true);
             }
             catch (OperationCanceledException)
             {
@@ -269,12 +271,12 @@ namespace IPAbuyer.Common
         {
             if (string.IsNullOrWhiteSpace(account))
             {
-                throw new ArgumentException("account 不能为空", nameof(account));
+                throw new ArgumentException(LF("Ipatool/Error/RequiredArgument", "account"), nameof(account));
             }
 
             if (string.IsNullOrWhiteSpace(bundleId))
             {
-                throw new ArgumentException("bundleId 不能为空", nameof(bundleId));
+                throw new ArgumentException(LF("Ipatool/Error/RequiredArgument", "bundleId"), nameof(bundleId));
             }
 
             return ExecuteIpatoolAsync(
@@ -298,17 +300,17 @@ namespace IPAbuyer.Common
         {
             if (string.IsNullOrWhiteSpace(account))
             {
-                throw new ArgumentException("account 不能为空", nameof(account));
+                throw new ArgumentException(LF("Ipatool/Error/RequiredArgument", "account"), nameof(account));
             }
 
             if (string.IsNullOrWhiteSpace(bundleId))
             {
-                throw new ArgumentException("bundleId 不能为空", nameof(bundleId));
+                throw new ArgumentException(LF("Ipatool/Error/RequiredArgument", "bundleId"), nameof(bundleId));
             }
 
             if (string.IsNullOrWhiteSpace(outputDirectory))
             {
-                throw new ArgumentException("outputDirectory 不能为空", nameof(outputDirectory));
+                throw new ArgumentException(LF("Ipatool/Error/RequiredArgument", "outputDirectory"), nameof(outputDirectory));
             }
 
             Directory.CreateDirectory(outputDirectory);
@@ -341,7 +343,7 @@ namespace IPAbuyer.Common
                 process = new Process { StartInfo = psi, EnableRaisingEvents = true };
                 if (!process.Start())
                 {
-                    return new IpatoolResult(null, "无法启动 ipatool 进程", ExitCode: -1, TimedOut: false);
+                    return new IpatoolResult(null, L("Ipatool/Error/ProcessStartFailed"), ExitCode: -1, TimedOut: false);
                 }
 
                 using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -361,7 +363,7 @@ namespace IPAbuyer.Common
                 catch (OperationCanceledException)
                 {
                     TryTerminateProcess(process);
-                    return new IpatoolResult(null, $"执行超时: download --bundle-identifier {bundleId}", ExitCode: -1, TimedOut: true);
+                    return new IpatoolResult(null, LF("Ipatool/Error/ExecutionTimeout", $"download --bundle-identifier {bundleId}"), ExitCode: -1, TimedOut: true);
                 }
 
                 string output = outputBuilder.ToString();
@@ -465,7 +467,7 @@ namespace IPAbuyer.Common
 
                 if (!process.Start())
                 {
-                    return new IpatoolResult(null, "无法启动 ipatool 进程", ExitCode: -1, TimedOut: false);
+                    return new IpatoolResult(null, L("Ipatool/Error/ProcessStartFailed"), ExitCode: -1, TimedOut: false);
                 }
 
                 using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -481,7 +483,7 @@ namespace IPAbuyer.Common
                 catch (OperationCanceledException)
                 {
                     TryTerminateProcess(process);
-                    return new IpatoolResult(null, $"执行超时: {GetSafeCommandLabel(arguments)}", ExitCode: -1, TimedOut: true);
+                    return new IpatoolResult(null, LF("Ipatool/Error/ExecutionTimeout", GetSafeCommandLabel(arguments)), ExitCode: -1, TimedOut: true);
                 }
 
                 string output = await outputTask.ConfigureAwait(false);
@@ -537,7 +539,7 @@ namespace IPAbuyer.Common
 
                 if (!string.IsNullOrEmpty(architectureSuffix))
                 {
-                    string pattern = $"ipatool-*-windows-{architectureSuffix}.exe";
+                    string pattern = $"ipatool-main-windows-{architectureSuffix}.exe";
                     string? candidate = Directory.GetFiles(includeDirectory, pattern, SearchOption.TopDirectoryOnly)
                         .OrderByDescending(path => path, StringComparer.OrdinalIgnoreCase)
                         .FirstOrDefault();
@@ -549,7 +551,7 @@ namespace IPAbuyer.Common
                 }
             }
 
-            Debug.WriteLine("未在应用目录中找到专用 ipatool，可执行文件将从 PATH 中解析。");
+            Debug.WriteLine(L("Ipatool/Debug/FallbackToPath"));
             return "ipatool.exe";
         }
 
@@ -573,7 +575,7 @@ namespace IPAbuyer.Common
                 return fallbackPassphrase;
             }
 
-            throw new InvalidOperationException("未找到可用的加密密钥，请先在账户页面重新登录后再试。");
+            throw new InvalidOperationException(L("Ipatool/Error/MissingPassphrase"));
         }
 
         private static bool TryReadEmailProperty(JsonElement root, string propertyName, out string email)
@@ -680,12 +682,12 @@ namespace IPAbuyer.Common
 
                     if (root.TryGetProperty("error", out var error) && error.ValueKind == JsonValueKind.String)
                     {
-                        return $"ipatool 错误: {error.GetString()} (exit: {exitCode})";
+                        return LF("Ipatool/Error/ReadableJsonError", error.GetString(), exitCode);
                     }
 
                     if (root.TryGetProperty("message", out var message) && message.ValueKind == JsonValueKind.String)
                     {
-                        return $"ipatool 错误: {message.GetString()} (exit: {exitCode})";
+                        return LF("Ipatool/Error/ReadableJsonError", message.GetString(), exitCode);
                     }
                 }
                 catch (JsonException)
@@ -696,7 +698,7 @@ namespace IPAbuyer.Common
                 return trimmed;
             }
 
-            return $"ipatool 执行失败 (exit: {exitCode})";
+            return LF("Ipatool/Error/ExecutionFailed", exitCode);
         }
 
         private static string Preview(string? value)
@@ -717,12 +719,12 @@ namespace IPAbuyer.Common
                 if (File.Exists(lockPath))
                 {
                     File.Delete(lockPath);
-                    Debug.WriteLine($"删除 ipatool cookies.lock: {lockPath}");
+                    Debug.WriteLine(LF("Ipatool/Debug/DeleteCookieLock", lockPath));
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"删除 ipatool cookies.lock 失败: {ex.Message}");
+                Debug.WriteLine(LF("Ipatool/Debug/DeleteCookieLockFailed", ex.Message));
             }
         }
 
@@ -851,6 +853,16 @@ namespace IPAbuyer.Common
             }
 
             return string.Join(" ", rendered);
+        }
+
+        private static string L(string key)
+        {
+            return Loader.GetString(key);
+        }
+
+        private static string LF(string key, params object[] args)
+        {
+            return string.Format(System.Globalization.CultureInfo.CurrentCulture, L(key), args);
         }
     }
 }

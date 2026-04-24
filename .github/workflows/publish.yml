@@ -44,25 +44,94 @@ jobs:
       shell: pwsh
       run: dotnet restore ${{ env.PROJECTCSPROJ }}
 
-    - name: Dotnet Build
+    - name: Dotnet Build x64
       shell: pwsh
       run: |
         dotnet build ${{ env.PROJECTCSPROJ }} `
           -c Release `
           /p:WindowsPackageType=MSIX `
           /p:GenerateAppxPackageOnBuild=true `
-          /p:AppxBundle=Always `
-          "/p:AppxBundlePlatforms=x64|ARM64" `
+          /p:AppxBundle=Never `
+          /p:AppxPackageDir="${{ github.workspace }}\artifacts\packages\x64\\" `
           /p:Platform=x64 `
           /p:AppxPackageSigningEnabled=true `
           /p:PackageCertificateThumbprint="${{ steps.cert.outputs.THUMBPRINT }}"
+
+    - name: Dotnet Build ARM64
+      shell: pwsh
+      run: |
+        dotnet build ${{ env.PROJECTCSPROJ }} `
+          -c Release `
+          /p:WindowsPackageType=MSIX `
+          /p:GenerateAppxPackageOnBuild=true `
+          /p:AppxBundle=Never `
+          /p:AppxPackageDir="${{ github.workspace }}\artifacts\packages\arm64\\" `
+          /p:Platform=ARM64 `
+          /p:AppxPackageSigningEnabled=true `
+          /p:PackageCertificateThumbprint="${{ steps.cert.outputs.THUMBPRINT }}"
+
+    - name: Create MSIX Bundle
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = "Stop"
+
+        $packageRoot = Join-Path $env:GITHUB_WORKSPACE "artifacts\packages"
+        $bundleSource = Join-Path $env:RUNNER_TEMP "BundleSource"
+        $artifactDirectory = Join-Path $env:GITHUB_WORKSPACE "artifacts"
+        New-Item -ItemType Directory -Force -Path $bundleSource | Out-Null
+        New-Item -ItemType Directory -Force -Path $artifactDirectory | Out-Null
+
+        Copy-Item -Path (Join-Path $packageRoot "x64\*.msix") -Destination $bundleSource -Force
+        Copy-Item -Path (Join-Path $packageRoot "arm64\*.msix") -Destination $bundleSource -Force
+
+        $bundlePackages = @(Get-ChildItem -Path $bundleSource -Filter "*.msix")
+        if ($bundlePackages.Count -ne 2) {
+          throw "Expected 2 MSIX packages for bundling, found $($bundlePackages.Count)."
+        }
+
+        $makeAppx = Get-Command makeappx.exe -ErrorAction SilentlyContinue
+        if (-not $makeAppx) {
+          $makeAppx = Get-ChildItem -Path "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Recurse -Filter makeappx.exe |
+            Where-Object { $_.FullName -match "\\x64\\makeappx\.exe$" } |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1
+        }
+
+        if (-not $makeAppx) {
+          throw "makeappx.exe was not found."
+        }
+
+        $makeAppxPath = if ($makeAppx.Source) { $makeAppx.Source } else { $makeAppx.FullName }
+        $bundlePath = Join-Path $artifactDirectory "IPAbuyer.msixbundle"
+        & $makeAppxPath bundle /d $bundleSource /p $bundlePath /overwrite
+        if ($LASTEXITCODE -ne 0) {
+          throw "makeappx.exe failed with exit code $LASTEXITCODE."
+        }
+
+        $signTool = Get-Command signtool.exe -ErrorAction SilentlyContinue
+        if (-not $signTool) {
+          $signTool = Get-ChildItem -Path "${env:ProgramFiles(x86)}\Windows Kits\10\bin" -Recurse -Filter signtool.exe |
+            Where-Object { $_.FullName -match "\\x64\\signtool\.exe$" } |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1
+        }
+
+        if (-not $signTool) {
+          throw "signtool.exe was not found."
+        }
+
+        $signToolPath = if ($signTool.Source) { $signTool.Source } else { $signTool.FullName }
+        & $signToolPath sign /fd SHA256 /sha "${{ steps.cert.outputs.THUMBPRINT }}" $bundlePath
+        if ($LASTEXITCODE -ne 0) {
+          throw "signtool.exe failed with exit code $LASTEXITCODE."
+        }
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v7
       with:
         name: IPAbuyer
         path: |
-          **/IPAbuyer*.msixbundle
+          artifacts/IPAbuyer.msixbundle
         if-no-files-found: error
 
     - name: Cleanup Certificate

@@ -99,6 +99,11 @@ namespace IPAbuyer.Common
                 return UiLogLevel.Tip;
             }
 
+            if (normalizedMessage.StartsWith("下载队列完成", StringComparison.OrdinalIgnoreCase))
+            {
+                return UiLogLevel.Info;
+            }
+
             if (rawMessage.Contains("[成功]", StringComparison.OrdinalIgnoreCase)
                 || normalizedMessage.Contains("成功", StringComparison.OrdinalIgnoreCase))
             {

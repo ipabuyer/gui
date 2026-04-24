@@ -15,11 +15,13 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.Windows.ApplicationModel.Resources;
 
 namespace IPAbuyer.Views
 {
     public sealed partial class MainPage : Page
     {
+        private static readonly ResourceLoader Loader = new();
         private readonly List<SearchResult> _allResults = new();
         private readonly DownloadQueueService _downloadQueueService = DownloadQueueService.Instance;
         private readonly StringBuilder _homeLogBuilder = new();
@@ -29,19 +31,19 @@ namespace IPAbuyer.Views
         private string _selectedFilter = "All";
         private string? _sortKey;
         private SortDirection _sortDirection = SortDirection.None;
-        private const string StatusPurchased = "已购买";
-        private const string StatusOwned = "已拥有";
-        private const string StatusCanPurchase = "未购买";
+        private static readonly string StatusPurchased = L("Common/Status/Purchased");
+        private static readonly string StatusOwned = L("Common/Status/Owned");
+        private static readonly string StatusCanPurchase = L("Common/Status/NotPurchased");
 
-        private static readonly string[] PurchasedAliases = { "已购买", "宸茶喘涔?" };
-        private static readonly string[] OwnedAliases = { "已拥有", "宸叉嫢鏈?" };
-        private static readonly string[] CanPurchaseAliases = { "可购买", "未购买", "鍙喘涔?", "鏈喘涔?" };
-        private const string NameHeaderBase = "App名称";
-        private const string IdHeaderBase = "AppID";
-        private const string DeveloperHeaderBase = "开发者";
-        private const string VersionHeaderBase = "版本号";
-        private const string PriceHeaderBase = "价格";
-        private const string PurchasedHeaderBase = "购买状态";
+        private static readonly string[] PurchasedAliases = { StatusPurchased };
+        private static readonly string[] OwnedAliases = { StatusOwned };
+        private static readonly string[] CanPurchaseAliases = { L("Common/Status/CanPurchase"), StatusCanPurchase };
+        private static readonly string NameHeaderBase = L("MainPage/Header/NameButton/Content");
+        private static readonly string IdHeaderBase = L("MainPage/Header/IdButton/Content");
+        private static readonly string DeveloperHeaderBase = L("MainPage/Header/DeveloperButton/Content");
+        private static readonly string VersionHeaderBase = L("MainPage/Header/VersionButton/Content");
+        private static readonly string PriceHeaderBase = L("MainPage/Header/PriceButton/Content");
+        private static readonly string PurchasedHeaderBase = L("MainPage/Header/PurchasedButton/Content");
         private const int MaxLogLines = 1000;
 
         public int SearchLimitNum { get; set; } = 100;
@@ -75,11 +77,11 @@ namespace IPAbuyer.Views
         {
             if (string.IsNullOrWhiteSpace(appName))
             {
-                AppendHomeLog("搜索词为空，已忽略。");
+                AppendHomeLog(L("MainPage/Log/SearchEmptyIgnored"));
                 return;
             }
 
-            AppendHomeLog($"开始搜索: {appName.Trim()}");
+            AppendHomeLog(LF("MainPage/Log/SearchStarted", appName.Trim()));
             SetTableLoading(true);
             try
             {
@@ -87,7 +89,7 @@ namespace IPAbuyer.Views
             }
             catch (Exception ex)
             {
-                AppendHomeLog($"搜索异常: {ex.Message}");
+                AppendHomeLog(LF("MainPage/Log/SearchException", ex.Message));
             }
             finally
             {
@@ -108,7 +110,7 @@ namespace IPAbuyer.Views
                     ResultList.ItemsSource = null;
                 }
 
-                AppendHomeLog("搜索超时或无返回结果。");
+                AppendHomeLog(L("MainPage/Log/SearchTimeoutOrEmpty"));
                 return;
             }
 
@@ -167,7 +169,7 @@ namespace IPAbuyer.Views
                 }
 
                 ApplyFilterAndRefresh();
-                AppendHomeLog($"搜索完成，共 {_allResults.Count} 条结果。");
+                AppendHomeLog(LF("MainPage/Log/SearchCompleted", _allResults.Count));
             }
             catch (JsonException)
             {
@@ -176,7 +178,7 @@ namespace IPAbuyer.Views
                     ResultList.ItemsSource = null;
                 }
 
-                AppendHomeLog("搜索结果解析失败。");
+                AppendHomeLog(L("MainPage/Log/SearchParseFailed"));
             }
         }
 
@@ -190,7 +192,7 @@ namespace IPAbuyer.Views
             var selectedApps = ResultList.SelectedItems.OfType<SearchResult>().ToList();
             if (selectedApps.Count == 0)
             {
-                AppendHomeLog("未选择应用，无法批量购买。");
+                AppendHomeLog(L("MainPage/Log/BatchPurchaseEmpty"));
                 return;
             }
 
@@ -202,20 +204,20 @@ namespace IPAbuyer.Views
 
             try
             {
-                AppendHomeLog($"开始批量购买，共 {selectedApps.Count} 项。");
+                AppendHomeLog(LF("MainPage/Log/BatchPurchaseStarted", selectedApps.Count));
                 bool executed = await PurchaseAppsAsync(selectedApps);
                 if (executed)
                 {
-                    AppendHomeLog("批量购买执行完成。");
+                    AppendHomeLog(L("MainPage/Log/BatchPurchaseCompleted"));
                 }
             }
             catch (OperationCanceledException)
             {
-                AppendHomeLog("批量购买已取消。");
+                AppendHomeLog(L("MainPage/Log/BatchPurchaseCanceled"));
             }
             catch (Exception ex)
             {
-                AppendHomeLog($"批量购买异常: {ex.Message}");
+                AppendHomeLog(LF("MainPage/Log/BatchPurchaseException", ex.Message));
             }
             finally
             {
@@ -237,19 +239,20 @@ namespace IPAbuyer.Views
             }
 
             int added = 0;
+            int updated = 0;
+            int ignored = 0;
             foreach (var app in ResultList.SelectedItems.OfType<SearchResult>())
             {
-                _downloadQueueService.AddOrUpdateFromSearchResult(app);
-                added++;
+                CountDownloadQueueAddResult(_downloadQueueService.AddOrUpdateFromSearchResult(app), ref added, ref updated, ref ignored);
             }
 
-            if (added == 0)
+            if (added == 0 && updated == 0)
             {
-                AppendHomeLog("未选择应用，无法开始下载。");
+                AppendHomeLog(ignored > 0 ? L("MainPage/DownloadQueue/AddSelectedIgnored") : L("MainPage/DownloadQueue/AddSelectedEmpty"));
                 return;
             }
 
-            AppendHomeLog($"已加入下载队列: {added} 项。");
+            AppendHomeLog(BuildDownloadQueueAddSummary(added, updated));
             await StartDownloadQueueFromMainAsync();
         }
 
@@ -269,16 +272,16 @@ namespace IPAbuyer.Views
 
             try
             {
-                AppendHomeLog($"右键购买，共 {selectedApps.Count} 项。");
+                AppendHomeLog(LF("MainPage/Log/ContextPurchaseStarted", selectedApps.Count));
                 _ = await PurchaseAppsAsync(selectedApps);
             }
             catch (OperationCanceledException)
             {
-                AppendHomeLog("右键购买已取消。");
+                AppendHomeLog(L("MainPage/Log/ContextPurchaseCanceled"));
             }
             catch (Exception ex)
             {
-                AppendHomeLog($"右键购买异常: {ex.Message}");
+                AppendHomeLog(LF("MainPage/Log/ContextPurchaseException", ex.Message));
             }
             finally
             {
@@ -300,12 +303,21 @@ namespace IPAbuyer.Views
                 return;
             }
 
+            int added = 0;
+            int updated = 0;
+            int ignored = 0;
             foreach (var app in selectedApps)
             {
-                _downloadQueueService.AddOrUpdateFromSearchResult(app);
+                CountDownloadQueueAddResult(_downloadQueueService.AddOrUpdateFromSearchResult(app), ref added, ref updated, ref ignored);
             }
 
-            AppendHomeLog($"右键加入下载队列: {selectedApps.Count} 项。");
+            if (added == 0 && updated == 0)
+            {
+                AppendHomeLog(ignored > 0 ? L("MainPage/DownloadQueue/AddContextIgnored") : L("MainPage/DownloadQueue/AddContextEmpty"));
+                return;
+            }
+
+            AppendHomeLog(LF("MainPage/DownloadQueue/ContextAddSummaryPrefix", BuildDownloadQueueAddSummary(added, updated)));
             await StartDownloadQueueFromMainAsync();
         }
 
@@ -313,7 +325,7 @@ namespace IPAbuyer.Views
         {
             if (_downloadQueueService.IsRunning)
             {
-                AppendHomeLog("下载队列已在运行。");
+                AppendHomeLog(L("MainPage/DownloadQueue/AlreadyRunningContinue"));
                 UpdateDownloadActionState();
                 return;
             }
@@ -325,12 +337,44 @@ namespace IPAbuyer.Views
             }
             catch (Exception ex)
             {
-                AppendHomeLog($"开始下载失败: {ex.Message}");
+                AppendHomeLog(LF("MainPage/DownloadQueue/StartFailed", ex.Message));
             }
             finally
             {
                 UpdateDownloadActionState();
             }
+        }
+
+        private static void CountDownloadQueueAddResult(DownloadQueueAddResult result, ref int added, ref int updated, ref int ignored)
+        {
+            switch (result)
+            {
+                case DownloadQueueAddResult.Added:
+                    added++;
+                    break;
+                case DownloadQueueAddResult.Updated:
+                case DownloadQueueAddResult.Requeued:
+                    updated++;
+                    break;
+                default:
+                    ignored++;
+                    break;
+            }
+        }
+
+        private static string BuildDownloadQueueAddSummary(int added, int updated)
+        {
+            if (added > 0 && updated > 0)
+            {
+                return LF("MainPage/DownloadQueue/AddSummaryAddedAndUpdated", added, updated);
+            }
+
+            if (added > 0)
+            {
+                return LF("MainPage/DownloadQueue/AddSummaryAdded", added);
+            }
+
+            return LF("MainPage/DownloadQueue/AddSummaryUpdated", updated);
         }
 
         private void CancelAllDownloadsButton_Click(object sender, RoutedEventArgs e)
@@ -452,22 +496,22 @@ namespace IPAbuyer.Views
             }
 
             ApplyFilterAndRefresh(preserveScrollPosition: true);
-            AppendHomeLog($"已标记 {selectedApps.Count} 项为 {status}。");
+            AppendHomeLog(LF("MainPage/Log/MarkedStatus", selectedApps.Count, status));
         }
 
         private void ContextMenuCopyName_Click(object sender, RoutedEventArgs e)
         {
-            CopyField(sender, app => app.name ?? string.Empty, "App 名称");
+            CopyField(sender, app => app.name ?? string.Empty, L("MainPage/Field/Name"));
         }
 
         private void ContextMenuCopyId_Click(object sender, RoutedEventArgs e)
         {
-            CopyField(sender, app => app.id ?? string.Empty, "ID");
+            CopyField(sender, app => app.id ?? string.Empty, L("MainPage/Field/Id"));
         }
 
         private void ContextMenuCopyVersion_Click(object sender, RoutedEventArgs e)
         {
-            CopyField(sender, app => app.version ?? string.Empty, "版本号");
+            CopyField(sender, app => app.version ?? string.Empty, L("MainPage/Field/Version"));
         }
 
         private void CopyField(object sender, Func<SearchResult, string> selector, string fieldName)
@@ -481,7 +525,7 @@ namespace IPAbuyer.Views
             string value = string.Join(Environment.NewLine, selectedApps.Select(selector).Where(v => !string.IsNullOrWhiteSpace(v)));
             if (string.IsNullOrWhiteSpace(value))
             {
-                AppendHomeLog($"复制失败：{fieldName}为空。");
+                AppendHomeLog(LF("MainPage/Log/CopyFieldEmpty", fieldName));
                 return;
             }
 
@@ -489,7 +533,7 @@ namespace IPAbuyer.Views
             package.SetText(value);
             Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
             Windows.ApplicationModel.DataTransfer.Clipboard.Flush();
-            AppendHomeLog($"已复制{fieldName}，共 {selectedApps.Count} 项。");
+            AppendHomeLog(LF("MainPage/Log/CopyFieldSuccess", fieldName, selectedApps.Count));
         }
 
         private void ScreeningComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -498,7 +542,7 @@ namespace IPAbuyer.Views
             {
                 _selectedFilter = selected.Tag?.ToString() ?? "All";
                 ApplyFilterAndRefresh();
-                AppendHomeLog($"切换筛选: {_selectedFilter}");
+                AppendHomeLog(LF("MainPage/Log/FilterChanged", _selectedFilter));
             }
         }
 
@@ -549,8 +593,8 @@ namespace IPAbuyer.Views
             if (string.IsNullOrWhiteSpace(account))
             {
                 string message = SessionState.IsLoggedIn
-                    ? "当前登录状态未获取到邮箱，请先在账户页面退出并重新登录。"
-                    : "请先在账户页面登录后再购买。";
+                    ? L("MainPage/Purchase/MissingSessionEmail")
+                    : L("MainPage/Purchase/LoginRequired");
                 AppendHomeLog(message);
                 return false;
             }
@@ -573,7 +617,7 @@ namespace IPAbuyer.Views
 
                 if (!IsPriceFree(app.price))
                 {
-                    AppendHomeLog($"非免费应用，已跳过购买: {app.name ?? app.bundleId}");
+                    AppendHomeLog(LF("MainPage/Purchase/SkipNonFree", app.name ?? app.bundleId));
                     continue;
                 }
 
@@ -581,7 +625,7 @@ namespace IPAbuyer.Views
                 {
                     app.purchased = StatusPurchased;
                     PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusPurchased);
-                    AppendHomeLog($"测试账户购买成功: {app.name ?? app.bundleId}");
+                    AppendHomeLog(LF("MainPage/Purchase/MockSuccess", app.name ?? app.bundleId));
                     continue;
                 }
 
@@ -590,7 +634,7 @@ namespace IPAbuyer.Views
                 {
                     app.purchased = StatusPurchased;
                     PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusPurchased);
-                    AppendHomeLog($"购买成功: {app.name ?? app.bundleId}");
+                    AppendHomeLog(LF("MainPage/Purchase/Success", app.name ?? app.bundleId));
                 }
                 else
                 {
@@ -601,19 +645,19 @@ namespace IPAbuyer.Views
                         {
                             app.purchased = StatusOwned;
                             PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusOwned);
-                            AppendHomeLog($"疑似已拥有，已标记: {app.name ?? app.bundleId}");
+                            AppendHomeLog(LF("MainPage/Purchase/OwnedMarked", app.name ?? app.bundleId));
                         }
                         else
                         {
-                            AppendHomeLog($"疑似已拥有，未标记: {app.name ?? app.bundleId}");
+                            AppendHomeLog(LF("MainPage/Purchase/OwnedNotMarked", app.name ?? app.bundleId));
                         }
                     }
                     else
                     {
                         string reason = string.IsNullOrWhiteSpace(result.OutputOrError)
-                            ? "未知错误"
+                            ? L("MainPage/Purchase/UnknownError")
                             : result.OutputOrError;
-                        AppendHomeLog($"购买失败: {app.name ?? app.bundleId} - {reason}");
+                        AppendHomeLog(LF("MainPage/Purchase/Failed", app.name ?? app.bundleId, reason));
                     }
                 }
             }
@@ -629,23 +673,23 @@ namespace IPAbuyer.Views
 
             var disablePromptCheckBox = new CheckBox
             {
-                Content = "不再提示，后续直接标记为已拥有"
+                Content = L("MainPage/OwnedPrompt/DisablePrompt")
             };
 
             var contentPanel = new StackPanel { Spacing = 8 };
             contentPanel.Children.Add(new TextBlock
             {
-                Text = $"ipatool 返回 STDQ：{app.name ?? app.bundleId} 可能已拥有，是否标记为“已拥有”？",
+                Text = LF("MainPage/OwnedPrompt/Message", app.name ?? app.bundleId),
                 TextWrapping = TextWrapping.Wrap
             });
             contentPanel.Children.Add(disablePromptCheckBox);
 
             var dialog = new ContentDialog
             {
-                Title = "疑似已拥有",
+                Title = L("MainPage/OwnedPrompt/Title"),
                 Content = contentPanel,
-                PrimaryButtonText = "标记为已拥有",
-                CloseButtonText = "取消",
+                PrimaryButtonText = L("MainPage/OwnedPrompt/PrimaryButton"),
+                CloseButtonText = L("Common/Cancel"),
                 XamlRoot = XamlRoot
             };
 
@@ -749,7 +793,7 @@ namespace IPAbuyer.Views
 
             string normalized = price.Trim();
             return normalized.Equals("free", StringComparison.OrdinalIgnoreCase)
-                || normalized.Equals("免费", StringComparison.OrdinalIgnoreCase);
+                || normalized.Equals(L("Common/Price/Free"), StringComparison.OrdinalIgnoreCase);
         }
 
         private static string? GetBundleId(JsonElement element)
@@ -813,12 +857,12 @@ namespace IPAbuyer.Views
             if (decimal.TryParse(rawPrice, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal value)
                 && value <= 0m)
             {
-                return "免费";
+                return L("Common/Price/Free");
             }
 
             if (rawPrice.Trim().Equals("free", StringComparison.OrdinalIgnoreCase))
             {
-                return "免费";
+                return L("Common/Price/Free");
             }
 
             return rawPrice.Trim();
@@ -905,7 +949,7 @@ namespace IPAbuyer.Views
                 return decimal.MaxValue;
             }
 
-            if (price.Trim().Equals("免费", StringComparison.OrdinalIgnoreCase)
+            if (price.Trim().Equals(L("Common/Price/Free"), StringComparison.OrdinalIgnoreCase)
                 || price.Trim().Equals("free", StringComparison.OrdinalIgnoreCase))
             {
                 return 0m;
@@ -953,7 +997,7 @@ namespace IPAbuyer.Views
             string text = _homeLogBuilder.ToString();
             if (string.IsNullOrWhiteSpace(text))
             {
-                AppendHomeLog("日志为空，无可复制内容。");
+                AppendHomeLog(L("MainPage/Log/CopyEmptyLog"));
                 return;
             }
 
@@ -961,7 +1005,7 @@ namespace IPAbuyer.Views
             package.SetText(text);
             Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
             Windows.ApplicationModel.DataTransfer.Clipboard.Flush();
-            AppendHomeLog("日志已复制到剪贴板。");
+            AppendHomeLog(L("MainPage/Log/CopiedToClipboard"));
         }
 
         private void ClearHomeLog_Click(object sender, RoutedEventArgs e)
@@ -973,7 +1017,7 @@ namespace IPAbuyer.Views
         {
             _homeLogBuilder.Clear();
             _homeLogEntries.Clear();
-            AppendHomeLog("日志已清空。");
+            AppendHomeLog(L("MainPage/Log/Cleared"));
         }
 
         private async void ShowHomeLogDialog_Click(object sender, RoutedEventArgs e)
@@ -1049,6 +1093,16 @@ namespace IPAbuyer.Views
                 UiLogLevel.Tip => InfoBarSeverity.Warning,
                 _ => InfoBarSeverity.Informational
             };
+        }
+
+        private static string L(string key)
+        {
+            return Loader.GetString(key);
+        }
+
+        private static string LF(string key, params object[] args)
+        {
+            return string.Format(CultureInfo.CurrentCulture, L(key), args);
         }
 
         private void SetTableLoading(bool isLoading)

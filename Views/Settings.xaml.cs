@@ -91,7 +91,7 @@ namespace IPAbuyer.Views
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"初始化国家代码失败: {ex.Message}");
+                Debug.WriteLine(LF("Settings/Debug/InitializeCountryCodeFailed", ex.Message));
             }
         }
 
@@ -106,7 +106,7 @@ namespace IPAbuyer.Views
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"初始化下载目录失败: {ex.Message}");
+                Debug.WriteLine(LF("Settings/Debug/InitializeDownloadDirectoryFailed", ex.Message));
             }
         }
 
@@ -469,7 +469,7 @@ namespace IPAbuyer.Views
                 return null;
             }
 
-            string pattern = $"ipatool-*-windows-{architectureSuffix}.exe";
+            string pattern = $"ipatool-main-windows-{architectureSuffix}.exe";
             return Directory.GetFiles(includeDirectory, pattern, SearchOption.TopDirectoryOnly)
                 .OrderByDescending(path => path, StringComparer.OrdinalIgnoreCase)
                 .FirstOrDefault();
