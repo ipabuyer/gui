@@ -622,7 +622,7 @@ namespace IPAbuyer.Views
         {
             if (LoginStatusInfoBar != null)
             {
-                LoginStatusInfoBar.IsOpen = true;
+                LoginStatusInfoBar.IsOpen = false;
             }
         }
 

@@ -81,7 +81,7 @@
           </StackPanel>
           <InfoBar
             x:Name="LoginStatusInfoBar"
-            IsOpen="True"
+            IsOpen="False"
             IsClosable="True"
             Severity="Informational" />
         </StackPanel>

@@ -112,7 +112,7 @@
                             Canvas.ZIndex="10" />
                     </Grid>
                 </Border>
-                <InfoBar x:Name="HomeStatusInfoBar" Grid.Row="2" IsOpen="True" IsClosable="True" Severity="Informational" />
+                <InfoBar x:Name="HomeStatusInfoBar" Grid.Row="2" IsOpen="False" IsClosable="True" Severity="Informational" />
             </Grid>
         </Grid>
     </Page.Content>
