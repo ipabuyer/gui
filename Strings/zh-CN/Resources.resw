@@ -469,7 +469,7 @@
     <value>如需修改加密密钥，请先退出登录并重新登录。</value>
   </data>
   <data name="LoginPage/NewAccountHintText.Text" xml:space="preserve">
-    <value>提示：新创建的 Apple 账号需先在苹果设备 App Store 完成一次购买后，才能正常使用下载与购买功能。</value>
+    <value>新创建的 Apple 账号需先在苹果设备 App Store 完成一次购买后，才能正常使用下载与购买功能。</value>
   </data>
   <data name="LoginPage/EmailLabel.Text" xml:space="preserve">
     <value>电子邮箱地址</value>
@@ -495,9 +495,6 @@
   <data name="LoginPage/PassphraseInput.PlaceholderText" xml:space="preserve">
     <value>用于 ipatool keychain-passphrase</value>
   </data>
-  <data name="LoginPage/LockedOverlayText.Text" xml:space="preserve">
-    <value>当前为已登录状态，操作区已锁定</value>
-  </data>
   <data name="LoginPage/LoginButton.Content" xml:space="preserve">
     <value>登录</value>
   </data>
@@ -512,6 +509,177 @@
   </data>
   <data name="LoginPage/TwoFactorHelpText.Text" xml:space="preserve">
     <value>收不到验证码时，请点击“打开苹果账户官网”前往 account.apple.com 获取验证码。</value>
+  </data>
+  <data name="LoginPage/HelpGlyph.Text" xml:space="preserve">
+    <value>?</value>
+  </data>
+  <data name="LoginPage/Status/QueryingAuthInfo" xml:space="preserve">
+    <value>正在查询登录状态...</value>
+  </data>
+  <data name="LoginPage/Status/AuthInfoSuccess" xml:space="preserve">
+    <value>登录状态正常</value>
+  </data>
+  <data name="LoginPage/Status/AuthInfoEmailMissing" xml:space="preserve">
+    <value>已查询到登录状态，但未获取到邮箱。请先重新登录后再进行购买或下载。</value>
+  </data>
+  <data name="LoginPage/Status/AuthInfoFailed" xml:space="preserve">
+    <value>登录状态异常</value>
+  </data>
+  <data name="LoginPage/Status/AuthInfoException" xml:space="preserve">
+    <value>查询登录状态失败: {0}</value>
+  </data>
+  <data name="LoginPage/Status/LoggingOut" xml:space="preserve">
+    <value>正在退出登录...</value>
+  </data>
+  <data name="LoginPage/Status/LogoutSuccess" xml:space="preserve">
+    <value>已退出登录</value>
+  </data>
+  <data name="LoginPage/Status/LogoutFailed" xml:space="preserve">
+    <value>退出登录失败</value>
+  </data>
+  <data name="LoginPage/Status/LogoutException" xml:space="preserve">
+    <value>退出登录失败: {0}</value>
+  </data>
+  <data name="LoginPage/Status/EmailRequired" xml:space="preserve">
+    <value>邮箱不能为空</value>
+  </data>
+  <data name="LoginPage/Status/RequiredFieldsEmpty" xml:space="preserve">
+    <value>邮箱、密码和加密密钥不能为空</value>
+  </data>
+  <data name="LoginPage/Status/LoggingIn" xml:space="preserve">
+    <value>正在登录...</value>
+  </data>
+  <data name="LoginPage/Status/LoginFlowException" xml:space="preserve">
+    <value>登录流程异常: {0}</value>
+  </data>
+  <data name="LoginPage/Status/LoginException" xml:space="preserve">
+    <value>登录失败: {0}</value>
+  </data>
+  <data name="LoginPage/Status/Verifying" xml:space="preserve">
+    <value>正在验证...</value>
+  </data>
+  <data name="LoginPage/Status/VerifyException" xml:space="preserve">
+    <value>验证失败: {0}</value>
+  </data>
+  <data name="LoginPage/Status/AuthCodeInvalid" xml:space="preserve">
+    <value>验证码错误，请重新输入。</value>
+  </data>
+  <data name="LoginPage/Status/VerifyFailedRetry" xml:space="preserve">
+    <value>验证失败，请重试。</value>
+  </data>
+  <data name="LoginPage/Status/TwoFactorPromptFallback" xml:space="preserve">
+    <value>请输入两步验证码继续登录。如果未收到验证码，请打开 https://account.apple.com/ 获取后再输入。</value>
+  </data>
+  <data name="LoginPage/Status/TwoFactorPromptWithMessage" xml:space="preserve">
+    <value>{0} 如未收到验证码，请打开 https://account.apple.com/ 获取后再输入。</value>
+  </data>
+  <data name="LoginPage/Status/LoginSuccess" xml:space="preserve">
+    <value>登录成功</value>
+  </data>
+  <data name="LoginPage/Status/OpenAppleAccountSiteFailed" xml:space="preserve">
+    <value>打开苹果账户官网失败: {0}</value>
+  </data>
+  <data name="LoginPage/Status/OperationLocked" xml:space="preserve">
+    <value>当前为已登录状态，操作区已锁定</value>
+  </data>
+  <data name="LoginPage/Log/StartVerifyTwoFactor" xml:space="preserve">
+    <value>开始验证双重验证码。</value>
+  </data>
+  <data name="LoginPage/Log/StartLogin" xml:space="preserve">
+    <value>开始登录。</value>
+  </data>
+  <data name="LoginPage/Log/LoginFlowException" xml:space="preserve">
+    <value>登录流程异常: {0}</value>
+  </data>
+  <data name="LoginPage/Log/AuthInfoSuccess" xml:space="preserve">
+    <value>查询登录状态成功: {0}</value>
+  </data>
+  <data name="LoginPage/Log/AuthInfoEmailMissing" xml:space="preserve">
+    <value>查询登录状态成功，但未获取到邮箱。</value>
+  </data>
+  <data name="LoginPage/Log/AuthInfoFailed" xml:space="preserve">
+    <value>查询登录状态失败。</value>
+  </data>
+  <data name="LoginPage/Log/AuthInfoException" xml:space="preserve">
+    <value>查询登录状态异常: {0}</value>
+  </data>
+  <data name="LoginPage/Log/LogoutSuccess" xml:space="preserve">
+    <value>退出登录成功: {0}</value>
+  </data>
+  <data name="LoginPage/Log/LogoutFailed" xml:space="preserve">
+    <value>退出登录失败: {0}</value>
+  </data>
+  <data name="LoginPage/Log/LogoutException" xml:space="preserve">
+    <value>退出登录异常: {0}</value>
+  </data>
+  <data name="LoginPage/Log/RequiredFieldsEmpty" xml:space="preserve">
+    <value>登录已阻止: 必填项为空。</value>
+  </data>
+  <data name="LoginPage/Log/LoginCanceled" xml:space="preserve">
+    <value>登录请求已取消。</value>
+  </data>
+  <data name="LoginPage/Log/LoginException" xml:space="preserve">
+    <value>登录异常: {0}</value>
+  </data>
+  <data name="LoginPage/Log/EmptyAuthCodeUsesDefault" xml:space="preserve">
+    <value>双重验证码为空，按 000000 处理。</value>
+  </data>
+  <data name="LoginPage/Log/CodeValidationCanceled" xml:space="preserve">
+    <value>验证码验证已取消。</value>
+  </data>
+  <data name="LoginPage/Log/CodeValidationException" xml:space="preserve">
+    <value>验证码验证异常: {0}</value>
+  </data>
+  <data name="LoginPage/Log/CodeValidationInvalid" xml:space="preserve">
+    <value>验证码验证失败: 验证码错误。</value>
+  </data>
+  <data name="LoginPage/Log/CodeValidationTimeout" xml:space="preserve">
+    <value>验证码验证失败: 请求超时。</value>
+  </data>
+  <data name="LoginPage/Log/CodeValidationFailed" xml:space="preserve">
+    <value>验证码验证失败。</value>
+  </data>
+  <data name="LoginPage/Log/CodeValidationSuccess" xml:space="preserve">
+    <value>双重验证码验证成功。</value>
+  </data>
+  <data name="LoginPage/Log/LoginSuccess" xml:space="preserve">
+    <value>登录成功。</value>
+  </data>
+  <data name="LoginPage/Log/TwoFactorRequired" xml:space="preserve">
+    <value>需要输入双重验证码。</value>
+  </data>
+  <data name="LoginPage/Log/LoginFailed" xml:space="preserve">
+    <value>登录失败: {0}</value>
+  </data>
+  <data name="LoginPage/Log/ErrorPrefixFormat" xml:space="preserve">
+    <value>[错误] {0}</value>
+  </data>
+  <data name="LoginPage/Log/SuccessPrefixFormat" xml:space="preserve">
+    <value>[成功] {0}</value>
+  </data>
+  <data name="LoginPage/Log/AuthErrorPrefixFormat" xml:space="preserve">
+    <value>[验证码错误] {0}</value>
+  </data>
+  <data name="LoginPage/Log/AuthWarningPrefixFormat" xml:space="preserve">
+    <value>[验证码提示] {0}</value>
+  </data>
+  <data name="LoginPage/Debug/SaveAccountInfoFailed" xml:space="preserve">
+    <value>保存账户信息失败: {0}</value>
+  </data>
+  <data name="LoginPage/Log/LoginAccount" xml:space="preserve">
+    <value>登录账户: {0}</value>
+  </data>
+  <data name="LoginPage/Log/AppleAccountSiteOpened" xml:space="preserve">
+    <value>已打开苹果账户官网。</value>
+  </data>
+  <data name="LoginPage/Log/CopyEmptyLog" xml:space="preserve">
+    <value>日志为空，无法复制。</value>
+  </data>
+  <data name="LoginPage/Log/CopiedToClipboard" xml:space="preserve">
+    <value>日志已复制到剪贴板。</value>
+  </data>
+  <data name="LoginPage/Log/Cleared" xml:space="preserve">
+    <value>日志已清空。</value>
   </data>
   <data name="LoginPage/Log/TitleText.Text" xml:space="preserve">
     <value>日志</value>

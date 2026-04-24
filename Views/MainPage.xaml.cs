@@ -182,8 +182,6 @@ namespace IPAbuyer.Views
 
         private async void BatchPurchaseButton_Click(object sender, RoutedEventArgs e)
         {
-            _ = TryShowHomeLogDialogAsync();
-
             if (ResultList == null)
             {
                 return;
@@ -233,8 +231,6 @@ namespace IPAbuyer.Views
 
         private async void AddToDownloadQueueButton_Click(object sender, RoutedEventArgs e)
         {
-            _ = TryShowHomeLogDialogAsync();
-
             if (ResultList == null)
             {
                 return;
@@ -259,8 +255,6 @@ namespace IPAbuyer.Views
 
         private async void ContextMenuPurchase_Click(object sender, RoutedEventArgs e)
         {
-            _ = TryShowHomeLogDialogAsync();
-
             var selectedApps = GetContextTargetApps(sender);
             if (selectedApps.Count == 0)
             {
@@ -312,7 +306,6 @@ namespace IPAbuyer.Views
             }
 
             AppendHomeLog($"右键加入下载队列: {selectedApps.Count} 项。");
-            _ = TryShowHomeLogDialogAsync();
             await StartDownloadQueueFromMainAsync();
         }
 
@@ -342,7 +335,6 @@ namespace IPAbuyer.Views
 
         private void CancelAllDownloadsButton_Click(object sender, RoutedEventArgs e)
         {
-            _ = TryShowHomeLogDialogAsync();
             _downloadQueueService.CancelAll();
             UpdateDownloadActionState();
         }
@@ -1030,6 +1022,33 @@ namespace IPAbuyer.Views
 
             RebuildHomeLogView();
             EnsureHomeLogScrollToBottom();
+            if (source == UiLogSource.App)
+            {
+                ShowHomeStatus(message, entry.Level);
+            }
+        }
+
+        private void ShowHomeStatus(string message, UiLogLevel level)
+        {
+            if (HomeStatusInfoBar == null || string.IsNullOrWhiteSpace(message))
+            {
+                return;
+            }
+
+            HomeStatusInfoBar.Message = message.Trim();
+            HomeStatusInfoBar.Severity = ToInfoBarSeverity(level);
+            HomeStatusInfoBar.IsOpen = true;
+        }
+
+        private static InfoBarSeverity ToInfoBarSeverity(UiLogLevel level)
+        {
+            return level switch
+            {
+                UiLogLevel.Error => InfoBarSeverity.Error,
+                UiLogLevel.Success => InfoBarSeverity.Success,
+                UiLogLevel.Tip => InfoBarSeverity.Warning,
+                _ => InfoBarSeverity.Informational
+            };
         }
 
         private void SetTableLoading(bool isLoading)

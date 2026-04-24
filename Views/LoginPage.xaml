@@ -7,13 +7,14 @@
         <StackPanel Spacing="16">
           <StackPanel Margin="0,0,0,4" Spacing="6">
             <TextBlock x:Uid="LoginPage/TitleText" Style="{ThemeResource TitleTextBlockStyle}" />
-            <TextBlock x:Uid="LoginPage/SubtitleText" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{ThemeResource BodyTextBlockStyle}" />
           </StackPanel>
-          <TextBlock x:Uid="LoginPage/PassphraseChangeHintText" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="WrapWholeWords" />
-          <TextBlock x:Uid="LoginPage/NewAccountHintText" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="WrapWholeWords" />
           <Grid>
-            <Border Padding="20" Style="{StaticResource AppSurfaceBorderStyle}">
-              <Grid ColumnSpacing="12" RowSpacing="12">
+              <Grid ColumnSpacing="12" Margin="24,8,0,8">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="130" />
+                  <ColumnDefinition Width="300" />
+                </Grid.ColumnDefinitions>
+              <Grid x:Name="LoginFormGrid" Grid.ColumnSpan="2" ColumnSpacing="12" RowSpacing="12">
                 <Grid.RowDefinitions>
                   <RowDefinition Height="Auto" />
                   <RowDefinition Height="Auto" />
@@ -22,26 +23,54 @@
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="130" />
-                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="300" />
                 </Grid.ColumnDefinitions>
-                <TextBlock x:Uid="LoginPage/EmailLabel" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" />
+                <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                  <TextBlock x:Uid="LoginPage/EmailLabel" VerticalAlignment="Center" />
+                  <TextBlock x:Uid="LoginPage/HelpGlyph" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center">
+                    <ToolTipService.ToolTip>
+                      <ToolTip>
+                        <TextBlock x:Uid="LoginPage/NewAccountHintText" MaxWidth="320" TextWrapping="WrapWholeWords" />
+                      </ToolTip>
+                    </ToolTipService.ToolTip>
+                  </TextBlock>
+                </StackPanel>
                 <TextBox x:Uid="LoginPage/EmailInput" x:Name="EmailComboBox" Grid.Row="0" Grid.Column="1" Width="300" MinHeight="36" InputScope="EmailSmtpAddress" IsSpellCheckEnabled="False" KeyUp="Input_KeyUp" />
-                <TextBlock x:Uid="LoginPage/PasswordLabel" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" />
+                <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                  <TextBlock x:Uid="LoginPage/PasswordLabel" VerticalAlignment="Center" />
+                </StackPanel>
                 <PasswordBox x:Uid="LoginPage/PasswordInput" x:Name="PasswordBox" Grid.Row="1" Grid.Column="1" Width="300" MinHeight="36" KeyUp="Input_KeyUp" PasswordRevealMode="Peek" />
-                <TextBlock x:Uid="LoginPage/TwoFactorCodeLabel" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" />
+                <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                  <TextBlock x:Uid="LoginPage/TwoFactorCodeLabel" VerticalAlignment="Center" />
+                  <TextBlock x:Uid="LoginPage/HelpGlyph" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center">
+                    <ToolTipService.ToolTip>
+                      <ToolTip>
+                        <TextBlock x:Uid="LoginPage/TwoFactorHelpText" MaxWidth="320" TextWrapping="WrapWholeWords" />
+                      </ToolTip>
+                    </ToolTipService.ToolTip>
+                  </TextBlock>
+                </StackPanel>
                 <StackPanel x:Name="AuthCodeInlinePanel" Grid.Row="2" Grid.Column="1" Spacing="6" VerticalAlignment="Center" Visibility="Visible">
                   <PasswordBox x:Uid="LoginPage/TwoFactorCodeInput" x:Name="CodeBox" Width="300" MinHeight="36" KeyUp="CodeBox_KeyUp" PasswordRevealMode="Peek" />
                 </StackPanel>
-                <TextBlock x:Uid="LoginPage/PassphraseLabel" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" />
+                <StackPanel Grid.Row="3" Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                  <TextBlock x:Uid="LoginPage/PassphraseLabel" VerticalAlignment="Center" />
+                  <TextBlock x:Uid="LoginPage/HelpGlyph" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center">
+                    <ToolTipService.ToolTip>
+                      <ToolTip>
+                        <TextBlock x:Uid="LoginPage/PassphraseChangeHintText" MaxWidth="320" TextWrapping="WrapWholeWords" />
+                      </ToolTip>
+                    </ToolTipService.ToolTip>
+                  </TextBlock>
+                </StackPanel>
                 <TextBox x:Uid="LoginPage/PassphraseInput" x:Name="PassphraseBox" Grid.Row="3" Grid.Column="1" Width="300" MinHeight="36" KeyUp="Input_KeyUp" />
               </Grid>
-            </Border>
-            <Border x:Name="OperationLockOverlay" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="{StaticResource AppControlCornerRadius}" Visibility="Collapsed">
-              <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-                <FontIcon FontSize="24" Glyph="&#xE72E;" />
-                <TextBlock x:Uid="LoginPage/LockedOverlayText" />
-              </StackPanel>
-            </Border>
+              <Border x:Name="OperationLockOverlay" Grid.Column="1" Margin="-10,-8,-10,-8" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="{StaticResource AppControlCornerRadius}" Visibility="Collapsed" Tapped="OperationLockOverlay_Tapped">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+                  <FontIcon FontSize="24" Glyph="&#xE72E;" />
+                </StackPanel>
+              </Border>
+              </Grid>
           </Grid>
           <StackPanel Orientation="Horizontal" Spacing="8">
             <Button x:Uid="LoginPage/LoginButton" x:Name="NextButton" HorizontalAlignment="Left" Click="NextButton_Click" />
@@ -50,7 +79,11 @@
             <Button x:Uid="Common/AppleAccount/OpenButton" x:Name="OpenAppleAccountButton" HorizontalAlignment="Left" Click="OpenAppleAccountButton_Click" />
             <Button x:Uid="LoginPage/Action/OpenLogDialogButton" x:Name="OpenLoginLogButton" HorizontalAlignment="Left" Click="ShowLoginLogDialog_Click" />
           </StackPanel>
-          <TextBlock x:Uid="LoginPage/TwoFactorHelpText" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="WrapWholeWords" />
+          <InfoBar
+            x:Name="LoginStatusInfoBar"
+            IsOpen="True"
+            IsClosable="False"
+            Severity="Informational" />
         </StackPanel>
       </Grid>
     </ScrollViewer>

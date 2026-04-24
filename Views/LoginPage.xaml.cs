@@ -3,8 +3,10 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.Windows.ApplicationModel.Resources;
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -14,6 +16,7 @@ namespace IPAbuyer.Views
 {
     public sealed partial class LoginPage : Page
     {
+        private static readonly ResourceLoader Loader = new();
         private CancellationTokenSource _pageCts = new();
         private readonly StringBuilder _loginLogBuilder = new();
         private readonly System.Collections.Generic.List<UiLogEntry> _loginLogEntries = new();
@@ -90,31 +93,28 @@ namespace IPAbuyer.Views
 
         private async void NextButton_Click(object sender, RoutedEventArgs e)
         {
-            _ = TryShowLoginLogDialogAsync();
-
             try
             {
                 if (_isTwoFactorPending)
                 {
-                    AppendLoginLog("Start verifying two-factor code.");
+                    AppendLoginLog(L("LoginPage/Log/StartVerifyTwoFactor"));
                     await ValidateAuthCodeAsync();
                     return;
                 }
 
-                AppendLoginLog("Start login.");
+                AppendLoginLog(L("LoginPage/Log/StartLogin"));
                 await TriggerLoginAsync();
             }
             catch (Exception ex)
             {
-                ShowError($"登录流程异常: {ex.Message}");
-                AppendLoginLog($"Login flow exception: {ex.Message}");
+                ShowError(LF("LoginPage/Status/LoginFlowException", ex.Message));
+                AppendLoginLog(LF("LoginPage/Log/LoginFlowException", ex.Message));
                 RestoreIdleState();
             }
         }
 
         private async void AuthInfoButton_Click(object sender, RoutedEventArgs e)
         {
-            _ = TryShowLoginLogDialogAsync();
             await QueryAuthInfoAsync();
         }
 
@@ -127,7 +127,7 @@ namespace IPAbuyer.Views
             {
                 CancelCurrentOperation();
                 _currentOperationCts = CancellationTokenSource.CreateLinkedTokenSource(_pageCts.Token);
-                SetBusyState(true, "正在查询登录状态...");
+                SetBusyState(true, L("LoginPage/Status/QueryingAuthInfo"));
 
                 string inputPassphrase = PassphraseInput?.Text?.Trim() ?? string.Empty;
                 var result = await IpatoolExecution.AuthInfoAsync(
@@ -156,29 +156,29 @@ namespace IPAbuyer.Views
                     {
                         SessionState.SetLoginState(activeAccount, true);
                         ApplyOperationLock(true);
-                        ShowSuccess("登录状态正常");
-                        AppendLoginLog($"Auth info success: {activeAccount}");
+                        ShowSuccess(L("LoginPage/Status/AuthInfoSuccess"));
+                        AppendLoginLog(LF("LoginPage/Log/AuthInfoSuccess", activeAccount));
                     }
                     else
                     {
                         SessionState.Reset();
                         ApplyOperationLock(false);
-                        ShowError("已查询到登录状态，但未获取到邮箱。请先重新登录后再进行购买或下载。");
-                        AppendLoginLog("Auth info success but email missing.");
+                        ShowError(L("LoginPage/Status/AuthInfoEmailMissing"));
+                        AppendLoginLog(L("LoginPage/Log/AuthInfoEmailMissing"));
                     }
                 }
                 else
                 {
                     ApplyOperationLock(wasLoggedIn);
-                    ShowError(string.IsNullOrWhiteSpace(result.OutputOrError) ? "登录状态异常" : result.OutputOrError);
-                    AppendLoginLog("Auth info failed.");
+                    ShowError(string.IsNullOrWhiteSpace(result.OutputOrError) ? L("LoginPage/Status/AuthInfoFailed") : result.OutputOrError);
+                    AppendLoginLog(L("LoginPage/Log/AuthInfoFailed"));
                 }
             }
             catch (Exception ex)
             {
                 ApplyOperationLock(wasLoggedIn);
-                ShowError($"查询登录状态失败: {ex.Message}");
-                AppendLoginLog($"Auth info exception: {ex.Message}");
+                ShowError(LF("LoginPage/Status/AuthInfoException", ex.Message));
+                AppendLoginLog(LF("LoginPage/Log/AuthInfoException", ex.Message));
             }
             finally
             {
@@ -199,7 +199,7 @@ namespace IPAbuyer.Views
             {
                 CancelCurrentOperation();
                 _currentOperationCts = CancellationTokenSource.CreateLinkedTokenSource(_pageCts.Token);
-                SetBusyState(true, "正在退出登录...");
+                SetBusyState(true, L("LoginPage/Status/LoggingOut"));
 
                 var result = await IpatoolExecution.AuthLogoutAsync(_currentOperationCts.Token);
                 DisposeCurrentOperation();
@@ -216,19 +216,19 @@ namespace IPAbuyer.Views
                     }
                     HideInlineTwoFactor();
                     ApplyOperationLock(false);
-                    ShowSuccess("已退出登录");
-                    AppendLoginLog($"Logout success: {account}");
+                    ShowSuccess(L("LoginPage/Status/LogoutSuccess"));
+                    AppendLoginLog(LF("LoginPage/Log/LogoutSuccess", account));
                 }
                 else
                 {
-                    ShowError(string.IsNullOrWhiteSpace(result.OutputOrError) ? "退出登录失败" : result.OutputOrError);
-                    AppendLoginLog($"Logout failed: {account}");
+                    ShowError(string.IsNullOrWhiteSpace(result.OutputOrError) ? L("LoginPage/Status/LogoutFailed") : result.OutputOrError);
+                    AppendLoginLog(LF("LoginPage/Log/LogoutFailed", account));
                 }
             }
             catch (Exception ex)
             {
-                ShowError($"退出登录失败: {ex.Message}");
-                AppendLoginLog($"Logout exception: {ex.Message}");
+                ShowError(LF("LoginPage/Status/LogoutException", ex.Message));
+                AppendLoginLog(LF("LoginPage/Log/LogoutException", ex.Message));
             }
             finally
             {
@@ -260,7 +260,7 @@ namespace IPAbuyer.Views
                 string accountText = EmailTextBox?.Text.Trim() ?? string.Empty;
                 if (string.IsNullOrEmpty(accountText))
                 {
-                    ShowError("邮箱不能为空");
+                    ShowError(L("LoginPage/Status/EmailRequired"));
                     EmailTextBox?.Focus(FocusState.Programmatic);
                     return;
                 }
@@ -324,8 +324,8 @@ namespace IPAbuyer.Views
             if (!hasAccount || !hasPassword || !hasPassphrase)
             {
                 hasLocalValidationIssue = true;
-                ShowError("邮箱、密码和加密密钥不能为空");
-                AppendLoginLog("Login blocked: required fields are empty.");
+                ShowError(L("LoginPage/Status/RequiredFieldsEmpty"));
+                AppendLoginLog(L("LoginPage/Log/RequiredFieldsEmpty"));
 
                 if (!hasAccount)
                 {
@@ -349,7 +349,7 @@ namespace IPAbuyer.Views
             }
 
             SetInputControlsEnabled(false);
-            SetBusyState(true, hasLocalValidationIssue ? string.Empty : "正在登录...");
+            SetBusyState(true, hasLocalValidationIssue ? string.Empty : L("LoginPage/Status/LoggingIn"));
 
             try
             {
@@ -360,14 +360,14 @@ namespace IPAbuyer.Views
             catch (OperationCanceledException)
             {
                 DisposeCurrentOperation();
-                AppendLoginLog("登录请求已取消。");
+                AppendLoginLog(L("LoginPage/Log/LoginCanceled"));
                 RestoreIdleState();
             }
             catch (Exception ex)
             {
                 DisposeCurrentOperation();
-                ShowError($"登录失败: {ex.Message}");
-                AppendLoginLog($"Login exception: {ex.Message}");
+                ShowError(LF("LoginPage/Status/LoginException", ex.Message));
+                AppendLoginLog(LF("LoginPage/Log/LoginException", ex.Message));
                 RestoreIdleState();
             }
         }
@@ -385,7 +385,7 @@ namespace IPAbuyer.Views
 
             if (string.IsNullOrWhiteSpace(_account) || string.IsNullOrWhiteSpace(_password) || string.IsNullOrWhiteSpace(_passphrase))
             {
-                ShowError("邮箱、密码和加密密钥不能为空");
+                ShowError(L("LoginPage/Status/RequiredFieldsEmpty"));
                 return false;
             }
 
@@ -393,7 +393,7 @@ namespace IPAbuyer.Views
             if (string.IsNullOrWhiteSpace(authCode))
             {
                 authCode = "000000";
-                AppendLoginLog("双重验证码为空，按 000000 处理。");
+                AppendLoginLog(L("LoginPage/Log/EmptyAuthCodeUsesDefault"));
             }
 
             HideAuthMessage();
@@ -402,7 +402,7 @@ namespace IPAbuyer.Views
             _currentOperationCts = CancellationTokenSource.CreateLinkedTokenSource(_pageCts.Token);
 
             SetInputControlsEnabled(false);
-            SetBusyState(true, "正在验证...");
+            SetBusyState(true, L("LoginPage/Status/Verifying"));
 
             LoginResult result;
             try
@@ -413,23 +413,23 @@ namespace IPAbuyer.Views
             catch (OperationCanceledException)
             {
                 DisposeCurrentOperation();
-                AppendLoginLog("验证码验证已取消。");
+                AppendLoginLog(L("LoginPage/Log/CodeValidationCanceled"));
                 RestoreIdleState();
                 return false;
             }
             catch (Exception ex)
             {
                 DisposeCurrentOperation();
-                ShowAuthError($"验证失败: {ex.Message}");
-                AppendLoginLog($"Code validation exception: {ex.Message}");
+                ShowAuthError(LF("LoginPage/Status/VerifyException", ex.Message));
+                AppendLoginLog(LF("LoginPage/Log/CodeValidationException", ex.Message));
                 RestoreIdleState();
                 return false;
             }
 
             if (result.Status == LoginStatus.AuthCodeInvalid)
             {
-                ShowAuthError("验证码错误，请重新输入。");
-                AppendLoginLog("Code validation failed: invalid code.");
+                ShowAuthError(L("LoginPage/Status/AuthCodeInvalid"));
+                AppendLoginLog(L("LoginPage/Log/CodeValidationInvalid"));
                 CodeTextBox.Password = string.Empty;
                 CodeTextBox.Focus(FocusState.Programmatic);
                 RestoreIdleState();
@@ -439,7 +439,7 @@ namespace IPAbuyer.Views
             if (result.Status == LoginStatus.Timeout)
             {
                 ShowAuthError(result.Message);
-                AppendLoginLog("Code validation failed: timeout.");
+                AppendLoginLog(L("LoginPage/Log/CodeValidationTimeout"));
                 CodeTextBox.Focus(FocusState.Programmatic);
                 RestoreIdleState();
                 return false;
@@ -447,14 +447,14 @@ namespace IPAbuyer.Views
 
             if (!result.IsSuccess)
             {
-                ShowAuthError(string.IsNullOrWhiteSpace(result.Message) ? "验证失败，请重试。" : result.Message);
-                AppendLoginLog("Code validation failed.");
+                ShowAuthError(string.IsNullOrWhiteSpace(result.Message) ? L("LoginPage/Status/VerifyFailedRetry") : result.Message);
+                AppendLoginLog(L("LoginPage/Log/CodeValidationFailed"));
                 RestoreIdleState();
                 return false;
             }
 
             await OnLoginSuccessAsync();
-            AppendLoginLog("Two-factor code verified.");
+            AppendLoginLog(L("LoginPage/Log/CodeValidationSuccess"));
             return true;
         }
 
@@ -463,12 +463,12 @@ namespace IPAbuyer.Views
             switch (result.Status)
             {
                 case LoginStatus.Success:
-                    AppendLoginLog("Login success.");
+                    AppendLoginLog(L("LoginPage/Log/LoginSuccess"));
                     await OnLoginSuccessAsync();
                     break;
 
                 case LoginStatus.RequiresTwoFactor:
-                    AppendLoginLog("Two-factor code required.");
+                    AppendLoginLog(L("LoginPage/Log/TwoFactorRequired"));
                     ShowInlineTwoFactor(result.Message);
                     RestoreIdleState();
                     break;
@@ -478,7 +478,7 @@ namespace IPAbuyer.Views
                 case LoginStatus.UnknownError:
                 case LoginStatus.Timeout:
                     ShowError(result.Message);
-                    AppendLoginLog($"Login failed: {result.Message}");
+                    AppendLoginLog(LF("LoginPage/Log/LoginFailed", result.Message));
                     RestoreIdleState();
                     break;
 
@@ -491,7 +491,7 @@ namespace IPAbuyer.Views
                     {
                         ShowError(result.Message);
                     }
-                    AppendLoginLog($"Login failed: {result.Message}");
+                    AppendLoginLog(LF("LoginPage/Log/LoginFailed", result.Message));
                     RestoreIdleState();
                     break;
             }
@@ -506,10 +506,10 @@ namespace IPAbuyer.Views
                 AuthCodeInlinePanelControl.Visibility = Visibility.Visible;
             }
 
-            string fallbackMessage = "请输入两步验证码继续登录。如果未收到验证码，请打开 https://account.apple.com/ 获取后再输入。";
+            string fallbackMessage = L("LoginPage/Status/TwoFactorPromptFallback");
             string finalMessage = string.IsNullOrWhiteSpace(message)
                 ? fallbackMessage
-                : $"{message} 如未收到验证码，请打开 https://account.apple.com/ 获取后再输入。";
+                : LF("LoginPage/Status/TwoFactorPromptWithMessage", message);
             ShowAuthWarning(finalMessage);
             CodeTextBox?.Focus(FocusState.Programmatic);
         }
@@ -590,32 +590,52 @@ namespace IPAbuyer.Views
 
         private void ShowInfo(string message)
         {
+            ShowStatus(message, InfoBarSeverity.Informational);
             AppendLoginLog(message);
         }
 
         private void ShowError(string message)
         {
-            AppendLoginLog($"[错误] {message}");
+            ShowStatus(message, InfoBarSeverity.Error);
+            AppendLoginLog(LF("LoginPage/Log/ErrorPrefixFormat", message));
         }
 
         private void ShowSuccess(string message)
         {
-            AppendLoginLog($"[成功] {message}");
+            ShowStatus(message, InfoBarSeverity.Success);
+            AppendLoginLog(LF("LoginPage/Log/SuccessPrefixFormat", message));
         }
 
         private void ShowAuthError(string message)
         {
-            AppendLoginLog($"[验证码错误] {message}");
+            ShowStatus(message, InfoBarSeverity.Error);
+            AppendLoginLog(LF("LoginPage/Log/AuthErrorPrefixFormat", message));
         }
 
         private void ShowAuthWarning(string message)
         {
-            AppendLoginLog($"[验证码提示] {message}");
+            ShowStatus(message, InfoBarSeverity.Warning);
+            AppendLoginLog(LF("LoginPage/Log/AuthWarningPrefixFormat", message));
         }
 
         private void HideAuthMessage()
         {
-            // 操作区不再显示错误提示，保留方法用于兼容现有调用点。
+            if (LoginStatusInfoBar != null)
+            {
+                LoginStatusInfoBar.IsOpen = true;
+            }
+        }
+
+        private void ShowStatus(string message, InfoBarSeverity severity)
+        {
+            if (LoginStatusInfoBar == null || string.IsNullOrWhiteSpace(message))
+            {
+                return;
+            }
+
+            LoginStatusInfoBar.Message = message;
+            LoginStatusInfoBar.Severity = severity;
+            LoginStatusInfoBar.IsOpen = true;
         }
 
         private void RestoreIdleState()
@@ -636,7 +656,7 @@ namespace IPAbuyer.Views
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Save account info failed: {ex.Message}");
+                Debug.WriteLine(LF("LoginPage/Debug/SaveAccountInfoFailed", ex.Message));
             }
 
             HideInlineTwoFactor();
@@ -644,8 +664,8 @@ namespace IPAbuyer.Views
             SessionState.SetLoginState(_account, true, isMockAccount);
             ApplyOperationLock(true);
             DisposeCurrentOperation();
-            ShowSuccess("Login successful");
-            AppendLoginLog($"Login account: {_account}");
+            ShowSuccess(L("LoginPage/Status/LoginSuccess"));
+            AppendLoginLog(LF("LoginPage/Log/LoginAccount", _account));
             return Task.CompletedTask;
         }
 
@@ -653,6 +673,12 @@ namespace IPAbuyer.Views
         {
             _operationLocked = isLocked;
             SetInputControlsEnabled(true);
+        }
+
+        private void OperationLockOverlay_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            ShowInfo(L("LoginPage/Status/OperationLocked"));
+            e.Handled = true;
         }
 
         private void OpenAppleAccountButton_Click(object sender, RoutedEventArgs e)
@@ -664,11 +690,11 @@ namespace IPAbuyer.Views
                     FileName = "https://account.apple.com/",
                     UseShellExecute = true
                 });
-                AppendLoginLog("已打开苹果账户官网。");
+                AppendLoginLog(L("LoginPage/Log/AppleAccountSiteOpened"));
             }
             catch (Exception ex)
             {
-                ShowError($"打开苹果账户官网失败: {ex.Message}");
+                ShowError(LF("LoginPage/Status/OpenAppleAccountSiteFailed", ex.Message));
             }
         }
 
@@ -707,7 +733,7 @@ namespace IPAbuyer.Views
             string text = _loginLogBuilder.ToString();
             if (string.IsNullOrWhiteSpace(text))
             {
-                AppendLoginLog("Log is empty; nothing to copy.");
+                AppendLoginLog(L("LoginPage/Log/CopyEmptyLog"));
                 return;
             }
 
@@ -715,14 +741,14 @@ namespace IPAbuyer.Views
             package.SetText(text);
             Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
             Windows.ApplicationModel.DataTransfer.Clipboard.Flush();
-            AppendLoginLog("Log copied to clipboard.");
+            AppendLoginLog(L("LoginPage/Log/CopiedToClipboard"));
         }
 
         private void ClearLoginLog()
         {
             _loginLogBuilder.Clear();
             _loginLogEntries.Clear();
-            AppendLoginLog("Log cleared.");
+            AppendLoginLog(L("LoginPage/Log/Cleared"));
         }
 
         private void AppendLoginLog(string message, UiLogSource source = UiLogSource.App)
@@ -811,6 +837,16 @@ namespace IPAbuyer.Views
         private PasswordBox? CodeTextBox => GetControl<PasswordBox>("CodeBox");
         private StackPanel? AuthCodeInlinePanelControl => GetControl<StackPanel>("AuthCodeInlinePanel");
         private Border? OperationLockOverlayControl => GetControl<Border>("OperationLockOverlay");
+
+        private static string L(string key)
+        {
+            return Loader.GetString(key);
+        }
+
+        private static string LF(string key, params object[] args)
+        {
+            return string.Format(CultureInfo.CurrentCulture, L(key), args);
+        }
 
         private T? GetControl<T>(string name)
             where T : class
