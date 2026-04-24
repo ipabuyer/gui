@@ -27,7 +27,7 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                   <TextBlock x:Uid="LoginPage/EmailLabel" VerticalAlignment="Center" />
-                  <TextBlock Text="?" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center">
+                  <TextBlock x:Uid="LoginPage/HelpGlyph" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center">
                     <ToolTipService.ToolTip>
                       <ToolTip>
                         <TextBlock x:Uid="LoginPage/NewAccountHintText" MaxWidth="320" TextWrapping="WrapWholeWords" />
@@ -42,7 +42,7 @@
                 <PasswordBox x:Uid="LoginPage/PasswordInput" x:Name="PasswordBox" Grid.Row="1" Grid.Column="1" Width="300" MinHeight="36" KeyUp="Input_KeyUp" PasswordRevealMode="Peek" />
                 <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                   <TextBlock x:Uid="LoginPage/TwoFactorCodeLabel" VerticalAlignment="Center" />
-                  <TextBlock Text="?" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center">
+                  <TextBlock x:Uid="LoginPage/HelpGlyph" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center">
                     <ToolTipService.ToolTip>
                       <ToolTip>
                         <TextBlock x:Uid="LoginPage/TwoFactorHelpText" MaxWidth="320" TextWrapping="WrapWholeWords" />
@@ -55,7 +55,7 @@
                 </StackPanel>
                 <StackPanel Grid.Row="3" Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                   <TextBlock x:Uid="LoginPage/PassphraseLabel" VerticalAlignment="Center" />
-                  <TextBlock Text="?" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center">
+                  <TextBlock x:Uid="LoginPage/HelpGlyph" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center">
                     <ToolTipService.ToolTip>
                       <ToolTip>
                         <TextBlock x:Uid="LoginPage/PassphraseChangeHintText" MaxWidth="320" TextWrapping="WrapWholeWords" />
@@ -65,10 +65,9 @@
                 </StackPanel>
                 <TextBox x:Uid="LoginPage/PassphraseInput" x:Name="PassphraseBox" Grid.Row="3" Grid.Column="1" Width="300" MinHeight="36" KeyUp="Input_KeyUp" />
               </Grid>
-              <Border x:Name="OperationLockOverlay" Grid.Column="1" Margin="-10,-8,-10,-8" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="{StaticResource AppControlCornerRadius}" Visibility="Collapsed">
+              <Border x:Name="OperationLockOverlay" Grid.Column="1" Margin="-10,-8,-10,-8" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" CornerRadius="{StaticResource AppControlCornerRadius}" Visibility="Collapsed" Tapped="OperationLockOverlay_Tapped">
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
                   <FontIcon FontSize="24" Glyph="&#xE72E;" />
-                  <TextBlock x:Uid="LoginPage/LockedOverlayText" />
                 </StackPanel>
               </Border>
               </Grid>
