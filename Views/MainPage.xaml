@@ -9,6 +9,7 @@
             <Grid RowSpacing="12">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
                 <Border Grid.Row="0" Style="{StaticResource AppCommandBarSurfaceStyle}">
@@ -31,7 +32,8 @@
                         <Button Grid.Column="1" x:Uid="MainPage/Action/CancelAllDownloadsButton" x:Name="CancelAllDownloadsButton" Click="CancelAllDownloadsButton_Click" Visibility="Collapsed" />
                     </Grid>
                 </Border>
-                <Border Grid.Row="1" Style="{StaticResource AppSurfaceBorderStyle}">
+                <InfoBar x:Name="HomeStatusInfoBar" Grid.Row="1" IsOpen="True" IsClosable="False" Severity="Informational" />
+                <Border Grid.Row="2" Style="{StaticResource AppSurfaceBorderStyle}">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
