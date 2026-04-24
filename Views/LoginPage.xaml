@@ -80,6 +80,11 @@
             <Button x:Uid="Common/AppleAccount/OpenButton" x:Name="OpenAppleAccountButton" HorizontalAlignment="Left" Click="OpenAppleAccountButton_Click" />
             <Button x:Uid="LoginPage/Action/OpenLogDialogButton" x:Name="OpenLoginLogButton" HorizontalAlignment="Left" Click="ShowLoginLogDialog_Click" />
           </StackPanel>
+          <InfoBar
+            x:Name="LoginStatusInfoBar"
+            IsOpen="False"
+            IsClosable="True"
+            Severity="Informational" />
         </StackPanel>
       </Grid>
     </ScrollViewer>

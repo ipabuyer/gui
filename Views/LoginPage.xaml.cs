@@ -590,32 +590,52 @@ namespace IPAbuyer.Views
 
         private void ShowInfo(string message)
         {
+            ShowStatus(message, InfoBarSeverity.Informational);
             AppendLoginLog(message);
         }
 
         private void ShowError(string message)
         {
+            ShowStatus(message, InfoBarSeverity.Error);
             AppendLoginLog($"[错误] {message}");
         }
 
         private void ShowSuccess(string message)
         {
+            ShowStatus(message, InfoBarSeverity.Success);
             AppendLoginLog($"[成功] {message}");
         }
 
         private void ShowAuthError(string message)
         {
+            ShowStatus(message, InfoBarSeverity.Error);
             AppendLoginLog($"[验证码错误] {message}");
         }
 
         private void ShowAuthWarning(string message)
         {
+            ShowStatus(message, InfoBarSeverity.Warning);
             AppendLoginLog($"[验证码提示] {message}");
         }
 
         private void HideAuthMessage()
         {
-            // 操作区不再显示错误提示，保留方法用于兼容现有调用点。
+            if (LoginStatusInfoBar != null)
+            {
+                LoginStatusInfoBar.IsOpen = false;
+            }
+        }
+
+        private void ShowStatus(string message, InfoBarSeverity severity)
+        {
+            if (LoginStatusInfoBar == null || string.IsNullOrWhiteSpace(message))
+            {
+                return;
+            }
+
+            LoginStatusInfoBar.Message = message;
+            LoginStatusInfoBar.Severity = severity;
+            LoginStatusInfoBar.IsOpen = true;
         }
 
         private void RestoreIdleState()
