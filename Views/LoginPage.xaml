@@ -44,11 +44,11 @@
             </Border>
           </Grid>
           <StackPanel Orientation="Horizontal" Spacing="8">
-            <Button x:Uid="LoginPage/LoginButton" x:Name="NextButton" MinWidth="150" MinHeight="36" HorizontalAlignment="Left" Click="NextButton_Click" Style="{StaticResource AccentButtonStyle}" />
-            <Button x:Uid="LoginPage/QueryAuthInfoButton" x:Name="AuthInfoButton" MinWidth="150" MinHeight="36" HorizontalAlignment="Left" Click="AuthInfoButton_Click" />
-            <Button x:Uid="LoginPage/LogoutButton" x:Name="LogoutButton" MinWidth="150" MinHeight="36" HorizontalAlignment="Left" Click="LogoutButton_Click" Style="{StaticResource AppDangerButtonStyle}" />
-            <Button x:Uid="Common/AppleAccount/OpenButton" x:Name="OpenAppleAccountButton" MinWidth="150" MinHeight="36" HorizontalAlignment="Left" Click="OpenAppleAccountButton_Click" />
-            <Button x:Uid="LoginPage/Action/OpenLogDialogButton" x:Name="OpenLoginLogButton" MinWidth="120" MinHeight="36" HorizontalAlignment="Left" Click="ShowLoginLogDialog_Click" />
+            <Button x:Uid="LoginPage/LoginButton" x:Name="NextButton" HorizontalAlignment="Left" Click="NextButton_Click" />
+            <Button x:Uid="LoginPage/QueryAuthInfoButton" x:Name="AuthInfoButton" HorizontalAlignment="Left" Click="AuthInfoButton_Click" />
+            <Button x:Uid="LoginPage/LogoutButton" x:Name="LogoutButton" HorizontalAlignment="Left" Click="LogoutButton_Click" />
+            <Button x:Uid="Common/AppleAccount/OpenButton" x:Name="OpenAppleAccountButton" HorizontalAlignment="Left" Click="OpenAppleAccountButton_Click" />
+            <Button x:Uid="LoginPage/Action/OpenLogDialogButton" x:Name="OpenLoginLogButton" HorizontalAlignment="Left" Click="ShowLoginLogDialog_Click" />
           </StackPanel>
           <TextBlock x:Uid="LoginPage/TwoFactorHelpText" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="WrapWholeWords" />
         </StackPanel>

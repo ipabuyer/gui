@@ -42,13 +42,13 @@
                 <Button x:Uid="Settings/Button/CopyFeedbackEmail" Click="CopyFeedbackEmailButton_Click" HorizontalAlignment="Right" />
             </controls:SettingsCard>
             <controls:SettingsCard x:Uid="Settings/Card/ClearLocalDatabase" HorizontalAlignment="Stretch">
-                <Button x:Uid="Settings/Button/ClearLocalDatabase" Click="DeleteDataBase" FontWeight="SemiBold" HorizontalAlignment="Right" Style="{StaticResource AppDangerButtonStyle}" />
+                <Button x:Uid="Settings/Button/ClearLocalDatabase" Click="DeleteDataBase" HorizontalAlignment="Right" />
             </controls:SettingsCard>
             <controls:SettingsCard x:Uid="Settings/Card/ClearIpatoolData" HorizontalAlignment="Stretch">
-                <Button x:Uid="Settings/Button/ClearIpatoolData" Click="ClearIpatoolDataButton_Click" FontWeight="SemiBold" Style="{StaticResource AppDangerButtonStyle}" />
+                <Button x:Uid="Settings/Button/ClearIpatoolData" Click="ClearIpatoolDataButton_Click" />
             </controls:SettingsCard>
             <controls:SettingsCard x:Uid="Settings/Card/ExportIpatool" HorizontalAlignment="Stretch">
-                <Button x:Uid="Settings/Button/ExportIpatool" Click="ExportIpatoolButton_Click" FontWeight="SemiBold" Style="{StaticResource AccentButtonStyle}" />
+                <Button x:Uid="Settings/Button/ExportIpatool" Click="ExportIpatoolButton_Click" />
             </controls:SettingsCard>
         </StackPanel>
     </ScrollViewer>
