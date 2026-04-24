@@ -14,21 +14,45 @@
             </ResourceDictionary.MergedDictionaries>
 
             <x:Double x:Key="StandardControlHeight">36</x:Double>
+            <CornerRadius x:Key="AppControlCornerRadius">8</CornerRadius>
+            <Thickness x:Key="AppPagePadding">24</Thickness>
+
+            <Style x:Key="AppSurfaceBorderStyle" TargetType="Border">
+                <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="{StaticResource AppControlCornerRadius}" />
+            </Style>
+
+            <Style x:Key="AppCommandBarSurfaceStyle" TargetType="Border" BasedOn="{StaticResource AppSurfaceBorderStyle}">
+                <Setter Property="Padding" Value="12" />
+            </Style>
+
+            <Style x:Key="AppDangerButtonStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+                <Setter Property="MinHeight" Value="{StaticResource StandardControlHeight}" />
+                <Setter Property="Background" Value="{ThemeResource SystemFillColorCriticalBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource SystemFillColorCriticalBrush}" />
+                <Setter Property="Foreground" Value="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+            </Style>
 
             <Style TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
                 <Setter Property="MinHeight" Value="{StaticResource StandardControlHeight}" />
+                <Setter Property="CornerRadius" Value="{StaticResource AppControlCornerRadius}" />
             </Style>
 
             <Style TargetType="TextBox" BasedOn="{StaticResource DefaultTextBoxStyle}">
                 <Setter Property="MinHeight" Value="{StaticResource StandardControlHeight}" />
+                <Setter Property="CornerRadius" Value="{StaticResource AppControlCornerRadius}" />
             </Style>
 
             <Style TargetType="PasswordBox" BasedOn="{StaticResource DefaultPasswordBoxStyle}">
                 <Setter Property="MinHeight" Value="{StaticResource StandardControlHeight}" />
+                <Setter Property="CornerRadius" Value="{StaticResource AppControlCornerRadius}" />
             </Style>
 
             <Style TargetType="ComboBox" BasedOn="{StaticResource DefaultComboBoxStyle}">
                 <Setter Property="MinHeight" Value="{StaticResource StandardControlHeight}" />
+                <Setter Property="CornerRadius" Value="{StaticResource AppControlCornerRadius}" />
             </Style>
 
             <Style TargetType="TextBlock">

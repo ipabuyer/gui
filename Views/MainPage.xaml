@@ -3,36 +3,35 @@
     <Page.Resources>
         <CornerRadius x:Key="MainUnifiedCornerRadius">8</CornerRadius>
     </Page.Resources>
+    <Page.Background>Transparent</Page.Background>
     <Page.Content>
-        <Grid Margin="10">
-            <Grid RowSpacing="5">
+        <Grid Padding="{StaticResource AppPagePadding}">
+            <Grid RowSpacing="12">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                <controls:SettingsCard Grid.Row="0">
-                    <controls:SettingsCard.Header>
-                        <Grid ColumnSpacing="10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
-                                <Button x:Uid="MainPage/Action/BatchPurchaseButton" x:Name="BatchPurchaseButton" Click="BatchPurchaseButton_Click" />
-                                <Button x:Uid="MainPage/Action/AddToQueueButton" x:Name="AddToDownloadQueueButton" Click="AddToDownloadQueueButton_Click" />
-                                <Button x:Uid="MainPage/Action/OpenLogButton" x:Name="OpenLogButton" Click="ShowHomeLogDialog_Click" />
-                                <ComboBox x:Name="ScreeningComboBox" MinHeight="36" MinWidth="132" SelectedIndex="0" SelectionChanged="ScreeningComboBox_SelectionChanged">
-                                    <ComboBoxItem x:Uid="MainPage/Filter/AllItem" x:Name="All" Tag="All"></ComboBoxItem>
-                                    <ComboBoxItem x:Uid="MainPage/Filter/OnlyNotPurchasedItem" x:Name="OnlyNotPurchased" Tag="OnlyNotPurchased"></ComboBoxItem>
-                                    <ComboBoxItem x:Uid="MainPage/Filter/OnlyPurchasedItem" x:Name="OnlyPurchased" Tag="OnlyPurchased"></ComboBoxItem>
-                                    <ComboBoxItem x:Uid="MainPage/Filter/OnlyOwnedItem" x:Name="OnlyHad" Tag="OnlyHad"></ComboBoxItem>
-                                </ComboBox>
-                            </StackPanel>
-                            <Button Grid.Column="1" x:Uid="MainPage/Action/CancelAllDownloadsButton" x:Name="CancelAllDownloadsButton" Click="CancelAllDownloadsButton_Click" Visibility="Collapsed" />
-                        </Grid>
-                    </controls:SettingsCard.Header>
-                </controls:SettingsCard>
-                <Border Grid.Row="1" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="{ThemeResource ControlCornerRadius}">
+                <Border Grid.Row="0" Style="{StaticResource AppCommandBarSurfaceStyle}">
+                    <Grid ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                            <Button x:Uid="MainPage/Action/BatchPurchaseButton" x:Name="BatchPurchaseButton" Click="BatchPurchaseButton_Click" Style="{StaticResource AccentButtonStyle}" />
+                            <Button x:Uid="MainPage/Action/AddToQueueButton" x:Name="AddToDownloadQueueButton" Click="AddToDownloadQueueButton_Click" />
+                            <Button x:Uid="MainPage/Action/OpenLogButton" x:Name="OpenLogButton" Click="ShowHomeLogDialog_Click" />
+                            <ComboBox x:Name="ScreeningComboBox" MinHeight="36" MinWidth="132" SelectedIndex="0" SelectionChanged="ScreeningComboBox_SelectionChanged">
+                                <ComboBoxItem x:Uid="MainPage/Filter/AllItem" x:Name="All" Tag="All"></ComboBoxItem>
+                                <ComboBoxItem x:Uid="MainPage/Filter/OnlyNotPurchasedItem" x:Name="OnlyNotPurchased" Tag="OnlyNotPurchased"></ComboBoxItem>
+                                <ComboBoxItem x:Uid="MainPage/Filter/OnlyPurchasedItem" x:Name="OnlyPurchased" Tag="OnlyPurchased"></ComboBoxItem>
+                                <ComboBoxItem x:Uid="MainPage/Filter/OnlyOwnedItem" x:Name="OnlyHad" Tag="OnlyHad"></ComboBoxItem>
+                            </ComboBox>
+                        </StackPanel>
+                        <Button Grid.Column="1" x:Uid="MainPage/Action/CancelAllDownloadsButton" x:Name="CancelAllDownloadsButton" Click="CancelAllDownloadsButton_Click" Visibility="Collapsed" Style="{StaticResource AppDangerButtonStyle}" />
+                    </Grid>
+                </Border>
+                <Border Grid.Row="1" Style="{StaticResource AppSurfaceBorderStyle}">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -40,7 +39,8 @@
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
                         <ProgressBar x:Name="PurchaseLoadingBar" Grid.Row="0" Height="3" IsIndeterminate="True" IsHitTestVisible="False" Visibility="Collapsed" />
-                        <Grid Grid.Row="1" Padding="14,8,14,8">
+                        <Border Grid.Row="1" Background="{ThemeResource LayerFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,0,0,1">
+                        <Grid Padding="14,8,14,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="32" />
                                 <ColumnDefinition Width="3*" />
@@ -57,7 +57,8 @@
                             <Button x:Uid="MainPage/Header/PriceButton" x:Name="PriceHeaderText" Grid.Column="5" Background="Transparent" BorderThickness="0" MinHeight="24" Padding="0" HorizontalAlignment="Center" Click="SortHeader_Click" Tag="price" />
                             <Button x:Uid="MainPage/Header/PurchasedButton" x:Name="PurchasedHeaderText" Grid.Column="6" Background="Transparent" BorderThickness="0" MinHeight="24" Padding="0" HorizontalAlignment="Center" Click="SortHeader_Click" Tag="purchased" />
                         </Grid>
-                        <ListView x:Name="ResultList" Grid.Row="2" Margin="0,0,0,8" ContainerContentChanging="ResultList_ContainerContentChanging" IsMultiSelectCheckBoxEnabled="True" SelectionMode="Multiple">
+                        </Border>
+                        <ListView x:Name="ResultList" Grid.Row="2" Margin="0,0,0,8" Background="Transparent" ContainerContentChanging="ResultList_ContainerContentChanging" IsMultiSelectCheckBoxEnabled="True" SelectionMode="Multiple">
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="models:SearchResult">
                                     <Grid Margin="-40,0,0,0" Padding="52,12,14,12">

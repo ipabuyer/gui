@@ -1,7 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Page x:Class="IPAbuyer.Views.Settings" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:controls="using:CommunityToolkit.WinUI.Controls" mc:Ignorable="d">
+    <Page.Background>Transparent</Page.Background>
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Padding="24" Spacing="16">
+        <StackPanel Padding="{StaticResource AppPagePadding}" Spacing="12" MaxWidth="920" HorizontalAlignment="Stretch">
             <controls:SettingsCard x:Uid="Settings/Card/CountryCode">
                 <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                     <TextBlock x:Name="CountryCodeValueTextBlock" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
@@ -33,13 +34,13 @@
                 <Button x:Uid="Settings/Button/CopyFeedbackEmail" Click="CopyFeedbackEmailButton_Click" HorizontalAlignment="Right" />
             </controls:SettingsCard>
             <controls:SettingsCard x:Uid="Settings/Card/ClearLocalDatabase">
-                <Button x:Uid="Settings/Button/ClearLocalDatabase" Background="#C42B1C" BorderBrush="#C42B1C" Click="DeleteDataBase" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Right" />
+                <Button x:Uid="Settings/Button/ClearLocalDatabase" Click="DeleteDataBase" FontWeight="SemiBold" HorizontalAlignment="Right" Style="{StaticResource AppDangerButtonStyle}" />
             </controls:SettingsCard>
             <controls:SettingsCard x:Uid="Settings/Card/ClearIpatoolData">
-                <Button x:Uid="Settings/Button/ClearIpatoolData" Background="#C42B1C" BorderBrush="#C42B1C" Click="ClearIpatoolDataButton_Click" FontWeight="SemiBold" Foreground="White" />
+                <Button x:Uid="Settings/Button/ClearIpatoolData" Click="ClearIpatoolDataButton_Click" FontWeight="SemiBold" Style="{StaticResource AppDangerButtonStyle}" />
             </controls:SettingsCard>
             <controls:SettingsCard x:Uid="Settings/Card/ExportIpatool">
-                <Button x:Uid="Settings/Button/ExportIpatool" Click="ExportIpatoolButton_Click" FontWeight="SemiBold" />
+                <Button x:Uid="Settings/Button/ExportIpatool" Click="ExportIpatoolButton_Click" FontWeight="SemiBold" Style="{StaticResource AccentButtonStyle}" />
             </controls:SettingsCard>
         </StackPanel>
     </ScrollViewer>

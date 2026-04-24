@@ -7,7 +7,7 @@
     xmlns:local="using:IPAbuyer"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
-    <Grid Background="Transparent">
+    <Grid Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="56" />
             <RowDefinition Height="*" />
@@ -16,9 +16,7 @@
         <Border
             x:Name="CustomTitleBar"
             Grid.Row="0"
-            Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}"
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            BorderThickness="0,0,0,1"
+            Background="Transparent"
             Padding="10">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -41,7 +39,8 @@
                     Grid.Column="1"
                     Margin="10"
                     VerticalAlignment="Center"
-                    HorizontalAlignment="Left"/>
+                    HorizontalAlignment="Left"
+                    Style="{ThemeResource BodyStrongTextBlockStyle}" />
                 <Grid Grid.Column="2" Width="360" MinWidth="220" MaxWidth="420" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <AutoSuggestBox
                         x:Uid="MainWindow/SearchBox"
@@ -62,10 +61,10 @@
             OpenPaneLength="224"
             CompactPaneLength="56"
             PaneDisplayMode="LeftCompact"
-            Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+            Background="Transparent">
             <NavigationView.PaneHeader>
                 <Border Margin="12,12,12,8">
-                    <TextBlock Text="导航" Style="{ThemeResource BodyStrongTextBlockStyle}" Opacity="0.78" />
+                    <TextBlock Text="导航" Style="{ThemeResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 </Border>
             </NavigationView.PaneHeader>
             <NavigationView.MenuItems>
