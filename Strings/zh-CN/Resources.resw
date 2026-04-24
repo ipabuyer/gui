@@ -411,6 +411,39 @@
   <data name="MainPage/Log/ClearButton.Content" xml:space="preserve">
     <value>清空</value>
   </data>
+  <data name="MainPage/DownloadQueue/AddSelectedIgnored" xml:space="preserve">
+    <value>所选应用无法加入下载队列。</value>
+  </data>
+  <data name="MainPage/DownloadQueue/AddSelectedEmpty" xml:space="preserve">
+    <value>未选择应用，无法开始下载。</value>
+  </data>
+  <data name="MainPage/DownloadQueue/AddContextIgnored" xml:space="preserve">
+    <value>右键目标无法加入下载队列。</value>
+  </data>
+  <data name="MainPage/DownloadQueue/AddContextEmpty" xml:space="preserve">
+    <value>右键目标为空，无法加入下载队列。</value>
+  </data>
+  <data name="MainPage/DownloadQueue/ContextAddSummaryPrefix" xml:space="preserve">
+    <value>右键{0}</value>
+  </data>
+  <data name="MainPage/DownloadQueue/AlreadyRunningContinue" xml:space="preserve">
+    <value>下载队列已在运行，新任务会在当前任务后继续处理。</value>
+  </data>
+  <data name="MainPage/DownloadQueue/AddSummaryAddedAndUpdated" xml:space="preserve">
+    <value>已加入下载队列: {0} 项，更新: {1} 项。</value>
+  </data>
+  <data name="MainPage/DownloadQueue/AddSummaryAdded" xml:space="preserve">
+    <value>已加入下载队列: {0} 项。</value>
+  </data>
+  <data name="MainPage/DownloadQueue/AddSummaryUpdated" xml:space="preserve">
+    <value>已更新下载队列: {0} 项。</value>
+  </data>
+  <data name="DownloadQueue/Status/Requeued" xml:space="preserve">
+    <value>已重新加入下载队列</value>
+  </data>
+  <data name="DownloadQueue/Log/Requeued" xml:space="preserve">
+    <value>已重新加入下载队列: {0} ({1})</value>
+  </data>
   <data name="DownloadsPage/Action/StartQueueButton.Content" xml:space="preserve">
     <value>开始下载队列</value>
   </data>

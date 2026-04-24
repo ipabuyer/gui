@@ -15,11 +15,13 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.Windows.ApplicationModel.Resources;
 
 namespace IPAbuyer.Views
 {
     public sealed partial class MainPage : Page
     {
+        private static readonly ResourceLoader Loader = new();
         private readonly List<SearchResult> _allResults = new();
         private readonly DownloadQueueService _downloadQueueService = DownloadQueueService.Instance;
         private readonly StringBuilder _homeLogBuilder = new();
@@ -237,19 +239,20 @@ namespace IPAbuyer.Views
             }
 
             int added = 0;
+            int updated = 0;
+            int ignored = 0;
             foreach (var app in ResultList.SelectedItems.OfType<SearchResult>())
             {
-                _downloadQueueService.AddOrUpdateFromSearchResult(app);
-                added++;
+                CountDownloadQueueAddResult(_downloadQueueService.AddOrUpdateFromSearchResult(app), ref added, ref updated, ref ignored);
             }
 
-            if (added == 0)
+            if (added == 0 && updated == 0)
             {
-                AppendHomeLog("未选择应用，无法开始下载。");
+                AppendHomeLog(ignored > 0 ? L("MainPage/DownloadQueue/AddSelectedIgnored") : L("MainPage/DownloadQueue/AddSelectedEmpty"));
                 return;
             }
 
-            AppendHomeLog($"已加入下载队列: {added} 项。");
+            AppendHomeLog(BuildDownloadQueueAddSummary(added, updated));
             await StartDownloadQueueFromMainAsync();
         }
 
@@ -300,12 +303,21 @@ namespace IPAbuyer.Views
                 return;
             }
 
+            int added = 0;
+            int updated = 0;
+            int ignored = 0;
             foreach (var app in selectedApps)
             {
-                _downloadQueueService.AddOrUpdateFromSearchResult(app);
+                CountDownloadQueueAddResult(_downloadQueueService.AddOrUpdateFromSearchResult(app), ref added, ref updated, ref ignored);
             }
 
-            AppendHomeLog($"右键加入下载队列: {selectedApps.Count} 项。");
+            if (added == 0 && updated == 0)
+            {
+                AppendHomeLog(ignored > 0 ? L("MainPage/DownloadQueue/AddContextIgnored") : L("MainPage/DownloadQueue/AddContextEmpty"));
+                return;
+            }
+
+            AppendHomeLog(LF("MainPage/DownloadQueue/ContextAddSummaryPrefix", BuildDownloadQueueAddSummary(added, updated)));
             await StartDownloadQueueFromMainAsync();
         }
 
@@ -313,7 +325,7 @@ namespace IPAbuyer.Views
         {
             if (_downloadQueueService.IsRunning)
             {
-                AppendHomeLog("下载队列已在运行。");
+                AppendHomeLog(L("MainPage/DownloadQueue/AlreadyRunningContinue"));
                 UpdateDownloadActionState();
                 return;
             }
@@ -331,6 +343,38 @@ namespace IPAbuyer.Views
             {
                 UpdateDownloadActionState();
             }
+        }
+
+        private static void CountDownloadQueueAddResult(DownloadQueueAddResult result, ref int added, ref int updated, ref int ignored)
+        {
+            switch (result)
+            {
+                case DownloadQueueAddResult.Added:
+                    added++;
+                    break;
+                case DownloadQueueAddResult.Updated:
+                case DownloadQueueAddResult.Requeued:
+                    updated++;
+                    break;
+                default:
+                    ignored++;
+                    break;
+            }
+        }
+
+        private static string BuildDownloadQueueAddSummary(int added, int updated)
+        {
+            if (added > 0 && updated > 0)
+            {
+                return LF("MainPage/DownloadQueue/AddSummaryAddedAndUpdated", added, updated);
+            }
+
+            if (added > 0)
+            {
+                return LF("MainPage/DownloadQueue/AddSummaryAdded", added);
+            }
+
+            return LF("MainPage/DownloadQueue/AddSummaryUpdated", updated);
         }
 
         private void CancelAllDownloadsButton_Click(object sender, RoutedEventArgs e)
@@ -1049,6 +1093,16 @@ namespace IPAbuyer.Views
                 UiLogLevel.Tip => InfoBarSeverity.Warning,
                 _ => InfoBarSeverity.Informational
             };
+        }
+
+        private static string L(string key)
+        {
+            return Loader.GetString(key);
+        }
+
+        private static string LF(string key, params object[] args)
+        {
+            return string.Format(CultureInfo.CurrentCulture, L(key), args);
         }
 
         private void SetTableLoading(bool isLoading)

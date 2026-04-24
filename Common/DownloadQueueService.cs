@@ -9,11 +9,21 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using IPAbuyer.Models;
+using Microsoft.Windows.ApplicationModel.Resources;
 
 namespace IPAbuyer.Common
 {
+    public enum DownloadQueueAddResult
+    {
+        Ignored = 0,
+        Added = 1,
+        Updated = 2,
+        Requeued = 3
+    }
+
     public sealed class DownloadQueueService
     {
+        private static readonly ResourceLoader Loader = new();
         private static readonly Regex ProgressRegex = new(@"(?<!\d)(\d{1,3}(?:\.\d+)?)\s*[%％]", RegexOptions.Compiled);
         private static readonly Regex JsonProgressRegex = new(@"""(?:progress|percent|percentage|completed|completion|fraction)""\s*:\s*(\d+(?:\.\d+)?)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         private static readonly Regex SuccessFlagRegex = new(@"success\s*[:=]\s*(true|false)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -38,11 +48,11 @@ namespace IPAbuyer.Common
         public event Action<UiLogMessage>? LogReceived;
         public event Action? QueueChanged;
 
-        public void AddOrUpdateFromSearchResult(SearchResult app)
+        public DownloadQueueAddResult AddOrUpdateFromSearchResult(SearchResult app)
         {
             if (app == null || string.IsNullOrWhiteSpace(app.bundleId))
             {
-                return;
+                return DownloadQueueAddResult.Ignored;
             }
 
             string bundleId = app.bundleId.Trim();
@@ -56,15 +66,18 @@ namespace IPAbuyer.Common
                 existing.Price = app.price ?? existing.Price;
                 existing.ArtworkUrl = app.artworkUrl ?? existing.ArtworkUrl;
 
-                if (existing.Status is DownloadQueueStatus.Failed or DownloadQueueStatus.Canceled or DownloadQueueStatus.Success)
+                bool requeued = existing.Status is DownloadQueueStatus.Failed or DownloadQueueStatus.Canceled or DownloadQueueStatus.Success;
+                if (requeued)
                 {
                     existing.Status = DownloadQueueStatus.Pending;
-                    existing.LastMessage = "已重新加入下载队列";
+                    existing.LastMessage = L("DownloadQueue/Status/Requeued");
                 }
 
-                EmitLog($"队列更新: {existing.Name} ({existing.BundleId})");
+                EmitLog(requeued
+                    ? LF("DownloadQueue/Log/Requeued", existing.Name, existing.BundleId)
+                    : $"队列更新: {existing.Name} ({existing.BundleId})");
                 NotifyQueueChanged();
-                return;
+                return requeued ? DownloadQueueAddResult.Requeued : DownloadQueueAddResult.Updated;
             }
 
             var item = new DownloadQueueItem
@@ -83,6 +96,7 @@ namespace IPAbuyer.Common
             _items.Add(item);
             EmitLog($"已加入下载队列: {item.Name} ({item.BundleId})");
             NotifyQueueChanged();
+            return DownloadQueueAddResult.Added;
         }
 
         public int RemoveItems(System.Collections.Generic.IEnumerable<DownloadQueueItem> items)
@@ -128,12 +142,8 @@ namespace IPAbuyer.Common
                     return 0;
                 }
 
-                var candidates = _items
-                    .Where(i => i.Status == DownloadQueueStatus.Pending
-                        || i.Status == DownloadQueueStatus.Failed
-                        || i.Status == DownloadQueueStatus.Canceled)
-                    .ToList();
-                if (candidates.Count == 0)
+                int initialCount = CountRunnableItems();
+                if (initialCount == 0)
                 {
                     EmitLog("没有待下载项目");
                     return 0;
@@ -160,12 +170,16 @@ namespace IPAbuyer.Common
                     && SessionState.IsMockAccount
                     && string.Equals(SessionState.CurrentAccount, account, StringComparison.OrdinalIgnoreCase);
 
-                EmitLog($"开始下载队列，共 {candidates.Count} 项，输出目录: {outputDirectory}");
+                EmitLog($"开始下载队列，共 {initialCount} 项，输出目录: {outputDirectory}");
 
                 int completed = 0;
-                foreach (var item in candidates)
+                int processed = 0;
+                var processedItems = new System.Collections.Generic.HashSet<DownloadQueueItem>();
+                while (TryGetNextRunnableItem(processedItems, out var item))
                 {
                     _queueCts.Token.ThrowIfCancellationRequested();
+                    processed++;
+                    processedItems.Add(item);
 
                     item.Status = DownloadQueueStatus.Downloading;
                     item.LastMessage = "下载中";
@@ -241,7 +255,7 @@ namespace IPAbuyer.Common
                     }
                 }
 
-                EmitLog($"下载队列完成，成功 {completed}/{candidates.Count}");
+                EmitLog($"下载队列完成，成功 {completed}/{processed}");
                 return completed;
             }
             catch (OperationCanceledException)
@@ -280,6 +294,31 @@ namespace IPAbuyer.Common
 
             EmitLog("已请求终止所有下载任务");
             NotifyQueueChanged();
+        }
+
+        private int CountRunnableItems()
+        {
+            return _items.Count(IsRunnableItem);
+        }
+
+        private bool TryGetNextRunnableItem(System.Collections.Generic.ISet<DownloadQueueItem> excludedItems, out DownloadQueueItem item)
+        {
+            DownloadQueueItem? nextItem = _items.FirstOrDefault(i => !excludedItems.Contains(i) && IsRunnableItem(i));
+            if (nextItem == null)
+            {
+                item = null!;
+                return false;
+            }
+
+            item = nextItem;
+            return true;
+        }
+
+        private static bool IsRunnableItem(DownloadQueueItem item)
+        {
+            return item.Status == DownloadQueueStatus.Pending
+                || item.Status == DownloadQueueStatus.Failed
+                || item.Status == DownloadQueueStatus.Canceled;
         }
 
         private static bool IsDownloadSuccess(IpatoolExecution.IpatoolResult result)
@@ -649,6 +688,16 @@ namespace IPAbuyer.Common
         private void EmitLog(string message, UiLogSource source = UiLogSource.App)
         {
             LogReceived?.Invoke(new UiLogMessage(message, source));
+        }
+
+        private static string L(string key)
+        {
+            return Loader.GetString(key);
+        }
+
+        private static string LF(string key, params object[] args)
+        {
+            return string.Format(CultureInfo.CurrentCulture, L(key), args);
         }
 
         private void NotifyQueueChanged()
