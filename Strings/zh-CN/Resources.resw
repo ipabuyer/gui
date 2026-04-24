@@ -469,10 +469,13 @@
     <value>如需修改加密密钥，请先退出登录并重新登录。</value>
   </data>
   <data name="LoginPage/NewAccountHintText.Text" xml:space="preserve">
-    <value>提示：新创建的 Apple 账号需先在苹果设备 App Store 完成一次购买后，才能正常使用下载与购买功能。</value>
+    <value>新创建的 Apple 账号需先在苹果设备 App Store 完成一次购买后，才能正常使用下载与购买功能。</value>
   </data>
   <data name="LoginPage/EmailLabel.Text" xml:space="preserve">
     <value>电子邮箱地址</value>
+  </data>
+  <data name="LoginPage/EmailHelpText.Text" xml:space="preserve">
+    <value>输入 Apple ID 邮箱地址用于登录。</value>
   </data>
   <data name="LoginPage/EmailInput.PlaceholderText" xml:space="preserve">
     <value>example@icloud.com</value>

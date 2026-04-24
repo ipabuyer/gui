@@ -7,10 +7,7 @@
         <StackPanel Spacing="16">
           <StackPanel Margin="0,0,0,4" Spacing="6">
             <TextBlock x:Uid="LoginPage/TitleText" Style="{ThemeResource TitleTextBlockStyle}" />
-            <TextBlock x:Uid="LoginPage/SubtitleText" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Style="{ThemeResource BodyTextBlockStyle}" />
           </StackPanel>
-          <TextBlock x:Uid="LoginPage/PassphraseChangeHintText" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="WrapWholeWords" />
-          <TextBlock x:Uid="LoginPage/NewAccountHintText" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="WrapWholeWords" />
           <Grid>
             <Border Padding="20" Style="{StaticResource AppSurfaceBorderStyle}">
               <Grid ColumnSpacing="12" RowSpacing="12">
@@ -24,15 +21,51 @@
                   <ColumnDefinition Width="130" />
                   <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <TextBlock x:Uid="LoginPage/EmailLabel" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" />
+                <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                  <TextBlock x:Uid="LoginPage/EmailLabel" VerticalAlignment="Center" />
+                  <TextBlock Text="?" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center">
+                    <ToolTipService.ToolTip>
+                      <ToolTip>
+                        <TextBlock x:Uid="LoginPage/NewAccountHintText" MaxWidth="320" TextWrapping="WrapWholeWords" />
+                      </ToolTip>
+                    </ToolTipService.ToolTip>
+                  </TextBlock>
+                </StackPanel>
                 <TextBox x:Uid="LoginPage/EmailInput" x:Name="EmailComboBox" Grid.Row="0" Grid.Column="1" Width="300" MinHeight="36" InputScope="EmailSmtpAddress" IsSpellCheckEnabled="False" KeyUp="Input_KeyUp" />
-                <TextBlock x:Uid="LoginPage/PasswordLabel" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center" />
+                <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                  <TextBlock x:Uid="LoginPage/PasswordLabel" VerticalAlignment="Center" />
+                  <TextBlock Text="?" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center">
+                    <ToolTipService.ToolTip>
+                      <ToolTip>
+                        <TextBlock x:Uid="LoginPage/EmailHelpText" MaxWidth="320" TextWrapping="WrapWholeWords" />
+                      </ToolTip>
+                    </ToolTipService.ToolTip>
+                  </TextBlock>
+                </StackPanel>
                 <PasswordBox x:Uid="LoginPage/PasswordInput" x:Name="PasswordBox" Grid.Row="1" Grid.Column="1" Width="300" MinHeight="36" KeyUp="Input_KeyUp" PasswordRevealMode="Peek" />
-                <TextBlock x:Uid="LoginPage/TwoFactorCodeLabel" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center" />
+                <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                  <TextBlock x:Uid="LoginPage/TwoFactorCodeLabel" VerticalAlignment="Center" />
+                  <TextBlock Text="?" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center">
+                    <ToolTipService.ToolTip>
+                      <ToolTip>
+                        <TextBlock x:Uid="LoginPage/TwoFactorHelpText" MaxWidth="320" TextWrapping="WrapWholeWords" />
+                      </ToolTip>
+                    </ToolTipService.ToolTip>
+                  </TextBlock>
+                </StackPanel>
                 <StackPanel x:Name="AuthCodeInlinePanel" Grid.Row="2" Grid.Column="1" Spacing="6" VerticalAlignment="Center" Visibility="Visible">
                   <PasswordBox x:Uid="LoginPage/TwoFactorCodeInput" x:Name="CodeBox" Width="300" MinHeight="36" KeyUp="CodeBox_KeyUp" PasswordRevealMode="Peek" />
                 </StackPanel>
-                <TextBlock x:Uid="LoginPage/PassphraseLabel" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" />
+                <StackPanel Grid.Row="3" Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                  <TextBlock x:Uid="LoginPage/PassphraseLabel" VerticalAlignment="Center" />
+                  <TextBlock Text="?" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center">
+                    <ToolTipService.ToolTip>
+                      <ToolTip>
+                        <TextBlock x:Uid="LoginPage/PassphraseChangeHintText" MaxWidth="320" TextWrapping="WrapWholeWords" />
+                      </ToolTip>
+                    </ToolTipService.ToolTip>
+                  </TextBlock>
+                </StackPanel>
                 <TextBox x:Uid="LoginPage/PassphraseInput" x:Name="PassphraseBox" Grid.Row="3" Grid.Column="1" Width="300" MinHeight="36" KeyUp="Input_KeyUp" />
               </Grid>
             </Border>
@@ -50,7 +83,6 @@
             <Button x:Uid="Common/AppleAccount/OpenButton" x:Name="OpenAppleAccountButton" HorizontalAlignment="Left" Click="OpenAppleAccountButton_Click" />
             <Button x:Uid="LoginPage/Action/OpenLogDialogButton" x:Name="OpenLoginLogButton" HorizontalAlignment="Left" Click="ShowLoginLogDialog_Click" />
           </StackPanel>
-          <TextBlock x:Uid="LoginPage/TwoFactorHelpText" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="WrapWholeWords" />
         </StackPanel>
       </Grid>
     </ScrollViewer>
