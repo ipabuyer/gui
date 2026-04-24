@@ -82,8 +82,8 @@
           </StackPanel>
           <InfoBar
             x:Name="LoginStatusInfoBar"
-            IsOpen="False"
-            IsClosable="True"
+            IsOpen="True"
+            IsClosable="False"
             Severity="Informational" />
         </StackPanel>
       </Grid>

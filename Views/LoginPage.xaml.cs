@@ -90,8 +90,6 @@ namespace IPAbuyer.Views
 
         private async void NextButton_Click(object sender, RoutedEventArgs e)
         {
-            _ = TryShowLoginLogDialogAsync();
-
             try
             {
                 if (_isTwoFactorPending)
@@ -114,7 +112,6 @@ namespace IPAbuyer.Views
 
         private async void AuthInfoButton_Click(object sender, RoutedEventArgs e)
         {
-            _ = TryShowLoginLogDialogAsync();
             await QueryAuthInfoAsync();
         }
 
@@ -622,7 +619,7 @@ namespace IPAbuyer.Views
         {
             if (LoginStatusInfoBar != null)
             {
-                LoginStatusInfoBar.IsOpen = false;
+                LoginStatusInfoBar.IsOpen = true;
             }
         }
 
