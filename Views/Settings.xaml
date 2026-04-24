@@ -2,44 +2,52 @@
 <Page x:Class="IPAbuyer.Views.Settings" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:controls="using:CommunityToolkit.WinUI.Controls" mc:Ignorable="d">
     <Page.Background>Transparent</Page.Background>
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Padding="{StaticResource AppPagePadding}" Spacing="12" MaxWidth="920" HorizontalAlignment="Stretch">
-            <controls:SettingsCard x:Uid="Settings/Card/CountryCode">
-                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                    <TextBlock x:Name="CountryCodeValueTextBlock" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                    <StackPanel Orientation="Horizontal" Spacing="8">
+        <StackPanel Padding="{StaticResource AppPagePadding}" Spacing="12" HorizontalAlignment="Stretch">
+            <controls:SettingsCard x:Uid="Settings/Card/CountryCode" HorizontalAlignment="Stretch">
+                <Grid ColumnSpacing="12" VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="CountryCodeValueTextBlock" Grid.Column="0" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                         <Button x:Uid="Settings/Button/EditCountryCode" Click="CountryCodeButton" />
                         <Button x:Uid="Settings/Button/ResetCountryCode" Click="ResetCountryCodeButton_Click" />
                     </StackPanel>
-                </StackPanel>
+                </Grid>
             </controls:SettingsCard>
-            <controls:SettingsCard x:Uid="Settings/Card/DownloadDirectory">
-                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                    <TextBlock x:Name="DownloadDirectoryValueTextBlock" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
-                    <StackPanel Orientation="Horizontal" Spacing="8">
+            <controls:SettingsCard x:Uid="Settings/Card/DownloadDirectory" HorizontalAlignment="Stretch">
+                <Grid ColumnSpacing="12" VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="DownloadDirectoryValueTextBlock" Grid.Column="0" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
                         <Button x:Uid="Settings/Button/PickDownloadDirectory" Click="PickDownloadDirectoryButton_Click" />
                         <Button x:Uid="Settings/Button/ResetDownloadDirectory" Click="ResetDownloadDirectoryButton_Click" />
                     </StackPanel>
-                </StackPanel>
+                </Grid>
             </controls:SettingsCard>
-            <controls:SettingsCard x:Uid="Settings/Card/DetailedIpatoolLog">
+            <controls:SettingsCard x:Uid="Settings/Card/DetailedIpatoolLog" HorizontalAlignment="Stretch">
                 <ToggleSwitch x:Name="DetailedIpatoolLogCheckBox" Toggled="DetailedIpatoolLogCheckBox_Toggled" />
             </controls:SettingsCard>
-            <controls:SettingsCard x:Uid="Settings/Card/OwnedPrompt">
+            <controls:SettingsCard x:Uid="Settings/Card/OwnedPrompt" HorizontalAlignment="Stretch">
                 <ToggleSwitch x:Name="OwnedCheckBox" Toggled="OwnedCheckBox_Toggled" />
             </controls:SettingsCard>
-            <controls:SettingsCard x:Uid="Settings/Card/DeveloperSite">
+            <controls:SettingsCard x:Uid="Settings/Card/DeveloperSite" HorizontalAlignment="Stretch">
                 <Button x:Uid="Settings/Button/OpenDeveloperSite" Click="GithubButton" HorizontalAlignment="Right" />
             </controls:SettingsCard>
-            <controls:SettingsCard x:Uid="Settings/Card/FeedbackEmail">
+            <controls:SettingsCard x:Uid="Settings/Card/FeedbackEmail" HorizontalAlignment="Stretch">
                 <Button x:Uid="Settings/Button/CopyFeedbackEmail" Click="CopyFeedbackEmailButton_Click" HorizontalAlignment="Right" />
             </controls:SettingsCard>
-            <controls:SettingsCard x:Uid="Settings/Card/ClearLocalDatabase">
+            <controls:SettingsCard x:Uid="Settings/Card/ClearLocalDatabase" HorizontalAlignment="Stretch">
                 <Button x:Uid="Settings/Button/ClearLocalDatabase" Click="DeleteDataBase" FontWeight="SemiBold" HorizontalAlignment="Right" Style="{StaticResource AppDangerButtonStyle}" />
             </controls:SettingsCard>
-            <controls:SettingsCard x:Uid="Settings/Card/ClearIpatoolData">
+            <controls:SettingsCard x:Uid="Settings/Card/ClearIpatoolData" HorizontalAlignment="Stretch">
                 <Button x:Uid="Settings/Button/ClearIpatoolData" Click="ClearIpatoolDataButton_Click" FontWeight="SemiBold" Style="{StaticResource AppDangerButtonStyle}" />
             </controls:SettingsCard>
-            <controls:SettingsCard x:Uid="Settings/Card/ExportIpatool">
+            <controls:SettingsCard x:Uid="Settings/Card/ExportIpatool" HorizontalAlignment="Stretch">
                 <Button x:Uid="Settings/Button/ExportIpatool" Click="ExportIpatoolButton_Click" FontWeight="SemiBold" Style="{StaticResource AccentButtonStyle}" />
             </controls:SettingsCard>
         </StackPanel>
