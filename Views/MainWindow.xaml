@@ -36,16 +36,18 @@
                 </StackPanel>
             </TitleBar.LeftHeader>
             <TitleBar.Content>
-                <AutoSuggestBox
-                    x:Uid="MainWindow/SearchBox"
-                    x:Name="AppNameBox"
-                    Width="450"
-                    MinWidth="240"
-                    MaxWidth="520"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    QueryIcon="Find"
-                    QuerySubmitted="AppNameBox_QuerySubmitted" />
+                <Grid x:Name="SearchBoxHost">
+                    <AutoSuggestBox
+                        x:Uid="MainWindow/SearchBox"
+                        x:Name="AppNameBox"
+                        Width="450"
+                        MinWidth="240"
+                        MaxWidth="520"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        QueryIcon="Find"
+                        QuerySubmitted="AppNameBox_QuerySubmitted" />
+                </Grid>
             </TitleBar.Content>
         </TitleBar>
 

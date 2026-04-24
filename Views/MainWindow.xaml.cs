@@ -16,7 +16,6 @@ namespace IPAbuyer.Views
             ConfigureSystemBackdrop();
 
             ExtendsContentIntoTitleBar = true;
-            SetTitleBar(AppTitleBar);
 
             Title = TitleBarTextBlock.Text;
             SetWindowIcon(this);
@@ -120,8 +119,7 @@ namespace IPAbuyer.Views
         private void UpdateSearchBoxState()
         {
             bool isMainPage = _currentMainPage != null;
-            AppNameBox.IsEnabled = isMainPage;
-            AppNameBox.Opacity = isMainPage ? 1.0 : 0.65;
+            AppTitleBar.Content = isMainPage ? SearchBoxHost : null;
         }
 
     }
