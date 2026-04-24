@@ -539,7 +539,7 @@ namespace IPAbuyer.Common
 
                 if (!string.IsNullOrEmpty(architectureSuffix))
                 {
-                    string pattern = $"ipatool-*-windows-{architectureSuffix}.exe";
+                    string pattern = $"ipatool-main-windows-{architectureSuffix}.exe";
                     string? candidate = Directory.GetFiles(includeDirectory, pattern, SearchOption.TopDirectoryOnly)
                         .OrderByDescending(path => path, StringComparer.OrdinalIgnoreCase)
                         .FirstOrDefault();

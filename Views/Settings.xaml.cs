@@ -469,7 +469,7 @@ namespace IPAbuyer.Views
                 return null;
             }
 
-            string pattern = $"ipatool-*-windows-{architectureSuffix}.exe";
+            string pattern = $"ipatool-main-windows-{architectureSuffix}.exe";
             return Directory.GetFiles(includeDirectory, pattern, SearchOption.TopDirectoryOnly)
                 .OrderByDescending(path => path, StringComparer.OrdinalIgnoreCase)
                 .FirstOrDefault();
