@@ -474,9 +474,6 @@
   <data name="LoginPage/EmailLabel.Text" xml:space="preserve">
     <value>电子邮箱地址</value>
   </data>
-  <data name="LoginPage/EmailHelpText.Text" xml:space="preserve">
-    <value>输入 Apple ID 邮箱地址用于登录。</value>
-  </data>
   <data name="LoginPage/EmailInput.PlaceholderText" xml:space="preserve">
     <value>example@icloud.com</value>
   </data>

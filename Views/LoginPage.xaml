@@ -34,13 +34,6 @@
                 <TextBox x:Uid="LoginPage/EmailInput" x:Name="EmailComboBox" Grid.Row="0" Grid.Column="1" Width="300" MinHeight="36" InputScope="EmailSmtpAddress" IsSpellCheckEnabled="False" KeyUp="Input_KeyUp" />
                 <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                   <TextBlock x:Uid="LoginPage/PasswordLabel" VerticalAlignment="Center" />
-                  <TextBlock Text="?" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center">
-                    <ToolTipService.ToolTip>
-                      <ToolTip>
-                        <TextBlock x:Uid="LoginPage/EmailHelpText" MaxWidth="320" TextWrapping="WrapWholeWords" />
-                      </ToolTip>
-                    </ToolTipService.ToolTip>
-                  </TextBlock>
                 </StackPanel>
                 <PasswordBox x:Uid="LoginPage/PasswordInput" x:Name="PasswordBox" Grid.Row="1" Grid.Column="1" Width="300" MinHeight="36" KeyUp="Input_KeyUp" PasswordRevealMode="Peek" />
                 <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
