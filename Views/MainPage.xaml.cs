@@ -38,12 +38,12 @@ namespace IPAbuyer.Views
         private static readonly string[] PurchasedAliases = { StatusPurchased };
         private static readonly string[] OwnedAliases = { StatusOwned };
         private static readonly string[] CanPurchaseAliases = { L("Common/Status/CanPurchase"), StatusCanPurchase };
-        private static readonly string NameHeaderBase = L("MainPage/Header/NameButton.Content");
-        private static readonly string IdHeaderBase = L("MainPage/Header/IdButton.Content");
-        private static readonly string DeveloperHeaderBase = L("MainPage/Header/DeveloperButton.Content");
-        private static readonly string VersionHeaderBase = L("MainPage/Header/VersionButton.Content");
-        private static readonly string PriceHeaderBase = L("MainPage/Header/PriceButton.Content");
-        private static readonly string PurchasedHeaderBase = L("MainPage/Header/PurchasedButton.Content");
+        private static readonly string NameHeaderBase = L("MainPage/Header/NameButton/Content");
+        private static readonly string IdHeaderBase = L("MainPage/Header/IdButton/Content");
+        private static readonly string DeveloperHeaderBase = L("MainPage/Header/DeveloperButton/Content");
+        private static readonly string VersionHeaderBase = L("MainPage/Header/VersionButton/Content");
+        private static readonly string PriceHeaderBase = L("MainPage/Header/PriceButton/Content");
+        private static readonly string PurchasedHeaderBase = L("MainPage/Header/PurchasedButton/Content");
         private const int MaxLogLines = 1000;
 
         public int SearchLimitNum { get; set; } = 100;
