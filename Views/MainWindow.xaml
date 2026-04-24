@@ -9,47 +9,37 @@
     mc:Ignorable="d">
     <Grid Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="56" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Border
-            x:Name="CustomTitleBar"
+        <TitleBar
+            x:Name="AppTitleBar"
             Grid.Row="0"
-            Background="Transparent"
-            Padding="10">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-
-                <Button
-                    x:Name="PaneToggleButton"
-                    Grid.Column="0"
-                    Width="36"
-                    Height="36"
-                    Click="PaneToggleButton_Click">
-                    <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE700;" />
-                </Button>
+            IsBackButtonVisible="False"
+            IsPaneToggleButtonVisible="True"
+            PaneToggleRequested="TitleBar_PaneToggleRequested">
+            <TitleBar.LeftHeader>
                 <TextBlock
                     x:Uid="MainWindow/TitleBar/TitleText"
                     x:Name="TitleBarTextBlock"
-                    Grid.Column="1"
-                    Margin="10"
+                    Margin="12,0,16,0"
                     VerticalAlignment="Center"
-                    HorizontalAlignment="Left"
                     Style="{ThemeResource BodyStrongTextBlockStyle}" />
-                <Grid Grid.Column="2" Width="360" MinWidth="220" MaxWidth="420" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <AutoSuggestBox
-                        x:Uid="MainWindow/SearchBox"
-                        x:Name="AppNameBox"
-                        QueryIcon="Find"
-                        QuerySubmitted="AppNameBox_QuerySubmitted" />
-                </Grid>
-            </Grid>
-        </Border>
+            </TitleBar.LeftHeader>
+            <TitleBar.Content>
+                <AutoSuggestBox
+                    x:Uid="MainWindow/SearchBox"
+                    x:Name="AppNameBox"
+                    Width="450"
+                    MinWidth="240"
+                    MaxWidth="520"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    QueryIcon="Find"
+                    QuerySubmitted="AppNameBox_QuerySubmitted" />
+            </TitleBar.Content>
+        </TitleBar>
 
         <NavigationView
             x:Name="NavView"
@@ -60,30 +50,26 @@
             ItemInvoked="NavView_ItemInvoked"
             OpenPaneLength="224"
             CompactPaneLength="56"
-            PaneDisplayMode="LeftCompact"
+            IsPaneOpen="True"
+            PaneDisplayMode="Left"
             Background="Transparent">
-            <NavigationView.PaneHeader>
-                <Border Margin="12,12,12,8">
-                    <TextBlock Text="导航" Style="{ThemeResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                </Border>
-            </NavigationView.PaneHeader>
             <NavigationView.MenuItems>
                 <NavigationViewItem x:Uid="MainWindow/Nav/Main" Icon="Home" Tag="MainPage" />
                 <NavigationViewItem x:Uid="MainWindow/Nav/Account" Icon="Contact" Tag="LoginPage" />
                 <NavigationViewItem x:Uid="MainWindow/Nav/Settings" Icon="Setting" Tag="SettingsPage" />
             </NavigationView.MenuItems>
-            <Frame x:Name="ContentFrame" />
+            <Grid>
+                <Frame x:Name="ContentFrame" />
+                <ProgressBar
+                    x:Name="SearchLoadingBar"
+                    Height="2"
+                    VerticalAlignment="Top"
+                    IsIndeterminate="True"
+                    IsHitTestVisible="False"
+                    Visibility="Collapsed"
+                    Canvas.ZIndex="10" />
+            </Grid>
         </NavigationView>
-
-        <ProgressBar
-            x:Name="SearchLoadingBar"
-            Grid.Row="1"
-            Height="2"
-            VerticalAlignment="Top"
-            IsIndeterminate="True"
-            IsHitTestVisible="False"
-            Visibility="Collapsed"
-            Canvas.ZIndex="10" />
     </Grid>
 </Window>
 

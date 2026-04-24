@@ -1,18 +1,14 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Input;
 using IPAbuyer;
 using System;
-using System.Collections.Generic;
-using Windows.Graphics;
 
 namespace IPAbuyer.Views
 {
     public sealed partial class MainWindow : Window
     {
         private MainPage? _currentMainPage;
-        private readonly InputNonClientPointerSource? _nonClientPointerSource;
 
         public MainWindow()
         {
@@ -20,17 +16,7 @@ namespace IPAbuyer.Views
             ConfigureSystemBackdrop();
 
             ExtendsContentIntoTitleBar = true;
-            SetTitleBar(CustomTitleBar);
-            try
-            {
-                IntPtr hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-                var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hwnd);
-                _nonClientPointerSource = InputNonClientPointerSource.GetForWindowId(windowId);
-            }
-            catch
-            {
-                _nonClientPointerSource = null;
-            }
+            SetTitleBar(AppTitleBar);
 
             Title = TitleBarTextBlock.Text;
             SetWindowIcon(this);
@@ -47,11 +33,6 @@ namespace IPAbuyer.Views
             }
 
             UpdateSearchBoxState();
-            CustomTitleBar.Loaded += TitleBar_Loaded;
-            SizeChanged += MainWindow_SizeChanged;
-            CustomTitleBar.SizeChanged += TitleBarElement_SizeChanged;
-            PaneToggleButton.SizeChanged += TitleBarElement_SizeChanged;
-            AppNameBox.SizeChanged += TitleBarElement_SizeChanged;
         }
 
         private void ConfigureSystemBackdrop()
@@ -66,14 +47,14 @@ namespace IPAbuyer.Views
             }
         }
 
-        private void PaneToggleButton_Click(object sender, RoutedEventArgs e)
-        {
-            NavView.IsPaneOpen = !NavView.IsPaneOpen;
-        }
-
         private void AppNameBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
         {
             TriggerSearch();
+        }
+
+        private void TitleBar_PaneToggleRequested(TitleBar sender, object args)
+        {
+            NavView.IsPaneOpen = !NavView.IsPaneOpen;
         }
 
         private void TriggerSearch()
@@ -162,65 +143,6 @@ namespace IPAbuyer.Views
             bool isMainPage = _currentMainPage != null;
             AppNameBox.IsEnabled = isMainPage;
             AppNameBox.Opacity = isMainPage ? 1.0 : 0.65;
-            UpdateNonClientPassthroughRegions();
-        }
-
-        private void TitleBar_Loaded(object sender, RoutedEventArgs e)
-        {
-            UpdateNonClientPassthroughRegions();
-        }
-
-        private void MainWindow_SizeChanged(object sender, WindowSizeChangedEventArgs args)
-        {
-            UpdateNonClientPassthroughRegions();
-        }
-
-        private void TitleBarElement_SizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            UpdateNonClientPassthroughRegions();
-        }
-
-        private void UpdateNonClientPassthroughRegions()
-        {
-            if (_nonClientPointerSource == null)
-            {
-                return;
-            }
-
-            double scale = CustomTitleBar.XamlRoot?.RasterizationScale ?? 1.0;
-            if (scale <= 0 || CustomTitleBar.ActualWidth <= 0 || CustomTitleBar.ActualHeight <= 0)
-            {
-                return;
-            }
-
-            try
-            {
-                var passthroughRects = new List<RectInt32>();
-                TryAddPassthroughRect(PaneToggleButton, scale, passthroughRects);
-                TryAddPassthroughRect(AppNameBox, scale, passthroughRects);
-                _nonClientPointerSource.SetRegionRects(NonClientRegionKind.Passthrough, passthroughRects.ToArray());
-            }
-            catch
-            {
-                // 忽略区域更新失败，避免在特定系统环境下触发启动崩溃。
-            }
-        }
-
-        private void TryAddPassthroughRect(FrameworkElement element, double scale, List<RectInt32> rects)
-        {
-            if (element.ActualWidth <= 0 || element.ActualHeight <= 0)
-            {
-                return;
-            }
-
-            var transform = element.TransformToVisual(CustomTitleBar);
-            Windows.Foundation.Point origin = transform.TransformPoint(new Windows.Foundation.Point(0, 0));
-            int x = Math.Max(0, (int)Math.Round(origin.X * scale));
-            int y = Math.Max(0, (int)Math.Round(origin.Y * scale));
-            int width = Math.Max(1, (int)Math.Round(element.ActualWidth * scale));
-            int height = Math.Max(1, (int)Math.Round(element.ActualHeight * scale));
-
-            rects.Add(new RectInt32(x, y, width, height));
         }
 
     }
