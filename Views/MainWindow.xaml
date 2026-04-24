@@ -7,50 +7,49 @@
     xmlns:local="using:IPAbuyer"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
-    <Grid Background="Transparent">
+    <Grid Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="56" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Border
-            x:Name="CustomTitleBar"
+        <TitleBar
+            x:Name="AppTitleBar"
             Grid.Row="0"
-            Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}"
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            BorderThickness="0,0,0,1"
-            Padding="10">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-
-                <Button
-                    x:Name="PaneToggleButton"
-                    Grid.Column="0"
-                    Width="36"
-                    Height="36"
-                    Click="PaneToggleButton_Click">
-                    <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE700;" />
-                </Button>
-                <TextBlock
-                    x:Uid="MainWindow/TitleBar/TitleText"
-                    x:Name="TitleBarTextBlock"
-                    Grid.Column="2"
-                    Margin="10"
-                    VerticalAlignment="Center"
-                    HorizontalAlignment="Left"/>
-                <Grid Grid.Column="3" Width="300" MinWidth="200" MaxWidth="300" HorizontalAlignment="Center" VerticalAlignment="Center">
+            IsBackButtonVisible="False"
+            IsPaneToggleButtonVisible="True"
+            PaneToggleRequested="TitleBar_PaneToggleRequested">
+            <TitleBar.LeftHeader>
+                <StackPanel
+                    Margin="12,0,16,0"
+                    Orientation="Horizontal"
+                    Spacing="8"
+                    VerticalAlignment="Center">
+                    <Image
+                        Width="20"
+                        Height="20"
+                        Source="ms-appx:///Assets/Square44x44Logo.scale-200.png" />
+                    <TextBlock
+                        x:Uid="MainWindow/TitleBar/TitleText"
+                        x:Name="TitleBarTextBlock"
+                        VerticalAlignment="Center" />
+                </StackPanel>
+            </TitleBar.LeftHeader>
+            <TitleBar.Content>
+                <Grid x:Name="SearchBoxHost">
                     <AutoSuggestBox
                         x:Uid="MainWindow/SearchBox"
                         x:Name="AppNameBox"
+                        Width="360"
+                        MinWidth="220"
+                        MaxWidth="420"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
                         QueryIcon="Find"
                         QuerySubmitted="AppNameBox_QuerySubmitted" />
                 </Grid>
-            </Grid>
-        </Border>
+            </TitleBar.Content>
+        </TitleBar>
 
         <NavigationView
             x:Name="NavView"
@@ -61,31 +60,18 @@
             ItemInvoked="NavView_ItemInvoked"
             OpenPaneLength="224"
             CompactPaneLength="56"
-            PaneDisplayMode="LeftCompact"
-            Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
-            <NavigationView.PaneHeader>
-                <Border Margin="12,12,12,8">
-                    <TextBlock Text="导航" Style="{ThemeResource BodyStrongTextBlockStyle}" Opacity="0.78" />
-                </Border>
-            </NavigationView.PaneHeader>
+            IsPaneOpen="True"
+            PaneDisplayMode="Left"
+            Background="Transparent">
             <NavigationView.MenuItems>
                 <NavigationViewItem x:Uid="MainWindow/Nav/Main" Icon="Home" Tag="MainPage" />
                 <NavigationViewItem x:Uid="MainWindow/Nav/Account" Icon="Contact" Tag="LoginPage" />
-                <NavigationViewItem x:Uid="MainWindow/Nav/Downloads" Icon="Download" Tag="DownloadsPage" />
                 <NavigationViewItem x:Uid="MainWindow/Nav/Settings" Icon="Setting" Tag="SettingsPage" />
             </NavigationView.MenuItems>
-            <Frame x:Name="ContentFrame" />
+            <Grid>
+                <Frame x:Name="ContentFrame" />
+            </Grid>
         </NavigationView>
-
-        <ProgressBar
-            x:Name="SearchLoadingBar"
-            Grid.Row="1"
-            Height="2"
-            VerticalAlignment="Top"
-            IsIndeterminate="True"
-            IsHitTestVisible="False"
-            Visibility="Collapsed"
-            Canvas.ZIndex="10" />
     </Grid>
 </Window>
 

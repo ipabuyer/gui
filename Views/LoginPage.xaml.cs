@@ -755,21 +755,11 @@ namespace IPAbuyer.Views
         {
             return level switch
             {
-                UiLogLevel.Tip => ActualTheme == ElementTheme.Dark
-                    ? Windows.UI.Color.FromArgb(0xFF, 0xFF, 0xD5, 0x8A)
-                    : Windows.UI.Color.FromArgb(0xFF, 0x9A, 0x67, 0x00),
-                UiLogLevel.Success => ActualTheme == ElementTheme.Dark
-                    ? Windows.UI.Color.FromArgb(0xFF, 0x8D, 0xE6, 0x9A)
-                    : Windows.UI.Color.FromArgb(0xFF, 0x2E, 0xA0, 0x43),
-                UiLogLevel.Error => ActualTheme == ElementTheme.Dark
-                    ? Windows.UI.Color.FromArgb(0xFF, 0xFF, 0x99, 0x99)
-                    : Windows.UI.Color.FromArgb(0xFF, 0xC4, 0x2B, 0x1C),
-                UiLogLevel.Ipatool => ActualTheme == ElementTheme.Dark
-                    ? Windows.UI.Color.FromArgb(0xFF, 0x9C, 0xC8, 0xFF)
-                    : Windows.UI.Color.FromArgb(0xFF, 0x00, 0x55, 0xAA),
-                _ => ActualTheme == ElementTheme.Dark
-                    ? Windows.UI.Color.FromArgb(0xFF, 0xD8, 0xD8, 0xD8)
-                    : Windows.UI.Color.FromArgb(0xFF, 0x44, 0x44, 0x44)
+                UiLogLevel.Tip => Windows.UI.Color.FromArgb(0xFF, 0xFF, 0xD5, 0x8A),
+                UiLogLevel.Success => Windows.UI.Color.FromArgb(0xFF, 0x8D, 0xE6, 0x9A),
+                UiLogLevel.Error => Windows.UI.Color.FromArgb(0xFF, 0xFF, 0x99, 0x99),
+                UiLogLevel.Ipatool => Windows.UI.Color.FromArgb(0xFF, 0x9C, 0xC8, 0xFF),
+                _ => Windows.UI.Color.FromArgb(0xFF, 0xE6, 0xE6, 0xE6)
             };
         }
 

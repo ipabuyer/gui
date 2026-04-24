@@ -29,8 +29,6 @@ namespace IPAbuyer.Views
         private string _selectedFilter = "All";
         private string? _sortKey;
         private SortDirection _sortDirection = SortDirection.None;
-        public event Action<bool>? SearchLoadingChanged;
-
         private const string StatusPurchased = "已购买";
         private const string StatusOwned = "已拥有";
         private const string StatusCanPurchase = "未购买";
@@ -61,6 +59,11 @@ namespace IPAbuyer.Views
             IpatoolExecution.CommandExecuting += OnIpatoolCommandExecuting;
             IpatoolExecution.CommandOutputReceived -= OnIpatoolCommandOutputReceived;
             IpatoolExecution.CommandOutputReceived += OnIpatoolCommandOutputReceived;
+            _downloadQueueService.LogReceived -= OnDownloadQueueLogReceived;
+            _downloadQueueService.LogReceived += OnDownloadQueueLogReceived;
+            _downloadQueueService.QueueChanged -= OnDownloadQueueChanged;
+            _downloadQueueService.QueueChanged += OnDownloadQueueChanged;
+            UpdateDownloadActionState();
 
             if (MainPageCacheState.ConsumeSearchCacheInvalidation())
             {
@@ -77,7 +80,7 @@ namespace IPAbuyer.Views
             }
 
             AppendHomeLog($"开始搜索: {appName.Trim()}");
-            SearchLoadingChanged?.Invoke(true);
+            SetTableLoading(true);
             try
             {
                 await PerformSearchAsync(appName.Trim(), _pageCts.Token);
@@ -88,7 +91,7 @@ namespace IPAbuyer.Views
             }
             finally
             {
-                SearchLoadingChanged?.Invoke(false);
+                SetTableLoading(false);
             }
         }
 
@@ -197,7 +200,7 @@ namespace IPAbuyer.Views
             {
                 BatchPurchaseButton.IsEnabled = false;
             }
-            SetPurchaseLoading(true);
+            SetTableLoading(true);
 
             try
             {
@@ -222,14 +225,16 @@ namespace IPAbuyer.Views
                 {
                     BatchPurchaseButton.IsEnabled = true;
                 }
-                SetPurchaseLoading(false);
+                SetTableLoading(false);
 
                 ApplyFilterAndRefresh(preserveScrollPosition: true);
             }
         }
 
-        private void AddToDownloadQueueButton_Click(object sender, RoutedEventArgs e)
+        private async void AddToDownloadQueueButton_Click(object sender, RoutedEventArgs e)
         {
+            _ = TryShowHomeLogDialogAsync();
+
             if (ResultList == null)
             {
                 return;
@@ -242,7 +247,14 @@ namespace IPAbuyer.Views
                 added++;
             }
 
-            AppendHomeLog(added == 0 ? "未选择应用，未加入下载队列。" : $"已加入下载队列: {added} 项。");
+            if (added == 0)
+            {
+                AppendHomeLog("未选择应用，无法开始下载。");
+                return;
+            }
+
+            AppendHomeLog($"已加入下载队列: {added} 项。");
+            await StartDownloadQueueFromMainAsync();
         }
 
         private async void ContextMenuPurchase_Click(object sender, RoutedEventArgs e)
@@ -259,7 +271,7 @@ namespace IPAbuyer.Views
             {
                 BatchPurchaseButton.IsEnabled = false;
             }
-            SetPurchaseLoading(true);
+            SetTableLoading(true);
 
             try
             {
@@ -280,13 +292,13 @@ namespace IPAbuyer.Views
                 {
                     BatchPurchaseButton.IsEnabled = true;
                 }
-                SetPurchaseLoading(false);
+                SetTableLoading(false);
 
                 ApplyFilterAndRefresh(preserveScrollPosition: true);
             }
         }
 
-        private void ContextMenuAddToQueue_Click(object sender, RoutedEventArgs e)
+        private async void ContextMenuAddToQueue_Click(object sender, RoutedEventArgs e)
         {
             var selectedApps = GetContextTargetApps(sender);
             if (selectedApps.Count == 0)
@@ -300,6 +312,65 @@ namespace IPAbuyer.Views
             }
 
             AppendHomeLog($"右键加入下载队列: {selectedApps.Count} 项。");
+            _ = TryShowHomeLogDialogAsync();
+            await StartDownloadQueueFromMainAsync();
+        }
+
+        private async Task StartDownloadQueueFromMainAsync()
+        {
+            if (_downloadQueueService.IsRunning)
+            {
+                AppendHomeLog("下载队列已在运行。");
+                UpdateDownloadActionState();
+                return;
+            }
+
+            try
+            {
+                UpdateDownloadActionState();
+                _ = await _downloadQueueService.StartQueueAsync();
+            }
+            catch (Exception ex)
+            {
+                AppendHomeLog($"开始下载失败: {ex.Message}");
+            }
+            finally
+            {
+                UpdateDownloadActionState();
+            }
+        }
+
+        private void CancelAllDownloadsButton_Click(object sender, RoutedEventArgs e)
+        {
+            _ = TryShowHomeLogDialogAsync();
+            _downloadQueueService.CancelAll();
+            UpdateDownloadActionState();
+        }
+
+        private void OnDownloadQueueChanged()
+        {
+            DispatcherQueue.TryEnqueue(UpdateDownloadActionState);
+        }
+
+        private void OnDownloadQueueLogReceived(UiLogMessage log)
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                AppendHomeLog(log.Message, log.Source);
+            });
+        }
+
+        private void UpdateDownloadActionState()
+        {
+            if (CancelAllDownloadsButton == null)
+            {
+                return;
+            }
+
+            bool isRunning = _downloadQueueService.IsRunning;
+            CancelAllDownloadsButton.Visibility = isRunning ? Visibility.Visible : Visibility.Collapsed;
+            CancelAllDownloadsButton.IsEnabled = isRunning;
+            AddToDownloadQueueButton.IsEnabled = !isRunning;
         }
 
         private SearchResult? ResolveContextItem(object sender)
@@ -961,14 +1032,15 @@ namespace IPAbuyer.Views
             EnsureHomeLogScrollToBottom();
         }
 
-        private void SetPurchaseLoading(bool isLoading)
+        private void SetTableLoading(bool isLoading)
         {
-            if (PurchaseLoadingBar == null)
+            if (TableLoadingRing == null)
             {
                 return;
             }
 
-            PurchaseLoadingBar.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
+            TableLoadingRing.IsActive = isLoading;
+            TableLoadingRing.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void ResultList_ContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
@@ -1095,6 +1167,8 @@ namespace IPAbuyer.Views
             base.OnNavigatedFrom(e);
             IpatoolExecution.CommandExecuting -= OnIpatoolCommandExecuting;
             IpatoolExecution.CommandOutputReceived -= OnIpatoolCommandOutputReceived;
+            _downloadQueueService.LogReceived -= OnDownloadQueueLogReceived;
+            _downloadQueueService.QueueChanged -= OnDownloadQueueChanged;
             if (!_pageCts.IsCancellationRequested)
             {
                 _pageCts.Cancel();

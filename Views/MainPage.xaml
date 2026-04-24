@@ -3,37 +3,42 @@
     <Page.Resources>
         <CornerRadius x:Key="MainUnifiedCornerRadius">8</CornerRadius>
     </Page.Resources>
+    <Page.Background>Transparent</Page.Background>
     <Page.Content>
-        <Grid Margin="10">
-            <Grid RowSpacing="5">
+        <Grid Padding="{StaticResource AppPagePadding}">
+            <Grid RowSpacing="12">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                <controls:SettingsCard Grid.Row="0">
-                    <controls:SettingsCard.Header>
-                        <StackPanel Orientation="Horizontal" Spacing="10">
+                <Border Grid.Row="0" Style="{StaticResource AppCommandBarSurfaceStyle}">
+                    <Grid ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
                             <Button x:Uid="MainPage/Action/BatchPurchaseButton" x:Name="BatchPurchaseButton" Click="BatchPurchaseButton_Click" />
                             <Button x:Uid="MainPage/Action/AddToQueueButton" x:Name="AddToDownloadQueueButton" Click="AddToDownloadQueueButton_Click" />
+                            <Button x:Uid="MainPage/Action/OpenLogButton" x:Name="OpenLogButton" Click="ShowHomeLogDialog_Click" />
                             <ComboBox x:Name="ScreeningComboBox" MinHeight="36" MinWidth="132" SelectedIndex="0" SelectionChanged="ScreeningComboBox_SelectionChanged">
                                 <ComboBoxItem x:Uid="MainPage/Filter/AllItem" x:Name="All" Tag="All"></ComboBoxItem>
                                 <ComboBoxItem x:Uid="MainPage/Filter/OnlyNotPurchasedItem" x:Name="OnlyNotPurchased" Tag="OnlyNotPurchased"></ComboBoxItem>
                                 <ComboBoxItem x:Uid="MainPage/Filter/OnlyPurchasedItem" x:Name="OnlyPurchased" Tag="OnlyPurchased"></ComboBoxItem>
                                 <ComboBoxItem x:Uid="MainPage/Filter/OnlyOwnedItem" x:Name="OnlyHad" Tag="OnlyHad"></ComboBoxItem>
                             </ComboBox>
-                            <Button x:Uid="MainPage/Action/OpenLogButton" x:Name="OpenLogButton" Click="ShowHomeLogDialog_Click" />
                         </StackPanel>
-                    </controls:SettingsCard.Header>
-                </controls:SettingsCard>
-                <Border Grid.Row="1" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="{ThemeResource ControlCornerRadius}">
+                        <Button Grid.Column="1" x:Uid="MainPage/Action/CancelAllDownloadsButton" x:Name="CancelAllDownloadsButton" Click="CancelAllDownloadsButton_Click" Visibility="Collapsed" />
+                    </Grid>
+                </Border>
+                <Border Grid.Row="1" Style="{StaticResource AppSurfaceBorderStyle}">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
-                        <ProgressBar x:Name="PurchaseLoadingBar" Grid.Row="0" Height="3" IsIndeterminate="True" IsHitTestVisible="False" Visibility="Collapsed" />
-                        <Grid Grid.Row="1" Padding="14,8,14,8">
+                        <Border Grid.Row="0" Background="{ThemeResource LayerFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,0,0,1">
+                        <Grid Padding="14,8,14,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="32" />
                                 <ColumnDefinition Width="3*" />
@@ -43,14 +48,15 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
-                            <Button x:Uid="MainPage/Header/NameButton" x:Name="NameHeaderText" Grid.Column="1" Background="Transparent" BorderThickness="0" MinHeight="24" Padding="0" HorizontalAlignment="Center" Click="SortHeader_Click" Tag="name" />
-                            <Button x:Uid="MainPage/Header/IdButton" x:Name="IdHeaderText" Grid.Column="2" Background="Transparent" BorderThickness="0" MinHeight="24" Padding="0" HorizontalAlignment="Center" Click="SortHeader_Click" Tag="id" />
-                            <Button x:Uid="MainPage/Header/DeveloperButton" x:Name="DeveloperHeaderText" Grid.Column="3" Background="Transparent" BorderThickness="0" MinHeight="24" Padding="0" HorizontalAlignment="Center" Click="SortHeader_Click" Tag="developer" />
-                            <Button x:Uid="MainPage/Header/VersionButton" x:Name="VersionHeaderText" Grid.Column="4" Background="Transparent" BorderThickness="0" MinHeight="24" Padding="0" HorizontalAlignment="Center" Click="SortHeader_Click" Tag="version" />
-                            <Button x:Uid="MainPage/Header/PriceButton" x:Name="PriceHeaderText" Grid.Column="5" Background="Transparent" BorderThickness="0" MinHeight="24" Padding="0" HorizontalAlignment="Center" Click="SortHeader_Click" Tag="price" />
-                            <Button x:Uid="MainPage/Header/PurchasedButton" x:Name="PurchasedHeaderText" Grid.Column="6" Background="Transparent" BorderThickness="0" MinHeight="24" Padding="0" HorizontalAlignment="Center" Click="SortHeader_Click" Tag="purchased" />
+                            <Button x:Uid="MainPage/Header/NameButton" x:Name="NameHeaderText" Grid.Column="1" Background="Transparent" BorderThickness="0" Padding="0" HorizontalAlignment="Center" Click="SortHeader_Click" Tag="name" />
+                            <Button x:Uid="MainPage/Header/IdButton" x:Name="IdHeaderText" Grid.Column="2" Background="Transparent" BorderThickness="0" Padding="0" HorizontalAlignment="Center" Click="SortHeader_Click" Tag="id" />
+                            <Button x:Uid="MainPage/Header/DeveloperButton" x:Name="DeveloperHeaderText" Grid.Column="3" Background="Transparent" BorderThickness="0" Padding="0" HorizontalAlignment="Center" Click="SortHeader_Click" Tag="developer" />
+                            <Button x:Uid="MainPage/Header/VersionButton" x:Name="VersionHeaderText" Grid.Column="4" Background="Transparent" BorderThickness="0" Padding="0" HorizontalAlignment="Center" Click="SortHeader_Click" Tag="version" />
+                            <Button x:Uid="MainPage/Header/PriceButton" x:Name="PriceHeaderText" Grid.Column="5" Background="Transparent" BorderThickness="0" Padding="0" HorizontalAlignment="Center" Click="SortHeader_Click" Tag="price" />
+                            <Button x:Uid="MainPage/Header/PurchasedButton" x:Name="PurchasedHeaderText" Grid.Column="6" Background="Transparent" BorderThickness="0" Padding="0" HorizontalAlignment="Center" Click="SortHeader_Click" Tag="purchased" />
                         </Grid>
-                        <ListView x:Name="ResultList" Grid.Row="2" Margin="0,0,0,8" ContainerContentChanging="ResultList_ContainerContentChanging" IsMultiSelectCheckBoxEnabled="True" SelectionMode="Multiple">
+                        </Border>
+                        <ListView x:Name="ResultList" Grid.Row="1" Margin="0,0,0,8" Background="Transparent" ContainerContentChanging="ResultList_ContainerContentChanging" IsMultiSelectCheckBoxEnabled="True" SelectionMode="Multiple">
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="models:SearchResult">
                                     <Grid Margin="-40,0,0,0" Padding="52,12,14,12">
@@ -92,6 +98,17 @@
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>
+                        <ProgressRing
+                            x:Name="TableLoadingRing"
+                            Grid.RowSpan="2"
+                            Width="44"
+                            Height="44"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            IsActive="False"
+                            IsHitTestVisible="False"
+                            Visibility="Collapsed"
+                            Canvas.ZIndex="10" />
                     </Grid>
                 </Border>
             </Grid>

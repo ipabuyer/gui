@@ -340,7 +340,10 @@
     <value>购买</value>
   </data>
   <data name="MainPage/Action/AddToQueueButton.Content" xml:space="preserve">
-    <value>加入下载队列</value>
+    <value>下载</value>
+  </data>
+  <data name="MainPage/Action/CancelAllDownloadsButton.Content" xml:space="preserve">
+    <value>终止下载</value>
   </data>
   <data name="MainPage/Action/OpenLogButton.Content" xml:space="preserve">
     <value>日志</value>
@@ -379,7 +382,7 @@
     <value>购买</value>
   </data>
   <data name="MainPage/Context/AddToQueueItem.Text" xml:space="preserve">
-    <value>加入下载队列</value>
+    <value>下载</value>
   </data>
   <data name="MainPage/Context/MarkNotPurchasedItem.Text" xml:space="preserve">
     <value>标记为未购买</value>
