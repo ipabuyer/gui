@@ -12,26 +12,24 @@
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <Border Grid.Row="0" Style="{StaticResource AppCommandBarSurfaceStyle}">
-                    <Grid ColumnSpacing="10">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
-                            <Button x:Uid="MainPage/Action/BatchPurchaseButton" x:Name="BatchPurchaseButton" Click="BatchPurchaseButton_Click" />
-                            <Button x:Uid="MainPage/Action/AddToQueueButton" x:Name="AddToDownloadQueueButton" Click="AddToDownloadQueueButton_Click" />
-                            <Button x:Uid="MainPage/Action/OpenLogButton" x:Name="OpenLogButton" Click="ShowHomeLogDialog_Click" />
-                            <ComboBox x:Name="ScreeningComboBox" MinHeight="36" MinWidth="132" SelectedIndex="0" SelectionChanged="ScreeningComboBox_SelectionChanged">
-                                <ComboBoxItem x:Uid="MainPage/Filter/AllItem" x:Name="All" Tag="All"></ComboBoxItem>
-                                <ComboBoxItem x:Uid="MainPage/Filter/OnlyNotPurchasedItem" x:Name="OnlyNotPurchased" Tag="OnlyNotPurchased"></ComboBoxItem>
-                                <ComboBoxItem x:Uid="MainPage/Filter/OnlyPurchasedItem" x:Name="OnlyPurchased" Tag="OnlyPurchased"></ComboBoxItem>
-                                <ComboBoxItem x:Uid="MainPage/Filter/OnlyOwnedItem" x:Name="OnlyHad" Tag="OnlyHad"></ComboBoxItem>
-                            </ComboBox>
-                        </StackPanel>
-                        <Button Grid.Column="1" x:Uid="MainPage/Action/CancelAllDownloadsButton" x:Name="CancelAllDownloadsButton" Click="CancelAllDownloadsButton_Click" Visibility="Collapsed" />
-                    </Grid>
-                </Border>
+                <Grid Grid.Row="0" ColumnSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                        <Button x:Uid="MainPage/Action/BatchPurchaseButton" x:Name="BatchPurchaseButton" Click="BatchPurchaseButton_Click" />
+                        <Button x:Uid="MainPage/Action/AddToQueueButton" x:Name="AddToDownloadQueueButton" Click="AddToDownloadQueueButton_Click" />
+                        <Button x:Uid="MainPage/Action/OpenLogButton" x:Name="OpenLogButton" Click="ShowHomeLogDialog_Click" />
+                        <ComboBox x:Name="ScreeningComboBox" MinHeight="36" MinWidth="132" SelectedIndex="0" SelectionChanged="ScreeningComboBox_SelectionChanged">
+                            <ComboBoxItem x:Uid="MainPage/Filter/AllItem" x:Name="All" Tag="All"></ComboBoxItem>
+                            <ComboBoxItem x:Uid="MainPage/Filter/OnlyNotPurchasedItem" x:Name="OnlyNotPurchased" Tag="OnlyNotPurchased"></ComboBoxItem>
+                            <ComboBoxItem x:Uid="MainPage/Filter/OnlyPurchasedItem" x:Name="OnlyPurchased" Tag="OnlyPurchased"></ComboBoxItem>
+                            <ComboBoxItem x:Uid="MainPage/Filter/OnlyOwnedItem" x:Name="OnlyHad" Tag="OnlyHad"></ComboBoxItem>
+                        </ComboBox>
+                    </StackPanel>
+                    <Button Grid.Column="1" x:Uid="MainPage/Action/CancelAllDownloadsButton" x:Name="CancelAllDownloadsButton" Click="CancelAllDownloadsButton_Click" Visibility="Collapsed" />
+                </Grid>
                 <Border Grid.Row="1" Style="{StaticResource AppSurfaceBorderStyle}">
                     <Grid>
                         <Grid.RowDefinitions>
