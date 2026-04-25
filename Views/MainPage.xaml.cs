@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using IPAbuyer.Common;
@@ -16,6 +15,7 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Windows.ApplicationModel.Resources;
+using Newtonsoft.Json.Linq;
 
 namespace IPAbuyer.Views
 {
@@ -137,9 +137,8 @@ namespace IPAbuyer.Views
         {
             try
             {
-                using var doc = JsonDocument.Parse(payload);
-                var root = doc.RootElement;
-                if (!root.TryGetProperty("results", out var resultsElement) || resultsElement.ValueKind != JsonValueKind.Array)
+                JToken root = JToken.Parse(payload);
+                if (root is not JObject rootObject || rootObject["results"] is not JArray resultsElement)
                 {
                     if (ResultList != null)
                     {
@@ -164,7 +163,7 @@ namespace IPAbuyer.Views
                 }
 
                 _allResults.Clear();
-                foreach (var appElement in resultsElement.EnumerateArray())
+                foreach (var appElement in resultsElement.Children())
                 {
                     string bundleId = GetBundleId(appElement) ?? string.Empty;
                     string price = NormalizePriceForDisplay(GetPriceValue(appElement));
@@ -186,7 +185,7 @@ namespace IPAbuyer.Views
                 ApplyFilterAndRefresh();
                 AppendHomeLog(LF("MainPage/Log/SearchCompleted", _allResults.Count));
             }
-            catch (JsonException)
+            catch (Newtonsoft.Json.JsonException)
             {
                 if (ResultList != null)
                 {
@@ -734,7 +733,13 @@ namespace IPAbuyer.Views
                 }
 
                 var result = await IpatoolExecution.PurchaseAppAsync(app.bundleId, account, _pageCts.Token);
-                if (IsPurchaseSuccess(result.OutputOrError))
+                if (IsPurchaseAlreadyOwned(result.OutputOrError))
+                {
+                    app.purchased = StatusOwned;
+                    PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusOwned);
+                    AppendHomeLog(LF("MainPage/Purchase/OwnedDetected", app.name ?? app.bundleId));
+                }
+                else if (IsPurchaseSuccess(result.OutputOrError))
                 {
                     app.purchased = StatusPurchased;
                     PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusPurchased);
@@ -890,17 +895,38 @@ namespace IPAbuyer.Views
                 return true;
             }
 
-            try
+            foreach (var token in JsonPayload.EnumerateTokens(response))
             {
-                using var doc = JsonDocument.Parse(response);
-                return doc.RootElement.TryGetProperty("success", out var successElement)
-                    && successElement.ValueKind == JsonValueKind.True
-                    && successElement.GetBoolean();
+                if (JsonPayload.TryReadBoolean(token, "success", out bool success))
+                {
+                    return success;
+                }
             }
-            catch (JsonException)
+
+            return false;
+        }
+
+        private static bool IsPurchaseAlreadyOwned(string response)
+        {
+            if (string.IsNullOrWhiteSpace(response))
             {
                 return false;
             }
+
+            if (response.Contains("\"alreadyOwned\":true", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            foreach (var token in JsonPayload.EnumerateTokens(response))
+            {
+                if (JsonPayload.TryReadBoolean(token, "alreadyOwned", out bool alreadyOwned) && alreadyOwned)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static string GetActiveAccount()
@@ -926,55 +952,38 @@ namespace IPAbuyer.Views
                 || normalized.Equals(L("Common/Price/Free"), StringComparison.OrdinalIgnoreCase);
         }
 
-        private static string? GetBundleId(JsonElement element)
+        private static string? GetBundleId(JToken element)
         {
-            if (element.TryGetProperty("bundleID", out var bundleId))
+            string? bundleId = GetPropertyValue(element, "bundleID");
+            if (!string.IsNullOrWhiteSpace(bundleId))
             {
-                return bundleId.GetString();
+                return bundleId;
             }
 
-            if (element.TryGetProperty("bundleId", out var bundleIdAlt))
-            {
-                return bundleIdAlt.GetString();
-            }
-
-            return null;
+            return GetPropertyValue(element, "bundleId");
         }
 
-        private static string? GetPropertyValue(JsonElement element, string propertyName)
+        private static string? GetPropertyValue(JToken element, string propertyName)
         {
-            if (!element.TryGetProperty(propertyName, out var property))
+            return element is JObject obj && obj[propertyName] is JToken property
+                ? JsonPayload.ReadScalarAsString(property)
+                : null;
+        }
+
+        private static string? GetPriceValue(JToken element)
+        {
+            if (element is not JObject obj || obj["price"] is not JToken priceElement)
             {
                 return null;
             }
 
-            return property.ValueKind switch
+            if ((priceElement.Type == JTokenType.Integer || priceElement.Type == JTokenType.Float)
+                && decimal.TryParse(priceElement.ToString(), NumberStyles.Number, CultureInfo.InvariantCulture, out decimal priceValue))
             {
-                JsonValueKind.String => property.GetString(),
-                JsonValueKind.Number => property.GetRawText(),
-                JsonValueKind.True => "true",
-                JsonValueKind.False => "false",
-                _ => property.GetRawText()
-            };
-        }
-
-        private static string? GetPriceValue(JsonElement element)
-        {
-            if (!element.TryGetProperty("price", out var priceElement))
-            {
-                return null;
+                return priceValue.ToString("0.00", CultureInfo.InvariantCulture);
             }
 
-            return priceElement.ValueKind switch
-            {
-                JsonValueKind.Number => priceElement.TryGetDecimal(out var decimalValue)
-                    ? decimalValue.ToString("0.00")
-                    : priceElement.GetRawText(),
-                JsonValueKind.String => priceElement.GetString(),
-                JsonValueKind.True => "true",
-                JsonValueKind.False => "false",
-                _ => priceElement.GetRawText()
-            };
+            return JsonPayload.ReadScalarAsString(priceElement);
         }
 
         private static string NormalizePriceForDisplay(string? rawPrice)

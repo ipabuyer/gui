@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.Windows.ApplicationModel.Resources;
+using Newtonsoft.Json.Linq;
+using Windows.Security.Credentials;
 using Windows.Storage;
 
 namespace IPAbuyer.Common
@@ -17,8 +17,9 @@ namespace IPAbuyer.Common
         private static readonly ResourceLoader Loader = new();
         private const string SettingsFileName = "settings.json";
         private const string PassphraseFileName = "passphrase.txt";
+        private const string PassphraseVaultResource = "IPAbuyer.ipatool.passphrase";
+        private const string DefaultPassphraseVaultUser = "__default__";
         private const string DefaultCountryCode = "cn";
-        private const string DefaultPassphrase = "12345678";
         private static readonly object SyncRoot = new();
 
         private static readonly HashSet<string> ValidCountryCodes = new(StringComparer.OrdinalIgnoreCase)
@@ -119,7 +120,7 @@ namespace IPAbuyer.Common
             }
         }
 
-        public static void SavePassphrase(string account, string passphrase)
+        public static void SavePassphrase(string passphrase)
         {
             if (string.IsNullOrWhiteSpace(passphrase))
             {
@@ -128,8 +129,14 @@ namespace IPAbuyer.Common
 
             lock (SyncRoot)
             {
-                string path = GetPassphraseFilePath();
-                File.WriteAllText(path, passphrase.Trim(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+                string normalizedPassphrase = passphrase.Trim();
+                if (!TrySavePassphraseToVault(normalizedPassphrase))
+                {
+                    SaveLegacyPassphrase(normalizedPassphrase);
+                    return;
+                }
+
+                DeleteLegacyPassphraseFile();
             }
         }
 
@@ -137,20 +144,47 @@ namespace IPAbuyer.Common
         {
             lock (SyncRoot)
             {
-                string path = GetPassphraseFilePath();
-                if (!File.Exists(path))
+                if (TryGetPassphraseFromVault(out string? vaultPassphrase))
                 {
-                    return DefaultPassphrase;
+                    return vaultPassphrase;
                 }
 
-                string content = File.ReadAllText(path, Encoding.UTF8).Trim();
-                return string.IsNullOrWhiteSpace(content) ? DefaultPassphrase : content;
+                if (TryMigrateLegacyPassphrase(out string? migratedPassphrase))
+                {
+                    return migratedPassphrase;
+                }
+
+                string generatedPassphrase = CreateDefaultPassphrase();
+                if (!TrySavePassphraseToVault(generatedPassphrase))
+                {
+                    SaveLegacyPassphrase(generatedPassphrase);
+                }
+
+                return generatedPassphrase;
             }
         }
 
         public static string GetDefaultPassphrase()
         {
-            return DefaultPassphrase;
+            return GetPassphrase(null) ?? CreateDefaultPassphrase();
+        }
+
+        public static string RotateDefaultPassphrase()
+        {
+            lock (SyncRoot)
+            {
+                string passphrase = CreateDefaultPassphrase();
+                if (!TrySavePassphraseToVault(passphrase))
+                {
+                    SaveLegacyPassphrase(passphrase);
+                }
+                else
+                {
+                    DeleteLegacyPassphraseFile();
+                }
+
+                return passphrase;
+            }
         }
 
         public static void SaveDownloadDirectory(string directoryPath)
@@ -248,6 +282,118 @@ namespace IPAbuyer.Common
             return Path.Combine(dataDirectory, PassphraseFileName);
         }
 
+        private static string CreateDefaultPassphrase()
+        {
+            return Guid.NewGuid().ToString("N");
+        }
+
+        private static bool TrySavePassphraseToVault(string passphrase)
+        {
+            try
+            {
+                var vault = new PasswordVault();
+                RemoveAllPassphraseEntriesFromVault(vault);
+                vault.Add(new PasswordCredential(PassphraseVaultResource, DefaultPassphraseVaultUser, passphrase));
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool TryGetPassphraseFromVault(out string? passphrase)
+        {
+            passphrase = null;
+            try
+            {
+                var vault = new PasswordVault();
+                PasswordCredential credential = vault.Retrieve(PassphraseVaultResource, DefaultPassphraseVaultUser);
+                credential.RetrievePassword();
+                if (string.IsNullOrWhiteSpace(credential.Password))
+                {
+                    return false;
+                }
+
+                passphrase = credential.Password.Trim();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool TryMigrateLegacyPassphrase(out string? passphrase)
+        {
+            passphrase = null;
+            string path = GetPassphraseFilePath();
+            if (!File.Exists(path))
+            {
+                return false;
+            }
+
+            string content;
+            try
+            {
+                content = File.ReadAllText(path, Encoding.UTF8).Trim();
+            }
+            catch
+            {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return false;
+            }
+
+            passphrase = content;
+            if (TrySavePassphraseToVault(content))
+            {
+                DeleteLegacyPassphraseFile();
+            }
+
+            return true;
+        }
+
+        private static void SaveLegacyPassphrase(string passphrase)
+        {
+            string path = GetPassphraseFilePath();
+            File.WriteAllText(path, passphrase, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        }
+
+        private static void RemoveAllPassphraseEntriesFromVault(PasswordVault vault)
+        {
+            try
+            {
+                foreach (PasswordCredential credential in vault.FindAllByResource(PassphraseVaultResource))
+                {
+                    vault.Remove(credential);
+                }
+            }
+            catch
+            {
+                // ignore missing or inaccessible vault entries
+            }
+        }
+
+        private static void DeleteLegacyPassphraseFile()
+        {
+            try
+            {
+                string path = GetPassphraseFilePath();
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+            catch
+            {
+                // ignore cleanup errors; Vault remains the source of truth
+            }
+        }
+
         private static void EnsureStorageReady()
         {
             Directory.CreateDirectory(ResolveDataDirectory());
@@ -269,29 +415,25 @@ namespace IPAbuyer.Common
                 var model = CreateDefaultSettings();
                 if (!string.IsNullOrWhiteSpace(json))
                 {
-                    using JsonDocument document = JsonDocument.Parse(json);
-                    JsonElement root = document.RootElement;
-                    if (root.ValueKind == JsonValueKind.Object)
+                    JObject root = JObject.Parse(json);
+                    if (TryReadStringProperty(root, out string? countryValue, "country", "CountryCode"))
                     {
-                        if (TryReadStringProperty(root, out string? countryValue, "country", "CountryCode"))
-                        {
-                            model.CountryCode = countryValue ?? DefaultCountryCode;
-                        }
+                        model.CountryCode = countryValue ?? DefaultCountryCode;
+                    }
 
-                        if (TryReadStringProperty(root, out string? downloadDirectoryValue, "download_dir", "DownloadDirectory"))
-                        {
-                            model.DownloadDirectory = downloadDirectoryValue ?? string.Empty;
-                        }
+                    if (TryReadStringProperty(root, out string? downloadDirectoryValue, "download_dir", "DownloadDirectory"))
+                    {
+                        model.DownloadDirectory = downloadDirectoryValue ?? string.Empty;
+                    }
 
-                        if (TryReadBooleanProperty(root, out bool verboseValue, "verbose", "DetailedIpatoolLogEnabled"))
-                        {
-                            model.DetailedIpatoolLogEnabled = verboseValue;
-                        }
+                    if (TryReadBooleanProperty(root, out bool verboseValue, "verbose", "DetailedIpatoolLogEnabled"))
+                    {
+                        model.DetailedIpatoolLogEnabled = verboseValue;
+                    }
 
-                        if (TryReadBooleanProperty(root, out bool ownedCheckValue, "owned_check", "OwnedCheckEnabled"))
-                        {
-                            model.OwnedCheckEnabled = ownedCheckValue;
-                        }
+                    if (TryReadBooleanProperty(root, out bool ownedCheckValue, "owned_check", "OwnedCheckEnabled"))
+                    {
+                        model.OwnedCheckEnabled = ownedCheckValue;
                     }
                 }
 
@@ -311,7 +453,14 @@ namespace IPAbuyer.Common
         {
             NormalizeSettings(settings);
             string path = GetSettingsFilePath();
-            string json = JsonSerializer.Serialize(settings, LocalSettingsJsonContext.Default.LocalSettingsModel);
+            var root = new JObject
+            {
+                ["country"] = settings.CountryCode,
+                ["download_dir"] = settings.DownloadDirectory,
+                ["verbose"] = settings.DetailedIpatoolLogEnabled,
+                ["owned_check"] = settings.OwnedCheckEnabled
+            };
+            string json = root.ToString(Newtonsoft.Json.Formatting.Indented);
             File.WriteAllText(path, json, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
         }
 
@@ -341,13 +490,16 @@ namespace IPAbuyer.Common
             };
         }
 
-        private static bool TryReadStringProperty(JsonElement root, out string? value, params string[] names)
+        private static bool TryReadStringProperty(JObject root, out string? value, params string[] names)
         {
             foreach (string name in names)
             {
-                if (root.TryGetProperty(name, out JsonElement element) && element.ValueKind == JsonValueKind.String)
+                if (root.TryGetValue(name, StringComparison.OrdinalIgnoreCase, out JToken? token)
+                    && token.Type != JTokenType.Null)
                 {
-                    value = element.GetString();
+                    value = token.Type == JTokenType.String
+                        ? token.Value<string>()
+                        : token.ToString(Newtonsoft.Json.Formatting.None);
                     return true;
                 }
             }
@@ -356,18 +508,25 @@ namespace IPAbuyer.Common
             return false;
         }
 
-        private static bool TryReadBooleanProperty(JsonElement root, out bool value, params string[] names)
+        private static bool TryReadBooleanProperty(JObject root, out bool value, params string[] names)
         {
             foreach (string name in names)
             {
-                if (!root.TryGetProperty(name, out JsonElement element))
+                if (!root.TryGetValue(name, StringComparison.OrdinalIgnoreCase, out JToken? token)
+                    || token.Type == JTokenType.Null)
                 {
                     continue;
                 }
 
-                if (element.ValueKind == JsonValueKind.True || element.ValueKind == JsonValueKind.False)
+                if (token.Type == JTokenType.Boolean)
                 {
-                    value = element.GetBoolean();
+                    value = token.Value<bool>();
+                    return true;
+                }
+
+                if (bool.TryParse(token.ToString(), out bool parsed))
+                {
+                    value = parsed;
                     return true;
                 }
             }
@@ -415,23 +574,13 @@ namespace IPAbuyer.Common
 
         private sealed class LocalSettingsModel
         {
-            [JsonPropertyName("country")]
             public string CountryCode { get; set; } = DefaultCountryCode;
 
-            [JsonPropertyName("download_dir")]
             public string DownloadDirectory { get; set; } = string.Empty;
 
-            [JsonPropertyName("verbose")]
             public bool DetailedIpatoolLogEnabled { get; set; }
 
-            [JsonPropertyName("owned_check")]
             public bool OwnedCheckEnabled { get; set; }
-        }
-
-        [JsonSourceGenerationOptions(WriteIndented = true)]
-        [JsonSerializable(typeof(LocalSettingsModel))]
-        private partial class LocalSettingsJsonContext : JsonSerializerContext
-        {
         }
 
         private static string L(string key)

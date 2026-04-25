@@ -48,6 +48,7 @@
         <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260416003" />
         <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3912.50" />
         <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1721" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
         <PackageReference Include="WinUI.TableView" Version="1.4.1" />
 
         <Manifest Include="$(ApplicationManifest)" />
@@ -61,6 +62,18 @@
         <Content Include="Include\ipatool-main-windows-arm64.exe" Condition="'$(Platform)' == 'ARM64' Or '$(RuntimeIdentifier)' == 'win-arm64' Or '$(RuntimeIdentifier)' == 'win10-arm64'">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <TargetPath>ipatool.exe</TargetPath>
+            <IncludeInPackage>true</IncludeInPackage>
+        </Content>
+
+        <Content Include="Include\ipatool-2.3.0-windows-amd64.exe" Condition="'$(Platform)' == 'x64' Or '$(RuntimeIdentifier)' == 'win-x64' Or '$(RuntimeIdentifier)' == 'win10-x64'">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <TargetPath>ipatool-legacy.exe</TargetPath>
+            <IncludeInPackage>true</IncludeInPackage>
+        </Content>
+
+        <Content Include="Include\ipatool-2.3.0-windows-arm64.exe" Condition="'$(Platform)' == 'ARM64' Or '$(RuntimeIdentifier)' == 'win-arm64' Or '$(RuntimeIdentifier)' == 'win10-arm64'">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <TargetPath>ipatool-legacy.exe</TargetPath>
             <IncludeInPackage>true</IncludeInPackage>
         </Content>
     </ItemGroup>
@@ -87,5 +100,17 @@
     <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
         <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
         <ApplicationIcon>Assets\Icon.ico</ApplicationIcon>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      <NoWarn>IL2104</NoWarn>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
+      <NoWarn>IL2104</NoWarn>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      <NoWarn>IL2104</NoWarn>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
+      <NoWarn>IL2104</NoWarn>
     </PropertyGroup>
 </Project>

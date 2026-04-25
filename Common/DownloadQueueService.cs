@@ -5,7 +5,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using IPAbuyer.Models;
@@ -25,7 +24,6 @@ namespace IPAbuyer.Common
     {
         private static readonly ResourceLoader Loader = new();
         private static readonly Regex ProgressRegex = new(@"(?<!\d)(\d{1,3}(?:\.\d+)?)\s*[%％]", RegexOptions.Compiled);
-        private static readonly Regex JsonProgressRegex = new(@"""(?:progress|percent|percentage|completed|completion|fraction)""\s*:\s*(\d+(?:\.\d+)?)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         private static readonly Regex SuccessFlagRegex = new(@"success\s*[:=]\s*(true|false)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
         private static readonly Regex AnsiEscapeRegex = new(@"\x1B\[[0-9;?]*[ -/]*[@-~]", RegexOptions.Compiled);
         private const int ProgressBufferMaxLength = 256;
@@ -344,21 +342,11 @@ namespace IPAbuyer.Common
                 return true;
             }
 
-            foreach (string segment in EnumerateJsonSegments(payload))
+            foreach (var token in JsonPayload.EnumerateTokens(payload))
             {
-                try
+                if (JsonPayload.TryReadBoolean(token, "success", out bool success))
                 {
-                    using var doc = JsonDocument.Parse(segment);
-                    if (doc.RootElement.TryGetProperty("success", out var success))
-                    {
-                        return success.ValueKind == JsonValueKind.True
-                            || (success.ValueKind == JsonValueKind.String
-                                && string.Equals(success.GetString(), "true", StringComparison.OrdinalIgnoreCase));
-                    }
-                }
-                catch (JsonException)
-                {
-                    // ignore and continue trying remaining segments
+                    return success;
                 }
             }
 
@@ -402,57 +390,20 @@ namespace IPAbuyer.Common
                 return LF("DownloadQueue/Error/ExitCode", result.ExitCode);
             }
 
-            foreach (string segment in EnumerateJsonSegments(payload))
+            foreach (var token in JsonPayload.EnumerateTokens(payload))
             {
-                try
+                if (JsonPayload.TryReadString(token, out string? error, "error") && !string.IsNullOrWhiteSpace(error))
                 {
-                    using var doc = JsonDocument.Parse(segment);
-                    if (doc.RootElement.TryGetProperty("error", out var error))
-                    {
-                        return error.GetString() ?? payload;
-                    }
-
-                    if (doc.RootElement.TryGetProperty("message", out var message))
-                    {
-                        return message.GetString() ?? payload;
-                    }
+                    return error;
                 }
-                catch (JsonException)
+
+                if (JsonPayload.TryReadString(token, out string? message, "message") && !string.IsNullOrWhiteSpace(message))
                 {
-                    // ignore and continue trying remaining segments
+                    return message;
                 }
             }
 
             return payload.Length > 160 ? payload.Substring(0, 160) + "..." : payload;
-        }
-
-        private static System.Collections.Generic.IEnumerable<string> EnumerateJsonSegments(string payload)
-        {
-            if (string.IsNullOrWhiteSpace(payload))
-            {
-                yield break;
-            }
-
-            string normalized = payload.Replace("}{", "}\n{");
-            string[] lines = normalized.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-
-            foreach (string line in lines)
-            {
-                string trimmed = line.Trim();
-                if (trimmed.StartsWith("{", StringComparison.Ordinal) || trimmed.StartsWith("[", StringComparison.Ordinal))
-                {
-                    yield return trimmed;
-                }
-            }
-
-            if (lines.Length == 0)
-            {
-                string trimmed = payload.Trim();
-                if (!string.IsNullOrEmpty(trimmed))
-                {
-                    yield return trimmed;
-                }
-            }
         }
 
         private static string ResolveAccount()
@@ -494,19 +445,25 @@ namespace IPAbuyer.Common
                 }
             }
 
-            MatchCollection jsonMatches = JsonProgressRegex.Matches(line);
-            if (jsonMatches.Count == 0)
+            foreach (var token in JsonPayload.EnumerateTokens(line))
             {
-                return null;
+                if (JsonPayload.TryReadString(
+                    token,
+                    out string? progressValue,
+                    "progress",
+                    "percent",
+                    "percentage",
+                    "completed",
+                    "completion",
+                    "fraction")
+                    && progressValue != null
+                    && TryConvertProgressValue(progressValue, out int percentByJson))
+                {
+                    return percentByJson;
+                }
             }
 
-            Match jsonMatch = jsonMatches[jsonMatches.Count - 1];
-            if (jsonMatch.Groups.Count < 2 || !TryConvertProgressValue(jsonMatch.Groups[1].Value, out int percentByJson))
-            {
-                return null;
-            }
-
-            return percentByJson;
+            return null;
         }
 
         private static int? TryExtractProgressPercentFromChunk(ref string buffer, string? chunk)

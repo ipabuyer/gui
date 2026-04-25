@@ -207,17 +207,16 @@ namespace IPAbuyer.Views
                 if (result.IsSuccessResponse)
                 {
                     SessionState.Reset();
-                    string defaultPassphrase = KeychainConfig.GetDefaultPassphrase();
-                    KeychainConfig.SavePassphrase(string.Empty, defaultPassphrase);
-                    _passphrase = defaultPassphrase;
+                    _passphrase = KeychainConfig.RotateDefaultPassphrase();
                     if (PassphraseInput != null)
                     {
-                        PassphraseInput.Text = defaultPassphrase;
+                        PassphraseInput.Text = _passphrase;
                     }
                     HideInlineTwoFactor();
                     ApplyOperationLock(false);
                     ShowSuccess(L("LoginPage/Status/LogoutSuccess"));
                     AppendLoginLog(LF("LoginPage/Log/LogoutSuccess", account));
+                    AppendLoginLog(L("LoginPage/Log/PassphraseRotated"));
                 }
                 else
                 {
@@ -648,7 +647,7 @@ namespace IPAbuyer.Views
         {
             try
             {
-                KeychainConfig.SavePassphrase(_account, _passphrase);
+                KeychainConfig.SavePassphrase(_passphrase);
                 if (EmailTextBox != null)
                 {
                     EmailTextBox.Text = _account;
