@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.Windows.ApplicationModel.Resources;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Windows.Security.Credentials;
 using Windows.Storage;
 
 namespace IPAbuyer.Common
@@ -17,6 +18,8 @@ namespace IPAbuyer.Common
         private static readonly ResourceLoader Loader = new();
         private const string SettingsFileName = "settings.json";
         private const string PassphraseFileName = "passphrase.txt";
+        private const string PassphraseVaultResource = "IPAbuyer.ipatool.passphrase";
+        private const string DefaultPassphraseVaultUser = "__default__";
         private const string DefaultCountryCode = "cn";
         private const string DefaultPassphrase = "12345678";
         private static readonly object SyncRoot = new();
@@ -128,8 +131,16 @@ namespace IPAbuyer.Common
 
             lock (SyncRoot)
             {
-                string path = GetPassphraseFilePath();
-                File.WriteAllText(path, passphrase.Trim(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+                string normalizedPassphrase = passphrase.Trim();
+                string vaultUser = NormalizePassphraseVaultUser(account);
+                if (!TrySavePassphraseToVault(vaultUser, normalizedPassphrase))
+                {
+                    string path = GetPassphraseFilePath();
+                    File.WriteAllText(path, normalizedPassphrase, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+                    return;
+                }
+
+                DeleteLegacyPassphraseFile();
             }
         }
 
@@ -137,14 +148,18 @@ namespace IPAbuyer.Common
         {
             lock (SyncRoot)
             {
-                string path = GetPassphraseFilePath();
-                if (!File.Exists(path))
+                string vaultUser = NormalizePassphraseVaultUser(account);
+                if (TryGetPassphraseFromVault(vaultUser, out string? vaultPassphrase))
                 {
-                    return DefaultPassphrase;
+                    return vaultPassphrase;
                 }
 
-                string content = File.ReadAllText(path, Encoding.UTF8).Trim();
-                return string.IsNullOrWhiteSpace(content) ? DefaultPassphrase : content;
+                if (TryMigrateLegacyPassphrase(vaultUser, out string? migratedPassphrase))
+                {
+                    return migratedPassphrase;
+                }
+
+                return DefaultPassphrase;
             }
         }
 
@@ -246,6 +261,112 @@ namespace IPAbuyer.Common
         {
             string dataDirectory = ResolveDataDirectory();
             return Path.Combine(dataDirectory, PassphraseFileName);
+        }
+
+        private static string NormalizePassphraseVaultUser(string? account)
+        {
+            return string.IsNullOrWhiteSpace(account)
+                ? DefaultPassphraseVaultUser
+                : account.Trim().ToLowerInvariant();
+        }
+
+        private static bool TrySavePassphraseToVault(string vaultUser, string passphrase)
+        {
+            try
+            {
+                var vault = new PasswordVault();
+                TryRemovePassphraseFromVault(vault, vaultUser);
+                vault.Add(new PasswordCredential(PassphraseVaultResource, vaultUser, passphrase));
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool TryGetPassphraseFromVault(string vaultUser, out string? passphrase)
+        {
+            passphrase = null;
+            try
+            {
+                var vault = new PasswordVault();
+                PasswordCredential credential = vault.Retrieve(PassphraseVaultResource, vaultUser);
+                credential.RetrievePassword();
+                if (string.IsNullOrWhiteSpace(credential.Password))
+                {
+                    return false;
+                }
+
+                passphrase = credential.Password.Trim();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool TryMigrateLegacyPassphrase(string vaultUser, out string? passphrase)
+        {
+            passphrase = null;
+            string path = GetPassphraseFilePath();
+            if (!File.Exists(path))
+            {
+                return false;
+            }
+
+            string content;
+            try
+            {
+                content = File.ReadAllText(path, Encoding.UTF8).Trim();
+            }
+            catch
+            {
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                return false;
+            }
+
+            passphrase = content;
+            if (TrySavePassphraseToVault(vaultUser, content))
+            {
+                DeleteLegacyPassphraseFile();
+            }
+
+            return true;
+        }
+
+        private static void TryRemovePassphraseFromVault(PasswordVault vault, string vaultUser)
+        {
+            try
+            {
+                PasswordCredential credential = vault.Retrieve(PassphraseVaultResource, vaultUser);
+                vault.Remove(credential);
+            }
+            catch
+            {
+                // ignore missing or inaccessible vault entries
+            }
+        }
+
+        private static void DeleteLegacyPassphraseFile()
+        {
+            try
+            {
+                string path = GetPassphraseFilePath();
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+            catch
+            {
+                // ignore cleanup errors; Vault remains the source of truth
+            }
         }
 
         private static void EnsureStorageReady()

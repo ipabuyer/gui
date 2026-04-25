@@ -500,7 +500,7 @@ namespace IPAbuyer.Common
                 return filePassphrase;
             }
 
-            // 账号不匹配时，尝试读取 passphrase.txt 中的默认值，避免误回退到无效密钥。
+            // 账号不匹配时，尝试读取默认凭据，避免误回退到无效密钥。
             string? fallbackPassphrase = KeychainConfig.GetPassphrase(null);
             if (!string.IsNullOrWhiteSpace(fallbackPassphrase))
             {
