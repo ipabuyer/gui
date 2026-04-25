@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -22,6 +23,7 @@ namespace IPAbuyer.Views
     {
         private static readonly ResourceLoader Loader = new();
         private readonly List<SearchResult> _allResults = new();
+        private readonly ObservableCollection<SearchResult> _visibleResults = new();
         private readonly DownloadQueueService _downloadQueueService = DownloadQueueService.Instance;
         private readonly StringBuilder _homeLogBuilder = new();
         private readonly List<UiLogEntry> _homeLogEntries = new();
@@ -578,12 +580,91 @@ namespace IPAbuyer.Views
             }
 
             bool hasResults = results is { Count: > 0 };
-            ResultList.HeadersVisibility = hasResults
+            var headersVisibility = hasResults
                 ? WinUI.TableView.TableViewHeadersVisibility.All
                 : WinUI.TableView.TableViewHeadersVisibility.Columns;
-            ResultList.IsMultiSelectCheckBoxEnabled = hasResults;
-            ResultList.SelectionMode = hasResults ? ListViewSelectionMode.Multiple : ListViewSelectionMode.None;
-            ResultList.ItemsSource = results;
+            var selectionMode = hasResults ? ListViewSelectionMode.Multiple : ListViewSelectionMode.None;
+
+            if (ResultList.HeadersVisibility != headersVisibility)
+            {
+                ResultList.HeadersVisibility = headersVisibility;
+            }
+
+            if (ResultList.IsMultiSelectCheckBoxEnabled != hasResults)
+            {
+                ResultList.IsMultiSelectCheckBoxEnabled = hasResults;
+            }
+
+            if (ResultList.SelectionMode != selectionMode)
+            {
+                ResultList.SelectionMode = selectionMode;
+            }
+
+            if (!ReferenceEquals(ResultList.ItemsSource, _visibleResults))
+            {
+                ResultList.ItemsSource = _visibleResults;
+            }
+
+            UpdateVisibleResults(results);
+        }
+
+        private void UpdateVisibleResults(IReadOnlyList<SearchResult>? results)
+        {
+            if (results == null || results.Count == 0)
+            {
+                _visibleResults.Clear();
+                return;
+            }
+
+            if (_visibleResults.Count == results.Count)
+            {
+                bool sameItems = true;
+                for (int i = 0; i < results.Count; i++)
+                {
+                    if (!ReferenceEquals(_visibleResults[i], results[i]))
+                    {
+                        sameItems = false;
+                        break;
+                    }
+                }
+
+                if (sameItems)
+                {
+                    return;
+                }
+            }
+
+            _visibleResults.Clear();
+            foreach (var result in results)
+            {
+                _visibleResults.Add(result);
+            }
+        }
+
+        private void ResultList_Sorting(object sender, WinUI.TableView.TableViewSortingEventArgs e)
+        {
+            ScrollResultListToTop();
+        }
+
+        private void ResultList_ClearSorting(object sender, WinUI.TableView.TableViewClearSortingEventArgs e)
+        {
+            ScrollResultListToTop();
+        }
+
+        private void ScrollResultListToTop()
+        {
+            if (ResultList == null)
+            {
+                return;
+            }
+
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                if (_visibleResults.Count > 0)
+                {
+                    ResultList.ScrollRowIntoView(0);
+                }
+            });
         }
 
         private List<SearchResult> GetFilteredResults()

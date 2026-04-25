@@ -51,7 +51,9 @@
                         RowHeight="60"
                         RowMinHeight="52"
                         SelectionMode="None"
-                        SelectionUnit="Row">
+                        SelectionUnit="Row"
+                        Sorting="ResultList_Sorting"
+                        ClearSorting="ResultList_ClearSorting">
                         <tv:TableView.RowContextFlyout>
                             <MenuFlyout>
                                 <MenuFlyoutItem x:Uid="MainPage/Context/PurchaseItem" Click="ContextMenuPurchase_Click" />
