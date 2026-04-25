@@ -240,7 +240,7 @@ namespace IPAbuyer.Views
                 }
                 SetTableLoading(false);
 
-                ApplyFilterAndRefresh(preserveScrollPosition: true);
+                ApplyFilterAndRefresh();
             }
         }
 
@@ -304,7 +304,7 @@ namespace IPAbuyer.Views
                 }
                 SetTableLoading(false);
 
-                ApplyFilterAndRefresh(preserveScrollPosition: true);
+                ApplyFilterAndRefresh();
             }
         }
 
@@ -508,7 +508,7 @@ namespace IPAbuyer.Views
                 }
             }
 
-            ApplyFilterAndRefresh(preserveScrollPosition: true);
+            ApplyFilterAndRefresh();
             AppendHomeLog(LF("MainPage/Log/MarkedStatus", selectedApps.Count, status));
         }
 
@@ -559,32 +559,15 @@ namespace IPAbuyer.Views
             }
         }
 
-        private void ApplyFilterAndRefresh(bool preserveScrollPosition = false)
+        private void ApplyFilterAndRefresh()
         {
             if (ResultList == null)
             {
                 return;
             }
 
-            ScrollViewer? listScrollViewer = null;
-            double? previousVerticalOffset = null;
-            if (preserveScrollPosition)
-            {
-                listScrollViewer = FindDescendantScrollViewer(ResultList);
-                previousVerticalOffset = listScrollViewer?.VerticalOffset;
-            }
-
             var filtered = GetFilteredResults();
             ResultList.ItemsSource = filtered;
-
-            if (preserveScrollPosition && listScrollViewer != null && previousVerticalOffset.HasValue)
-            {
-                double targetOffset = previousVerticalOffset.Value;
-                DispatcherQueue.TryEnqueue(() =>
-                {
-                    listScrollViewer.ChangeView(null, targetOffset, null, disableAnimation: true);
-                });
-            }
         }
 
         private List<SearchResult> GetFilteredResults()
@@ -1053,27 +1036,6 @@ namespace IPAbuyer.Views
                     : Windows.UI.Color.FromArgb(0xFF, 0x00, 0x55, 0xAA),
                 _ => Windows.UI.Color.FromArgb(0xFF, 0xE6, 0xE6, 0xE6)
             };
-        }
-
-        private static ScrollViewer? FindDescendantScrollViewer(DependencyObject root)
-        {
-            int childrenCount = VisualTreeHelper.GetChildrenCount(root);
-            for (int i = 0; i < childrenCount; i++)
-            {
-                DependencyObject child = VisualTreeHelper.GetChild(root, i);
-                if (child is ScrollViewer scrollViewer)
-                {
-                    return scrollViewer;
-                }
-
-                ScrollViewer? nested = FindDescendantScrollViewer(child);
-                if (nested != null)
-                {
-                    return nested;
-                }
-            }
-
-            return null;
         }
 
         protected override void OnNavigatedFrom(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
