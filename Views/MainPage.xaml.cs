@@ -1225,22 +1225,38 @@ namespace IPAbuyer.Views
 
     }
 
-    public sealed class MainPagePriceForegroundConverter : IValueConverter
+    public sealed class MainPageFreePriceVisibilityConverter : IValueConverter
     {
         private static readonly ResourceLoader Loader = new();
-        private static readonly string FreeText = Loader.GetString("Common/Price/Free");
 
         public object? Convert(object value, Type targetType, object parameter, string language)
         {
-            string? price = value as string;
-            if (string.IsNullOrWhiteSpace(price)
-                || price.Trim().Equals(FreeText, StringComparison.OrdinalIgnoreCase)
-                || price.Trim().Equals("free", StringComparison.OrdinalIgnoreCase))
+            return IsFreePrice(value as string) ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            throw new NotSupportedException();
+        }
+
+        internal static bool IsFreePrice(string? price)
+        {
+            if (string.IsNullOrWhiteSpace(price))
             {
-                return null;
+                return true;
             }
 
-            return new SolidColorBrush(Windows.UI.Color.FromArgb(0xFF, 0xC4, 0x2B, 0x1C));
+            string freeText = Loader.GetString("Common/Price/Free");
+            return price.Trim().Equals(freeText, StringComparison.OrdinalIgnoreCase)
+                || price.Trim().Equals("free", StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    public sealed class MainPageNonFreePriceVisibilityConverter : IValueConverter
+    {
+        public object? Convert(object value, Type targetType, object parameter, string language)
+        {
+            return MainPageFreePriceVisibilityConverter.IsFreePrice(value as string) ? Visibility.Collapsed : Visibility.Visible;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, string language)
