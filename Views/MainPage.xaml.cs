@@ -692,7 +692,7 @@ namespace IPAbuyer.Views
             var contentPanel = new StackPanel { Spacing = 8 };
             contentPanel.Children.Add(new TextBlock
             {
-                Text = LF("MainPage/OwnedPrompt/Message", app.name ?? app.bundleId),
+                Text = LF("MainPage/OwnedPrompt/Message", app.name ?? app.bundleId ?? string.Empty),
                 TextWrapping = TextWrapping.Wrap
             });
             contentPanel.Children.Add(disablePromptCheckBox);
