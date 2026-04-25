@@ -1,9 +1,9 @@
 using System;
-using System.Collections.Generic;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Windows.ApplicationModel.Resources;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace IPAbuyer.Common
 {
@@ -85,9 +85,10 @@ namespace IPAbuyer.Common
 
         private static LoginResult InterpretPayload(string payload, bool isTwoFactor)
         {
-            foreach (string segment in EnumerateJsonSegments(payload))
+            foreach (JToken token in JsonPayload.EnumerateTokens(payload))
             {
-                var result = InterpretJsonSegment(segment, isTwoFactor);
+                string segment = token.ToString(Formatting.None);
+                var result = InterpretJsonSegment(token, segment, isTwoFactor);
                 if (result != null)
                 {
                     return result;
@@ -102,16 +103,12 @@ namespace IPAbuyer.Common
             return ClassifyFailure(payload, payload, isTwoFactor);
         }
 
-        private static LoginResult? InterpretJsonSegment(string segment, bool isTwoFactor)
+        private static LoginResult? InterpretJsonSegment(JToken root, string segment, bool isTwoFactor)
         {
             try
             {
-                using var document = JsonDocument.Parse(segment);
-                var root = document.RootElement;
-
-                if (root.TryGetProperty("success", out var successElement))
+                if (JsonPayload.TryReadBoolean(root, "success", out bool success))
                 {
-                    bool success = successElement.ValueKind == JsonValueKind.True && successElement.GetBoolean();
                     if (success)
                     {
                         return new LoginResult(LoginStatus.Success, L("LoginService/Status/Success"), segment);
@@ -136,7 +133,7 @@ namespace IPAbuyer.Common
                     return new LoginResult(LoginStatus.RequiresTwoFactor, L("LoginService/Status/RequiresTwoFactor"), segment);
                 }
             }
-            catch (JsonException)
+            catch
             {
                 // 忽略，尝试下一个片段
             }
@@ -144,50 +141,11 @@ namespace IPAbuyer.Common
             return null;
         }
 
-        private static IEnumerable<string> EnumerateJsonSegments(string payload)
+        private static string ExtractErrorMessage(JToken root)
         {
-            if (string.IsNullOrWhiteSpace(payload))
+            if (JsonPayload.TryReadString(root, out string? message, "error", "message", "reason"))
             {
-                yield break;
-            }
-
-            string normalized = payload.Replace("}{", "}\n{");
-            string[] lines = normalized.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-
-            foreach (string line in lines)
-            {
-                string trimmed = line.Trim();
-                if (trimmed.StartsWith("{") || trimmed.StartsWith("["))
-                {
-                    yield return trimmed;
-                }
-            }
-
-            if (lines.Length == 0)
-            {
-                string trimmed = payload.Trim();
-                if (!string.IsNullOrEmpty(trimmed))
-                {
-                    yield return trimmed;
-                }
-            }
-        }
-
-        private static string ExtractErrorMessage(JsonElement root)
-        {
-            if (root.TryGetProperty("error", out var errorElement))
-            {
-                return errorElement.GetString() ?? string.Empty;
-            }
-
-            if (root.TryGetProperty("message", out var messageElement))
-            {
-                return messageElement.GetString() ?? string.Empty;
-            }
-
-            if (root.TryGetProperty("reason", out var reason))
-            {
-                return reason.GetString() ?? string.Empty;
+                return message ?? string.Empty;
             }
 
             return string.Empty;

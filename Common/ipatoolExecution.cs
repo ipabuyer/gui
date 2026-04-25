@@ -6,7 +6,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -145,33 +144,12 @@ namespace IPAbuyer.Common
                 return string.Empty;
             }
 
-            string normalized = payload.Replace("}{", "}\n{");
-            string[] lines = normalized.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (string line in lines)
+            foreach (var token in JsonPayload.EnumerateTokens(payload))
             {
-                string trimmed = line.Trim();
-                if (!trimmed.StartsWith("{", StringComparison.Ordinal))
+                if (JsonPayload.TryReadString(token, out string? email, "email", "eamil")
+                    && !string.IsNullOrWhiteSpace(email))
                 {
-                    continue;
-                }
-
-                try
-                {
-                    using JsonDocument document = JsonDocument.Parse(trimmed);
-                    JsonElement root = document.RootElement;
-                    if (TryReadEmailProperty(root, "email", out string email))
-                    {
-                        return email;
-                    }
-
-                    if (TryReadEmailProperty(root, "eamil", out email))
-                    {
-                        return email;
-                    }
-                }
-                catch (JsonException)
-                {
-                    // ignore invalid segment
+                    return email.Trim();
                 }
             }
 
@@ -186,39 +164,11 @@ namespace IPAbuyer.Common
                 return false;
             }
 
-            string normalized = payload.Replace("}{", "}\n{");
-            string[] lines = normalized.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (string line in lines)
+            foreach (var token in JsonPayload.EnumerateTokens(payload))
             {
-                string trimmed = line.Trim();
-                if (!trimmed.StartsWith("{", StringComparison.Ordinal))
+                if (JsonPayload.TryReadBoolean(token, "success", out bool success) && success)
                 {
-                    continue;
-                }
-
-                try
-                {
-                    using JsonDocument document = JsonDocument.Parse(trimmed);
-                    JsonElement root = document.RootElement;
-                    if (!root.TryGetProperty("success", out JsonElement successElement))
-                    {
-                        continue;
-                    }
-
-                    if (successElement.ValueKind == JsonValueKind.True)
-                    {
-                        return true;
-                    }
-
-                    if (successElement.ValueKind == JsonValueKind.String
-                        && string.Equals(successElement.GetString(), "true", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return true;
-                    }
-                }
-                catch (JsonException)
-                {
-                    // ignore invalid segment
+                    return true;
                 }
             }
 
@@ -233,39 +183,11 @@ namespace IPAbuyer.Common
                 return false;
             }
 
-            string normalized = payload.Replace("}{", "}\n{");
-            string[] lines = normalized.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (string line in lines)
+            foreach (var token in JsonPayload.EnumerateTokens(payload))
             {
-                string trimmed = line.Trim();
-                if (!trimmed.StartsWith("{", StringComparison.Ordinal))
+                if (JsonPayload.TryReadBoolean(token, "success", out bool success) && !success)
                 {
-                    continue;
-                }
-
-                try
-                {
-                    using JsonDocument document = JsonDocument.Parse(trimmed);
-                    JsonElement root = document.RootElement;
-                    if (!root.TryGetProperty("success", out JsonElement successElement))
-                    {
-                        continue;
-                    }
-
-                    if (successElement.ValueKind == JsonValueKind.False)
-                    {
-                        return true;
-                    }
-
-                    if (successElement.ValueKind == JsonValueKind.String
-                        && string.Equals(successElement.GetString(), "false", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return true;
-                    }
-                }
-                catch (JsonException)
-                {
-                    // ignore invalid segment
+                    return true;
                 }
             }
 
@@ -588,22 +510,6 @@ namespace IPAbuyer.Common
             throw new InvalidOperationException(L("Ipatool/Error/MissingPassphrase"));
         }
 
-        private static bool TryReadEmailProperty(JsonElement root, string propertyName, out string email)
-        {
-            if (root.TryGetProperty(propertyName, out JsonElement element) && element.ValueKind == JsonValueKind.String)
-            {
-                string? value = element.GetString()?.Trim();
-                if (!string.IsNullOrWhiteSpace(value))
-                {
-                    email = value;
-                    return true;
-                }
-            }
-
-            email = string.Empty;
-            return false;
-        }
-
         private static void TryTerminateProcess(Process process)
         {
             try
@@ -685,24 +591,17 @@ namespace IPAbuyer.Common
             if (!string.IsNullOrWhiteSpace(text))
             {
                 string trimmed = text.Trim();
-                try
+                if (JsonPayload.TryParseToken(trimmed, out var token))
                 {
-                    using var doc = JsonDocument.Parse(trimmed);
-                    var root = doc.RootElement;
-
-                    if (root.TryGetProperty("error", out var error) && error.ValueKind == JsonValueKind.String)
+                    if (JsonPayload.TryReadString(token!, out string? error, "error") && !string.IsNullOrWhiteSpace(error))
                     {
-                        return LF("Ipatool/Error/ReadableJsonError", error.GetString() ?? string.Empty, exitCode);
+                        return LF("Ipatool/Error/ReadableJsonError", error, exitCode);
                     }
 
-                    if (root.TryGetProperty("message", out var message) && message.ValueKind == JsonValueKind.String)
+                    if (JsonPayload.TryReadString(token!, out string? message, "message") && !string.IsNullOrWhiteSpace(message))
                     {
-                        return LF("Ipatool/Error/ReadableJsonError", message.GetString() ?? string.Empty, exitCode);
+                        return LF("Ipatool/Error/ReadableJsonError", message, exitCode);
                     }
-                }
-                catch (JsonException)
-                {
-                    // ignore json parse failure and fallback to raw text
                 }
 
                 return trimmed;

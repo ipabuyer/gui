@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.Windows.ApplicationModel.Resources;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Windows.Storage;
 
 namespace IPAbuyer.Common
@@ -269,29 +269,25 @@ namespace IPAbuyer.Common
                 var model = CreateDefaultSettings();
                 if (!string.IsNullOrWhiteSpace(json))
                 {
-                    using JsonDocument document = JsonDocument.Parse(json);
-                    JsonElement root = document.RootElement;
-                    if (root.ValueKind == JsonValueKind.Object)
+                    JObject root = JObject.Parse(json);
+                    if (TryReadStringProperty(root, out string? countryValue, "country", "CountryCode"))
                     {
-                        if (TryReadStringProperty(root, out string? countryValue, "country", "CountryCode"))
-                        {
-                            model.CountryCode = countryValue ?? DefaultCountryCode;
-                        }
+                        model.CountryCode = countryValue ?? DefaultCountryCode;
+                    }
 
-                        if (TryReadStringProperty(root, out string? downloadDirectoryValue, "download_dir", "DownloadDirectory"))
-                        {
-                            model.DownloadDirectory = downloadDirectoryValue ?? string.Empty;
-                        }
+                    if (TryReadStringProperty(root, out string? downloadDirectoryValue, "download_dir", "DownloadDirectory"))
+                    {
+                        model.DownloadDirectory = downloadDirectoryValue ?? string.Empty;
+                    }
 
-                        if (TryReadBooleanProperty(root, out bool verboseValue, "verbose", "DetailedIpatoolLogEnabled"))
-                        {
-                            model.DetailedIpatoolLogEnabled = verboseValue;
-                        }
+                    if (TryReadBooleanProperty(root, out bool verboseValue, "verbose", "DetailedIpatoolLogEnabled"))
+                    {
+                        model.DetailedIpatoolLogEnabled = verboseValue;
+                    }
 
-                        if (TryReadBooleanProperty(root, out bool ownedCheckValue, "owned_check", "OwnedCheckEnabled"))
-                        {
-                            model.OwnedCheckEnabled = ownedCheckValue;
-                        }
+                    if (TryReadBooleanProperty(root, out bool ownedCheckValue, "owned_check", "OwnedCheckEnabled"))
+                    {
+                        model.OwnedCheckEnabled = ownedCheckValue;
                     }
                 }
 
@@ -311,7 +307,7 @@ namespace IPAbuyer.Common
         {
             NormalizeSettings(settings);
             string path = GetSettingsFilePath();
-            string json = JsonSerializer.Serialize(settings, LocalSettingsJsonContext.Default.LocalSettingsModel);
+            string json = JsonConvert.SerializeObject(settings, Formatting.Indented);
             File.WriteAllText(path, json, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
         }
 
@@ -341,13 +337,16 @@ namespace IPAbuyer.Common
             };
         }
 
-        private static bool TryReadStringProperty(JsonElement root, out string? value, params string[] names)
+        private static bool TryReadStringProperty(JObject root, out string? value, params string[] names)
         {
             foreach (string name in names)
             {
-                if (root.TryGetProperty(name, out JsonElement element) && element.ValueKind == JsonValueKind.String)
+                if (root.TryGetValue(name, StringComparison.OrdinalIgnoreCase, out JToken? token)
+                    && token.Type != JTokenType.Null)
                 {
-                    value = element.GetString();
+                    value = token.Type == JTokenType.String
+                        ? token.Value<string>()
+                        : token.ToString(Formatting.None);
                     return true;
                 }
             }
@@ -356,18 +355,25 @@ namespace IPAbuyer.Common
             return false;
         }
 
-        private static bool TryReadBooleanProperty(JsonElement root, out bool value, params string[] names)
+        private static bool TryReadBooleanProperty(JObject root, out bool value, params string[] names)
         {
             foreach (string name in names)
             {
-                if (!root.TryGetProperty(name, out JsonElement element))
+                if (!root.TryGetValue(name, StringComparison.OrdinalIgnoreCase, out JToken? token)
+                    || token.Type == JTokenType.Null)
                 {
                     continue;
                 }
 
-                if (element.ValueKind == JsonValueKind.True || element.ValueKind == JsonValueKind.False)
+                if (token.Type == JTokenType.Boolean)
                 {
-                    value = element.GetBoolean();
+                    value = token.Value<bool>();
+                    return true;
+                }
+
+                if (bool.TryParse(token.ToString(), out bool parsed))
+                {
+                    value = parsed;
                     return true;
                 }
             }
@@ -415,23 +421,17 @@ namespace IPAbuyer.Common
 
         private sealed class LocalSettingsModel
         {
-            [JsonPropertyName("country")]
+            [JsonProperty("country")]
             public string CountryCode { get; set; } = DefaultCountryCode;
 
-            [JsonPropertyName("download_dir")]
+            [JsonProperty("download_dir")]
             public string DownloadDirectory { get; set; } = string.Empty;
 
-            [JsonPropertyName("verbose")]
+            [JsonProperty("verbose")]
             public bool DetailedIpatoolLogEnabled { get; set; }
 
-            [JsonPropertyName("owned_check")]
+            [JsonProperty("owned_check")]
             public bool OwnedCheckEnabled { get; set; }
-        }
-
-        [JsonSourceGenerationOptions(WriteIndented = true)]
-        [JsonSerializable(typeof(LocalSettingsModel))]
-        private partial class LocalSettingsJsonContext : JsonSerializerContext
-        {
         }
 
         private static string L(string key)
