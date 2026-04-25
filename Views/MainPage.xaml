@@ -29,7 +29,7 @@
                         <Button x:Uid="MainPage/Action/BatchPurchaseButton" x:Name="BatchPurchaseButton" Click="BatchPurchaseButton_Click" />
                         <Button x:Uid="MainPage/Action/AddToQueueButton" x:Name="AddToDownloadQueueButton" Click="AddToDownloadQueueButton_Click" />
                         <Button x:Uid="MainPage/Action/OpenLogButton" x:Name="OpenLogButton" Click="ShowHomeLogDialog_Click" />
-                        <ComboBox x:Name="ScreeningComboBox" MinHeight="36" MinWidth="132" SelectedIndex="0" SelectionChanged="ScreeningComboBox_SelectionChanged">
+                        <ComboBox x:Name="ScreeningComboBox" MinWidth="100" SelectedIndex="0" SelectionChanged="ScreeningComboBox_SelectionChanged">
                             <ComboBoxItem x:Uid="MainPage/Filter/AllItem" x:Name="All" Tag="All"></ComboBoxItem>
                             <ComboBoxItem x:Uid="MainPage/Filter/OnlyNotPurchasedItem" x:Name="OnlyNotPurchased" Tag="OnlyNotPurchased"></ComboBoxItem>
                             <ComboBoxItem x:Uid="MainPage/Filter/OnlyPurchasedItem" x:Name="OnlyPurchased" Tag="OnlyPurchased"></ComboBoxItem>
