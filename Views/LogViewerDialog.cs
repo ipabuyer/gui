@@ -72,6 +72,7 @@ namespace IPAbuyer.Views
             {
                 _onCopy();
                 RefreshLog();
+                QueueScrollToBottom();
             };
 
             var clearButton = new Button
@@ -139,6 +140,7 @@ namespace IPAbuyer.Views
             {
                 _lastLogSignature = int.MinValue;
                 RefreshLogIfChanged();
+                QueueScrollToBottom();
                 _refreshTimer.Start();
             };
             Closed += (_, _) =>
@@ -161,7 +163,7 @@ namespace IPAbuyer.Views
 
             _lastLogSignature = signature;
             RefreshLog();
-            _logScrollViewer.ChangeView(null, _logScrollViewer.ScrollableHeight, null, true);
+            QueueScrollToBottom();
         }
 
         private void RefreshLog()
@@ -179,6 +181,21 @@ namespace IPAbuyer.Views
             }
 
             _logViewer.Blocks.Add(paragraph);
+        }
+
+        private void QueueScrollToBottom()
+        {
+            _logScrollViewer.DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
+            {
+                ScrollToBottom();
+                _logScrollViewer.DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, ScrollToBottom);
+            });
+        }
+
+        private void ScrollToBottom()
+        {
+            _logScrollViewer.UpdateLayout();
+            _logScrollViewer.ChangeView(null, _logScrollViewer.ScrollableHeight, null, true);
         }
 
         private static string AddStrictWrapPoints(string text)
