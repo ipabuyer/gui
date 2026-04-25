@@ -45,7 +45,7 @@ namespace IPAbuyer.Views
         private static readonly string PurchasedHeaderBase = L("MainPage/Header/PurchasedButton/Content");
         private const int MaxLogLines = 1000;
 
-        public int SearchLimitNum { get; set; } = 100;
+        public int SearchLimitNum { get; set; } = 200;
 
         public MainPage()
         {
