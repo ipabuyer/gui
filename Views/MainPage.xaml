@@ -46,6 +46,7 @@
                             GridLinesVisibility="None"
                             HeaderGridLinesVisibility="None"
                             HeaderRowHeight="48"
+                            HeadersVisibility="All"
                             IsMultiSelectCheckBoxEnabled="True"
                             IsReadOnly="True"
                             RowHeight="60"
