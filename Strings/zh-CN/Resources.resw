@@ -954,6 +954,9 @@
   <data name="LoginPage/Log/LogoutSuccess" xml:space="preserve">
     <value>退出登录成功: {0}</value>
   </data>
+  <data name="LoginPage/Log/PassphraseRotated" xml:space="preserve">
+    <value>加密密钥已轮换。</value>
+  </data>
   <data name="LoginPage/Log/LogoutFailed" xml:space="preserve">
     <value>退出登录失败: {0}</value>
   </data>

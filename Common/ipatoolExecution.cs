@@ -494,17 +494,10 @@ namespace IPAbuyer.Common
                 return passphrase.Trim();
             }
 
-            string? filePassphrase = KeychainConfig.GetPassphrase(account);
-            if (!string.IsNullOrWhiteSpace(filePassphrase))
+            string? storedPassphrase = KeychainConfig.GetPassphrase(null);
+            if (!string.IsNullOrWhiteSpace(storedPassphrase))
             {
-                return filePassphrase;
-            }
-
-            // 账号不匹配时，尝试读取默认凭据，避免误回退到无效密钥。
-            string? fallbackPassphrase = KeychainConfig.GetPassphrase(null);
-            if (!string.IsNullOrWhiteSpace(fallbackPassphrase))
-            {
-                return fallbackPassphrase;
+                return storedPassphrase;
             }
 
             throw new InvalidOperationException(L("Ipatool/Error/MissingPassphrase"));

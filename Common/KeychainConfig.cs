@@ -21,7 +21,6 @@ namespace IPAbuyer.Common
         private const string PassphraseVaultResource = "IPAbuyer.ipatool.passphrase";
         private const string DefaultPassphraseVaultUser = "__default__";
         private const string DefaultCountryCode = "cn";
-        private const string DefaultPassphrase = "12345678";
         private static readonly object SyncRoot = new();
 
         private static readonly HashSet<string> ValidCountryCodes = new(StringComparer.OrdinalIgnoreCase)
@@ -132,11 +131,9 @@ namespace IPAbuyer.Common
             lock (SyncRoot)
             {
                 string normalizedPassphrase = passphrase.Trim();
-                string vaultUser = NormalizePassphraseVaultUser(account);
-                if (!TrySavePassphraseToVault(vaultUser, normalizedPassphrase))
+                if (!TrySavePassphraseToVault(normalizedPassphrase))
                 {
-                    string path = GetPassphraseFilePath();
-                    File.WriteAllText(path, normalizedPassphrase, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+                    SaveLegacyPassphrase(normalizedPassphrase);
                     return;
                 }
 
@@ -148,24 +145,43 @@ namespace IPAbuyer.Common
         {
             lock (SyncRoot)
             {
-                string vaultUser = NormalizePassphraseVaultUser(account);
-                if (TryGetPassphraseFromVault(vaultUser, out string? vaultPassphrase))
+                if (TryGetPassphraseFromVault(out string? vaultPassphrase))
                 {
                     return vaultPassphrase;
                 }
 
-                if (TryMigrateLegacyPassphrase(vaultUser, out string? migratedPassphrase))
+                if (TryMigrateLegacyPassphrase(out string? migratedPassphrase))
                 {
                     return migratedPassphrase;
                 }
 
-                return DefaultPassphrase;
+                string generatedPassphrase = CreateDefaultPassphrase();
+                if (!TrySavePassphraseToVault(generatedPassphrase))
+                {
+                    SaveLegacyPassphrase(generatedPassphrase);
+                }
+
+                return generatedPassphrase;
             }
         }
 
         public static string GetDefaultPassphrase()
         {
-            return DefaultPassphrase;
+            return GetPassphrase(null) ?? CreateDefaultPassphrase();
+        }
+
+        public static string RotateDefaultPassphrase()
+        {
+            lock (SyncRoot)
+            {
+                string passphrase = CreateDefaultPassphrase();
+                if (!TrySavePassphraseToVault(passphrase))
+                {
+                    SaveLegacyPassphrase(passphrase);
+                }
+
+                return passphrase;
+            }
         }
 
         public static void SaveDownloadDirectory(string directoryPath)
@@ -263,20 +279,18 @@ namespace IPAbuyer.Common
             return Path.Combine(dataDirectory, PassphraseFileName);
         }
 
-        private static string NormalizePassphraseVaultUser(string? account)
+        private static string CreateDefaultPassphrase()
         {
-            return string.IsNullOrWhiteSpace(account)
-                ? DefaultPassphraseVaultUser
-                : account.Trim().ToLowerInvariant();
+            return Guid.NewGuid().ToString("N");
         }
 
-        private static bool TrySavePassphraseToVault(string vaultUser, string passphrase)
+        private static bool TrySavePassphraseToVault(string passphrase)
         {
             try
             {
                 var vault = new PasswordVault();
-                TryRemovePassphraseFromVault(vault, vaultUser);
-                vault.Add(new PasswordCredential(PassphraseVaultResource, vaultUser, passphrase));
+                RemoveAllPassphraseEntriesFromVault(vault);
+                vault.Add(new PasswordCredential(PassphraseVaultResource, DefaultPassphraseVaultUser, passphrase));
                 return true;
             }
             catch
@@ -285,13 +299,13 @@ namespace IPAbuyer.Common
             }
         }
 
-        private static bool TryGetPassphraseFromVault(string vaultUser, out string? passphrase)
+        private static bool TryGetPassphraseFromVault(out string? passphrase)
         {
             passphrase = null;
             try
             {
                 var vault = new PasswordVault();
-                PasswordCredential credential = vault.Retrieve(PassphraseVaultResource, vaultUser);
+                PasswordCredential credential = vault.Retrieve(PassphraseVaultResource, DefaultPassphraseVaultUser);
                 credential.RetrievePassword();
                 if (string.IsNullOrWhiteSpace(credential.Password))
                 {
@@ -307,7 +321,7 @@ namespace IPAbuyer.Common
             }
         }
 
-        private static bool TryMigrateLegacyPassphrase(string vaultUser, out string? passphrase)
+        private static bool TryMigrateLegacyPassphrase(out string? passphrase)
         {
             passphrase = null;
             string path = GetPassphraseFilePath();
@@ -332,7 +346,7 @@ namespace IPAbuyer.Common
             }
 
             passphrase = content;
-            if (TrySavePassphraseToVault(vaultUser, content))
+            if (TrySavePassphraseToVault(content))
             {
                 DeleteLegacyPassphraseFile();
             }
@@ -340,12 +354,20 @@ namespace IPAbuyer.Common
             return true;
         }
 
-        private static void TryRemovePassphraseFromVault(PasswordVault vault, string vaultUser)
+        private static void SaveLegacyPassphrase(string passphrase)
+        {
+            string path = GetPassphraseFilePath();
+            File.WriteAllText(path, passphrase, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        }
+
+        private static void RemoveAllPassphraseEntriesFromVault(PasswordVault vault)
         {
             try
             {
-                PasswordCredential credential = vault.Retrieve(PassphraseVaultResource, vaultUser);
-                vault.Remove(credential);
+                foreach (PasswordCredential credential in vault.FindAllByResource(PassphraseVaultResource))
+                {
+                    vault.Remove(credential);
+                }
             }
             catch
             {
