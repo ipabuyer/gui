@@ -41,16 +41,16 @@
                         CanReorderColumns="False"
                         CanResizeColumns="True"
                         CanSortColumns="True"
-                        CornerButtonMode="SelectAll"
+                        CornerButtonMode="None"
                         GridLinesVisibility="None"
                         HeaderGridLinesVisibility="None"
                         HeaderRowHeight="48"
-                        HeadersVisibility="All"
-                        IsMultiSelectCheckBoxEnabled="True"
+                        HeadersVisibility="Columns"
+                        IsMultiSelectCheckBoxEnabled="False"
                         IsReadOnly="True"
                         RowHeight="60"
                         RowMinHeight="52"
-                        SelectionMode="Multiple"
+                        SelectionMode="None"
                         SelectionUnit="Row">
                         <tv:TableView.RowContextFlyout>
                             <MenuFlyout>

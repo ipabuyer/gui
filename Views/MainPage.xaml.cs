@@ -120,7 +120,7 @@ namespace IPAbuyer.Views
             {
                 if (ResultList != null)
                 {
-                    ResultList.ItemsSource = null;
+                    SetResultListItemsSource(null);
                 }
 
                 AppendHomeLog(L("MainPage/Log/SearchTimeoutOrEmpty"));
@@ -140,7 +140,7 @@ namespace IPAbuyer.Views
                 {
                     if (ResultList != null)
                     {
-                        ResultList.ItemsSource = null;
+                        SetResultListItemsSource(null);
                     }
 
                     return;
@@ -188,7 +188,7 @@ namespace IPAbuyer.Views
             {
                 if (ResultList != null)
                 {
-                    ResultList.ItemsSource = null;
+                    SetResultListItemsSource(null);
                 }
 
                 AppendHomeLog(L("MainPage/Log/SearchParseFailed"));
@@ -567,7 +567,23 @@ namespace IPAbuyer.Views
             }
 
             var filtered = GetFilteredResults();
-            ResultList.ItemsSource = filtered;
+            SetResultListItemsSource(filtered);
+        }
+
+        private void SetResultListItemsSource(List<SearchResult>? results)
+        {
+            if (ResultList == null)
+            {
+                return;
+            }
+
+            bool hasResults = results is { Count: > 0 };
+            ResultList.HeadersVisibility = hasResults
+                ? WinUI.TableView.TableViewHeadersVisibility.All
+                : WinUI.TableView.TableViewHeadersVisibility.Columns;
+            ResultList.IsMultiSelectCheckBoxEnabled = hasResults;
+            ResultList.SelectionMode = hasResults ? ListViewSelectionMode.Multiple : ListViewSelectionMode.None;
+            ResultList.ItemsSource = results;
         }
 
         private List<SearchResult> GetFilteredResults()
@@ -1059,7 +1075,7 @@ namespace IPAbuyer.Views
             _allResults.Clear();
             if (ResultList != null)
             {
-                ResultList.ItemsSource = null;
+                SetResultListItemsSource(null);
             }
         }
 
