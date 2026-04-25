@@ -528,6 +528,9 @@
   <data name="MainPage/Purchase/Success" xml:space="preserve">
     <value>购买成功: {0}</value>
   </data>
+  <data name="MainPage/Purchase/OwnedDetected" xml:space="preserve">
+    <value>已拥有: {0}</value>
+  </data>
   <data name="MainPage/Purchase/OwnedMarked" xml:space="preserve">
     <value>疑似已拥有，已标记: {0}</value>
   </data>

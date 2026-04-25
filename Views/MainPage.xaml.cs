@@ -734,7 +734,13 @@ namespace IPAbuyer.Views
                 }
 
                 var result = await IpatoolExecution.PurchaseAppAsync(app.bundleId, account, _pageCts.Token);
-                if (IsPurchaseSuccess(result.OutputOrError))
+                if (IsPurchaseAlreadyOwned(result.OutputOrError))
+                {
+                    app.purchased = StatusOwned;
+                    PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusOwned);
+                    AppendHomeLog(LF("MainPage/Purchase/OwnedDetected", app.name ?? app.bundleId));
+                }
+                else if (IsPurchaseSuccess(result.OutputOrError))
                 {
                     app.purchased = StatusPurchased;
                     PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusPurchased);
@@ -901,6 +907,74 @@ namespace IPAbuyer.Views
             {
                 return false;
             }
+        }
+
+        private static bool IsPurchaseAlreadyOwned(string response)
+        {
+            if (string.IsNullOrWhiteSpace(response))
+            {
+                return false;
+            }
+
+            if (response.Contains("\"alreadyOwned\":true", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            string normalized = response.Replace("}{", "}\n{");
+            string[] lines = normalized.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (string line in lines)
+            {
+                string trimmed = line.Trim();
+                if (!trimmed.StartsWith("{", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    using JsonDocument document = JsonDocument.Parse(trimmed);
+                    if (TryReadBooleanProperty(document.RootElement, "alreadyOwned", out bool alreadyOwned) && alreadyOwned)
+                    {
+                        return true;
+                    }
+                }
+                catch (JsonException)
+                {
+                    // ignore invalid segment
+                }
+            }
+
+            return false;
+        }
+
+        private static bool TryReadBooleanProperty(JsonElement root, string propertyName, out bool value)
+        {
+            value = false;
+            if (!root.TryGetProperty(propertyName, out JsonElement element))
+            {
+                return false;
+            }
+
+            if (element.ValueKind == JsonValueKind.True)
+            {
+                value = true;
+                return true;
+            }
+
+            if (element.ValueKind == JsonValueKind.False)
+            {
+                return true;
+            }
+
+            if (element.ValueKind == JsonValueKind.String
+                && bool.TryParse(element.GetString(), out bool parsed))
+            {
+                value = parsed;
+                return true;
+            }
+
+            return false;
         }
 
         private static string GetActiveAccount()
