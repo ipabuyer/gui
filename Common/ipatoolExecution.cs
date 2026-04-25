@@ -102,7 +102,7 @@ namespace IPAbuyer.Common
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    string errorMessage = LF("Ipatool/Error/HttpRequestFailed", (int)response.StatusCode, response.ReasonPhrase);
+                    string errorMessage = LF("Ipatool/Error/HttpRequestFailed", (int)response.StatusCode, response.ReasonPhrase ?? string.Empty);
                     return new IpatoolResult(null, string.IsNullOrWhiteSpace(content) ? errorMessage : content, (int)response.StatusCode, TimedOut: false);
                 }
 
@@ -682,12 +682,12 @@ namespace IPAbuyer.Common
 
                     if (root.TryGetProperty("error", out var error) && error.ValueKind == JsonValueKind.String)
                     {
-                        return LF("Ipatool/Error/ReadableJsonError", error.GetString(), exitCode);
+                        return LF("Ipatool/Error/ReadableJsonError", error.GetString() ?? string.Empty, exitCode);
                     }
 
                     if (root.TryGetProperty("message", out var message) && message.ValueKind == JsonValueKind.String)
                     {
-                        return LF("Ipatool/Error/ReadableJsonError", message.GetString(), exitCode);
+                        return LF("Ipatool/Error/ReadableJsonError", message.GetString() ?? string.Empty, exitCode);
                     }
                 }
                 catch (JsonException)
