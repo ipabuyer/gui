@@ -68,7 +68,7 @@
                                 </MenuFlyout>
                             </tv:TableView.RowContextFlyout>
                             <tv:TableView.Columns>
-                                <tv:TableViewTemplateColumn x:Name="NameColumn" Width="3*" MinWidth="240" SortMemberPath="name" CanFilter="False">
+                                <tv:TableViewTemplateColumn x:Name="NameColumn" Width="3*" SortMemberPath="name" CanFilter="False">
                                     <tv:TableViewTemplateColumn.CellTemplate>
                                         <DataTemplate x:DataType="models:SearchResult">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
@@ -80,20 +80,20 @@
                                         </DataTemplate>
                                     </tv:TableViewTemplateColumn.CellTemplate>
                                 </tv:TableViewTemplateColumn>
-                                <tv:TableViewTextColumn x:Name="IdColumn" Width="*" MinWidth="120" Binding="{Binding id}" SortMemberPath="id" CanFilter="False" />
-                                <tv:TableViewTextColumn x:Name="DeveloperColumn" Width="2*" MinWidth="180" Binding="{Binding developer}" SortMemberPath="developer" CanFilter="False" />
-                                <tv:TableViewTextColumn x:Name="VersionColumn" Width="*" MinWidth="120" Binding="{Binding version}" SortMemberPath="version" CanFilter="False" />
-                                <tv:TableViewTemplateColumn x:Name="PriceColumn" Width="*" MinWidth="100" SortMemberPath="price" CanFilter="False">
+                                <tv:TableViewTextColumn x:Name="IdColumn" Width="*" Binding="{Binding id}" SortMemberPath="id" CanFilter="False" />
+                                <tv:TableViewTextColumn x:Name="DeveloperColumn" Width="2*" Binding="{Binding developer}" SortMemberPath="developer" CanFilter="False" />
+                                <tv:TableViewTextColumn x:Name="VersionColumn" Width="*" Binding="{Binding version}" SortMemberPath="version" CanFilter="False" />
+                                <tv:TableViewTemplateColumn x:Name="PriceColumn" Width="*" SortMemberPath="price" CanFilter="False">
                                     <tv:TableViewTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <TextBlock HorizontalAlignment="Center" Text="{Binding price}" Foreground="{Binding price, Converter={StaticResource MainPagePriceForegroundConverter}}" />
+                                            <TextBlock Text="{Binding price}" Foreground="{Binding price, Converter={StaticResource MainPagePriceForegroundConverter}}" />
                                         </DataTemplate>
                                     </tv:TableViewTemplateColumn.CellTemplate>
                                 </tv:TableViewTemplateColumn>
-                                <tv:TableViewTemplateColumn x:Name="PurchasedColumn" Width="*" MinWidth="120" SortMemberPath="purchased" CanFilter="False">
+                                <tv:TableViewTemplateColumn x:Name="PurchasedColumn" Width="*" SortMemberPath="purchased" CanFilter="False">
                                     <tv:TableViewTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <TextBlock HorizontalAlignment="Center" Text="{Binding purchased}" Foreground="{Binding purchased, Converter={StaticResource MainPagePurchasedForegroundConverter}}" />
+                                            <TextBlock Text="{Binding purchased}" Foreground="{Binding purchased, Converter={StaticResource MainPagePurchasedForegroundConverter}}" />
                                         </DataTemplate>
                                     </tv:TableViewTemplateColumn.CellTemplate>
                                 </tv:TableViewTemplateColumn>
