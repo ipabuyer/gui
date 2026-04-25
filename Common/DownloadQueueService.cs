@@ -456,6 +456,7 @@ namespace IPAbuyer.Common
                     "completed",
                     "completion",
                     "fraction")
+                    && progressValue != null
                     && TryConvertProgressValue(progressValue, out int percentByJson))
                 {
                     return percentByJson;

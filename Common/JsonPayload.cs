@@ -16,7 +16,7 @@ namespace IPAbuyer.Common
             }
 
             string trimmedPayload = payload.Trim();
-            if (LooksLikeJson(trimmedPayload) && TryParseToken(trimmedPayload, out JToken? fullToken))
+            if (LooksLikeJson(trimmedPayload) && TryParseToken(trimmedPayload, out JToken? fullToken) && fullToken != null)
             {
                 yield return fullToken;
                 yield break;
@@ -27,14 +27,14 @@ namespace IPAbuyer.Common
             foreach (string line in lines)
             {
                 string trimmed = line.Trim();
-                if (TryParseToken(trimmed, out JToken? token))
+                if (TryParseToken(trimmed, out JToken? token) && token != null)
                 {
                     yield return token;
                     continue;
                 }
 
                 string? jsonCandidate = FindEmbeddedJsonCandidate(trimmed);
-                if (jsonCandidate != null && TryParseToken(jsonCandidate, out JToken? embeddedToken))
+                if (jsonCandidate != null && TryParseToken(jsonCandidate, out JToken? embeddedToken) && embeddedToken != null)
                 {
                     yield return embeddedToken;
                 }
@@ -43,7 +43,7 @@ namespace IPAbuyer.Common
             if (lines.Length == 0)
             {
                 string trimmed = trimmedPayload;
-                if (LooksLikeJson(trimmed) && TryParseToken(trimmed, out JToken? token))
+                if (LooksLikeJson(trimmed) && TryParseToken(trimmed, out JToken? token) && token != null)
                 {
                     yield return token;
                 }
