@@ -79,12 +79,16 @@
                             <tv:TableViewTemplateColumn x:Name="NameColumn" Width="2*" HeaderStyle="{StaticResource MainTableHeaderStyle}" SortMemberPath="name" CanFilter="False" CanSort="True">
                                 <tv:TableViewTemplateColumn.CellTemplate>
                                     <DataTemplate x:DataType="models:SearchResult">
-                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Spacing="8">
-                                            <Border Width="24" Height="24" CornerRadius="{StaticResource MainUnifiedCornerRadius}" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}" BorderThickness="0.6">
+                                        <Grid HorizontalAlignment="Stretch" ColumnSpacing="8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="24" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Width="24" Height="24" CornerRadius="{StaticResource MainUnifiedCornerRadius}" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}" BorderThickness="0.6">
                                                 <Image Width="24" Height="24" Source="{x:Bind artworkUrl}" Stretch="UniformToFill" />
                                             </Border>
-                                            <TextBlock VerticalAlignment="Center" Text="{x:Bind name}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{x:Bind name}" />
-                                        </StackPanel>
+                                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{x:Bind name}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{x:Bind name}" />
+                                        </Grid>
                                     </DataTemplate>
                                 </tv:TableViewTemplateColumn.CellTemplate>
                             </tv:TableViewTemplateColumn>
