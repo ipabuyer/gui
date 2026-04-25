@@ -88,20 +88,38 @@
                                     </DataTemplate>
                                 </tv:TableViewTemplateColumn.CellTemplate>
                             </tv:TableViewTemplateColumn>
-                            <tv:TableViewTextColumn x:Name="IdColumn" Width="*" HeaderStyle="{StaticResource MainTableHeaderStyle}" Binding="{Binding id}" SortMemberPath="id" CanFilter="False" CanSort="True" />
-                            <tv:TableViewTextColumn x:Name="DeveloperColumn" Width="*" HeaderStyle="{StaticResource MainTableHeaderStyle}" Binding="{Binding developer}" SortMemberPath="developer" CanFilter="False" CanSort="True" />
-                            <tv:TableViewTextColumn x:Name="VersionColumn" Width="*" HeaderStyle="{StaticResource MainTableHeaderStyle}" Binding="{Binding version}" SortMemberPath="version" CanFilter="False" CanSort="True" />
+                            <tv:TableViewTemplateColumn x:Name="IdColumn" Width="*" HeaderStyle="{StaticResource MainTableHeaderStyle}" SortMemberPath="id" CanFilter="False" CanSort="True">
+                                <tv:TableViewTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock HorizontalAlignment="Left" Text="{Binding id}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding id}" />
+                                    </DataTemplate>
+                                </tv:TableViewTemplateColumn.CellTemplate>
+                            </tv:TableViewTemplateColumn>
+                            <tv:TableViewTemplateColumn x:Name="DeveloperColumn" Width="*" HeaderStyle="{StaticResource MainTableHeaderStyle}" SortMemberPath="developer" CanFilter="False" CanSort="True">
+                                <tv:TableViewTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock HorizontalAlignment="Left" Text="{Binding developer}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding developer}" />
+                                    </DataTemplate>
+                                </tv:TableViewTemplateColumn.CellTemplate>
+                            </tv:TableViewTemplateColumn>
+                            <tv:TableViewTemplateColumn x:Name="VersionColumn" Width="*" HeaderStyle="{StaticResource MainTableHeaderStyle}" SortMemberPath="version" CanFilter="False" CanSort="True">
+                                <tv:TableViewTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock HorizontalAlignment="Left" Text="{Binding version}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding version}" />
+                                    </DataTemplate>
+                                </tv:TableViewTemplateColumn.CellTemplate>
+                            </tv:TableViewTemplateColumn>
                             <tv:TableViewTemplateColumn x:Name="PriceColumn" Width="*" HeaderStyle="{StaticResource MainTableHeaderStyle}" SortMemberPath="price" CanFilter="False" CanSort="True">
                                 <tv:TableViewTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock HorizontalAlignment="Left" Text="{Binding price}" Foreground="{Binding price, Converter={StaticResource MainPagePriceForegroundConverter}}" />
+                                        <TextBlock HorizontalAlignment="Left" Text="{Binding price}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding price}" Foreground="{Binding price, Converter={StaticResource MainPagePriceForegroundConverter}}" />
                                     </DataTemplate>
                                 </tv:TableViewTemplateColumn.CellTemplate>
                             </tv:TableViewTemplateColumn>
                             <tv:TableViewTemplateColumn x:Name="PurchasedColumn" Width="*" HeaderStyle="{StaticResource MainTableHeaderStyle}" SortMemberPath="purchased" CanFilter="False" CanSort="True">
                                 <tv:TableViewTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock HorizontalAlignment="Left" Text="{Binding purchased}" Foreground="{Binding purchased, Converter={StaticResource MainPagePurchasedForegroundConverter}}" />
+                                        <TextBlock HorizontalAlignment="Left" Text="{Binding purchased}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding purchased}" Foreground="{Binding purchased, Converter={StaticResource MainPagePurchasedForegroundConverter}}" />
                                     </DataTemplate>
                                 </tv:TableViewTemplateColumn.CellTemplate>
                             </tv:TableViewTemplateColumn>
