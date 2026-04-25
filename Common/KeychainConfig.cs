@@ -450,7 +450,14 @@ namespace IPAbuyer.Common
         {
             NormalizeSettings(settings);
             string path = GetSettingsFilePath();
-            string json = JsonConvert.SerializeObject(settings, Formatting.Indented);
+            var root = new JObject
+            {
+                ["country"] = settings.CountryCode,
+                ["download_dir"] = settings.DownloadDirectory,
+                ["verbose"] = settings.DetailedIpatoolLogEnabled,
+                ["owned_check"] = settings.OwnedCheckEnabled
+            };
+            string json = root.ToString(Formatting.Indented);
             File.WriteAllText(path, json, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
         }
 
