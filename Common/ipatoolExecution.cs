@@ -245,7 +245,7 @@ namespace IPAbuyer.Common
 
             string ipatoolPath = ResolveIpatoolPath(IpatoolFlavor.Main);
             string workingDirectory = Path.GetDirectoryName(ipatoolPath) ?? AppContext.BaseDirectory;
-            string effectivePassphrase = EnsurePassphrase(account, null);
+            string effectivePassphrase = EnsurePassphrase(null);
             var finalArguments = new List<string>
             {
                 "download",
@@ -267,7 +267,7 @@ namespace IPAbuyer.Common
 
             try
             {
-                EmitCommandLog(finalArguments);
+                EmitCommandLog(ipatoolPath, finalArguments);
                 process = new Process { StartInfo = psi, EnableRaisingEvents = true };
                 if (!process.Start())
                 {
@@ -358,7 +358,7 @@ namespace IPAbuyer.Common
             string ipatoolPath = ResolveIpatoolPath(flavor);
             string workingDirectory = Path.GetDirectoryName(ipatoolPath) ?? AppContext.BaseDirectory;
 
-            string effectivePassphrase = EnsurePassphrase(account, passphrase);
+            string effectivePassphrase = EnsurePassphrase(passphrase);
 
             var finalArguments = new List<string>(arguments.Count + 6);
             foreach (string arg in arguments)
@@ -390,7 +390,7 @@ namespace IPAbuyer.Common
 
                 if (!suppressLogEvents)
                 {
-                    EmitCommandLog(finalArguments);
+                    EmitCommandLog(ipatoolPath, finalArguments);
                 }
                 process = new Process { StartInfo = psi, EnableRaisingEvents = true };
 
@@ -487,7 +487,7 @@ namespace IPAbuyer.Common
             return "ipatool.exe";
         }
 
-        private static string EnsurePassphrase(string account, string? passphrase)
+        private static string EnsurePassphrase(string? passphrase)
         {
             if (!string.IsNullOrWhiteSpace(passphrase))
             {
@@ -669,7 +669,7 @@ namespace IPAbuyer.Common
             return $"ipatool {arguments[0]} {arguments[1]}";
         }
 
-        private static void EmitCommandLog(IReadOnlyList<string> arguments)
+        private static void EmitCommandLog(string ipatoolPath, IReadOnlyList<string> arguments)
         {
             if (!KeychainConfig.GetDetailedIpatoolLogEnabled())
             {
@@ -677,7 +677,8 @@ namespace IPAbuyer.Common
             }
 
             string rendered = RenderArgumentsForDisplay(arguments);
-            CommandExecuting?.Invoke($"ipatool.exe {rendered}");
+            string executableName = Path.GetFileName(ipatoolPath);
+            CommandExecuting?.Invoke($"{executableName} {rendered}");
         }
 
         private static void EmitDetailedOutputLogs(string? output, string? error)

@@ -647,7 +647,7 @@ namespace IPAbuyer.Views
         {
             try
             {
-                KeychainConfig.SavePassphrase(_account, _passphrase);
+                KeychainConfig.SavePassphrase(_passphrase);
                 if (EmailTextBox != null)
                 {
                     EmailTextBox.Text = _account;

@@ -125,7 +125,7 @@ namespace IPAbuyer.Common
 
                 value = child.Type == JTokenType.String
                     ? child.Value<string>()
-                    : child.ToString(Formatting.None);
+                    : child.ToString(Newtonsoft.Json.Formatting.None);
                 return true;
             }
 
@@ -141,9 +141,9 @@ namespace IPAbuyer.Common
                 JTokenType.String => token.Value<string>(),
                 JTokenType.Float when token.Value<decimal>() <= 0m => "0.00",
                 JTokenType.Float => token.Value<decimal>().ToString("0.00", CultureInfo.InvariantCulture),
-                JTokenType.Integer => token.ToString(Formatting.None),
+                JTokenType.Integer => token.ToString(Newtonsoft.Json.Formatting.None),
                 JTokenType.Boolean => token.Value<bool>() ? "true" : "false",
-                _ => token.ToString(Formatting.None)
+                _ => token.ToString(Newtonsoft.Json.Formatting.None)
             };
         }
 

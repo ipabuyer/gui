@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Windows.ApplicationModel.Resources;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace IPAbuyer.Common
@@ -87,7 +86,7 @@ namespace IPAbuyer.Common
         {
             foreach (JToken token in JsonPayload.EnumerateTokens(payload))
             {
-                string segment = token.ToString(Formatting.None);
+                string segment = token.ToString(Newtonsoft.Json.Formatting.None);
                 var result = InterpretJsonSegment(token, segment, isTwoFactor);
                 if (result != null)
                 {
@@ -105,37 +104,30 @@ namespace IPAbuyer.Common
 
         private static LoginResult? InterpretJsonSegment(JToken root, string segment, bool isTwoFactor)
         {
-            try
+            if (JsonPayload.TryReadBoolean(root, "success", out bool success))
             {
-                if (JsonPayload.TryReadBoolean(root, "success", out bool success))
+                if (success)
                 {
-                    if (success)
-                    {
-                        return new LoginResult(LoginStatus.Success, L("LoginService/Status/Success"), segment);
-                    }
-
-                    string error = ExtractErrorMessage(root);
-                    return ClassifyFailure(error, segment, isTwoFactor);
+                    return new LoginResult(LoginStatus.Success, L("LoginService/Status/Success"), segment);
                 }
 
-                string message = ExtractErrorMessage(root);
-                if (!string.IsNullOrWhiteSpace(message))
-                {
-                    var failure = ClassifyFailure(message, segment, isTwoFactor);
-                    if (failure.Status != LoginStatus.UnknownError)
-                    {
-                        return failure;
-                    }
-                }
+                string error = ExtractErrorMessage(root);
+                return ClassifyFailure(error, segment, isTwoFactor);
+            }
 
-                if (DetectTwoFactorRequirement(segment))
+            string message = ExtractErrorMessage(root);
+            if (!string.IsNullOrWhiteSpace(message))
+            {
+                var failure = ClassifyFailure(message, segment, isTwoFactor);
+                if (failure.Status != LoginStatus.UnknownError)
                 {
-                    return new LoginResult(LoginStatus.RequiresTwoFactor, L("LoginService/Status/RequiresTwoFactor"), segment);
+                    return failure;
                 }
             }
-            catch
+
+            if (DetectTwoFactorRequirement(segment))
             {
-                // 忽略，尝试下一个片段
+                return new LoginResult(LoginStatus.RequiresTwoFactor, L("LoginService/Status/RequiresTwoFactor"), segment);
             }
 
             return null;

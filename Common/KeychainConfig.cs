@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Microsoft.Windows.ApplicationModel.Resources;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Windows.Security.Credentials;
 using Windows.Storage;
@@ -121,7 +120,7 @@ namespace IPAbuyer.Common
             }
         }
 
-        public static void SavePassphrase(string account, string passphrase)
+        public static void SavePassphrase(string passphrase)
         {
             if (string.IsNullOrWhiteSpace(passphrase))
             {
@@ -178,6 +177,10 @@ namespace IPAbuyer.Common
                 if (!TrySavePassphraseToVault(passphrase))
                 {
                     SaveLegacyPassphrase(passphrase);
+                }
+                else
+                {
+                    DeleteLegacyPassphraseFile();
                 }
 
                 return passphrase;
@@ -457,7 +460,7 @@ namespace IPAbuyer.Common
                 ["verbose"] = settings.DetailedIpatoolLogEnabled,
                 ["owned_check"] = settings.OwnedCheckEnabled
             };
-            string json = root.ToString(Formatting.Indented);
+            string json = root.ToString(Newtonsoft.Json.Formatting.Indented);
             File.WriteAllText(path, json, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
         }
 
@@ -496,7 +499,7 @@ namespace IPAbuyer.Common
                 {
                     value = token.Type == JTokenType.String
                         ? token.Value<string>()
-                        : token.ToString(Formatting.None);
+                        : token.ToString(Newtonsoft.Json.Formatting.None);
                     return true;
                 }
             }
@@ -571,16 +574,12 @@ namespace IPAbuyer.Common
 
         private sealed class LocalSettingsModel
         {
-            [JsonProperty("country")]
             public string CountryCode { get; set; } = DefaultCountryCode;
 
-            [JsonProperty("download_dir")]
             public string DownloadDirectory { get; set; } = string.Empty;
 
-            [JsonProperty("verbose")]
             public bool DetailedIpatoolLogEnabled { get; set; }
 
-            [JsonProperty("owned_check")]
             public bool OwnedCheckEnabled { get; set; }
         }
 
