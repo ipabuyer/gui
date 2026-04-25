@@ -33,6 +33,7 @@ namespace IPAbuyer.Views
         private static readonly string StatusPurchased = L("Common/Status/Purchased");
         private static readonly string StatusOwned = L("Common/Status/Owned");
         private static readonly string StatusCanPurchase = L("Common/Status/NotPurchased");
+        private static readonly string StatusPurchaseBlocked = L("Common/Status/PurchaseBlocked");
 
         private static readonly string[] PurchasedAliases = { StatusPurchased };
         private static readonly string[] OwnedAliases = { StatusOwned };
@@ -166,9 +167,8 @@ namespace IPAbuyer.Views
                 foreach (var appElement in resultsElement.EnumerateArray())
                 {
                     string bundleId = GetBundleId(appElement) ?? string.Empty;
-                    string status = purchasedDict.TryGetValue(bundleId, out string? purchasedStatus)
-                        ? NormalizePurchasedStatus(purchasedStatus)
-                        : StatusCanPurchase;
+                    string price = NormalizePriceForDisplay(GetPriceValue(appElement));
+                    string status = ResolveSearchStatus(bundleId, price, purchasedDict);
 
                     _allResults.Add(new SearchResult
                     {
@@ -177,7 +177,7 @@ namespace IPAbuyer.Views
                         name = GetPropertyValue(appElement, "trackName"),
                         developer = GetPropertyValue(appElement, "sellerName"),
                         artworkUrl = GetPropertyValue(appElement, "artworkUrl100"),
-                        price = NormalizePriceForDisplay(GetPriceValue(appElement)),
+                        price = price,
                         version = GetPropertyValue(appElement, "version"),
                         purchased = status
                     });
@@ -495,19 +495,21 @@ namespace IPAbuyer.Views
                     continue;
                 }
 
-                app.purchased = status;
-                if (string.IsNullOrWhiteSpace(account))
-                {
-                    continue;
-                }
-
                 if (status == StatusCanPurchase)
                 {
-                    PurchasedAppDb.RemovePurchasedApp(app.bundleId, account);
+                    app.purchased = ResolveUnpurchasedStatusForPrice(app.price);
+                    if (!string.IsNullOrWhiteSpace(account))
+                    {
+                        PurchasedAppDb.RemovePurchasedApp(app.bundleId, account);
+                    }
                 }
                 else
                 {
-                    PurchasedAppDb.SavePurchasedApp(app.bundleId, account, status);
+                    app.purchased = status;
+                    if (!string.IsNullOrWhiteSpace(account))
+                    {
+                        PurchasedAppDb.SavePurchasedApp(app.bundleId, account, status);
+                    }
                 }
             }
 
@@ -820,6 +822,25 @@ namespace IPAbuyer.Views
             return StatusCanPurchase;
         }
 
+        private static string ResolveSearchStatus(string bundleId, string price, IReadOnlyDictionary<string, string> purchasedDict)
+        {
+            if (!string.IsNullOrWhiteSpace(bundleId) && purchasedDict.TryGetValue(bundleId, out string? purchasedStatus))
+            {
+                return NormalizePurchasedStatus(purchasedStatus);
+            }
+
+            return string.IsNullOrWhiteSpace(price) || IsPriceFree(price)
+                ? StatusCanPurchase
+                : StatusPurchaseBlocked;
+        }
+
+        private static string ResolveUnpurchasedStatusForPrice(string? price)
+        {
+            return string.IsNullOrWhiteSpace(price) || IsPriceFree(price)
+                ? StatusCanPurchase
+                : StatusPurchaseBlocked;
+        }
+
         private static bool IsPurchasedStatus(string? status)
         {
             if (string.IsNullOrWhiteSpace(status))
@@ -847,7 +868,14 @@ namespace IPAbuyer.Views
                 return true;
             }
 
-            return CanPurchaseAliases.Any(alias => string.Equals(status, alias, StringComparison.OrdinalIgnoreCase));
+            return IsPurchaseBlockedStatus(status)
+                || CanPurchaseAliases.Any(alias => string.Equals(status, alias, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static bool IsPurchaseBlockedStatus(string? status)
+        {
+            return !string.IsNullOrWhiteSpace(status)
+                && status.Trim().Equals(StatusPurchaseBlocked, StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool IsPurchaseSuccess(string response)
@@ -1226,6 +1254,7 @@ namespace IPAbuyer.Views
         private static readonly ResourceLoader Loader = new();
         private static readonly string PurchasedText = Loader.GetString("Common/Status/Purchased");
         private static readonly string OwnedText = Loader.GetString("Common/Status/Owned");
+        private static readonly string PurchaseBlockedText = Loader.GetString("Common/Status/PurchaseBlocked");
 
         public object? Convert(object value, Type targetType, object parameter, string language)
         {
@@ -1239,6 +1268,11 @@ namespace IPAbuyer.Views
                 || status.Trim().Equals(OwnedText, StringComparison.OrdinalIgnoreCase))
             {
                 return new SolidColorBrush(Windows.UI.Color.FromArgb(0xFF, 0x2E, 0xA0, 0x43));
+            }
+
+            if (status.Trim().Equals(PurchaseBlockedText, StringComparison.OrdinalIgnoreCase))
+            {
+                return new SolidColorBrush(Windows.UI.Color.FromArgb(0xFF, 0xC4, 0x2B, 0x1C));
             }
 
             return null;
