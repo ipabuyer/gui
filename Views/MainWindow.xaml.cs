@@ -3,19 +3,25 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using IPAbuyer;
 using System;
+using Microsoft.UI;
+using Microsoft.UI.Windowing;
 
 namespace IPAbuyer.Views
 {
     public sealed partial class MainWindow : Window
     {
         private MainPage? _currentMainPage;
+        private AppWindow? _appWindow;
 
         public MainWindow()
         {
             InitializeComponent();
+            _appWindow = GetAppWindow(this);
             ConfigureSystemBackdrop();
 
             ExtendsContentIntoTitleBar = true;
+            ApplyCaptionButtonColors();
+            AppTitleBar.ActualThemeChanged += (_, _) => ApplyCaptionButtonColors();
 
             Title = TitleBarTextBlock.Text;
             SetWindowIcon(this);
@@ -81,9 +87,7 @@ namespace IPAbuyer.Views
         {
             try
             {
-                IntPtr hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
-                var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hwnd);
-                var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
+                var appWindow = GetAppWindow(window);
 
                 string iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "Icon.ico");
                 if (System.IO.File.Exists(iconPath))
@@ -95,6 +99,39 @@ namespace IPAbuyer.Views
             {
                 // ignore icon load failures
             }
+        }
+
+        private static AppWindow? GetAppWindow(Window window)
+        {
+            IntPtr hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+            var windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
+            return AppWindow.GetFromWindowId(windowId);
+        }
+
+        private void ApplyCaptionButtonColors()
+        {
+            if (_appWindow?.TitleBar == null)
+            {
+                return;
+            }
+
+            bool isDark = AppTitleBar.ActualTheme == ElementTheme.Dark;
+            var foreground = isDark ? Colors.White : Colors.Black;
+            var hoverBackground = isDark
+                ? Windows.UI.Color.FromArgb(0x33, 0xFF, 0xFF, 0xFF)
+                : Windows.UI.Color.FromArgb(0x1A, 0x00, 0x00, 0x00);
+            var pressedBackground = isDark
+                ? Windows.UI.Color.FromArgb(0x4D, 0xFF, 0xFF, 0xFF)
+                : Windows.UI.Color.FromArgb(0x26, 0x00, 0x00, 0x00);
+
+            _appWindow.TitleBar.ButtonForegroundColor = foreground;
+            _appWindow.TitleBar.ButtonInactiveForegroundColor = foreground;
+            _appWindow.TitleBar.ButtonHoverForegroundColor = foreground;
+            _appWindow.TitleBar.ButtonPressedForegroundColor = foreground;
+            _appWindow.TitleBar.ButtonBackgroundColor = Colors.Transparent;
+            _appWindow.TitleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
+            _appWindow.TitleBar.ButtonHoverBackgroundColor = hoverBackground;
+            _appWindow.TitleBar.ButtonPressedBackgroundColor = pressedBackground;
         }
 
         private void NavView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)

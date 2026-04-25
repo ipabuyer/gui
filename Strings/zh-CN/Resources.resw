@@ -567,6 +567,9 @@
   <data name="Common/Status/CanPurchase" xml:space="preserve">
     <value>可购买</value>
   </data>
+  <data name="Common/Status/PurchaseBlocked" xml:space="preserve">
+    <value>无法购买</value>
+  </data>
   <data name="Common/Price/Free" xml:space="preserve">
     <value>免费</value>
   </data>

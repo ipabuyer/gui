@@ -7,7 +7,16 @@
     xmlns:local="using:IPAbuyer"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
-    <Grid Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+    <Grid Background="Transparent">
+        <Grid.Resources>
+            <SolidColorBrush x:Key="NavigationViewDefaultPaneBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="NavigationViewMinimalPaneBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="NavigationViewTopPaneBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="NavigationViewContentBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="TitleBarBackground" Color="Transparent" />
+            <SolidColorBrush x:Key="TitleBarInactiveBackground" Color="Transparent" />
+        </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -68,7 +77,7 @@
                 <NavigationViewItem x:Uid="MainWindow/Nav/Account" Icon="Contact" Tag="LoginPage" />
                 <NavigationViewItem x:Uid="MainWindow/Nav/Settings" Icon="Setting" Tag="SettingsPage" />
             </NavigationView.MenuItems>
-            <Grid>
+            <Grid Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
                 <Frame x:Name="ContentFrame" />
             </Grid>
         </NavigationView>

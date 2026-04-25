@@ -2,7 +2,8 @@
 <Page x:Class="IPAbuyer.Views.MainPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:models="using:IPAbuyer.Models" xmlns:local="using:IPAbuyer.Views" xmlns:tv="using:WinUI.TableView" mc:Ignorable="d">
     <Page.Resources>
         <CornerRadius x:Key="MainUnifiedCornerRadius">8</CornerRadius>
-        <local:MainPagePriceForegroundConverter x:Key="MainPagePriceForegroundConverter" />
+        <local:MainPageFreePriceVisibilityConverter x:Key="MainPageFreePriceVisibilityConverter" />
+        <local:MainPageNonFreePriceVisibilityConverter x:Key="MainPageNonFreePriceVisibilityConverter" />
         <local:MainPagePurchasedForegroundConverter x:Key="MainPagePurchasedForegroundConverter" />
         <Style x:Key="MainTableHeaderStyle" TargetType="tv:TableViewColumnHeader">
             <Setter Property="HorizontalContentAlignment" Value="Center" />
@@ -116,7 +117,10 @@
                             <tv:TableViewTemplateColumn x:Name="PriceColumn" Width="*" HeaderStyle="{StaticResource MainTableHeaderStyle}" SortMemberPath="price" CanFilter="False" CanSort="True">
                                 <tv:TableViewTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <TextBlock HorizontalAlignment="Left" Text="{Binding price}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding price}" Foreground="{Binding price, Converter={StaticResource MainPagePriceForegroundConverter}}" />
+                                        <Grid HorizontalAlignment="Left">
+                                            <TextBlock Text="{Binding price}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding price}" Visibility="{Binding price, Converter={StaticResource MainPageFreePriceVisibilityConverter}}" />
+                                            <TextBlock Text="{Binding price}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding price}" Foreground="{ThemeResource SystemFillColorCriticalBrush}" Visibility="{Binding price, Converter={StaticResource MainPageNonFreePriceVisibilityConverter}}" />
+                                        </Grid>
                                     </DataTemplate>
                                 </tv:TableViewTemplateColumn.CellTemplate>
                             </tv:TableViewTemplateColumn>
