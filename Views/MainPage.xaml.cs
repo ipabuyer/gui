@@ -9,10 +9,9 @@ using System.Threading.Tasks;
 using IPAbuyer.Common;
 using IPAbuyer.Data;
 using IPAbuyer.Models;
-using Microsoft.UI;
-using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Windows.ApplicationModel.Resources;
@@ -29,8 +28,6 @@ namespace IPAbuyer.Views
         private CancellationTokenSource _pageCts = new();
         private bool _isHomeLogDialogOpen;
         private string _selectedFilter = "All";
-        private string? _sortKey;
-        private SortDirection _sortDirection = SortDirection.None;
         private static readonly string StatusPurchased = L("Common/Status/Purchased");
         private static readonly string StatusOwned = L("Common/Status/Owned");
         private static readonly string StatusCanPurchase = L("Common/Status/NotPurchased");
@@ -51,7 +48,23 @@ namespace IPAbuyer.Views
         public MainPage()
         {
             InitializeComponent();
+            InitializeResultColumns();
             NavigationCacheMode = Microsoft.UI.Xaml.Navigation.NavigationCacheMode.Enabled;
+        }
+
+        private void InitializeResultColumns()
+        {
+            if (NameColumn == null)
+            {
+                return;
+            }
+
+            NameColumn.Header = NameHeaderBase;
+            IdColumn.Header = IdHeaderBase;
+            DeveloperColumn.Header = DeveloperHeaderBase;
+            VersionColumn.Header = VersionHeaderBase;
+            PriceColumn.Header = PriceHeaderBase;
+            PurchasedColumn.Header = PurchasedHeaderBase;
         }
 
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
@@ -584,7 +597,7 @@ namespace IPAbuyer.Views
                 _ => _allResults.ToList(),
             };
 
-            return ApplySorting(filtered);
+            return filtered;
         }
 
         private async Task<bool> PurchaseAppsAsync(List<SearchResult> selectedApps)
@@ -879,114 +892,6 @@ namespace IPAbuyer.Views
             return KeychainConfig.IsValidCountryCode(normalized) ? normalized : "cn";
         }
 
-        private void SortHeader_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is not Button header)
-            {
-                return;
-            }
-
-            string key = header.Tag?.ToString() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(key))
-            {
-                return;
-            }
-
-            if (!string.Equals(_sortKey, key, StringComparison.Ordinal))
-            {
-                _sortKey = key;
-                _sortDirection = SortDirection.Ascending;
-            }
-            else
-            {
-                _sortDirection = _sortDirection switch
-                {
-                    SortDirection.None => SortDirection.Ascending,
-                    SortDirection.Ascending => SortDirection.Descending,
-                    SortDirection.Descending => SortDirection.None,
-                    _ => SortDirection.None
-                };
-
-                if (_sortDirection == SortDirection.None)
-                {
-                    _sortKey = null;
-                }
-            }
-
-            UpdateSortHeaderTexts();
-            ApplyFilterAndRefresh(preserveScrollPosition: true);
-        }
-
-        private List<SearchResult> ApplySorting(List<SearchResult> input)
-        {
-            if (string.IsNullOrWhiteSpace(_sortKey) || _sortDirection == SortDirection.None)
-            {
-                return input;
-            }
-
-            Func<SearchResult, object?> keySelector = _sortKey switch
-            {
-                "name" => item => item.name ?? string.Empty,
-                "id" => item => item.id ?? string.Empty,
-                "developer" => item => item.developer ?? string.Empty,
-                "version" => item => item.version ?? string.Empty,
-                "price" => item => GetPriceSortValue(item.price),
-                "purchased" => item => item.purchased ?? string.Empty,
-                _ => item => item.name ?? string.Empty
-            };
-
-            IOrderedEnumerable<SearchResult> ordered = _sortDirection == SortDirection.Ascending
-                ? input.OrderBy(keySelector)
-                : input.OrderByDescending(keySelector);
-
-            return ordered.ToList();
-        }
-
-        private static decimal GetPriceSortValue(string? price)
-        {
-            if (string.IsNullOrWhiteSpace(price))
-            {
-                return decimal.MaxValue;
-            }
-
-            if (price.Trim().Equals(L("Common/Price/Free"), StringComparison.OrdinalIgnoreCase)
-                || price.Trim().Equals("free", StringComparison.OrdinalIgnoreCase))
-            {
-                return 0m;
-            }
-
-            return decimal.TryParse(price, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal value)
-                ? value
-                : decimal.MaxValue - 1;
-        }
-
-        private void UpdateSortHeaderTexts()
-        {
-            SetHeaderText(NameHeaderText, NameHeaderBase, "name");
-            SetHeaderText(IdHeaderText, IdHeaderBase, "id");
-            SetHeaderText(DeveloperHeaderText, DeveloperHeaderBase, "developer");
-            SetHeaderText(VersionHeaderText, VersionHeaderBase, "version");
-            SetHeaderText(PriceHeaderText, PriceHeaderBase, "price");
-            SetHeaderText(PurchasedHeaderText, PurchasedHeaderBase, "purchased");
-        }
-
-        private void SetHeaderText(Button? button, string baseText, string key)
-        {
-            if (button == null)
-            {
-                return;
-            }
-
-            if (!string.Equals(_sortKey, key, StringComparison.Ordinal) || _sortDirection == SortDirection.None)
-            {
-                button.Content = baseText;
-                return;
-            }
-
-            string suffix = _sortDirection == SortDirection.Ascending ? " ↑" : " ↓";
-            button.Content = baseText + suffix;
-        }
-
         private void CopyHomeLog_Click(object sender, RoutedEventArgs e)
         {
             CopyHomeLog();
@@ -1116,70 +1021,6 @@ namespace IPAbuyer.Views
             TableLoadingRing.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        private void ResultList_ContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
-        {
-            if (args.ItemContainer?.ContentTemplateRoot is not Grid rowGrid)
-            {
-                return;
-            }
-
-            bool isOddRow = args.ItemIndex % 2 == 1;
-            if (!isOddRow)
-            {
-                rowGrid.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(0x00, 0x00, 0x00, 0x00));
-                ApplyPurchasedStatusColor(rowGrid, args.Item as SearchResult);
-                ApplyPriceColor(rowGrid, args.Item as SearchResult);
-                return;
-            }
-
-            // Use neutral gray striping and keep it independent from pointer visual states.
-            var stripeColor = ActualTheme == ElementTheme.Dark
-                ? Windows.UI.Color.FromArgb(0x1A, 0x80, 0x80, 0x80)
-                : Windows.UI.Color.FromArgb(0x14, 0x70, 0x70, 0x70);
-
-            rowGrid.Background = new SolidColorBrush(stripeColor);
-            ApplyPurchasedStatusColor(rowGrid, args.Item as SearchResult);
-            ApplyPriceColor(rowGrid, args.Item as SearchResult);
-        }
-
-        private void ApplyPurchasedStatusColor(Grid rowGrid, SearchResult? item)
-        {
-            if (rowGrid.FindName("PurchasedTextBlock") is not TextBlock statusTextBlock)
-            {
-                return;
-            }
-
-            if (item != null && (IsPurchasedStatus(item.purchased) || IsOwnedStatus(item.purchased)))
-            {
-                var greenColor = ActualTheme == ElementTheme.Dark
-                    ? Windows.UI.Color.FromArgb(0xFF, 0x8D, 0xE6, 0x9A)
-                    : Windows.UI.Color.FromArgb(0xFF, 0x2E, 0xA0, 0x43);
-                statusTextBlock.Foreground = new SolidColorBrush(greenColor);
-                return;
-            }
-
-            statusTextBlock.ClearValue(TextBlock.ForegroundProperty);
-        }
-
-        private void ApplyPriceColor(Grid rowGrid, SearchResult? item)
-        {
-            if (rowGrid.FindName("PriceTextBlock") is not TextBlock priceTextBlock)
-            {
-                return;
-            }
-
-            if (item != null && !IsPriceFree(item.price))
-            {
-                var redColor = ActualTheme == ElementTheme.Dark
-                    ? Windows.UI.Color.FromArgb(0xFF, 0xFF, 0x99, 0x99)
-                    : Windows.UI.Color.FromArgb(0xFF, 0xC4, 0x2B, 0x1C);
-                priceTextBlock.Foreground = new SolidColorBrush(redColor);
-                return;
-            }
-
-            priceTextBlock.ClearValue(TextBlock.ForegroundProperty);
-        }
-
         private void EnsureHomeLogScrollToBottom()
         {
             // Popup log mode does not need in-page auto scrolling.
@@ -1286,11 +1127,58 @@ namespace IPAbuyer.Views
             });
         }
 
-        private enum SortDirection
+    }
+
+    public sealed class MainPagePriceForegroundConverter : IValueConverter
+    {
+        private static readonly ResourceLoader Loader = new();
+        private static readonly string FreeText = Loader.GetString("Common/Price/Free");
+
+        public object? Convert(object value, Type targetType, object parameter, string language)
         {
-            None = 0,
-            Ascending = 1,
-            Descending = 2
+            string? price = value as string;
+            if (string.IsNullOrWhiteSpace(price)
+                || price.Trim().Equals(FreeText, StringComparison.OrdinalIgnoreCase)
+                || price.Trim().Equals("free", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            return new SolidColorBrush(Windows.UI.Color.FromArgb(0xFF, 0xC4, 0x2B, 0x1C));
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            throw new NotSupportedException();
+        }
+    }
+
+    public sealed class MainPagePurchasedForegroundConverter : IValueConverter
+    {
+        private static readonly ResourceLoader Loader = new();
+        private static readonly string PurchasedText = Loader.GetString("Common/Status/Purchased");
+        private static readonly string OwnedText = Loader.GetString("Common/Status/Owned");
+
+        public object? Convert(object value, Type targetType, object parameter, string language)
+        {
+            string? status = value as string;
+            if (string.IsNullOrWhiteSpace(status))
+            {
+                return null;
+            }
+
+            if (status.Trim().Equals(PurchasedText, StringComparison.OrdinalIgnoreCase)
+                || status.Trim().Equals(OwnedText, StringComparison.OrdinalIgnoreCase))
+            {
+                return new SolidColorBrush(Windows.UI.Color.FromArgb(0xFF, 0x2E, 0xA0, 0x43));
+            }
+
+            return null;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            throw new NotSupportedException();
         }
     }
 }
