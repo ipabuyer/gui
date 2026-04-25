@@ -16,6 +16,12 @@ namespace IPAbuyer.Common
 {
     public static class IpatoolExecution
     {
+        private enum IpatoolFlavor
+        {
+            Main,
+            AuthLegacy
+        }
+
         private static readonly ResourceLoader Loader = new();
         private const int MaxPreviewLength = 200;
         private static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(2);
@@ -66,7 +72,7 @@ namespace IPAbuyer.Common
                 arguments.Add(authCode);
             }
 
-            return ExecuteIpatoolAsync(arguments, account, passphrase, cancellationToken);
+            return ExecuteIpatoolAsync(arguments, account, passphrase, cancellationToken, flavor: IpatoolFlavor.AuthLegacy);
         }
 
         public static Task<IpatoolResult> AuthLogoutAsync(CancellationToken cancellationToken = default)
@@ -315,7 +321,7 @@ namespace IPAbuyer.Common
 
             Directory.CreateDirectory(outputDirectory);
 
-            string ipatoolPath = ResolveIpatoolPath();
+            string ipatoolPath = ResolveIpatoolPath(IpatoolFlavor.Main);
             string workingDirectory = Path.GetDirectoryName(ipatoolPath) ?? AppContext.BaseDirectory;
             string effectivePassphrase = EnsurePassphrase(account, null);
             var finalArguments = new List<string>
@@ -420,13 +426,14 @@ namespace IPAbuyer.Common
             string account,
             string? passphrase,
             CancellationToken cancellationToken,
-            bool suppressLogEvents = false)
+            bool suppressLogEvents = false,
+            IpatoolFlavor flavor = IpatoolFlavor.Main)
         {
             bool isLogout = arguments.Count >= 2
                 && string.Equals(arguments[0], "auth", StringComparison.OrdinalIgnoreCase)
                 && string.Equals(arguments[1], "revoke", StringComparison.OrdinalIgnoreCase);
 
-            string ipatoolPath = ResolveIpatoolPath();
+            string ipatoolPath = ResolveIpatoolPath(flavor);
             string workingDirectory = Path.GetDirectoryName(ipatoolPath) ?? AppContext.BaseDirectory;
 
             string effectivePassphrase = EnsurePassphrase(account, passphrase);
@@ -518,10 +525,11 @@ namespace IPAbuyer.Common
             }
         }
 
-        private static string ResolveIpatoolPath()
+        private static string ResolveIpatoolPath(IpatoolFlavor flavor)
         {
             string baseDirectory = AppContext.BaseDirectory;
-            string defaultPath = Path.Combine(baseDirectory, "ipatool.exe");
+            string defaultExecutableName = flavor == IpatoolFlavor.AuthLegacy ? "ipatool-legacy.exe" : "ipatool.exe";
+            string defaultPath = Path.Combine(baseDirectory, defaultExecutableName);
             if (File.Exists(defaultPath))
             {
                 return defaultPath;
@@ -539,7 +547,9 @@ namespace IPAbuyer.Common
 
                 if (!string.IsNullOrEmpty(architectureSuffix))
                 {
-                    string pattern = $"ipatool-main-windows-{architectureSuffix}.exe";
+                    string pattern = flavor == IpatoolFlavor.AuthLegacy
+                        ? $"ipatool-2.3.0-windows-{architectureSuffix}.exe"
+                        : $"ipatool-main-windows-{architectureSuffix}.exe";
                     string? candidate = Directory.GetFiles(includeDirectory, pattern, SearchOption.TopDirectoryOnly)
                         .OrderByDescending(path => path, StringComparer.OrdinalIgnoreCase)
                         .FirstOrDefault();

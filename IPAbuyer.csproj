@@ -63,6 +63,18 @@
             <TargetPath>ipatool.exe</TargetPath>
             <IncludeInPackage>true</IncludeInPackage>
         </Content>
+
+        <Content Include="Include\ipatool-2.3.0-windows-amd64.exe" Condition="'$(Platform)' == 'x64' Or '$(RuntimeIdentifier)' == 'win-x64' Or '$(RuntimeIdentifier)' == 'win10-x64'">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <TargetPath>ipatool-legacy.exe</TargetPath>
+            <IncludeInPackage>true</IncludeInPackage>
+        </Content>
+
+        <Content Include="Include\ipatool-2.3.0-windows-arm64.exe" Condition="'$(Platform)' == 'ARM64' Or '$(RuntimeIdentifier)' == 'win-arm64' Or '$(RuntimeIdentifier)' == 'win10-arm64'">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <TargetPath>ipatool-legacy.exe</TargetPath>
+            <IncludeInPackage>true</IncludeInPackage>
+        </Content>
     </ItemGroup>
 
     <!-- 
