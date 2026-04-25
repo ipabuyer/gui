@@ -223,6 +223,7 @@ namespace IPAbuyer.Views
                 bool executed = await PurchaseAppsAsync(selectedApps);
                 if (executed)
                 {
+                    ClearResultSelection();
                     AppendHomeLog(L("MainPage/Log/BatchPurchaseCompleted"));
                 }
             }
@@ -606,6 +607,14 @@ namespace IPAbuyer.Views
             }
 
             UpdateVisibleResults(results);
+        }
+
+        private void ClearResultSelection()
+        {
+            if (ResultList?.SelectedItems.Count > 0)
+            {
+                ResultList.SelectedItems.Clear();
+            }
         }
 
         private void UpdateVisibleResults(IReadOnlyList<SearchResult>? results)
