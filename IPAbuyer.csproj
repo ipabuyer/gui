@@ -49,9 +49,6 @@
         <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
         <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.0.1" />
         <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1839" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-        <PackageReference Include="System.Text.Json" Version="10.0.7" />
-
         <Manifest Include="$(ApplicationManifest)" />
 
         <Content Include="Include\ipatool-main-windows-amd64.exe" Condition="'$(Platform)' == 'x64' Or '$(RuntimeIdentifier)' == 'win-x64' Or '$(RuntimeIdentifier)' == 'win10-x64'">

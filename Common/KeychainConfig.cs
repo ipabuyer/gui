@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.Json;
 using Microsoft.Windows.ApplicationModel.Resources;
-using Newtonsoft.Json.Linq;
 using Windows.Security.Credentials;
 using Windows.Storage;
 
@@ -433,7 +433,8 @@ namespace IPAbuyer.Common
                 var model = CreateDefaultSettings();
                 if (!string.IsNullOrWhiteSpace(json))
                 {
-                    JObject root = JObject.Parse(json);
+                    using JsonDocument document = JsonDocument.Parse(json);
+                    JsonElement root = document.RootElement;
                     if (TryReadStringProperty(root, out string? countryValue, "country", "CountryCode"))
                     {
                         model.CountryCode = countryValue ?? DefaultCountryCode;
@@ -476,15 +477,24 @@ namespace IPAbuyer.Common
         {
             NormalizeSettings(settings);
             string path = GetSettingsFilePath();
-            var root = new JObject
+            var jsonOptions = new JsonWriterOptions
             {
-                ["country"] = settings.CountryCode,
-                ["download_dir"] = settings.DownloadDirectory,
-                ["verbose"] = settings.DetailedIpatoolLogEnabled,
-                ["owned_check"] = settings.OwnedCheckEnabled,
-                ["keychain_passphrase_rotation"] = settings.KeychainPassphraseRotationEnabled
+                Indented = true
             };
-            string json = root.ToString(Newtonsoft.Json.Formatting.Indented);
+
+            using var stream = new MemoryStream();
+            using (var writer = new Utf8JsonWriter(stream, jsonOptions))
+            {
+                writer.WriteStartObject();
+                writer.WriteString("country", settings.CountryCode);
+                writer.WriteString("download_dir", settings.DownloadDirectory);
+                writer.WriteBoolean("verbose", settings.DetailedIpatoolLogEnabled);
+                writer.WriteBoolean("owned_check", settings.OwnedCheckEnabled);
+                writer.WriteBoolean("keychain_passphrase_rotation", settings.KeychainPassphraseRotationEnabled);
+                writer.WriteEndObject();
+            }
+
+            string json = Encoding.UTF8.GetString(stream.ToArray());
             File.WriteAllText(path, json, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
         }
 
@@ -515,16 +525,17 @@ namespace IPAbuyer.Common
             };
         }
 
-        private static bool TryReadStringProperty(JObject root, out string? value, params string[] names)
+        private static bool TryReadStringProperty(JsonElement root, out string? value, params string[] names)
         {
             foreach (string name in names)
             {
-                if (root.TryGetValue(name, StringComparison.OrdinalIgnoreCase, out JToken? token)
-                    && token.Type != JTokenType.Null)
+                if (JsonPayload.TryGetProperty(root, name, out JsonElement token)
+                    && token.ValueKind != JsonValueKind.Null
+                    && token.ValueKind != JsonValueKind.Undefined)
                 {
-                    value = token.Type == JTokenType.String
-                        ? token.Value<string>()
-                        : token.ToString(Newtonsoft.Json.Formatting.None);
+                    value = token.ValueKind == JsonValueKind.String
+                        ? token.GetString()
+                        : token.GetRawText();
                     return true;
                 }
             }
@@ -533,23 +544,27 @@ namespace IPAbuyer.Common
             return false;
         }
 
-        private static bool TryReadBooleanProperty(JObject root, out bool value, params string[] names)
+        private static bool TryReadBooleanProperty(JsonElement root, out bool value, params string[] names)
         {
             foreach (string name in names)
             {
-                if (!root.TryGetValue(name, StringComparison.OrdinalIgnoreCase, out JToken? token)
-                    || token.Type == JTokenType.Null)
+                if (!JsonPayload.TryGetProperty(root, name, out JsonElement token)
+                    || token.ValueKind == JsonValueKind.Null
+                    || token.ValueKind == JsonValueKind.Undefined)
                 {
                     continue;
                 }
 
-                if (token.Type == JTokenType.Boolean)
+                if (token.ValueKind == JsonValueKind.True || token.ValueKind == JsonValueKind.False)
                 {
-                    value = token.Value<bool>();
+                    value = token.GetBoolean();
                     return true;
                 }
 
-                if (bool.TryParse(token.ToString(), out bool parsed))
+                string? text = token.ValueKind == JsonValueKind.String
+                    ? token.GetString()
+                    : token.GetRawText();
+                if (bool.TryParse(text, out bool parsed))
                 {
                     value = parsed;
                     return true;

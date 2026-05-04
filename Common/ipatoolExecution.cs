@@ -586,12 +586,12 @@ namespace IPAbuyer.Common
                 string trimmed = text.Trim();
                 if (JsonPayload.TryParseToken(trimmed, out var token))
                 {
-                    if (JsonPayload.TryReadString(token!, out string? error, "error") && !string.IsNullOrWhiteSpace(error))
+                    if (JsonPayload.TryReadString(token, out string? error, "error") && !string.IsNullOrWhiteSpace(error))
                     {
                         return LF("Ipatool/Error/ReadableJsonError", error, exitCode);
                     }
 
-                    if (JsonPayload.TryReadString(token!, out string? message, "message") && !string.IsNullOrWhiteSpace(message))
+                    if (JsonPayload.TryReadString(token, out string? message, "message") && !string.IsNullOrWhiteSpace(message))
                     {
                         return LF("Ipatool/Error/ReadableJsonError", message, exitCode);
                     }

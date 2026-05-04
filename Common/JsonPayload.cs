@@ -1,14 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
 
 namespace IPAbuyer.Common
 {
     internal static class JsonPayload
     {
-        public static IEnumerable<JToken> EnumerateTokens(string? payload)
+        public static IEnumerable<JsonElement> EnumerateTokens(string? payload)
         {
             if (string.IsNullOrWhiteSpace(payload))
             {
@@ -16,7 +15,7 @@ namespace IPAbuyer.Common
             }
 
             string trimmedPayload = payload.Trim();
-            if (LooksLikeJson(trimmedPayload) && TryParseToken(trimmedPayload, out JToken? fullToken) && fullToken != null)
+            if (LooksLikeJson(trimmedPayload) && TryParseToken(trimmedPayload, out JsonElement fullToken))
             {
                 yield return fullToken;
                 yield break;
@@ -27,14 +26,14 @@ namespace IPAbuyer.Common
             foreach (string line in lines)
             {
                 string trimmed = line.Trim();
-                if (TryParseToken(trimmed, out JToken? token) && token != null)
+                if (TryParseToken(trimmed, out JsonElement token))
                 {
                     yield return token;
                     continue;
                 }
 
                 string? jsonCandidate = FindEmbeddedJsonCandidate(trimmed);
-                if (jsonCandidate != null && TryParseToken(jsonCandidate, out JToken? embeddedToken) && embeddedToken != null)
+                if (jsonCandidate != null && TryParseToken(jsonCandidate, out JsonElement embeddedToken))
                 {
                     yield return embeddedToken;
                 }
@@ -43,16 +42,16 @@ namespace IPAbuyer.Common
             if (lines.Length == 0)
             {
                 string trimmed = trimmedPayload;
-                if (LooksLikeJson(trimmed) && TryParseToken(trimmed, out JToken? token) && token != null)
+                if (LooksLikeJson(trimmed) && TryParseToken(trimmed, out JsonElement token))
                 {
                     yield return token;
                 }
             }
         }
 
-        public static bool TryParseToken(string? json, out JToken? token)
+        public static bool TryParseToken(string? json, out JsonElement token)
         {
-            token = null;
+            token = default;
             if (string.IsNullOrWhiteSpace(json))
             {
                 return false;
@@ -60,7 +59,8 @@ namespace IPAbuyer.Common
 
             try
             {
-                token = JToken.Parse(json);
+                using JsonDocument document = JsonDocument.Parse(json);
+                token = document.RootElement.Clone();
                 return true;
             }
             catch (JsonException)
@@ -69,29 +69,28 @@ namespace IPAbuyer.Common
             }
         }
 
-        public static bool TryReadBoolean(JToken token, string name, out bool value)
+        public static bool TryReadBoolean(JsonElement token, string name, out bool value)
         {
             value = false;
-            if (token is not JObject obj)
+            if (token.ValueKind != JsonValueKind.Object || !TryGetProperty(token, name, out JsonElement child))
             {
                 return false;
             }
 
-            JToken? child = obj[name];
-            if (child == null || child.Type == JTokenType.Null)
+            if (child.ValueKind == JsonValueKind.Null || child.ValueKind == JsonValueKind.Undefined)
             {
                 return false;
             }
 
-            if (child.Type == JTokenType.Boolean)
+            if (child.ValueKind == JsonValueKind.True || child.ValueKind == JsonValueKind.False)
             {
-                value = child.Value<bool>();
+                value = child.GetBoolean();
                 return true;
             }
 
-            string? text = child.Type == JTokenType.String
-                ? child.Value<string>()
-                : child.ToString();
+            string? text = child.ValueKind == JsonValueKind.String
+                ? child.GetString()
+                : child.GetRawText();
             if (bool.TryParse(text, out bool parsed))
             {
                 value = parsed;
@@ -107,9 +106,9 @@ namespace IPAbuyer.Common
             return false;
         }
 
-        public static bool TryReadString(JToken token, out string? value, params string[] names)
+        public static bool TryReadString(JsonElement token, out string? value, params string[] names)
         {
-            if (token is not JObject obj)
+            if (token.ValueKind != JsonValueKind.Object)
             {
                 value = null;
                 return false;
@@ -117,15 +116,16 @@ namespace IPAbuyer.Common
 
             foreach (string name in names)
             {
-                JToken? child = obj[name];
-                if (child == null || child.Type == JTokenType.Null)
+                if (!TryGetProperty(token, name, out JsonElement child)
+                    || child.ValueKind == JsonValueKind.Null
+                    || child.ValueKind == JsonValueKind.Undefined)
                 {
                     continue;
                 }
 
-                value = child.Type == JTokenType.String
-                    ? child.Value<string>()
-                    : child.ToString(Newtonsoft.Json.Formatting.None);
+                value = child.ValueKind == JsonValueKind.String
+                    ? child.GetString()
+                    : child.GetRawText();
                 return true;
             }
 
@@ -133,18 +133,39 @@ namespace IPAbuyer.Common
             return false;
         }
 
-        public static string? ReadScalarAsString(JToken token)
+        public static string? ReadScalarAsString(JsonElement token)
         {
-            return token.Type switch
+            return token.ValueKind switch
             {
-                JTokenType.Null => null,
-                JTokenType.String => token.Value<string>(),
-                JTokenType.Float when token.Value<decimal>() <= 0m => "0.00",
-                JTokenType.Float => token.Value<decimal>().ToString("0.00", CultureInfo.InvariantCulture),
-                JTokenType.Integer => token.ToString(Newtonsoft.Json.Formatting.None),
-                JTokenType.Boolean => token.Value<bool>() ? "true" : "false",
-                _ => token.ToString(Newtonsoft.Json.Formatting.None)
+                JsonValueKind.Null or JsonValueKind.Undefined => null,
+                JsonValueKind.String => token.GetString(),
+                JsonValueKind.Number when token.TryGetDecimal(out decimal value) && value <= 0m => "0.00",
+                JsonValueKind.Number when token.TryGetDecimal(out decimal value) => value.ToString(CultureInfo.InvariantCulture),
+                JsonValueKind.True => "true",
+                JsonValueKind.False => "false",
+                _ => token.GetRawText()
             };
+        }
+
+        public static bool TryGetProperty(JsonElement element, string name, out JsonElement value)
+        {
+            if (element.ValueKind != JsonValueKind.Object)
+            {
+                value = default;
+                return false;
+            }
+
+            foreach (JsonProperty property in element.EnumerateObject())
+            {
+                if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    value = property.Value;
+                    return true;
+                }
+            }
+
+            value = default;
+            return false;
         }
 
         private static bool LooksLikeJson(string value)
