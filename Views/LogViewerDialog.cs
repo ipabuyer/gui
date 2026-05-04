@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using IPAbuyer.Common;
+﻿using IPAbuyer.Common;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;

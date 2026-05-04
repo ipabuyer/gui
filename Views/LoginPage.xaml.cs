@@ -4,13 +4,9 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.Windows.ApplicationModel.Resources;
-using System;
 using System.Diagnostics;
 using System.Globalization;
-using System.Linq;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace IPAbuyer.Views
 {
@@ -717,14 +713,14 @@ namespace IPAbuyer.Views
             _isLoginLogDialogOpen = true;
             try
             {
-            var dialog = new LogViewerDialog(
-                _loginLogEntries,
-                GetLogColor,
-                CopyLoginLog,
-                ClearLoginLog,
-                XamlRoot);
+                var dialog = new LogViewerDialog(
+                    _loginLogEntries,
+                    GetLogColor,
+                    CopyLoginLog,
+                    ClearLoginLog,
+                    XamlRoot);
 
-            await dialog.ShowAsync();
+                await dialog.ShowAsync();
             }
             finally
             {

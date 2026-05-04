@@ -1,19 +1,10 @@
 using IPAbuyer.Common;
 using IPAbuyer.Data;
 using IPAbuyer.Views;
-using Microsoft.UI;
-using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
 using Microsoft.Windows.ApplicationModel.Resources;
-using System;
 using System.Diagnostics;
-using System.IO;
-using System.Threading.Tasks;
 using Windows.Storage;
-using WinRT.Interop;
 
 namespace IPAbuyer
 {

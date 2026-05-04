@@ -1,15 +1,8 @@
-using System;
-using System.Collections.Generic;
+using Microsoft.Windows.ApplicationModel.Resources;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Windows.ApplicationModel.Resources;
 
 namespace IPAbuyer.Common
 {

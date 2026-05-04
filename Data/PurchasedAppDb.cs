@@ -1,13 +1,8 @@
-using Microsoft.Data.Sqlite;
-using System;
-using System.IO;
-using System.Security.Cryptography;
-using System.Threading.Tasks;
-using Windows.ApplicationModel;
-using Windows.Storage;
-using System.Diagnostics;
 using IPAbuyer.Models;
+using Microsoft.Data.Sqlite;
 using Microsoft.Windows.ApplicationModel.Resources;
+using System.Diagnostics;
+using Windows.Storage;
 
 namespace IPAbuyer.Data
 {

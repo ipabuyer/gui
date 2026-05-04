@@ -1,21 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
-using IPAbuyer.Common;
+﻿using IPAbuyer.Common;
 using IPAbuyer.Data;
 using IPAbuyer.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Windows.ApplicationModel.Resources;
+using System.Globalization;
+using System.Text;
+using System.Text.Json;
 
 namespace IPAbuyer.Views
 {
@@ -1066,14 +1060,14 @@ namespace IPAbuyer.Views
             _isHomeLogDialogOpen = true;
             try
             {
-            var dialog = new LogViewerDialog(
-                _homeLogEntries,
-                GetLogColor,
-                CopyHomeLog,
-                ClearHomeLog,
-                XamlRoot);
+                var dialog = new LogViewerDialog(
+                    _homeLogEntries,
+                    GetLogColor,
+                    CopyHomeLog,
+                    ClearHomeLog,
+                    XamlRoot);
 
-            await dialog.ShowAsync();
+                await dialog.ShowAsync();
             }
             finally
             {

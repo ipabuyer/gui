@@ -1,9 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
+using Microsoft.Windows.ApplicationModel.Resources;
 using System.Text;
 using System.Text.Json;
-using Microsoft.Windows.ApplicationModel.Resources;
 using Windows.Security.Credentials;
 using Windows.Storage;
 

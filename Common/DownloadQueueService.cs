@@ -1,14 +1,8 @@
-using System;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 using IPAbuyer.Models;
 using Microsoft.Windows.ApplicationModel.Resources;
+using System.Collections.ObjectModel;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace IPAbuyer.Common
 {

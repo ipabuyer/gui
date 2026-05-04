@@ -1,10 +1,8 @@
+using Microsoft.UI;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using IPAbuyer;
-using System;
-using Microsoft.UI;
-using Microsoft.UI.Windowing;
 
 namespace IPAbuyer.Views
 {

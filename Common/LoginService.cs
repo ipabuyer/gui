@@ -1,8 +1,5 @@
-using System;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Windows.ApplicationModel.Resources;
+using System.Text.Json;
 
 namespace IPAbuyer.Common
 {
