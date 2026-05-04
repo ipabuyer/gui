@@ -309,6 +309,12 @@
   <data name="Settings/Card/OwnedPrompt.Header" xml:space="preserve">
     <value>标记“已拥有”前提示</value>
   </data>
+  <data name="Settings/Card/KeychainPassphraseRotation.Description" xml:space="preserve">
+    <value>关闭后，退出登录时不再自动生成新的加密密钥。</value>
+  </data>
+  <data name="Settings/Card/KeychainPassphraseRotation.Header" xml:space="preserve">
+    <value>加密密钥轮换</value>
+  </data>
   <data name="Settings/Button/ClearIpatoolData.Content" xml:space="preserve">
     <value>清空数据</value>
   </data>

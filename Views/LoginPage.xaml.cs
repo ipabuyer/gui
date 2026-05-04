@@ -207,16 +207,21 @@ namespace IPAbuyer.Views
                 if (result.IsSuccessResponse)
                 {
                     SessionState.Reset();
-                    _passphrase = KeychainConfig.RotateDefaultPassphrase();
-                    if (PassphraseInput != null)
+                    if (KeychainConfig.GetKeychainPassphraseRotationEnabled())
                     {
-                        PassphraseInput.Text = _passphrase;
+                        _passphrase = KeychainConfig.RotateDefaultPassphrase();
+                        if (PassphraseInput != null)
+                        {
+                            PassphraseInput.Text = _passphrase;
+                        }
+
+                        AppendLoginLog(L("LoginPage/Log/PassphraseRotated"));
                     }
+
                     HideInlineTwoFactor();
                     ApplyOperationLock(false);
                     ShowSuccess(L("LoginPage/Status/LogoutSuccess"));
                     AppendLoginLog(LF("LoginPage/Log/LogoutSuccess", account));
-                    AppendLoginLog(L("LoginPage/Log/PassphraseRotated"));
                 }
                 else
                 {

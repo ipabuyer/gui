@@ -47,6 +47,12 @@
                 </controls:SettingsCard.HeaderIcon>
                 <ToggleSwitch x:Name="OwnedCheckBox" Toggled="OwnedCheckBox_Toggled" />
             </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="Settings/Card/KeychainPassphraseRotation" HorizontalAlignment="Stretch">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontSize="20" Glyph="&#xE72E;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ToggleSwitch x:Name="KeychainPassphraseRotationCheckBox" Toggled="KeychainPassphraseRotationCheckBox_Toggled" />
+            </controls:SettingsCard>
             <controls:SettingsCard x:Uid="Settings/Card/DeveloperSite" HorizontalAlignment="Stretch">
                 <controls:SettingsCard.HeaderIcon>
                     <FontIcon FontSize="20" Glyph="&#xE943;" />
