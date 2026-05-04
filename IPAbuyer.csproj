@@ -33,6 +33,7 @@
         <RepositoryUrl>https://github.com/ipabuyer/gui</RepositoryUrl>
         <Copyright>Copyright © 2025-2026 IPAbuyer. 保留所有权利。</Copyright>
         <PackageProjectUrl>https://github.com/ipabuyer/gui</PackageProjectUrl>
+        <GenerateTemporaryStoreCertificate>True</GenerateTemporaryStoreCertificate>
     </PropertyGroup>
 
     <ItemGroup>
