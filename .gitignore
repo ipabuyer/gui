@@ -4,3 +4,4 @@ BundleArtifacts/
 bin/
 obj/
 *.user
+*.pfx
