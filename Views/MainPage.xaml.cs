@@ -11,6 +11,7 @@ using IPAbuyer.Data;
 using IPAbuyer.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
@@ -430,13 +431,32 @@ namespace IPAbuyer.Views
             AppendHomeLog(LF("MainPage/Log/CopyFieldSuccess", fieldName, selectedApps.Count));
         }
 
-        private void ScreeningComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void FilterButton_Click(object sender, RoutedEventArgs e)
         {
-            if (ScreeningComboBox != null && ScreeningComboBox.SelectedItem is ComboBoxItem selected)
+            if (sender is not ToggleButton selected)
             {
-                _selectedFilter = selected.Tag?.ToString() ?? "All";
-                ApplyFilterAndRefresh();
-                AppendHomeLog(LF("MainPage/Log/FilterChanged", _selectedFilter));
+                return;
+            }
+
+            _selectedFilter = selected.Tag?.ToString() ?? "All";
+            UpdateFilterButtonState();
+            ApplyFilterAndRefresh();
+            AppendHomeLog(LF("MainPage/Log/FilterChanged", _selectedFilter));
+        }
+
+        private void UpdateFilterButtonState()
+        {
+            SetFilterButtonState(AllFilterButton, "All");
+            SetFilterButtonState(OnlyNotPurchasedFilterButton, "OnlyNotPurchased");
+            SetFilterButtonState(OnlyPurchasedFilterButton, "OnlyPurchased");
+            SetFilterButtonState(OnlyHadFilterButton, "OnlyHad");
+        }
+
+        private void SetFilterButtonState(ToggleButton? button, string filter)
+        {
+            if (button != null)
+            {
+                button.IsChecked = string.Equals(_selectedFilter, filter, StringComparison.Ordinal);
             }
         }
 

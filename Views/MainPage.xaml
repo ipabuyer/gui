@@ -22,6 +22,12 @@
             <Setter Property="Padding" Value="0" />
             <Setter Property="Margin" Value="0,0,0,8" />
         </Style>
+        <Style x:Key="MainFilterButtonStyle" TargetType="ToggleButton" BasedOn="{StaticResource DefaultToggleButtonStyle}">
+            <Setter Property="MinWidth" Value="96" />
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Padding" Value="20,0" />
+            <Setter Property="CornerRadius" Value="18" />
+        </Style>
     </Page.Resources>
     <Page.Background>Transparent</Page.Background>
     <Page.Content>
@@ -39,15 +45,24 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
-                        <Button x:Uid="MainPage/Action/OpenLogButton" x:Name="OpenLogButton" Click="ShowHomeLogDialog_Click" />
-                        <ComboBox x:Name="ScreeningComboBox" MinWidth="120" SelectedIndex="0" SelectionChanged="ScreeningComboBox_SelectionChanged">
-                            <ComboBoxItem x:Uid="MainPage/Filter/AllItem" x:Name="All" Tag="All" />
-                            <ComboBoxItem x:Uid="MainPage/Filter/OnlyNotPurchasedItem" x:Name="OnlyNotPurchased" Tag="OnlyNotPurchased" />
-                            <ComboBoxItem x:Uid="MainPage/Filter/OnlyPurchasedItem" x:Name="OnlyPurchased" Tag="OnlyPurchased" />
-                            <ComboBoxItem x:Uid="MainPage/Filter/OnlyOwnedItem" x:Name="OnlyHad" Tag="OnlyHad" />
-                        </ComboBox>
+                        <ToggleButton x:Uid="MainPage/Filter/AllItem" x:Name="AllFilterButton" Style="{StaticResource MainFilterButtonStyle}" Tag="All" IsChecked="True" Click="FilterButton_Click" />
+                        <ToggleButton x:Uid="MainPage/Filter/OnlyNotPurchasedItem" x:Name="OnlyNotPurchasedFilterButton" Style="{StaticResource MainFilterButtonStyle}" Tag="OnlyNotPurchased" Click="FilterButton_Click" />
+                        <ToggleButton x:Uid="MainPage/Filter/OnlyPurchasedItem" x:Name="OnlyPurchasedFilterButton" Style="{StaticResource MainFilterButtonStyle}" Tag="OnlyPurchased" Click="FilterButton_Click" />
+                        <ToggleButton x:Uid="MainPage/Filter/OnlyOwnedItem" x:Name="OnlyHadFilterButton" Style="{StaticResource MainFilterButtonStyle}" Tag="OnlyHad" Click="FilterButton_Click" />
                     </StackPanel>
-                    <Button Grid.Column="1" x:Uid="MainPage/Action/CancelAllDownloadsButton" x:Name="CancelAllDownloadsButton" Click="CancelAllDownloadsButton_Click" Visibility="Collapsed" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                        <Button
+                            x:Name="OpenLogButton"
+                            Width="40"
+                            Height="36"
+                            Padding="0"
+                            AutomationProperties.Name="日志"
+                            Click="ShowHomeLogDialog_Click"
+                            ToolTipService.ToolTip="日志">
+                            <FontIcon FontSize="16" Glyph="&#xE9D5;" />
+                        </Button>
+                        <Button x:Uid="MainPage/Action/CancelAllDownloadsButton" x:Name="CancelAllDownloadsButton" Click="CancelAllDownloadsButton_Click" Visibility="Collapsed" />
+                    </StackPanel>
                 </Grid>
 
                 <Grid Grid.Row="1">
@@ -56,6 +71,8 @@
                         Background="Transparent"
                         IsItemClickEnabled="False"
                         ItemContainerStyle="{StaticResource MainResultListViewItemStyle}"
+                        Margin="0,0,-12,0"
+                        Padding="0,0,12,0"
                         SelectionMode="None">
                         <ListView.ItemTemplate>
                             <DataTemplate x:DataType="models:SearchResult">
