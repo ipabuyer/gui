@@ -4,6 +4,9 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Padding="{StaticResource AppPagePadding}" Spacing="12" HorizontalAlignment="Stretch">
             <controls:SettingsCard x:Uid="Settings/Card/CountryCode" HorizontalAlignment="Stretch">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontSize="20" Glyph="&#xE909;" />
+                </controls:SettingsCard.HeaderIcon>
                 <Grid ColumnSpacing="12" VerticalAlignment="Center">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -17,6 +20,9 @@
                 </Grid>
             </controls:SettingsCard>
             <controls:SettingsCard x:Uid="Settings/Card/DownloadDirectory" HorizontalAlignment="Stretch">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontSize="20" Glyph="&#xE8B7;" />
+                </controls:SettingsCard.HeaderIcon>
                 <Grid ColumnSpacing="12" VerticalAlignment="Center">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -30,24 +36,45 @@
                 </Grid>
             </controls:SettingsCard>
             <controls:SettingsCard x:Uid="Settings/Card/DetailedIpatoolLog" HorizontalAlignment="Stretch">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontSize="20" Glyph="&#xE9D5;" />
+                </controls:SettingsCard.HeaderIcon>
                 <ToggleSwitch x:Name="DetailedIpatoolLogCheckBox" Toggled="DetailedIpatoolLogCheckBox_Toggled" />
             </controls:SettingsCard>
             <controls:SettingsCard x:Uid="Settings/Card/OwnedPrompt" HorizontalAlignment="Stretch">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontSize="20" Glyph="&#xE8FB;" />
+                </controls:SettingsCard.HeaderIcon>
                 <ToggleSwitch x:Name="OwnedCheckBox" Toggled="OwnedCheckBox_Toggled" />
             </controls:SettingsCard>
             <controls:SettingsCard x:Uid="Settings/Card/DeveloperSite" HorizontalAlignment="Stretch">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontSize="20" Glyph="&#xE943;" />
+                </controls:SettingsCard.HeaderIcon>
                 <Button x:Uid="Settings/Button/OpenDeveloperSite" Click="GithubButton" HorizontalAlignment="Right" />
             </controls:SettingsCard>
             <controls:SettingsCard x:Uid="Settings/Card/FeedbackEmail" HorizontalAlignment="Stretch">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontSize="20" Glyph="&#xE715;" />
+                </controls:SettingsCard.HeaderIcon>
                 <Button x:Uid="Settings/Button/CopyFeedbackEmail" Click="CopyFeedbackEmailButton_Click" HorizontalAlignment="Right" />
             </controls:SettingsCard>
             <controls:SettingsCard x:Uid="Settings/Card/ClearLocalDatabase" HorizontalAlignment="Stretch">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontSize="20" Glyph="&#xE777;" />
+                </controls:SettingsCard.HeaderIcon>
                 <Button x:Uid="Settings/Button/ClearLocalDatabase" Click="DeleteDataBase" HorizontalAlignment="Right" />
             </controls:SettingsCard>
             <controls:SettingsCard x:Uid="Settings/Card/ClearIpatoolData" HorizontalAlignment="Stretch">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontSize="20" Glyph="&#xE74D;" />
+                </controls:SettingsCard.HeaderIcon>
                 <Button x:Uid="Settings/Button/ClearIpatoolData" Click="ClearIpatoolDataButton_Click" />
             </controls:SettingsCard>
             <controls:SettingsCard x:Uid="Settings/Card/ExportIpatool" HorizontalAlignment="Stretch">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontSize="20" Glyph="&#xEDE1;" />
+                </controls:SettingsCard.HeaderIcon>
                 <Button x:Uid="Settings/Button/ExportIpatool" Click="ExportIpatoolButton_Click" />
             </controls:SettingsCard>
         </StackPanel>
