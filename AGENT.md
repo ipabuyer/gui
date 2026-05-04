@@ -70,11 +70,12 @@
 
 ### 账户加密密钥处理
 
-1. 加密密钥即keychain-passphrase，默认为12345678，显示于输入框
-2. 账户登录时，需要让用户输入加密密钥即keychain-passphrase用于加密ipatool的配置文件
-3. 在账户页面，若用户需要修改加密密钥，提示其退出登录并重新登录，在这个过程中输入新的加密密钥
-4. 注意：只有ipatool auth处于登录状态时，才存在加密密钥
-5. 加密密钥用passphrase.txt储存
+1. 加密密钥即keychain-passphrase，显示于输入框
+2. 账户登录时，需要生成加密密钥即keychain-passphrase用于加密ipatool的配置文件
+3. 加密密钥生成使用uuid
+4. 在账户页面，若用户需要修改加密密钥，提示其退出登录并重新登录，在这个过程中输入新的加密密钥
+5. 注意：只有ipatool auth处于登录状态时，才存在加密密钥
+6. 加密密钥用passphrase.txt储存
 
 ## 日志弹窗
 
@@ -97,13 +98,15 @@
 5. 标记为已拥有前的提示，取消勾选后，标记为已拥有前要弹窗询问用户
    1. 设置名称：owned_check
    2. 需要提示用户：勾选后，标记为已拥有将不再弹窗询问
-6. 开发者官方网站（按钮跳转<https://ipa.blazesnow.com>）
+6. 关闭加密密钥轮换功能
+   1. 设置名称：keychain_passphrase_rotation
+7. 开发者官方网站（按钮跳转<https://ipa.blazesnow.com>）
    1. 需要提示用户：打开开发者官方网站，查看Q&A及更多信息
-7. 反馈邮箱（按钮复制<ipa@blazesnow.com>）
+8. 反馈邮箱（按钮复制<ipa@blazesnow.com>）
    1. 需要提示用户：附带屏幕截图和复现步骤，有助于更快地修复问题
-8. 清空本地数据库按钮与介绍
-9. 清空ipatool数据按钮与介绍，ipatool数据目录：`%USERNAME%/.ipatool/`
-10. 导出ipatool.exe功能，默认输出目录为下载目录
+9. 清空本地数据库按钮与介绍
+10. 清空ipatool数据按钮与介绍，ipatool数据目录：`%USERNAME%/.ipatool/`
+11. 导出ipatool.exe功能，默认输出目录为下载目录
 
 ## 搜索功能
 
