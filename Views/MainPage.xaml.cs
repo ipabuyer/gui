@@ -24,6 +24,8 @@ namespace IPAbuyer.Views
         private static readonly ResourceLoader Loader = new();
         private readonly List<SearchResult> _allResults = new();
         private SearchResult[] _visibleResults = Array.Empty<SearchResult>();
+        private string[] _visibleResultSnapshots = Array.Empty<string>();
+        private bool[] _visibleResultChanged = Array.Empty<bool>();
         private readonly DownloadQueueService _downloadQueueService = DownloadQueueService.Instance;
         private readonly StringBuilder _homeLogBuilder = new();
         private readonly List<UiLogEntry> _homeLogEntries = new();
@@ -481,13 +483,14 @@ namespace IPAbuyer.Views
                 return;
             }
 
-            UpdateVisibleResults(results);
-            ResultList.ItemsSource = null;
-            ResultList.Items.Clear();
-            foreach (SearchResult result in _visibleResults)
+            if (ResultList.ItemsSource != null)
             {
-                ResultList.Items.Add(result);
+                ResultList.ItemsSource = null;
             }
+            double? verticalOffset = GetResultListVerticalOffset();
+            UpdateVisibleResults(results);
+            SyncResultListItems();
+            RestoreResultListVerticalOffset(verticalOffset);
 
             UpdateEmptySearchHintVisibility();
         }
@@ -497,28 +500,131 @@ namespace IPAbuyer.Views
             if (results == null || results.Count == 0)
             {
                 _visibleResults = Array.Empty<SearchResult>();
+                _visibleResultSnapshots = Array.Empty<string>();
+                _visibleResultChanged = Array.Empty<bool>();
                 return;
             }
 
-            if (_visibleResults.Length == results.Count)
+            string[] snapshots = results.Select(CreateSearchResultSnapshot).ToArray();
+            bool[] changed = new bool[results.Count];
+            if (_visibleResults.Length == results.Count && _visibleResultSnapshots.Length == snapshots.Length)
             {
                 bool sameItems = true;
                 for (int i = 0; i < results.Count; i++)
                 {
-                    if (!ReferenceEquals(_visibleResults[i], results[i]))
+                    if (!ReferenceEquals(_visibleResults[i], results[i])
+                        || !string.Equals(_visibleResultSnapshots[i], snapshots[i], StringComparison.Ordinal))
                     {
+                        changed[i] = true;
                         sameItems = false;
-                        break;
                     }
                 }
 
                 if (sameItems)
                 {
+                    _visibleResultChanged = Array.Empty<bool>();
                     return;
                 }
             }
+            else
+            {
+                Array.Fill(changed, true);
+            }
 
             _visibleResults = results.ToArray();
+            _visibleResultSnapshots = snapshots;
+            _visibleResultChanged = changed;
+        }
+
+        private void SyncResultListItems()
+        {
+            if (ResultList == null)
+            {
+                return;
+            }
+
+            for (int i = ResultList.Items.Count - 1; i >= _visibleResults.Length; i--)
+            {
+                ResultList.Items.RemoveAt(i);
+            }
+
+            for (int i = 0; i < _visibleResults.Length; i++)
+            {
+                SearchResult result = _visibleResults[i];
+                if (i >= ResultList.Items.Count)
+                {
+                    ResultList.Items.Add(result);
+                    continue;
+                }
+
+                bool itemChanged = i < _visibleResultChanged.Length && _visibleResultChanged[i];
+                if (ReferenceEquals(ResultList.Items[i], result) && !itemChanged)
+                {
+                    continue;
+                }
+
+                ResultList.Items.RemoveAt(i);
+                ResultList.Items.Insert(i, result);
+            }
+        }
+
+        private static string CreateSearchResultSnapshot(SearchResult result)
+        {
+            return string.Join(
+                "\u001F",
+                result.bundleId,
+                result.id,
+                result.name,
+                result.developer,
+                result.artworkUrl,
+                result.price,
+                result.version,
+                result.purchased);
+        }
+
+        private double? GetResultListVerticalOffset()
+        {
+            ScrollViewer? scrollViewer = FindDescendantScrollViewer(ResultList);
+            return scrollViewer?.VerticalOffset;
+        }
+
+        private void RestoreResultListVerticalOffset(double? verticalOffset)
+        {
+            if (verticalOffset == null || ResultList == null)
+            {
+                return;
+            }
+
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                ScrollViewer? scrollViewer = FindDescendantScrollViewer(ResultList);
+                scrollViewer?.ChangeView(null, verticalOffset.Value, null, disableAnimation: true);
+            });
+        }
+
+        private static ScrollViewer? FindDescendantScrollViewer(DependencyObject? root)
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            if (root is ScrollViewer scrollViewer)
+            {
+                return scrollViewer;
+            }
+
+            int childCount = VisualTreeHelper.GetChildrenCount(root);
+            for (int i = 0; i < childCount; i++)
+            {
+                ScrollViewer? childScrollViewer = FindDescendantScrollViewer(VisualTreeHelper.GetChild(root, i));
+                if (childScrollViewer != null)
+                {
+                    return childScrollViewer;
+                }
+            }
+
+            return null;
         }
 
         private List<SearchResult> GetFilteredResults()
