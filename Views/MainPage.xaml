@@ -83,8 +83,8 @@
                                     Header="{x:Bind name, Mode=OneWay}">
                                     <controls:SettingsCard.HeaderIcon>
                                         <BitmapIcon
-                                            Width="48"
-                                            Height="48"
+                                            Width="64"
+                                            Height="64"
                                             ShowAsMonochrome="False"
                                             UriSource="{Binding artworkUrl, Converter={StaticResource MainPageImageUriConverter}}" />
                                     </controls:SettingsCard.HeaderIcon>
