@@ -75,6 +75,9 @@
                         Margin="0,0,-12,0"
                         Padding="0,0,12,0"
                         SelectionMode="None">
+                        <ListView.ItemContainerTransitions>
+                            <TransitionCollection />
+                        </ListView.ItemContainerTransitions>
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <controls:SettingsCard

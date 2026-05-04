@@ -384,18 +384,18 @@ namespace IPAbuyer.Views
 
                 if (status == StatusCanPurchase)
                 {
-                    app.purchased = ResolveUnpurchasedStatusForPrice(app.price);
+                    SearchResult updatedApp = ReplaceSearchResultStatus(app, ResolveUnpurchasedStatusForPrice(app.price));
                     if (!string.IsNullOrWhiteSpace(account))
                     {
-                        PurchasedAppDb.RemovePurchasedApp(app.bundleId, account);
+                        PurchasedAppDb.RemovePurchasedApp(updatedApp.bundleId, account);
                     }
                 }
                 else
                 {
-                    app.purchased = status;
+                    SearchResult updatedApp = ReplaceSearchResultStatus(app, status);
                     if (!string.IsNullOrWhiteSpace(account))
                     {
-                        PurchasedAppDb.SavePurchasedApp(app.bundleId, account, status);
+                        PurchasedAppDb.SavePurchasedApp(updatedApp.bundleId, account, status);
                     }
                 }
             }
@@ -557,8 +557,7 @@ namespace IPAbuyer.Views
                     continue;
                 }
 
-                bool itemChanged = i < _visibleResultChanged.Length && _visibleResultChanged[i];
-                if (ReferenceEquals(ResultList.Items[i], result) && !itemChanged)
+                if (ReferenceEquals(ResultList.Items[i], result))
                 {
                     continue;
                 }
@@ -580,6 +579,34 @@ namespace IPAbuyer.Views
                 result.price,
                 result.version,
                 result.purchased);
+        }
+
+        private SearchResult ReplaceSearchResultStatus(SearchResult app, string status)
+        {
+            var updated = new SearchResult
+            {
+                bundleId = app.bundleId,
+                id = app.id,
+                name = app.name,
+                developer = app.developer,
+                artworkUrl = app.artworkUrl,
+                price = app.price,
+                version = app.version,
+                purchased = status
+            };
+
+            int index = _allResults.FindIndex(candidate => ReferenceEquals(candidate, app));
+            if (index < 0 && !string.IsNullOrWhiteSpace(app.bundleId))
+            {
+                index = _allResults.FindIndex(candidate => string.Equals(candidate.bundleId, app.bundleId, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (index >= 0)
+            {
+                _allResults[index] = updated;
+            }
+
+            return updated;
         }
 
         private double? GetResultListVerticalOffset()
@@ -676,24 +703,24 @@ namespace IPAbuyer.Views
 
                 if (isTestAccount)
                 {
-                    app.purchased = StatusPurchased;
-                    PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusPurchased);
-                    AppendHomeLog(LF("MainPage/Purchase/MockSuccess", app.name ?? app.bundleId), UiLogLevel.Success);
+                    SearchResult updatedApp = ReplaceSearchResultStatus(app, StatusPurchased);
+                    PurchasedAppDb.SavePurchasedApp(updatedApp.bundleId, account, StatusPurchased);
+                    AppendHomeLog(LF("MainPage/Purchase/MockSuccess", updatedApp.name ?? updatedApp.bundleId), UiLogLevel.Success);
                     continue;
                 }
 
                 var result = await IpatoolExecution.PurchaseAppAsync(app.bundleId, account, _pageCts.Token);
                 if (IsPurchaseAlreadyOwned(result.OutputOrError))
                 {
-                    app.purchased = StatusOwned;
-                    PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusOwned);
-                    AppendHomeLog(LF("MainPage/Purchase/OwnedDetected", app.name ?? app.bundleId), UiLogLevel.Success);
+                    SearchResult updatedApp = ReplaceSearchResultStatus(app, StatusOwned);
+                    PurchasedAppDb.SavePurchasedApp(updatedApp.bundleId, account, StatusOwned);
+                    AppendHomeLog(LF("MainPage/Purchase/OwnedDetected", updatedApp.name ?? updatedApp.bundleId), UiLogLevel.Success);
                 }
                 else if (IsPurchaseSuccess(result.OutputOrError))
                 {
-                    app.purchased = StatusPurchased;
-                    PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusPurchased);
-                    AppendHomeLog(LF("MainPage/Purchase/Success", app.name ?? app.bundleId), UiLogLevel.Success);
+                    SearchResult updatedApp = ReplaceSearchResultStatus(app, StatusPurchased);
+                    PurchasedAppDb.SavePurchasedApp(updatedApp.bundleId, account, StatusPurchased);
+                    AppendHomeLog(LF("MainPage/Purchase/Success", updatedApp.name ?? updatedApp.bundleId), UiLogLevel.Success);
                 }
                 else
                 {
@@ -702,9 +729,9 @@ namespace IPAbuyer.Views
                         bool shouldMarkOwned = await ConfirmMarkOwnedAsync(app).ConfigureAwait(true);
                         if (shouldMarkOwned)
                         {
-                            app.purchased = StatusOwned;
-                            PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusOwned);
-                            AppendHomeLog(LF("MainPage/Purchase/OwnedMarked", app.name ?? app.bundleId), UiLogLevel.Success);
+                            SearchResult updatedApp = ReplaceSearchResultStatus(app, StatusOwned);
+                            PurchasedAppDb.SavePurchasedApp(updatedApp.bundleId, account, StatusOwned);
+                            AppendHomeLog(LF("MainPage/Purchase/OwnedMarked", updatedApp.name ?? updatedApp.bundleId), UiLogLevel.Success);
                         }
                         else
                         {
