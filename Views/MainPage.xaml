@@ -76,11 +76,11 @@
                         Padding="0,0,12,0"
                         SelectionMode="None">
                         <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="models:SearchResult">
+                            <DataTemplate>
                                 <controls:SettingsCard
                                     HorizontalAlignment="Stretch"
-                                    Description="{x:Bind developer, Mode=OneWay}"
-                                    Header="{x:Bind name, Mode=OneWay}">
+                                    Description="{Binding developer}"
+                                    Header="{Binding name}">
                                     <controls:SettingsCard.HeaderIcon>
                                         <BitmapIcon
                                             Width="64"
@@ -99,16 +99,16 @@
                                             Grid.Column="0"
                                             VerticalAlignment="Center"
                                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Text="{x:Bind version, Mode=OneWay}"
+                                            Text="{Binding version}"
                                             TextTrimming="CharacterEllipsis"
-                                            ToolTipService.ToolTip="{x:Bind version, Mode=OneWay}" />
+                                            ToolTipService.ToolTip="{Binding version}" />
                                         <TextBlock
                                             Grid.Column="1"
                                             VerticalAlignment="Center"
                                             Foreground="{Binding purchased, Converter={StaticResource MainPagePurchasedForegroundConverter}}"
-                                            Text="{x:Bind purchased, Mode=OneWay}"
+                                            Text="{Binding purchased}"
                                             TextTrimming="CharacterEllipsis"
-                                            ToolTipService.ToolTip="{x:Bind purchased, Mode=OneWay}" />
+                                            ToolTipService.ToolTip="{Binding purchased}" />
                                         <Button
                                             Grid.Column="2"
                                             MinWidth="96"

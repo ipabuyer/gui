@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using IPAbuyer.Common;
@@ -16,7 +16,6 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Windows.ApplicationModel.Resources;
-using Newtonsoft.Json.Linq;
 
 namespace IPAbuyer.Views
 {
@@ -24,7 +23,7 @@ namespace IPAbuyer.Views
     {
         private static readonly ResourceLoader Loader = new();
         private readonly List<SearchResult> _allResults = new();
-        private readonly ObservableCollection<SearchResult> _visibleResults = new();
+        private SearchResult[] _visibleResults = Array.Empty<SearchResult>();
         private readonly DownloadQueueService _downloadQueueService = DownloadQueueService.Instance;
         private readonly StringBuilder _homeLogBuilder = new();
         private readonly List<UiLogEntry> _homeLogEntries = new();
@@ -85,6 +84,7 @@ namespace IPAbuyer.Views
             catch (Exception ex)
             {
                 AppendHomeLog(LF("MainPage/Log/SearchException", ex.Message), UiLogLevel.Error);
+                AppendHomeLog(ex.ToString(), UiLogLevel.Error, UiLogSource.Auto);
             }
             finally
             {
@@ -116,8 +116,11 @@ namespace IPAbuyer.Views
         {
             try
             {
-                JToken root = JToken.Parse(payload);
-                if (root is not JObject rootObject || rootObject["results"] is not JArray resultsElement)
+                using JsonDocument document = JsonDocument.Parse(payload);
+                JsonElement root = document.RootElement;
+                if (root.ValueKind != JsonValueKind.Object
+                    || !root.TryGetProperty("results", out JsonElement resultsElement)
+                    || resultsElement.ValueKind != JsonValueKind.Array)
                 {
                     if (ResultList != null)
                     {
@@ -142,7 +145,7 @@ namespace IPAbuyer.Views
                 }
 
                 _allResults.Clear();
-                foreach (var appElement in resultsElement.Children())
+                foreach (JsonElement appElement in resultsElement.EnumerateArray())
                 {
                     string bundleId = GetBundleId(appElement) ?? string.Empty;
                     string price = NormalizePriceForDisplay(GetPriceValue(appElement));
@@ -164,7 +167,7 @@ namespace IPAbuyer.Views
                 ApplyFilterAndRefresh();
                 AppendHomeLog(LF("MainPage/Log/SearchCompleted", _allResults.Count), UiLogLevel.Success);
             }
-            catch (Newtonsoft.Json.JsonException)
+            catch (JsonException)
             {
                 if (ResultList != null)
                 {
@@ -478,12 +481,14 @@ namespace IPAbuyer.Views
                 return;
             }
 
-            if (!ReferenceEquals(ResultList.ItemsSource, _visibleResults))
+            UpdateVisibleResults(results);
+            ResultList.ItemsSource = null;
+            ResultList.Items.Clear();
+            foreach (SearchResult result in _visibleResults)
             {
-                ResultList.ItemsSource = _visibleResults;
+                ResultList.Items.Add(result);
             }
 
-            UpdateVisibleResults(results);
             UpdateEmptySearchHintVisibility();
         }
 
@@ -491,11 +496,11 @@ namespace IPAbuyer.Views
         {
             if (results == null || results.Count == 0)
             {
-                _visibleResults.Clear();
+                _visibleResults = Array.Empty<SearchResult>();
                 return;
             }
 
-            if (_visibleResults.Count == results.Count)
+            if (_visibleResults.Length == results.Count)
             {
                 bool sameItems = true;
                 for (int i = 0; i < results.Count; i++)
@@ -513,11 +518,7 @@ namespace IPAbuyer.Views
                 }
             }
 
-            _visibleResults.Clear();
-            foreach (var result in results)
-            {
-                _visibleResults.Add(result);
-            }
+            _visibleResults = results.ToArray();
         }
 
         private List<SearchResult> GetFilteredResults()
@@ -795,7 +796,7 @@ namespace IPAbuyer.Views
                 || normalized.Equals(L("Common/Price/Free"), StringComparison.OrdinalIgnoreCase);
         }
 
-        private static string? GetBundleId(JToken element)
+        private static string? GetBundleId(JsonElement element)
         {
             string? bundleId = GetPropertyValue(element, "bundleID");
             if (!string.IsNullOrWhiteSpace(bundleId))
@@ -806,27 +807,40 @@ namespace IPAbuyer.Views
             return GetPropertyValue(element, "bundleId");
         }
 
-        private static string? GetPropertyValue(JToken element, string propertyName)
+        private static string? GetPropertyValue(JsonElement element, string propertyName)
         {
-            return element is JObject obj && obj[propertyName] is JToken property
-                ? JsonPayload.ReadScalarAsString(property)
+            return element.ValueKind == JsonValueKind.Object && element.TryGetProperty(propertyName, out JsonElement property)
+                ? ReadJsonScalarAsString(property)
                 : null;
         }
 
-        private static string? GetPriceValue(JToken element)
+        private static string? GetPriceValue(JsonElement element)
         {
-            if (element is not JObject obj || obj["price"] is not JToken priceElement)
+            if (element.ValueKind != JsonValueKind.Object || !element.TryGetProperty("price", out JsonElement priceElement))
             {
                 return null;
             }
 
-            if ((priceElement.Type == JTokenType.Integer || priceElement.Type == JTokenType.Float)
-                && decimal.TryParse(priceElement.ToString(), NumberStyles.Number, CultureInfo.InvariantCulture, out decimal priceValue))
+            if (priceElement.ValueKind == JsonValueKind.Number
+                && priceElement.TryGetDecimal(out decimal priceValue))
             {
                 return priceValue.ToString("0.00", CultureInfo.InvariantCulture);
             }
 
-            return JsonPayload.ReadScalarAsString(priceElement);
+            return ReadJsonScalarAsString(priceElement);
+        }
+
+        private static string? ReadJsonScalarAsString(JsonElement element)
+        {
+            return element.ValueKind switch
+            {
+                JsonValueKind.Null or JsonValueKind.Undefined => null,
+                JsonValueKind.String => element.GetString(),
+                JsonValueKind.Number when element.TryGetDecimal(out decimal value) => value.ToString(CultureInfo.InvariantCulture),
+                JsonValueKind.True => "true",
+                JsonValueKind.False => "false",
+                _ => element.GetRawText()
+            };
         }
 
         private static string NormalizePriceForDisplay(string? rawPrice)
@@ -999,7 +1013,7 @@ namespace IPAbuyer.Views
             }
 
             bool loading = isLoading ?? TableLoadingRing?.IsActive == true;
-            EmptySearchHintTextBlock.Visibility = !loading && _visibleResults.Count == 0
+            EmptySearchHintTextBlock.Visibility = !loading && _visibleResults.Length == 0
                 ? Visibility.Visible
                 : Visibility.Collapsed;
         }
