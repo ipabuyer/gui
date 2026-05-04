@@ -484,6 +484,7 @@ namespace IPAbuyer.Views
             }
 
             UpdateVisibleResults(results);
+            UpdateEmptySearchHintVisibility();
         }
 
         private void UpdateVisibleResults(IReadOnlyList<SearchResult>? results)
@@ -987,6 +988,20 @@ namespace IPAbuyer.Views
 
             TableLoadingRing.IsActive = isLoading;
             TableLoadingRing.Visibility = isLoading ? Visibility.Visible : Visibility.Collapsed;
+            UpdateEmptySearchHintVisibility(isLoading);
+        }
+
+        private void UpdateEmptySearchHintVisibility(bool? isLoading = null)
+        {
+            if (EmptySearchHintTextBlock == null)
+            {
+                return;
+            }
+
+            bool loading = isLoading ?? TableLoadingRing?.IsActive == true;
+            EmptySearchHintTextBlock.Visibility = !loading && _visibleResults.Count == 0
+                ? Visibility.Visible
+                : Visibility.Collapsed;
         }
 
         private void EnsureHomeLogScrollToBottom()

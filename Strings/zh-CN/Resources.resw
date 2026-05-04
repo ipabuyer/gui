@@ -1056,4 +1056,7 @@
   <data name="Common/LogDialog/CloseButton" xml:space="preserve">
     <value>关闭</value>
   </data>
+  <data name="MainPage/EmptySearchHintTextBlock.Text" xml:space="preserve">
+    <value>请在搜索框搜索应用</value>
+  </data>
 </root>

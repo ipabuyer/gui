@@ -141,6 +141,16 @@
                         </ListView.ItemTemplate>
                     </ListView>
 
+                    <TextBlock
+                        x:Name="EmptySearchHintTextBlock"
+                        x:Uid="MainPage/EmptySearchHintTextBlock"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="18"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        IsHitTestVisible="False"
+                        Visibility="Visible" />
+
                     <ProgressRing
                         x:Name="TableLoadingRing"
                         Width="44"
