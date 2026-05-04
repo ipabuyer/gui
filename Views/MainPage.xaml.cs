@@ -410,6 +410,39 @@ namespace IPAbuyer.Views
             CopyField(sender, app => app.bundleId ?? string.Empty, L("MainPage/Field/Id"));
         }
 
+        private async void ContextMenuOpenAppStore_Click(object sender, RoutedEventArgs e)
+        {
+            SearchResult? app = ResolveContextItem(sender);
+            if (app == null)
+            {
+                return;
+            }
+
+            if (!long.TryParse(app.id, NumberStyles.Integer, CultureInfo.InvariantCulture, out long trackId) || trackId <= 0)
+            {
+                AppendHomeLog(L("MainPage/Log/AppStoreMissingId"), UiLogLevel.Tip);
+                return;
+            }
+
+            try
+            {
+                string countryCode = NormalizeCountryCode(KeychainConfig.GetCountryCode(GetActiveAccount()));
+                var appStoreUri = new Uri(FormattableString.Invariant($"https://apps.apple.com/{countryCode}/app/id{trackId}"));
+                bool opened = await Windows.System.Launcher.LaunchUriAsync(appStoreUri);
+                if (opened)
+                {
+                    AppendHomeLog(LF("MainPage/Log/AppStoreOpened", GetAppDisplayLabel(app, app.bundleId ?? app.id ?? string.Empty)), UiLogLevel.Success);
+                    return;
+                }
+
+                AppendHomeLog(LF("MainPage/Log/AppStoreOpenFailed", appStoreUri), UiLogLevel.Error);
+            }
+            catch (Exception ex)
+            {
+                AppendHomeLog(LF("MainPage/Log/AppStoreOpenFailed", ex.Message), UiLogLevel.Error);
+            }
+        }
+
         private void CopyField(object sender, Func<SearchResult, string> selector, string fieldName)
         {
             var selectedApps = GetContextTargetApps(sender);

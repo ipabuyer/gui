@@ -135,6 +135,8 @@
                                                     <MenuFlyoutSeparator />
                                                     <MenuFlyoutItem x:Uid="MainPage/Context/CopyNameItem" Click="ContextMenuCopyName_Click" />
                                                     <MenuFlyoutItem x:Uid="MainPage/Context/CopyIdItem" Click="ContextMenuCopyId_Click" />
+                                                    <MenuFlyoutSeparator />
+                                                    <MenuFlyoutItem x:Uid="MainPage/Context/OpenAppStoreItem" Click="ContextMenuOpenAppStore_Click" />
                                                 </MenuFlyout>
                                             </Button.Flyout>
                                         </Button>
