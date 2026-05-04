@@ -377,25 +377,26 @@ namespace IPAbuyer.Views
             string account = GetActiveAccount();
             foreach (var app in selectedApps)
             {
-                if (string.IsNullOrWhiteSpace(app.bundleId))
+                string bundleId = app.bundleId ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(bundleId))
                 {
                     continue;
                 }
 
                 if (status == StatusCanPurchase)
                 {
-                    SearchResult updatedApp = ReplaceSearchResultStatus(app, ResolveUnpurchasedStatusForPrice(app.price));
+                    ReplaceSearchResultStatus(app, ResolveUnpurchasedStatusForPrice(app.price));
                     if (!string.IsNullOrWhiteSpace(account))
                     {
-                        PurchasedAppDb.RemovePurchasedApp(updatedApp.bundleId, account);
+                        PurchasedAppDb.RemovePurchasedApp(bundleId, account);
                     }
                 }
                 else
                 {
-                    SearchResult updatedApp = ReplaceSearchResultStatus(app, status);
+                    ReplaceSearchResultStatus(app, status);
                     if (!string.IsNullOrWhiteSpace(account))
                     {
-                        PurchasedAppDb.SavePurchasedApp(updatedApp.bundleId, account, status);
+                        PurchasedAppDb.SavePurchasedApp(bundleId, account, status);
                     }
                 }
             }
@@ -685,7 +686,8 @@ namespace IPAbuyer.Views
 
             foreach (var app in selectedApps)
             {
-                if (string.IsNullOrWhiteSpace(app.bundleId))
+                string bundleId = app.bundleId ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(bundleId))
                 {
                     continue;
                 }
@@ -704,22 +706,22 @@ namespace IPAbuyer.Views
                 if (isTestAccount)
                 {
                     SearchResult updatedApp = ReplaceSearchResultStatus(app, StatusPurchased);
-                    PurchasedAppDb.SavePurchasedApp(updatedApp.bundleId, account, StatusPurchased);
+                    PurchasedAppDb.SavePurchasedApp(bundleId, account, StatusPurchased);
                     AppendHomeLog(LF("MainPage/Purchase/MockSuccess", updatedApp.name ?? updatedApp.bundleId), UiLogLevel.Success);
                     continue;
                 }
 
-                var result = await IpatoolExecution.PurchaseAppAsync(app.bundleId, account, _pageCts.Token);
+                var result = await IpatoolExecution.PurchaseAppAsync(bundleId, account, _pageCts.Token);
                 if (IsPurchaseAlreadyOwned(result.OutputOrError))
                 {
                     SearchResult updatedApp = ReplaceSearchResultStatus(app, StatusOwned);
-                    PurchasedAppDb.SavePurchasedApp(updatedApp.bundleId, account, StatusOwned);
+                    PurchasedAppDb.SavePurchasedApp(bundleId, account, StatusOwned);
                     AppendHomeLog(LF("MainPage/Purchase/OwnedDetected", updatedApp.name ?? updatedApp.bundleId), UiLogLevel.Success);
                 }
                 else if (IsPurchaseSuccess(result.OutputOrError))
                 {
                     SearchResult updatedApp = ReplaceSearchResultStatus(app, StatusPurchased);
-                    PurchasedAppDb.SavePurchasedApp(updatedApp.bundleId, account, StatusPurchased);
+                    PurchasedAppDb.SavePurchasedApp(bundleId, account, StatusPurchased);
                     AppendHomeLog(LF("MainPage/Purchase/Success", updatedApp.name ?? updatedApp.bundleId), UiLogLevel.Success);
                 }
                 else
@@ -730,7 +732,7 @@ namespace IPAbuyer.Views
                         if (shouldMarkOwned)
                         {
                             SearchResult updatedApp = ReplaceSearchResultStatus(app, StatusOwned);
-                            PurchasedAppDb.SavePurchasedApp(updatedApp.bundleId, account, StatusOwned);
+                            PurchasedAppDb.SavePurchasedApp(bundleId, account, StatusOwned);
                             AppendHomeLog(LF("MainPage/Purchase/OwnedMarked", updatedApp.name ?? updatedApp.bundleId), UiLogLevel.Success);
                         }
                         else
