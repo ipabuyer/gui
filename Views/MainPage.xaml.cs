@@ -405,9 +405,9 @@ namespace IPAbuyer.Views
             CopyField(sender, app => app.name ?? string.Empty, L("MainPage/Field/Name"));
         }
 
-        private void ContextMenuCopyVersion_Click(object sender, RoutedEventArgs e)
+        private void ContextMenuCopyId_Click(object sender, RoutedEventArgs e)
         {
-            CopyField(sender, app => app.version ?? string.Empty, L("MainPage/Field/Version"));
+            CopyField(sender, app => app.bundleId ?? string.Empty, L("MainPage/Field/Id"));
         }
 
         private void CopyField(object sender, Func<SearchResult, string> selector, string fieldName)

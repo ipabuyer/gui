@@ -134,7 +134,7 @@
                                                     <MenuFlyoutItem x:Uid="MainPage/Context/MarkOwnedItem" Click="ContextMenuMarkOwned_Click" />
                                                     <MenuFlyoutSeparator />
                                                     <MenuFlyoutItem x:Uid="MainPage/Context/CopyNameItem" Click="ContextMenuCopyName_Click" />
-                                                    <MenuFlyoutItem x:Uid="MainPage/Context/CopyVersionItem" Click="ContextMenuCopyVersion_Click" />
+                                                    <MenuFlyoutItem x:Uid="MainPage/Context/CopyIdItem" Click="ContextMenuCopyId_Click" />
                                                 </MenuFlyout>
                                             </Button.Flyout>
                                         </Button>
