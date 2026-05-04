@@ -28,6 +28,12 @@
             <Setter Property="Padding" Value="20,0" />
             <Setter Property="CornerRadius" Value="18" />
         </Style>
+        <Style x:Key="MainIconButtonStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
     </Page.Resources>
     <Page.Background>Transparent</Page.Background>
     <Page.Content>
@@ -53,14 +59,9 @@
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
                         <Button
                             x:Name="OpenLogButton"
-                            Width="40"
                             Height="36"
-                            Padding="0"
-                            AutomationProperties.Name="日志"
                             Click="ShowHomeLogDialog_Click"
-                            ToolTipService.ToolTip="日志">
-                            <FontIcon FontSize="16" Glyph="&#xE9D5;" />
-                        </Button>
+                            Content="日志" />
                         <Button x:Uid="MainPage/Action/CancelAllDownloadsButton" x:Name="CancelAllDownloadsButton" Click="CancelAllDownloadsButton_Click" Visibility="Collapsed" />
                     </StackPanel>
                 </Grid>
@@ -116,9 +117,9 @@
                                             IsEnabled="{Binding purchased, Converter={StaticResource MainPageAppActionEnabledConverter}}" />
                                         <Button
                                             Grid.Column="3"
+                                            Style="{StaticResource MainIconButtonStyle}"
                                             Width="36"
                                             Height="36"
-                                            Padding="0"
                                             HorizontalAlignment="Right">
                                             <Button.Content>
                                                 <FontIcon FontSize="16" Glyph="&#xE712;" />
