@@ -1065,4 +1065,13 @@
   <data name="MainPage/EmptySearchHintTextBlock.Text" xml:space="preserve">
     <value>请在搜索框搜索应用</value>
   </data>
+  <data name="MainPage/EmptySearchHint/Initial" xml:space="preserve">
+    <value>请在搜索框搜索应用</value>
+  </data>
+  <data name="MainPage/EmptySearchHint/SearchEmpty" xml:space="preserve">
+    <value>未找到匹配的应用</value>
+  </data>
+  <data name="MainPage/EmptySearchHint/FilterEmpty" xml:space="preserve">
+    <value>当前筛选下没有应用</value>
+  </data>
 </root>

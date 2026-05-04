@@ -31,6 +31,7 @@ namespace IPAbuyer.Views
         private readonly List<UiLogEntry> _homeLogEntries = new();
         private CancellationTokenSource _pageCts = new();
         private bool _isHomeLogDialogOpen;
+        private bool _hasCompletedSearch;
         private string _selectedFilter = "All";
         private static readonly string StatusPurchased = L("Common/Status/Purchased");
         private static readonly string StatusOwned = L("Common/Status/Owned");
@@ -166,6 +167,7 @@ namespace IPAbuyer.Views
                     });
                 }
 
+                _hasCompletedSearch = true;
                 ApplyFilterAndRefresh();
                 AppendHomeLog(LF("MainPage/Log/SearchCompleted", _allResults.Count), UiLogLevel.Success);
             }
@@ -1154,9 +1156,22 @@ namespace IPAbuyer.Views
             }
 
             bool loading = isLoading ?? TableLoadingRing?.IsActive == true;
+            EmptySearchHintTextBlock.Text = ResolveEmptySearchHintText();
             EmptySearchHintTextBlock.Visibility = !loading && _visibleResults.Length == 0
                 ? Visibility.Visible
                 : Visibility.Collapsed;
+        }
+
+        private string ResolveEmptySearchHintText()
+        {
+            if (_allResults.Count > 0)
+            {
+                return L("MainPage/EmptySearchHint/FilterEmpty");
+            }
+
+            return _hasCompletedSearch
+                ? L("MainPage/EmptySearchHint/SearchEmpty")
+                : L("MainPage/EmptySearchHint/Initial");
         }
 
         private void EnsureHomeLogScrollToBottom()
@@ -1212,6 +1227,7 @@ namespace IPAbuyer.Views
         private void ClearSearchCache()
         {
             _allResults.Clear();
+            _hasCompletedSearch = false;
             if (ResultList != null)
             {
                 SetResultListItemsSource(null);
