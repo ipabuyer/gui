@@ -75,12 +75,15 @@
                         Margin="0,0,-12,0"
                         Padding="0,0,12,0"
                         SelectionMode="None">
+                        <ListView.ItemContainerTransitions>
+                            <TransitionCollection />
+                        </ListView.ItemContainerTransitions>
                         <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="models:SearchResult">
+                            <DataTemplate>
                                 <controls:SettingsCard
                                     HorizontalAlignment="Stretch"
-                                    Description="{x:Bind developer, Mode=OneWay}"
-                                    Header="{x:Bind name, Mode=OneWay}">
+                                    Description="{Binding developer}"
+                                    Header="{Binding name}">
                                     <controls:SettingsCard.HeaderIcon>
                                         <BitmapIcon
                                             Width="64"
@@ -99,16 +102,16 @@
                                             Grid.Column="0"
                                             VerticalAlignment="Center"
                                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Text="{x:Bind version, Mode=OneWay}"
+                                            Text="{Binding version}"
                                             TextTrimming="CharacterEllipsis"
-                                            ToolTipService.ToolTip="{x:Bind version, Mode=OneWay}" />
+                                            ToolTipService.ToolTip="{Binding version}" />
                                         <TextBlock
                                             Grid.Column="1"
                                             VerticalAlignment="Center"
                                             Foreground="{Binding purchased, Converter={StaticResource MainPagePurchasedForegroundConverter}}"
-                                            Text="{x:Bind purchased, Mode=OneWay}"
+                                            Text="{Binding purchased}"
                                             TextTrimming="CharacterEllipsis"
-                                            ToolTipService.ToolTip="{x:Bind purchased, Mode=OneWay}" />
+                                            ToolTipService.ToolTip="{Binding purchased}" />
                                         <Button
                                             Grid.Column="2"
                                             MinWidth="96"
@@ -131,7 +134,9 @@
                                                     <MenuFlyoutItem x:Uid="MainPage/Context/MarkOwnedItem" Click="ContextMenuMarkOwned_Click" />
                                                     <MenuFlyoutSeparator />
                                                     <MenuFlyoutItem x:Uid="MainPage/Context/CopyNameItem" Click="ContextMenuCopyName_Click" />
-                                                    <MenuFlyoutItem x:Uid="MainPage/Context/CopyVersionItem" Click="ContextMenuCopyVersion_Click" />
+                                                    <MenuFlyoutItem x:Uid="MainPage/Context/CopyIdItem" Click="ContextMenuCopyId_Click" />
+                                                    <MenuFlyoutSeparator />
+                                                    <MenuFlyoutItem x:Uid="MainPage/Context/OpenAppStoreItem" Click="ContextMenuOpenAppStore_Click" />
                                                 </MenuFlyout>
                                             </Button.Flyout>
                                         </Button>

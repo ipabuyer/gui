@@ -1,4 +1,3 @@
-using System;
 namespace IPAbuyer.Common
 {
     public enum UiLogLevel

@@ -1,22 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using IPAbuyer.Common;
+﻿using IPAbuyer.Common;
 using IPAbuyer.Data;
 using IPAbuyer.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Windows.ApplicationModel.Resources;
-using Newtonsoft.Json.Linq;
+using System.Globalization;
+using System.Text;
+using System.Text.Json;
 
 namespace IPAbuyer.Views
 {
@@ -24,12 +17,14 @@ namespace IPAbuyer.Views
     {
         private static readonly ResourceLoader Loader = new();
         private readonly List<SearchResult> _allResults = new();
-        private readonly ObservableCollection<SearchResult> _visibleResults = new();
+        private SearchResult[] _visibleResults = Array.Empty<SearchResult>();
+        private string[] _visibleResultSnapshots = Array.Empty<string>();
         private readonly DownloadQueueService _downloadQueueService = DownloadQueueService.Instance;
         private readonly StringBuilder _homeLogBuilder = new();
         private readonly List<UiLogEntry> _homeLogEntries = new();
         private CancellationTokenSource _pageCts = new();
         private bool _isHomeLogDialogOpen;
+        private bool _hasCompletedSearch;
         private string _selectedFilter = "All";
         private static readonly string StatusPurchased = L("Common/Status/Purchased");
         private static readonly string StatusOwned = L("Common/Status/Owned");
@@ -85,6 +80,7 @@ namespace IPAbuyer.Views
             catch (Exception ex)
             {
                 AppendHomeLog(LF("MainPage/Log/SearchException", ex.Message), UiLogLevel.Error);
+                AppendHomeLog(ex.ToString(), UiLogLevel.Error, UiLogSource.Auto);
             }
             finally
             {
@@ -116,8 +112,11 @@ namespace IPAbuyer.Views
         {
             try
             {
-                JToken root = JToken.Parse(payload);
-                if (root is not JObject rootObject || rootObject["results"] is not JArray resultsElement)
+                using JsonDocument document = JsonDocument.Parse(payload);
+                JsonElement root = document.RootElement;
+                if (root.ValueKind != JsonValueKind.Object
+                    || !root.TryGetProperty("results", out JsonElement resultsElement)
+                    || resultsElement.ValueKind != JsonValueKind.Array)
                 {
                     if (ResultList != null)
                     {
@@ -142,7 +141,7 @@ namespace IPAbuyer.Views
                 }
 
                 _allResults.Clear();
-                foreach (var appElement in resultsElement.Children())
+                foreach (JsonElement appElement in resultsElement.EnumerateArray())
                 {
                     string bundleId = GetBundleId(appElement) ?? string.Empty;
                     string price = NormalizePriceForDisplay(GetPriceValue(appElement));
@@ -161,10 +160,11 @@ namespace IPAbuyer.Views
                     });
                 }
 
+                _hasCompletedSearch = true;
                 ApplyFilterAndRefresh();
                 AppendHomeLog(LF("MainPage/Log/SearchCompleted", _allResults.Count), UiLogLevel.Success);
             }
-            catch (Newtonsoft.Json.JsonException)
+            catch (JsonException)
             {
                 if (ResultList != null)
                 {
@@ -372,25 +372,26 @@ namespace IPAbuyer.Views
             string account = GetActiveAccount();
             foreach (var app in selectedApps)
             {
-                if (string.IsNullOrWhiteSpace(app.bundleId))
+                string bundleId = app.bundleId ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(bundleId))
                 {
                     continue;
                 }
 
                 if (status == StatusCanPurchase)
                 {
-                    app.purchased = ResolveUnpurchasedStatusForPrice(app.price);
+                    ReplaceSearchResultStatus(app, ResolveUnpurchasedStatusForPrice(app.price));
                     if (!string.IsNullOrWhiteSpace(account))
                     {
-                        PurchasedAppDb.RemovePurchasedApp(app.bundleId, account);
+                        PurchasedAppDb.RemovePurchasedApp(bundleId, account);
                     }
                 }
                 else
                 {
-                    app.purchased = status;
+                    ReplaceSearchResultStatus(app, status);
                     if (!string.IsNullOrWhiteSpace(account))
                     {
-                        PurchasedAppDb.SavePurchasedApp(app.bundleId, account, status);
+                        PurchasedAppDb.SavePurchasedApp(bundleId, account, status);
                     }
                 }
             }
@@ -404,9 +405,42 @@ namespace IPAbuyer.Views
             CopyField(sender, app => app.name ?? string.Empty, L("MainPage/Field/Name"));
         }
 
-        private void ContextMenuCopyVersion_Click(object sender, RoutedEventArgs e)
+        private void ContextMenuCopyId_Click(object sender, RoutedEventArgs e)
         {
-            CopyField(sender, app => app.version ?? string.Empty, L("MainPage/Field/Version"));
+            CopyField(sender, app => app.bundleId ?? string.Empty, L("MainPage/Field/Id"));
+        }
+
+        private async void ContextMenuOpenAppStore_Click(object sender, RoutedEventArgs e)
+        {
+            SearchResult? app = ResolveContextItem(sender);
+            if (app == null)
+            {
+                return;
+            }
+
+            if (!long.TryParse(app.id, NumberStyles.Integer, CultureInfo.InvariantCulture, out long trackId) || trackId <= 0)
+            {
+                AppendHomeLog(L("MainPage/Log/AppStoreMissingId"), UiLogLevel.Tip);
+                return;
+            }
+
+            try
+            {
+                string countryCode = NormalizeCountryCode(KeychainConfig.GetCountryCode(GetActiveAccount()));
+                var appStoreUri = new Uri(FormattableString.Invariant($"https://apps.apple.com/{countryCode}/app/id{trackId}"));
+                bool opened = await Windows.System.Launcher.LaunchUriAsync(appStoreUri);
+                if (opened)
+                {
+                    AppendHomeLog(LF("MainPage/Log/AppStoreOpened", GetAppDisplayLabel(app, app.bundleId ?? app.id ?? string.Empty)), UiLogLevel.Success);
+                    return;
+                }
+
+                AppendHomeLog(LF("MainPage/Log/AppStoreOpenFailed", appStoreUri), UiLogLevel.Error);
+            }
+            catch (Exception ex)
+            {
+                AppendHomeLog(LF("MainPage/Log/AppStoreOpenFailed", ex.Message), UiLogLevel.Error);
+            }
         }
 
         private void CopyField(object sender, Func<SearchResult, string> selector, string fieldName)
@@ -478,12 +512,15 @@ namespace IPAbuyer.Views
                 return;
             }
 
-            if (!ReferenceEquals(ResultList.ItemsSource, _visibleResults))
+            if (ResultList.ItemsSource != null)
             {
-                ResultList.ItemsSource = _visibleResults;
+                ResultList.ItemsSource = null;
             }
-
+            double? verticalOffset = GetResultListVerticalOffset();
             UpdateVisibleResults(results);
+            SyncResultListItems();
+            RestoreResultListVerticalOffset(verticalOffset);
+
             UpdateEmptySearchHintVisibility();
         }
 
@@ -491,19 +528,21 @@ namespace IPAbuyer.Views
         {
             if (results == null || results.Count == 0)
             {
-                _visibleResults.Clear();
+                _visibleResults = Array.Empty<SearchResult>();
+                _visibleResultSnapshots = Array.Empty<string>();
                 return;
             }
 
-            if (_visibleResults.Count == results.Count)
+            string[] snapshots = results.Select(CreateSearchResultSnapshot).ToArray();
+            if (_visibleResults.Length == results.Count && _visibleResultSnapshots.Length == snapshots.Length)
             {
                 bool sameItems = true;
                 for (int i = 0; i < results.Count; i++)
                 {
-                    if (!ReferenceEquals(_visibleResults[i], results[i]))
+                    if (!ReferenceEquals(_visibleResults[i], results[i])
+                        || !string.Equals(_visibleResultSnapshots[i], snapshots[i], StringComparison.Ordinal))
                     {
                         sameItems = false;
-                        break;
                     }
                 }
 
@@ -513,11 +552,131 @@ namespace IPAbuyer.Views
                 }
             }
 
-            _visibleResults.Clear();
-            foreach (var result in results)
+            _visibleResults = results.ToArray();
+            _visibleResultSnapshots = snapshots;
+        }
+
+        private void SyncResultListItems()
+        {
+            if (ResultList == null)
             {
-                _visibleResults.Add(result);
+                return;
             }
+
+            for (int i = ResultList.Items.Count - 1; i >= _visibleResults.Length; i--)
+            {
+                ResultList.Items.RemoveAt(i);
+            }
+
+            for (int i = 0; i < _visibleResults.Length; i++)
+            {
+                SearchResult result = _visibleResults[i];
+                if (i >= ResultList.Items.Count)
+                {
+                    ResultList.Items.Add(result);
+                    continue;
+                }
+
+                if (ReferenceEquals(ResultList.Items[i], result))
+                {
+                    continue;
+                }
+
+                ResultList.Items.RemoveAt(i);
+                ResultList.Items.Insert(i, result);
+            }
+        }
+
+        private static string CreateSearchResultSnapshot(SearchResult result)
+        {
+            return string.Join(
+                "\u001F",
+                result.bundleId,
+                result.id,
+                result.name,
+                result.developer,
+                result.artworkUrl,
+                result.price,
+                result.version,
+                result.purchased);
+        }
+
+        private SearchResult ReplaceSearchResultStatus(SearchResult app, string status)
+        {
+            var updated = new SearchResult
+            {
+                bundleId = app.bundleId,
+                id = app.id,
+                name = app.name,
+                developer = app.developer,
+                artworkUrl = app.artworkUrl,
+                price = app.price,
+                version = app.version,
+                purchased = status
+            };
+
+            int index = _allResults.FindIndex(candidate => ReferenceEquals(candidate, app));
+            if (index < 0 && !string.IsNullOrWhiteSpace(app.bundleId))
+            {
+                index = _allResults.FindIndex(candidate => string.Equals(candidate.bundleId, app.bundleId, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (index >= 0)
+            {
+                _allResults[index] = updated;
+            }
+
+            return updated;
+        }
+
+        private static string GetAppDisplayLabel(SearchResult app, string fallbackBundleId)
+        {
+            return string.IsNullOrWhiteSpace(app.name) ? fallbackBundleId : app.name;
+        }
+
+        private double? GetResultListVerticalOffset()
+        {
+            ScrollViewer? scrollViewer = FindDescendantScrollViewer(ResultList);
+            return scrollViewer?.VerticalOffset;
+        }
+
+        private void RestoreResultListVerticalOffset(double? verticalOffset)
+        {
+            if (verticalOffset == null || ResultList == null)
+            {
+                return;
+            }
+
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                ScrollViewer? scrollViewer = FindDescendantScrollViewer(ResultList);
+                scrollViewer?.ChangeView(null, verticalOffset.Value, null, disableAnimation: true);
+            });
+        }
+
+        private static ScrollViewer? FindDescendantScrollViewer(DependencyObject? root)
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            if (root is ScrollViewer scrollViewer)
+            {
+                return scrollViewer;
+            }
+
+            int childCount = VisualTreeHelper.GetChildrenCount(root);
+            for (int i = 0; i < childCount; i++)
+            {
+                ScrollViewer? childScrollViewer = FindDescendantScrollViewer(VisualTreeHelper.GetChild(root, i));
+                if (childScrollViewer != null)
+                {
+                    return childScrollViewer;
+                }
+            }
+
+            return null;
         }
 
         private List<SearchResult> GetFilteredResults()
@@ -551,10 +710,12 @@ namespace IPAbuyer.Views
 
             foreach (var app in selectedApps)
             {
-                if (string.IsNullOrWhiteSpace(app.bundleId))
+                string bundleId = app.bundleId ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(bundleId))
                 {
                     continue;
                 }
+                string appLabel = GetAppDisplayLabel(app, bundleId);
 
                 if (IsPurchasedStatus(app.purchased) || IsOwnedStatus(app.purchased))
                 {
@@ -563,30 +724,30 @@ namespace IPAbuyer.Views
 
                 if (!IsPriceFree(app.price))
                 {
-                    AppendHomeLog(LF("MainPage/Purchase/SkipNonFree", app.name ?? app.bundleId), UiLogLevel.Tip);
+                    AppendHomeLog(LF("MainPage/Purchase/SkipNonFree", appLabel), UiLogLevel.Tip);
                     continue;
                 }
 
                 if (isTestAccount)
                 {
-                    app.purchased = StatusPurchased;
-                    PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusPurchased);
-                    AppendHomeLog(LF("MainPage/Purchase/MockSuccess", app.name ?? app.bundleId), UiLogLevel.Success);
+                    SearchResult updatedApp = ReplaceSearchResultStatus(app, StatusPurchased);
+                    PurchasedAppDb.SavePurchasedApp(bundleId, account, StatusPurchased);
+                    AppendHomeLog(LF("MainPage/Purchase/MockSuccess", GetAppDisplayLabel(updatedApp, bundleId)), UiLogLevel.Success);
                     continue;
                 }
 
-                var result = await IpatoolExecution.PurchaseAppAsync(app.bundleId, account, _pageCts.Token);
+                var result = await IpatoolExecution.PurchaseAppAsync(bundleId, account, _pageCts.Token);
                 if (IsPurchaseAlreadyOwned(result.OutputOrError))
                 {
-                    app.purchased = StatusOwned;
-                    PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusOwned);
-                    AppendHomeLog(LF("MainPage/Purchase/OwnedDetected", app.name ?? app.bundleId), UiLogLevel.Success);
+                    SearchResult updatedApp = ReplaceSearchResultStatus(app, StatusOwned);
+                    PurchasedAppDb.SavePurchasedApp(bundleId, account, StatusOwned);
+                    AppendHomeLog(LF("MainPage/Purchase/OwnedDetected", GetAppDisplayLabel(updatedApp, bundleId)), UiLogLevel.Success);
                 }
                 else if (IsPurchaseSuccess(result.OutputOrError))
                 {
-                    app.purchased = StatusPurchased;
-                    PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusPurchased);
-                    AppendHomeLog(LF("MainPage/Purchase/Success", app.name ?? app.bundleId), UiLogLevel.Success);
+                    SearchResult updatedApp = ReplaceSearchResultStatus(app, StatusPurchased);
+                    PurchasedAppDb.SavePurchasedApp(bundleId, account, StatusPurchased);
+                    AppendHomeLog(LF("MainPage/Purchase/Success", GetAppDisplayLabel(updatedApp, bundleId)), UiLogLevel.Success);
                 }
                 else
                 {
@@ -595,13 +756,13 @@ namespace IPAbuyer.Views
                         bool shouldMarkOwned = await ConfirmMarkOwnedAsync(app).ConfigureAwait(true);
                         if (shouldMarkOwned)
                         {
-                            app.purchased = StatusOwned;
-                            PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusOwned);
-                            AppendHomeLog(LF("MainPage/Purchase/OwnedMarked", app.name ?? app.bundleId), UiLogLevel.Success);
+                            SearchResult updatedApp = ReplaceSearchResultStatus(app, StatusOwned);
+                            PurchasedAppDb.SavePurchasedApp(bundleId, account, StatusOwned);
+                            AppendHomeLog(LF("MainPage/Purchase/OwnedMarked", GetAppDisplayLabel(updatedApp, bundleId)), UiLogLevel.Success);
                         }
                         else
                         {
-                            AppendHomeLog(LF("MainPage/Purchase/OwnedNotMarked", app.name ?? app.bundleId), UiLogLevel.Info);
+                            AppendHomeLog(LF("MainPage/Purchase/OwnedNotMarked", appLabel), UiLogLevel.Info);
                         }
                     }
                     else
@@ -609,7 +770,7 @@ namespace IPAbuyer.Views
                         string reason = string.IsNullOrWhiteSpace(result.OutputOrError)
                             ? L("MainPage/Purchase/UnknownError")
                             : result.OutputOrError;
-                        AppendHomeLog(LF("MainPage/Purchase/Failed", app.name ?? app.bundleId, reason), UiLogLevel.Error);
+                        AppendHomeLog(LF("MainPage/Purchase/Failed", appLabel, reason), UiLogLevel.Error);
                     }
                 }
             }
@@ -795,7 +956,7 @@ namespace IPAbuyer.Views
                 || normalized.Equals(L("Common/Price/Free"), StringComparison.OrdinalIgnoreCase);
         }
 
-        private static string? GetBundleId(JToken element)
+        private static string? GetBundleId(JsonElement element)
         {
             string? bundleId = GetPropertyValue(element, "bundleID");
             if (!string.IsNullOrWhiteSpace(bundleId))
@@ -806,27 +967,40 @@ namespace IPAbuyer.Views
             return GetPropertyValue(element, "bundleId");
         }
 
-        private static string? GetPropertyValue(JToken element, string propertyName)
+        private static string? GetPropertyValue(JsonElement element, string propertyName)
         {
-            return element is JObject obj && obj[propertyName] is JToken property
-                ? JsonPayload.ReadScalarAsString(property)
+            return element.ValueKind == JsonValueKind.Object && element.TryGetProperty(propertyName, out JsonElement property)
+                ? ReadJsonScalarAsString(property)
                 : null;
         }
 
-        private static string? GetPriceValue(JToken element)
+        private static string? GetPriceValue(JsonElement element)
         {
-            if (element is not JObject obj || obj["price"] is not JToken priceElement)
+            if (element.ValueKind != JsonValueKind.Object || !element.TryGetProperty("price", out JsonElement priceElement))
             {
                 return null;
             }
 
-            if ((priceElement.Type == JTokenType.Integer || priceElement.Type == JTokenType.Float)
-                && decimal.TryParse(priceElement.ToString(), NumberStyles.Number, CultureInfo.InvariantCulture, out decimal priceValue))
+            if (priceElement.ValueKind == JsonValueKind.Number
+                && priceElement.TryGetDecimal(out decimal priceValue))
             {
                 return priceValue.ToString("0.00", CultureInfo.InvariantCulture);
             }
 
-            return JsonPayload.ReadScalarAsString(priceElement);
+            return ReadJsonScalarAsString(priceElement);
+        }
+
+        private static string? ReadJsonScalarAsString(JsonElement element)
+        {
+            return element.ValueKind switch
+            {
+                JsonValueKind.Null or JsonValueKind.Undefined => null,
+                JsonValueKind.String => element.GetString(),
+                JsonValueKind.Number when element.TryGetDecimal(out decimal value) => value.ToString(CultureInfo.InvariantCulture),
+                JsonValueKind.True => "true",
+                JsonValueKind.False => "false",
+                _ => element.GetRawText()
+            };
         }
 
         private static string NormalizePriceForDisplay(string? rawPrice)
@@ -909,14 +1083,14 @@ namespace IPAbuyer.Views
             _isHomeLogDialogOpen = true;
             try
             {
-            var dialog = new LogViewerDialog(
-                _homeLogEntries,
-                GetLogColor,
-                CopyHomeLog,
-                ClearHomeLog,
-                XamlRoot);
+                var dialog = new LogViewerDialog(
+                    _homeLogEntries,
+                    GetLogColor,
+                    CopyHomeLog,
+                    ClearHomeLog,
+                    XamlRoot);
 
-            await dialog.ShowAsync();
+                await dialog.ShowAsync();
             }
             finally
             {
@@ -999,9 +1173,22 @@ namespace IPAbuyer.Views
             }
 
             bool loading = isLoading ?? TableLoadingRing?.IsActive == true;
-            EmptySearchHintTextBlock.Visibility = !loading && _visibleResults.Count == 0
+            EmptySearchHintTextBlock.Text = ResolveEmptySearchHintText();
+            EmptySearchHintTextBlock.Visibility = !loading && _visibleResults.Length == 0
                 ? Visibility.Visible
                 : Visibility.Collapsed;
+        }
+
+        private string ResolveEmptySearchHintText()
+        {
+            if (_allResults.Count > 0)
+            {
+                return L("MainPage/EmptySearchHint/FilterEmpty");
+            }
+
+            return _hasCompletedSearch
+                ? L("MainPage/EmptySearchHint/SearchEmpty")
+                : L("MainPage/EmptySearchHint/Initial");
         }
 
         private void EnsureHomeLogScrollToBottom()
@@ -1057,6 +1244,7 @@ namespace IPAbuyer.Views
         private void ClearSearchCache()
         {
             _allResults.Clear();
+            _hasCompletedSearch = false;
             if (ResultList != null)
             {
                 SetResultListItemsSource(null);

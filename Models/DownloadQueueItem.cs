@@ -1,7 +1,6 @@
-using System;
+using Microsoft.Windows.ApplicationModel.Resources;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using Microsoft.Windows.ApplicationModel.Resources;
 
 namespace IPAbuyer.Models
 {

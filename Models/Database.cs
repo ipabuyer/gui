@@ -1,7 +1,5 @@
-using System;
-using System.Diagnostics;
-using System.IO;
 using Microsoft.Windows.ApplicationModel.Resources;
+using System.Diagnostics;
 using Windows.ApplicationModel;
 using Windows.Storage;
 

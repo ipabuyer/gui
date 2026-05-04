@@ -1,15 +1,8 @@
-using System;
-using System.Collections.Generic;
+using Microsoft.Windows.ApplicationModel.Resources;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Windows.ApplicationModel.Resources;
 
 namespace IPAbuyer.Common
 {
@@ -586,12 +579,12 @@ namespace IPAbuyer.Common
                 string trimmed = text.Trim();
                 if (JsonPayload.TryParseToken(trimmed, out var token))
                 {
-                    if (JsonPayload.TryReadString(token!, out string? error, "error") && !string.IsNullOrWhiteSpace(error))
+                    if (JsonPayload.TryReadString(token, out string? error, "error") && !string.IsNullOrWhiteSpace(error))
                     {
                         return LF("Ipatool/Error/ReadableJsonError", error, exitCode);
                     }
 
-                    if (JsonPayload.TryReadString(token!, out string? message, "message") && !string.IsNullOrWhiteSpace(message))
+                    if (JsonPayload.TryReadString(token, out string? message, "message") && !string.IsNullOrWhiteSpace(message))
                     {
                         return LF("Ipatool/Error/ReadableJsonError", message, exitCode);
                     }

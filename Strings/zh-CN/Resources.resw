@@ -358,13 +358,13 @@
     <value>全部</value>
   </data>
   <data name="MainPage/Filter/OnlyNotPurchasedItem.Content" xml:space="preserve">
-    <value>仅未购买</value>
+    <value>未购买</value>
   </data>
   <data name="MainPage/Filter/OnlyPurchasedItem.Content" xml:space="preserve">
-    <value>仅已购买</value>
+    <value>已购买</value>
   </data>
   <data name="MainPage/Filter/OnlyOwnedItem.Content" xml:space="preserve">
-    <value>仅已拥有</value>
+    <value>已拥有</value>
   </data>
   <data name="MainPage/Header/NameButton.Content" xml:space="preserve">
     <value>App名称</value>
@@ -400,10 +400,13 @@
     <value>标记为已拥有</value>
   </data>
   <data name="MainPage/Context/CopyNameItem.Text" xml:space="preserve">
-    <value>复制App名称</value>
+    <value>复制 App 名称</value>
   </data>
   <data name="MainPage/Context/CopyIdItem.Text" xml:space="preserve">
-    <value>复制ID</value>
+    <value>复制 App ID</value>
+  </data>
+  <data name="MainPage/Context/OpenAppStoreItem.Text" xml:space="preserve">
+    <value>在 App Store 中查看</value>
   </data>
   <data name="MainPage/Context/CopyVersionItem.Text" xml:space="preserve">
     <value>复制版本号</value>
@@ -497,6 +500,15 @@
   </data>
   <data name="MainPage/Log/CopyFieldSuccess" xml:space="preserve">
     <value>已复制{0}，共 {1} 项。</value>
+  </data>
+  <data name="MainPage/Log/AppStoreMissingId" xml:space="preserve">
+    <value>无法打开 App Store：缺少 App Store ID。</value>
+  </data>
+  <data name="MainPage/Log/AppStoreOpened" xml:space="preserve">
+    <value>已打开 App Store：{0}。</value>
+  </data>
+  <data name="MainPage/Log/AppStoreOpenFailed" xml:space="preserve">
+    <value>打开 App Store 失败：{0}</value>
   </data>
   <data name="MainPage/Log/FilterChanged" xml:space="preserve">
     <value>切换筛选: {0}</value>
@@ -1064,5 +1076,14 @@
   </data>
   <data name="MainPage/EmptySearchHintTextBlock.Text" xml:space="preserve">
     <value>请在搜索框搜索应用</value>
+  </data>
+  <data name="MainPage/EmptySearchHint/Initial" xml:space="preserve">
+    <value>请在搜索框搜索应用</value>
+  </data>
+  <data name="MainPage/EmptySearchHint/SearchEmpty" xml:space="preserve">
+    <value>未找到匹配的应用</value>
+  </data>
+  <data name="MainPage/EmptySearchHint/FilterEmpty" xml:space="preserve">
+    <value>当前筛选下没有应用</value>
   </data>
 </root>

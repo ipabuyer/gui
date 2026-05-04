@@ -1,8 +1,5 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Windows.ApplicationModel.Resources;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
 
 namespace IPAbuyer.Common
 {
@@ -84,9 +81,9 @@ namespace IPAbuyer.Common
 
         private static LoginResult InterpretPayload(string payload, bool isTwoFactor)
         {
-            foreach (JToken token in JsonPayload.EnumerateTokens(payload))
+            foreach (JsonElement token in JsonPayload.EnumerateTokens(payload))
             {
-                string segment = token.ToString(Newtonsoft.Json.Formatting.None);
+                string segment = token.GetRawText();
                 var result = InterpretJsonSegment(token, segment, isTwoFactor);
                 if (result != null)
                 {
@@ -102,7 +99,7 @@ namespace IPAbuyer.Common
             return ClassifyFailure(payload, payload, isTwoFactor);
         }
 
-        private static LoginResult? InterpretJsonSegment(JToken root, string segment, bool isTwoFactor)
+        private static LoginResult? InterpretJsonSegment(JsonElement root, string segment, bool isTwoFactor)
         {
             if (JsonPayload.TryReadBoolean(root, "success", out bool success))
             {
@@ -133,7 +130,7 @@ namespace IPAbuyer.Common
             return null;
         }
 
-        private static string ExtractErrorMessage(JToken root)
+        private static string ExtractErrorMessage(JsonElement root)
         {
             if (JsonPayload.TryReadString(root, out string? message, "error", "message", "reason"))
             {
