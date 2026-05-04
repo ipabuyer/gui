@@ -20,6 +20,7 @@ namespace IPAbuyer.Views
         private static readonly ResourceLoader Loader = new();
         private bool _isInitializingDetailedLogOption;
         private bool _isInitializingOwnedCheckOption;
+        private bool _isInitializingPassphraseRotationOption;
 
         public Settings()
         {
@@ -28,6 +29,7 @@ namespace IPAbuyer.Views
             InitializeDownloadDirectory();
             InitializeDetailedIpatoolLogOption();
             InitializeOwnedCheckOption();
+            InitializeKeychainPassphraseRotationOption();
         }
 
         private void GithubButton(object sender, RoutedEventArgs e)
@@ -440,6 +442,34 @@ namespace IPAbuyer.Views
             }
 
             KeychainConfig.SaveOwnedCheckEnabled(OwnedCheckBox.IsOn);
+        }
+
+        private void InitializeKeychainPassphraseRotationOption()
+        {
+            if (KeychainPassphraseRotationCheckBox == null)
+            {
+                return;
+            }
+
+            _isInitializingPassphraseRotationOption = true;
+            try
+            {
+                KeychainPassphraseRotationCheckBox.IsOn = KeychainConfig.GetKeychainPassphraseRotationEnabled();
+            }
+            finally
+            {
+                _isInitializingPassphraseRotationOption = false;
+            }
+        }
+
+        private void KeychainPassphraseRotationCheckBox_Toggled(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializingPassphraseRotationOption)
+            {
+                return;
+            }
+
+            KeychainConfig.SaveKeychainPassphraseRotationEnabled(KeychainPassphraseRotationCheckBox.IsOn);
         }
 
         private static string? ResolveBundledIpatoolPath()

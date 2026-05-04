@@ -241,6 +241,24 @@ namespace IPAbuyer.Common
             }
         }
 
+        public static bool GetKeychainPassphraseRotationEnabled()
+        {
+            lock (SyncRoot)
+            {
+                return LoadSettingsInternal().KeychainPassphraseRotationEnabled;
+            }
+        }
+
+        public static void SaveKeychainPassphraseRotationEnabled(bool enabled)
+        {
+            lock (SyncRoot)
+            {
+                var settings = LoadSettingsInternal();
+                settings.KeychainPassphraseRotationEnabled = enabled;
+                SaveSettingsInternal(settings);
+            }
+        }
+
         public static bool IsValidCountryCode(string? code)
         {
             if (string.IsNullOrWhiteSpace(code))
@@ -435,6 +453,11 @@ namespace IPAbuyer.Common
                     {
                         model.OwnedCheckEnabled = ownedCheckValue;
                     }
+
+                    if (TryReadBooleanProperty(root, out bool rotationValue, "keychain_passphrase_rotation", "KeychainPassphraseRotationEnabled"))
+                    {
+                        model.KeychainPassphraseRotationEnabled = rotationValue;
+                    }
                 }
 
                 NormalizeSettings(model);
@@ -458,7 +481,8 @@ namespace IPAbuyer.Common
                 ["country"] = settings.CountryCode,
                 ["download_dir"] = settings.DownloadDirectory,
                 ["verbose"] = settings.DetailedIpatoolLogEnabled,
-                ["owned_check"] = settings.OwnedCheckEnabled
+                ["owned_check"] = settings.OwnedCheckEnabled,
+                ["keychain_passphrase_rotation"] = settings.KeychainPassphraseRotationEnabled
             };
             string json = root.ToString(Newtonsoft.Json.Formatting.Indented);
             File.WriteAllText(path, json, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
@@ -486,7 +510,8 @@ namespace IPAbuyer.Common
                 CountryCode = DefaultCountryCode,
                 DownloadDirectory = GetDefaultDownloadDirectory(),
                 DetailedIpatoolLogEnabled = false,
-                OwnedCheckEnabled = false
+                OwnedCheckEnabled = false,
+                KeychainPassphraseRotationEnabled = true
             };
         }
 
@@ -581,6 +606,8 @@ namespace IPAbuyer.Common
             public bool DetailedIpatoolLogEnabled { get; set; }
 
             public bool OwnedCheckEnabled { get; set; }
+
+            public bool KeychainPassphraseRotationEnabled { get; set; } = true;
         }
 
         private static string L(string key)

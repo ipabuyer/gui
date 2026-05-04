@@ -1,15 +1,38 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Page x:Class="IPAbuyer.Views.MainPage" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:models="using:IPAbuyer.Models" xmlns:local="using:IPAbuyer.Views" xmlns:tv="using:WinUI.TableView" mc:Ignorable="d">
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="IPAbuyer.Views.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:IPAbuyer.Views"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="using:IPAbuyer.Models"
+    mc:Ignorable="d">
     <Page.Resources>
         <CornerRadius x:Key="MainUnifiedCornerRadius">8</CornerRadius>
         <local:MainPageFreePriceVisibilityConverter x:Key="MainPageFreePriceVisibilityConverter" />
         <local:MainPageNonFreePriceVisibilityConverter x:Key="MainPageNonFreePriceVisibilityConverter" />
         <local:MainPagePurchasedForegroundConverter x:Key="MainPagePurchasedForegroundConverter" />
-        <Style x:Key="MainTableHeaderStyle" TargetType="tv:TableViewColumnHeader">
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <local:MainPageImageUriConverter x:Key="MainPageImageUriConverter" />
+        <local:MainPageAppActionTextConverter x:Key="MainPageAppActionTextConverter" />
+        <local:MainPageAppActionEnabledConverter x:Key="MainPageAppActionEnabledConverter" />
+        <Style x:Key="MainResultListViewItemStyle" TargetType="ListViewItem" BasedOn="{StaticResource DefaultListViewItemStyle}">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0,0,0,8" />
         </Style>
-        <Style x:Key="MainTableCellStyle" TargetType="tv:TableViewCell">
-            <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Style x:Key="MainFilterButtonStyle" TargetType="ToggleButton" BasedOn="{StaticResource DefaultToggleButtonStyle}">
+            <Setter Property="MinWidth" Value="96" />
+            <Setter Property="MinHeight" Value="36" />
+            <Setter Property="Padding" Value="20,0" />
+            <Setter Property="CornerRadius" Value="18" />
+        </Style>
+        <Style x:Key="MainIconButtonStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
         </Style>
     </Page.Resources>
     <Page.Background>Transparent</Page.Background>
@@ -21,129 +44,125 @@
                     <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
+
                 <Grid Grid.Row="0" ColumnSpacing="10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
-                        <Button x:Uid="MainPage/Action/BatchPurchaseButton" x:Name="BatchPurchaseButton" Click="BatchPurchaseButton_Click" />
-                        <Button x:Uid="MainPage/Action/AddToQueueButton" x:Name="AddToDownloadQueueButton" Click="AddToDownloadQueueButton_Click" />
-                        <Button x:Uid="MainPage/Action/OpenLogButton" x:Name="OpenLogButton" Click="ShowHomeLogDialog_Click" />
-                        <ComboBox x:Name="ScreeningComboBox" MinWidth="100" SelectedIndex="0" SelectionChanged="ScreeningComboBox_SelectionChanged">
-                            <ComboBoxItem x:Uid="MainPage/Filter/AllItem" x:Name="All" Tag="All"></ComboBoxItem>
-                            <ComboBoxItem x:Uid="MainPage/Filter/OnlyNotPurchasedItem" x:Name="OnlyNotPurchased" Tag="OnlyNotPurchased"></ComboBoxItem>
-                            <ComboBoxItem x:Uid="MainPage/Filter/OnlyPurchasedItem" x:Name="OnlyPurchased" Tag="OnlyPurchased"></ComboBoxItem>
-                            <ComboBoxItem x:Uid="MainPage/Filter/OnlyOwnedItem" x:Name="OnlyHad" Tag="OnlyHad"></ComboBoxItem>
-                        </ComboBox>
+                        <ToggleButton x:Uid="MainPage/Filter/AllItem" x:Name="AllFilterButton" Style="{StaticResource MainFilterButtonStyle}" Tag="All" IsChecked="True" Click="FilterButton_Click" />
+                        <ToggleButton x:Uid="MainPage/Filter/OnlyNotPurchasedItem" x:Name="OnlyNotPurchasedFilterButton" Style="{StaticResource MainFilterButtonStyle}" Tag="OnlyNotPurchased" Click="FilterButton_Click" />
+                        <ToggleButton x:Uid="MainPage/Filter/OnlyPurchasedItem" x:Name="OnlyPurchasedFilterButton" Style="{StaticResource MainFilterButtonStyle}" Tag="OnlyPurchased" Click="FilterButton_Click" />
+                        <ToggleButton x:Uid="MainPage/Filter/OnlyOwnedItem" x:Name="OnlyHadFilterButton" Style="{StaticResource MainFilterButtonStyle}" Tag="OnlyHad" Click="FilterButton_Click" />
                     </StackPanel>
-                    <Button Grid.Column="1" x:Uid="MainPage/Action/CancelAllDownloadsButton" x:Name="CancelAllDownloadsButton" Click="CancelAllDownloadsButton_Click" Visibility="Collapsed" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                        <Button
+                            x:Name="OpenLogButton"
+                            Height="36"
+                            Click="ShowHomeLogDialog_Click"
+                            Content="日志" />
+                        <Button x:Uid="MainPage/Action/CancelAllDownloadsButton" x:Name="CancelAllDownloadsButton" Click="CancelAllDownloadsButton_Click" Visibility="Collapsed" />
+                    </StackPanel>
                 </Grid>
+
                 <Grid Grid.Row="1">
-                    <tv:TableView
+                    <ListView
                         x:Name="ResultList"
-                        AutoGenerateColumns="False"
                         Background="Transparent"
-                        CanFilterColumns="False"
-                        CanReorderColumns="False"
-                        CanResizeColumns="True"
-                        CanSortColumns="True"
-                        CellStyle="{StaticResource MainTableCellStyle}"
-                        CornerButtonMode="None"
-                        GridLinesVisibility="None"
-                        HeaderGridLinesVisibility="None"
-                        HeaderRowHeight="48"
-                        HeadersVisibility="Columns"
-                        IsMultiSelectCheckBoxEnabled="False"
-                        IsReadOnly="True"
-                        RowHeight="60"
-                        RowMinHeight="52"
-                        SelectionMode="None"
-                        SelectionUnit="Row"
-                        Sorting="ResultList_Sorting"
-                        ClearSorting="ResultList_ClearSorting">
-                        <tv:TableView.RowContextFlyout>
-                            <MenuFlyout>
-                                <MenuFlyoutItem x:Uid="MainPage/Context/PurchaseItem" Click="ContextMenuPurchase_Click" />
-                                <MenuFlyoutItem x:Uid="MainPage/Context/AddToQueueItem" Click="ContextMenuAddToQueue_Click" />
-                                <MenuFlyoutSeparator />
-                                <MenuFlyoutItem x:Uid="MainPage/Context/MarkNotPurchasedItem" Click="ContextMenuMarkNotPurchased_Click" />
-                                <MenuFlyoutItem x:Uid="MainPage/Context/MarkPurchasedItem" Click="ContextMenuMarkPurchased_Click" />
-                                <MenuFlyoutItem x:Uid="MainPage/Context/MarkOwnedItem" Click="ContextMenuMarkOwned_Click" />
-                                <MenuFlyoutSeparator />
-                                <MenuFlyoutItem x:Uid="MainPage/Context/CopyNameItem" Click="ContextMenuCopyName_Click" />
-                                <MenuFlyoutItem x:Uid="MainPage/Context/CopyIdItem" Click="ContextMenuCopyId_Click" />
-                                <MenuFlyoutItem x:Uid="MainPage/Context/CopyVersionItem" Click="ContextMenuCopyVersion_Click" />
-                            </MenuFlyout>
-                        </tv:TableView.RowContextFlyout>
-                        <tv:TableView.Columns>
-                            <tv:TableViewTemplateColumn x:Name="NameColumn" Width="2*" HeaderStyle="{StaticResource MainTableHeaderStyle}" SortMemberPath="name" CanFilter="False" CanSort="True">
-                                <tv:TableViewTemplateColumn.CellTemplate>
-                                    <DataTemplate x:DataType="models:SearchResult">
-                                        <Grid HorizontalAlignment="Stretch" ColumnSpacing="8">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="24" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-                                            <Border Grid.Column="0" Width="24" Height="24" CornerRadius="{StaticResource MainUnifiedCornerRadius}" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}" BorderThickness="0.6">
-                                                <Image Width="24" Height="24" Source="{x:Bind artworkUrl}" Stretch="UniformToFill" />
-                                            </Border>
-                                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{x:Bind name}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{x:Bind name}" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </tv:TableViewTemplateColumn.CellTemplate>
-                            </tv:TableViewTemplateColumn>
-                            <tv:TableViewTemplateColumn x:Name="IdColumn" Width="*" HeaderStyle="{StaticResource MainTableHeaderStyle}" SortMemberPath="id" CanFilter="False" CanSort="True">
-                                <tv:TableViewTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock HorizontalAlignment="Left" Text="{Binding id}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding id}" />
-                                    </DataTemplate>
-                                </tv:TableViewTemplateColumn.CellTemplate>
-                            </tv:TableViewTemplateColumn>
-                            <tv:TableViewTemplateColumn x:Name="DeveloperColumn" Width="*" HeaderStyle="{StaticResource MainTableHeaderStyle}" SortMemberPath="developer" CanFilter="False" CanSort="True">
-                                <tv:TableViewTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock HorizontalAlignment="Left" Text="{Binding developer}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding developer}" />
-                                    </DataTemplate>
-                                </tv:TableViewTemplateColumn.CellTemplate>
-                            </tv:TableViewTemplateColumn>
-                            <tv:TableViewTemplateColumn x:Name="VersionColumn" Width="*" HeaderStyle="{StaticResource MainTableHeaderStyle}" SortMemberPath="version" CanFilter="False" CanSort="True">
-                                <tv:TableViewTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock HorizontalAlignment="Left" Text="{Binding version}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding version}" />
-                                    </DataTemplate>
-                                </tv:TableViewTemplateColumn.CellTemplate>
-                            </tv:TableViewTemplateColumn>
-                            <tv:TableViewTemplateColumn x:Name="PriceColumn" Width="*" HeaderStyle="{StaticResource MainTableHeaderStyle}" SortMemberPath="price" CanFilter="False" CanSort="True">
-                                <tv:TableViewTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Grid HorizontalAlignment="Left">
-                                            <TextBlock Text="{Binding price}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding price}" Visibility="{Binding price, Converter={StaticResource MainPageFreePriceVisibilityConverter}}" />
-                                            <TextBlock Text="{Binding price}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding price}" Foreground="{ThemeResource SystemFillColorCriticalBrush}" Visibility="{Binding price, Converter={StaticResource MainPageNonFreePriceVisibilityConverter}}" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </tv:TableViewTemplateColumn.CellTemplate>
-                            </tv:TableViewTemplateColumn>
-                            <tv:TableViewTemplateColumn x:Name="PurchasedColumn" Width="*" HeaderStyle="{StaticResource MainTableHeaderStyle}" SortMemberPath="purchased" CanFilter="False" CanSort="True">
-                                <tv:TableViewTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBlock HorizontalAlignment="Left" Text="{Binding purchased}" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding purchased}" Foreground="{Binding purchased, Converter={StaticResource MainPagePurchasedForegroundConverter}}" />
-                                    </DataTemplate>
-                                </tv:TableViewTemplateColumn.CellTemplate>
-                            </tv:TableViewTemplateColumn>
-                        </tv:TableView.Columns>
-                    </tv:TableView>
+                        IsItemClickEnabled="False"
+                        ItemContainerStyle="{StaticResource MainResultListViewItemStyle}"
+                        Margin="0,0,-12,0"
+                        Padding="0,0,12,0"
+                        SelectionMode="None">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="models:SearchResult">
+                                <controls:SettingsCard
+                                    HorizontalAlignment="Stretch"
+                                    Description="{x:Bind developer, Mode=OneWay}"
+                                    Header="{x:Bind name, Mode=OneWay}">
+                                    <controls:SettingsCard.HeaderIcon>
+                                        <BitmapIcon
+                                            Width="64"
+                                            Height="64"
+                                            ShowAsMonochrome="False"
+                                            UriSource="{Binding artworkUrl, Converter={StaticResource MainPageImageUriConverter}}" />
+                                    </controls:SettingsCard.HeaderIcon>
+                                    <Grid ColumnSpacing="18" VerticalAlignment="Center">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="140" />
+                                            <ColumnDefinition Width="140" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock
+                                            Grid.Column="0"
+                                            VerticalAlignment="Center"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="{x:Bind version, Mode=OneWay}"
+                                            TextTrimming="CharacterEllipsis"
+                                            ToolTipService.ToolTip="{x:Bind version, Mode=OneWay}" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            VerticalAlignment="Center"
+                                            Foreground="{Binding purchased, Converter={StaticResource MainPagePurchasedForegroundConverter}}"
+                                            Text="{x:Bind purchased, Mode=OneWay}"
+                                            TextTrimming="CharacterEllipsis"
+                                            ToolTipService.ToolTip="{x:Bind purchased, Mode=OneWay}" />
+                                        <Button
+                                            Grid.Column="2"
+                                            MinWidth="96"
+                                            Click="AppActionButton_Click"
+                                            Content="{Binding purchased, Converter={StaticResource MainPageAppActionTextConverter}}"
+                                            IsEnabled="{Binding purchased, Converter={StaticResource MainPageAppActionEnabledConverter}}" />
+                                        <Button
+                                            Grid.Column="3"
+                                            Style="{StaticResource MainIconButtonStyle}"
+                                            Width="36"
+                                            Height="36"
+                                            HorizontalAlignment="Right">
+                                            <Button.Content>
+                                                <FontIcon FontSize="16" Glyph="&#xE712;" />
+                                            </Button.Content>
+                                            <Button.Flyout>
+                                                <MenuFlyout>
+                                                    <MenuFlyoutItem x:Uid="MainPage/Context/MarkNotPurchasedItem" Click="ContextMenuMarkNotPurchased_Click" />
+                                                    <MenuFlyoutItem x:Uid="MainPage/Context/MarkPurchasedItem" Click="ContextMenuMarkPurchased_Click" />
+                                                    <MenuFlyoutItem x:Uid="MainPage/Context/MarkOwnedItem" Click="ContextMenuMarkOwned_Click" />
+                                                    <MenuFlyoutSeparator />
+                                                    <MenuFlyoutItem x:Uid="MainPage/Context/CopyNameItem" Click="ContextMenuCopyName_Click" />
+                                                    <MenuFlyoutItem x:Uid="MainPage/Context/CopyVersionItem" Click="ContextMenuCopyVersion_Click" />
+                                                </MenuFlyout>
+                                            </Button.Flyout>
+                                        </Button>
+                                    </Grid>
+                                </controls:SettingsCard>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <TextBlock
+                        x:Name="EmptySearchHintTextBlock"
+                        x:Uid="MainPage/EmptySearchHintTextBlock"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="18"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        IsHitTestVisible="False"
+                        Visibility="Visible" />
+
                     <ProgressRing
                         x:Name="TableLoadingRing"
                         Width="44"
                         Height="44"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
+                        Canvas.ZIndex="10"
                         IsActive="False"
                         IsHitTestVisible="False"
-                        Visibility="Collapsed"
-                        Canvas.ZIndex="10" />
+                        Visibility="Collapsed" />
                 </Grid>
+
                 <InfoBar x:Name="HomeStatusInfoBar" Grid.Row="2" IsOpen="False" IsClosable="True" Severity="Informational" />
             </Grid>
         </Grid>

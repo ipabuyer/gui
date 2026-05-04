@@ -97,18 +97,18 @@ namespace IPAbuyer.Views
             {
                 if (_isTwoFactorPending)
                 {
-                    AppendLoginLog(L("LoginPage/Log/StartVerifyTwoFactor"));
+                    AppendLoginLog(L("LoginPage/Log/StartVerifyTwoFactor"), UiLogLevel.Info);
                     await ValidateAuthCodeAsync();
                     return;
                 }
 
-                AppendLoginLog(L("LoginPage/Log/StartLogin"));
+                AppendLoginLog(L("LoginPage/Log/StartLogin"), UiLogLevel.Info);
                 await TriggerLoginAsync();
             }
             catch (Exception ex)
             {
                 ShowError(LF("LoginPage/Status/LoginFlowException", ex.Message));
-                AppendLoginLog(LF("LoginPage/Log/LoginFlowException", ex.Message));
+                AppendLoginLog(LF("LoginPage/Log/LoginFlowException", ex.Message), UiLogLevel.Error);
                 RestoreIdleState();
             }
         }
@@ -157,28 +157,28 @@ namespace IPAbuyer.Views
                         SessionState.SetLoginState(activeAccount, true);
                         ApplyOperationLock(true);
                         ShowSuccess(L("LoginPage/Status/AuthInfoSuccess"));
-                        AppendLoginLog(LF("LoginPage/Log/AuthInfoSuccess", activeAccount));
+                        AppendLoginLog(LF("LoginPage/Log/AuthInfoSuccess", activeAccount), UiLogLevel.Success);
                     }
                     else
                     {
                         SessionState.Reset();
                         ApplyOperationLock(false);
                         ShowError(L("LoginPage/Status/AuthInfoEmailMissing"));
-                        AppendLoginLog(L("LoginPage/Log/AuthInfoEmailMissing"));
+                        AppendLoginLog(L("LoginPage/Log/AuthInfoEmailMissing"), UiLogLevel.Error);
                     }
                 }
                 else
                 {
                     ApplyOperationLock(wasLoggedIn);
                     ShowError(string.IsNullOrWhiteSpace(result.OutputOrError) ? L("LoginPage/Status/AuthInfoFailed") : result.OutputOrError);
-                    AppendLoginLog(L("LoginPage/Log/AuthInfoFailed"));
+                    AppendLoginLog(L("LoginPage/Log/AuthInfoFailed"), UiLogLevel.Error);
                 }
             }
             catch (Exception ex)
             {
                 ApplyOperationLock(wasLoggedIn);
                 ShowError(LF("LoginPage/Status/AuthInfoException", ex.Message));
-                AppendLoginLog(LF("LoginPage/Log/AuthInfoException", ex.Message));
+                AppendLoginLog(LF("LoginPage/Log/AuthInfoException", ex.Message), UiLogLevel.Error);
             }
             finally
             {
@@ -207,27 +207,32 @@ namespace IPAbuyer.Views
                 if (result.IsSuccessResponse)
                 {
                     SessionState.Reset();
-                    _passphrase = KeychainConfig.RotateDefaultPassphrase();
-                    if (PassphraseInput != null)
+                    if (KeychainConfig.GetKeychainPassphraseRotationEnabled())
                     {
-                        PassphraseInput.Text = _passphrase;
+                        _passphrase = KeychainConfig.RotateDefaultPassphrase();
+                        if (PassphraseInput != null)
+                        {
+                            PassphraseInput.Text = _passphrase;
+                        }
+
+                        AppendLoginLog(L("LoginPage/Log/PassphraseRotated"), UiLogLevel.Success);
                     }
+
                     HideInlineTwoFactor();
                     ApplyOperationLock(false);
                     ShowSuccess(L("LoginPage/Status/LogoutSuccess"));
-                    AppendLoginLog(LF("LoginPage/Log/LogoutSuccess", account));
-                    AppendLoginLog(L("LoginPage/Log/PassphraseRotated"));
+                    AppendLoginLog(LF("LoginPage/Log/LogoutSuccess", account), UiLogLevel.Success);
                 }
                 else
                 {
                     ShowError(string.IsNullOrWhiteSpace(result.OutputOrError) ? L("LoginPage/Status/LogoutFailed") : result.OutputOrError);
-                    AppendLoginLog(LF("LoginPage/Log/LogoutFailed", account));
+                    AppendLoginLog(LF("LoginPage/Log/LogoutFailed", account), UiLogLevel.Error);
                 }
             }
             catch (Exception ex)
             {
                 ShowError(LF("LoginPage/Status/LogoutException", ex.Message));
-                AppendLoginLog(LF("LoginPage/Log/LogoutException", ex.Message));
+                AppendLoginLog(LF("LoginPage/Log/LogoutException", ex.Message), UiLogLevel.Error);
             }
             finally
             {
@@ -324,7 +329,7 @@ namespace IPAbuyer.Views
             {
                 hasLocalValidationIssue = true;
                 ShowError(L("LoginPage/Status/RequiredFieldsEmpty"));
-                AppendLoginLog(L("LoginPage/Log/RequiredFieldsEmpty"));
+                AppendLoginLog(L("LoginPage/Log/RequiredFieldsEmpty"), UiLogLevel.Error);
 
                 if (!hasAccount)
                 {
@@ -359,14 +364,14 @@ namespace IPAbuyer.Views
             catch (OperationCanceledException)
             {
                 DisposeCurrentOperation();
-                AppendLoginLog(L("LoginPage/Log/LoginCanceled"));
+                AppendLoginLog(L("LoginPage/Log/LoginCanceled"), UiLogLevel.Tip);
                 RestoreIdleState();
             }
             catch (Exception ex)
             {
                 DisposeCurrentOperation();
                 ShowError(LF("LoginPage/Status/LoginException", ex.Message));
-                AppendLoginLog(LF("LoginPage/Log/LoginException", ex.Message));
+                AppendLoginLog(LF("LoginPage/Log/LoginException", ex.Message), UiLogLevel.Error);
                 RestoreIdleState();
             }
         }
@@ -392,7 +397,7 @@ namespace IPAbuyer.Views
             if (string.IsNullOrWhiteSpace(authCode))
             {
                 authCode = "000000";
-                AppendLoginLog(L("LoginPage/Log/EmptyAuthCodeUsesDefault"));
+                AppendLoginLog(L("LoginPage/Log/EmptyAuthCodeUsesDefault"), UiLogLevel.Tip);
             }
 
             HideAuthMessage();
@@ -412,7 +417,7 @@ namespace IPAbuyer.Views
             catch (OperationCanceledException)
             {
                 DisposeCurrentOperation();
-                AppendLoginLog(L("LoginPage/Log/CodeValidationCanceled"));
+                AppendLoginLog(L("LoginPage/Log/CodeValidationCanceled"), UiLogLevel.Tip);
                 RestoreIdleState();
                 return false;
             }
@@ -420,7 +425,7 @@ namespace IPAbuyer.Views
             {
                 DisposeCurrentOperation();
                 ShowAuthError(LF("LoginPage/Status/VerifyException", ex.Message));
-                AppendLoginLog(LF("LoginPage/Log/CodeValidationException", ex.Message));
+                AppendLoginLog(LF("LoginPage/Log/CodeValidationException", ex.Message), UiLogLevel.Error);
                 RestoreIdleState();
                 return false;
             }
@@ -428,7 +433,7 @@ namespace IPAbuyer.Views
             if (result.Status == LoginStatus.AuthCodeInvalid)
             {
                 ShowAuthError(L("LoginPage/Status/AuthCodeInvalid"));
-                AppendLoginLog(L("LoginPage/Log/CodeValidationInvalid"));
+                AppendLoginLog(L("LoginPage/Log/CodeValidationInvalid"), UiLogLevel.Error);
                 CodeTextBox.Password = string.Empty;
                 CodeTextBox.Focus(FocusState.Programmatic);
                 RestoreIdleState();
@@ -438,7 +443,7 @@ namespace IPAbuyer.Views
             if (result.Status == LoginStatus.Timeout)
             {
                 ShowAuthError(result.Message);
-                AppendLoginLog(L("LoginPage/Log/CodeValidationTimeout"));
+                AppendLoginLog(L("LoginPage/Log/CodeValidationTimeout"), UiLogLevel.Error);
                 CodeTextBox.Focus(FocusState.Programmatic);
                 RestoreIdleState();
                 return false;
@@ -447,13 +452,13 @@ namespace IPAbuyer.Views
             if (!result.IsSuccess)
             {
                 ShowAuthError(string.IsNullOrWhiteSpace(result.Message) ? L("LoginPage/Status/VerifyFailedRetry") : result.Message);
-                AppendLoginLog(L("LoginPage/Log/CodeValidationFailed"));
+                AppendLoginLog(L("LoginPage/Log/CodeValidationFailed"), UiLogLevel.Error);
                 RestoreIdleState();
                 return false;
             }
 
             await OnLoginSuccessAsync();
-            AppendLoginLog(L("LoginPage/Log/CodeValidationSuccess"));
+            AppendLoginLog(L("LoginPage/Log/CodeValidationSuccess"), UiLogLevel.Success);
             return true;
         }
 
@@ -462,12 +467,12 @@ namespace IPAbuyer.Views
             switch (result.Status)
             {
                 case LoginStatus.Success:
-                    AppendLoginLog(L("LoginPage/Log/LoginSuccess"));
+                    AppendLoginLog(L("LoginPage/Log/LoginSuccess"), UiLogLevel.Success);
                     await OnLoginSuccessAsync();
                     break;
 
                 case LoginStatus.RequiresTwoFactor:
-                    AppendLoginLog(L("LoginPage/Log/TwoFactorRequired"));
+                    AppendLoginLog(L("LoginPage/Log/TwoFactorRequired"), UiLogLevel.Tip);
                     ShowInlineTwoFactor(result.Message);
                     RestoreIdleState();
                     break;
@@ -477,7 +482,7 @@ namespace IPAbuyer.Views
                 case LoginStatus.UnknownError:
                 case LoginStatus.Timeout:
                     ShowError(result.Message);
-                    AppendLoginLog(LF("LoginPage/Log/LoginFailed", result.Message));
+                    AppendLoginLog(LF("LoginPage/Log/LoginFailed", result.Message), UiLogLevel.Error);
                     RestoreIdleState();
                     break;
 
@@ -490,7 +495,7 @@ namespace IPAbuyer.Views
                     {
                         ShowError(result.Message);
                     }
-                    AppendLoginLog(LF("LoginPage/Log/LoginFailed", result.Message));
+                    AppendLoginLog(LF("LoginPage/Log/LoginFailed", result.Message), UiLogLevel.Error);
                     RestoreIdleState();
                     break;
             }
@@ -590,31 +595,31 @@ namespace IPAbuyer.Views
         private void ShowInfo(string message)
         {
             ShowStatus(message, InfoBarSeverity.Informational);
-            AppendLoginLog(message);
+            AppendLoginLog(message, UiLogLevel.Info);
         }
 
         private void ShowError(string message)
         {
             ShowStatus(message, InfoBarSeverity.Error);
-            AppendLoginLog(LF("LoginPage/Log/ErrorPrefixFormat", message));
+            AppendLoginLog(LF("LoginPage/Log/ErrorPrefixFormat", message), UiLogLevel.Error);
         }
 
         private void ShowSuccess(string message)
         {
             ShowStatus(message, InfoBarSeverity.Success);
-            AppendLoginLog(LF("LoginPage/Log/SuccessPrefixFormat", message));
+            AppendLoginLog(LF("LoginPage/Log/SuccessPrefixFormat", message), UiLogLevel.Success);
         }
 
         private void ShowAuthError(string message)
         {
             ShowStatus(message, InfoBarSeverity.Error);
-            AppendLoginLog(LF("LoginPage/Log/AuthErrorPrefixFormat", message));
+            AppendLoginLog(LF("LoginPage/Log/AuthErrorPrefixFormat", message), UiLogLevel.Error);
         }
 
         private void ShowAuthWarning(string message)
         {
             ShowStatus(message, InfoBarSeverity.Warning);
-            AppendLoginLog(LF("LoginPage/Log/AuthWarningPrefixFormat", message));
+            AppendLoginLog(LF("LoginPage/Log/AuthWarningPrefixFormat", message), UiLogLevel.Tip);
         }
 
         private void HideAuthMessage()
@@ -664,7 +669,7 @@ namespace IPAbuyer.Views
             ApplyOperationLock(true);
             DisposeCurrentOperation();
             ShowSuccess(L("LoginPage/Status/LoginSuccess"));
-            AppendLoginLog(LF("LoginPage/Log/LoginAccount", _account));
+            AppendLoginLog(LF("LoginPage/Log/LoginAccount", _account), UiLogLevel.Success);
             return Task.CompletedTask;
         }
 
@@ -689,7 +694,7 @@ namespace IPAbuyer.Views
                     FileName = "https://account.apple.com/",
                     UseShellExecute = true
                 });
-                AppendLoginLog(L("LoginPage/Log/AppleAccountSiteOpened"));
+                AppendLoginLog(L("LoginPage/Log/AppleAccountSiteOpened"), UiLogLevel.Success);
             }
             catch (Exception ex)
             {
@@ -732,7 +737,7 @@ namespace IPAbuyer.Views
             string text = _loginLogBuilder.ToString();
             if (string.IsNullOrWhiteSpace(text))
             {
-                AppendLoginLog(L("LoginPage/Log/CopyEmptyLog"));
+                AppendLoginLog(L("LoginPage/Log/CopyEmptyLog"), UiLogLevel.Tip);
                 return;
             }
 
@@ -740,24 +745,24 @@ namespace IPAbuyer.Views
             package.SetText(text);
             Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
             Windows.ApplicationModel.DataTransfer.Clipboard.Flush();
-            AppendLoginLog(L("LoginPage/Log/CopiedToClipboard"));
+            AppendLoginLog(L("LoginPage/Log/CopiedToClipboard"), UiLogLevel.Success);
         }
 
         private void ClearLoginLog()
         {
             _loginLogBuilder.Clear();
             _loginLogEntries.Clear();
-            AppendLoginLog(L("LoginPage/Log/Cleared"));
+            AppendLoginLog(L("LoginPage/Log/Cleared"), UiLogLevel.Info);
         }
 
-        private void AppendLoginLog(string message, UiLogSource source = UiLogSource.App)
+        private void AppendLoginLog(string message, UiLogLevel level, UiLogSource source = UiLogSource.App)
         {
             if (string.IsNullOrWhiteSpace(message))
             {
                 return;
             }
 
-            UiLogEntry entry = UiLogFormatter.Build(message, source);
+            UiLogEntry entry = UiLogFormatter.Build(message, level);
             _loginLogEntries.Add(entry);
             if (_loginLogEntries.Count > MaxLogLines)
             {
@@ -814,7 +819,7 @@ namespace IPAbuyer.Views
         {
             DispatcherQueue.TryEnqueue(() =>
             {
-                AppendLoginLog(command, UiLogSource.Ipatool);
+                AppendLoginLog(command, UiLogLevel.Ipatool, UiLogSource.Ipatool);
             });
         }
 
@@ -822,7 +827,7 @@ namespace IPAbuyer.Views
         {
             DispatcherQueue.TryEnqueue(() =>
             {
-                AppendLoginLog(line, UiLogSource.Ipatool);
+                AppendLoginLog(line, UiLogLevel.Ipatool, UiLogSource.Ipatool);
             });
         }
 

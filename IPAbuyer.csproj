@@ -33,6 +33,7 @@
         <RepositoryUrl>https://github.com/ipabuyer/gui</RepositoryUrl>
         <Copyright>Copyright © 2025-2026 IPAbuyer. 保留所有权利。</Copyright>
         <PackageProjectUrl>https://github.com/ipabuyer/gui</PackageProjectUrl>
+        <GenerateTemporaryStoreCertificate>True</GenerateTemporaryStoreCertificate>
     </PropertyGroup>
 
     <ItemGroup>
@@ -48,7 +49,6 @@
         <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.0.1" />
         <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1839" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-        <PackageReference Include="WinUI.TableView" Version="1.4.1" />
 
         <Manifest Include="$(ApplicationManifest)" />
 
@@ -101,15 +101,15 @@
         <ApplicationIcon>Assets\Icon.ico</ApplicationIcon>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-      <NoWarn>IL2104</NoWarn>
+      <NoWarn></NoWarn>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
-      <NoWarn>IL2104</NoWarn>
+      <NoWarn></NoWarn>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-      <NoWarn>IL2104</NoWarn>
+      <NoWarn></NoWarn>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
-      <NoWarn>IL2104</NoWarn>
+      <NoWarn></NoWarn>
     </PropertyGroup>
 </Project>
