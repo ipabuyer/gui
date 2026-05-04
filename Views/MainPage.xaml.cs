@@ -38,12 +38,6 @@ namespace IPAbuyer.Views
         private static readonly string[] PurchasedAliases = { StatusPurchased };
         private static readonly string[] OwnedAliases = { StatusOwned };
         private static readonly string[] CanPurchaseAliases = { L("Common/Status/CanPurchase"), StatusCanPurchase };
-        private static readonly string NameHeaderBase = L("MainPage/Header/NameButton/Content");
-        private static readonly string IdHeaderBase = L("MainPage/Header/IdButton/Content");
-        private static readonly string DeveloperHeaderBase = L("MainPage/Header/DeveloperButton/Content");
-        private static readonly string VersionHeaderBase = L("MainPage/Header/VersionButton/Content");
-        private static readonly string PriceHeaderBase = L("MainPage/Header/PriceButton/Content");
-        private static readonly string PurchasedHeaderBase = L("MainPage/Header/PurchasedButton/Content");
         private const int MaxLogLines = 1000;
 
         public int SearchLimitNum { get; set; } = 200;
@@ -51,23 +45,7 @@ namespace IPAbuyer.Views
         public MainPage()
         {
             InitializeComponent();
-            InitializeResultColumns();
             NavigationCacheMode = Microsoft.UI.Xaml.Navigation.NavigationCacheMode.Enabled;
-        }
-
-        private void InitializeResultColumns()
-        {
-            if (NameColumn == null)
-            {
-                return;
-            }
-
-            NameColumn.Header = NameHeaderBase;
-            IdColumn.Header = IdHeaderBase;
-            DeveloperColumn.Header = DeveloperHeaderBase;
-            VersionColumn.Header = VersionHeaderBase;
-            PriceColumn.Header = PriceHeaderBase;
-            PurchasedColumn.Header = PurchasedHeaderBase;
         }
 
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
@@ -196,99 +174,24 @@ namespace IPAbuyer.Views
             }
         }
 
-        private async void BatchPurchaseButton_Click(object sender, RoutedEventArgs e)
+        private async void AppActionButton_Click(object sender, RoutedEventArgs e)
         {
-            if (ResultList == null)
+            if (sender is not FrameworkElement { DataContext: SearchResult app })
             {
                 return;
             }
 
-            var selectedApps = ResultList.SelectedItems.OfType<SearchResult>().ToList();
-            if (selectedApps.Count == 0)
+            if (IsPurchasedStatus(app.purchased) || IsOwnedStatus(app.purchased))
             {
-                AppendHomeLog(L("MainPage/Log/BatchPurchaseEmpty"));
+                await AddSingleAppToDownloadQueueAsync(app);
                 return;
             }
 
-            if (BatchPurchaseButton != null)
-            {
-                BatchPurchaseButton.IsEnabled = false;
-            }
             SetTableLoading(true);
 
             try
             {
-                AppendHomeLog(LF("MainPage/Log/BatchPurchaseStarted", selectedApps.Count));
-                bool executed = await PurchaseAppsAsync(selectedApps);
-                if (executed)
-                {
-                    ClearResultSelection();
-                    AppendHomeLog(L("MainPage/Log/BatchPurchaseCompleted"));
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                AppendHomeLog(L("MainPage/Log/BatchPurchaseCanceled"));
-            }
-            catch (Exception ex)
-            {
-                AppendHomeLog(LF("MainPage/Log/BatchPurchaseException", ex.Message));
-            }
-            finally
-            {
-                if (BatchPurchaseButton != null)
-                {
-                    BatchPurchaseButton.IsEnabled = true;
-                }
-                SetTableLoading(false);
-
-                ApplyFilterAndRefresh();
-            }
-        }
-
-        private async void AddToDownloadQueueButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (ResultList == null)
-            {
-                return;
-            }
-
-            int added = 0;
-            int updated = 0;
-            int ignored = 0;
-            foreach (var app in ResultList.SelectedItems.OfType<SearchResult>())
-            {
-                CountDownloadQueueAddResult(_downloadQueueService.AddOrUpdateFromSearchResult(app), ref added, ref updated, ref ignored);
-            }
-
-            if (added == 0 && updated == 0)
-            {
-                AppendHomeLog(ignored > 0 ? L("MainPage/DownloadQueue/AddSelectedIgnored") : L("MainPage/DownloadQueue/AddSelectedEmpty"));
-                return;
-            }
-
-            AppendHomeLog(BuildDownloadQueueAddSummary(added, updated));
-            await StartDownloadQueueFromMainAsync();
-        }
-
-        private async void ContextMenuPurchase_Click(object sender, RoutedEventArgs e)
-        {
-            var selectedApps = GetContextTargetApps(sender);
-            if (selectedApps.Count == 0)
-            {
-                return;
-            }
-
-            if (BatchPurchaseButton != null)
-            {
-                BatchPurchaseButton.IsEnabled = false;
-            }
-            SetTableLoading(true);
-
-            try
-            {
-                AppendHomeLog(LF("MainPage/Log/ContextPurchaseStarted", selectedApps.Count));
-                _ = await PurchaseAppsAsync(selectedApps);
+                _ = await PurchaseAppsAsync(new List<SearchResult> { app });
             }
             catch (OperationCanceledException)
             {
@@ -300,31 +203,17 @@ namespace IPAbuyer.Views
             }
             finally
             {
-                if (BatchPurchaseButton != null)
-                {
-                    BatchPurchaseButton.IsEnabled = true;
-                }
                 SetTableLoading(false);
-
                 ApplyFilterAndRefresh();
             }
         }
 
-        private async void ContextMenuAddToQueue_Click(object sender, RoutedEventArgs e)
+        private async Task AddSingleAppToDownloadQueueAsync(SearchResult app)
         {
-            var selectedApps = GetContextTargetApps(sender);
-            if (selectedApps.Count == 0)
-            {
-                return;
-            }
-
             int added = 0;
             int updated = 0;
             int ignored = 0;
-            foreach (var app in selectedApps)
-            {
-                CountDownloadQueueAddResult(_downloadQueueService.AddOrUpdateFromSearchResult(app), ref added, ref updated, ref ignored);
-            }
+            CountDownloadQueueAddResult(_downloadQueueService.AddOrUpdateFromSearchResult(app), ref added, ref updated, ref ignored);
 
             if (added == 0 && updated == 0)
             {
@@ -332,7 +221,7 @@ namespace IPAbuyer.Views
                 return;
             }
 
-            AppendHomeLog(LF("MainPage/DownloadQueue/ContextAddSummaryPrefix", BuildDownloadQueueAddSummary(added, updated)));
+            AppendHomeLog(BuildDownloadQueueAddSummary(added, updated));
             await StartDownloadQueueFromMainAsync();
         }
 
@@ -421,7 +310,6 @@ namespace IPAbuyer.Views
             bool isRunning = _downloadQueueService.IsRunning;
             CancelAllDownloadsButton.Visibility = isRunning ? Visibility.Visible : Visibility.Collapsed;
             CancelAllDownloadsButton.IsEnabled = isRunning;
-            AddToDownloadQueueButton.IsEnabled = !isRunning;
         }
 
         private SearchResult? ResolveContextItem(object sender)
@@ -449,15 +337,9 @@ namespace IPAbuyer.Views
         private List<SearchResult> GetContextTargetApps(object sender)
         {
             var contextItem = ResolveContextItem(sender);
-            if (contextItem == null || ResultList == null)
+            if (contextItem == null)
             {
                 return new List<SearchResult>();
-            }
-
-            var selectedItems = ResultList.SelectedItems.OfType<SearchResult>().ToList();
-            if (selectedItems.Count > 1 && selectedItems.Contains(contextItem))
-            {
-                return selectedItems;
             }
 
             return new List<SearchResult> { contextItem };
@@ -521,11 +403,6 @@ namespace IPAbuyer.Views
             CopyField(sender, app => app.name ?? string.Empty, L("MainPage/Field/Name"));
         }
 
-        private void ContextMenuCopyId_Click(object sender, RoutedEventArgs e)
-        {
-            CopyField(sender, app => app.id ?? string.Empty, L("MainPage/Field/Id"));
-        }
-
         private void ContextMenuCopyVersion_Click(object sender, RoutedEventArgs e)
         {
             CopyField(sender, app => app.version ?? string.Empty, L("MainPage/Field/Version"));
@@ -581,41 +458,12 @@ namespace IPAbuyer.Views
                 return;
             }
 
-            bool hasResults = results is { Count: > 0 };
-            var headersVisibility = hasResults
-                ? WinUI.TableView.TableViewHeadersVisibility.All
-                : WinUI.TableView.TableViewHeadersVisibility.Columns;
-            var selectionMode = hasResults ? ListViewSelectionMode.Multiple : ListViewSelectionMode.None;
-
-            if (ResultList.HeadersVisibility != headersVisibility)
-            {
-                ResultList.HeadersVisibility = headersVisibility;
-            }
-
-            if (ResultList.IsMultiSelectCheckBoxEnabled != hasResults)
-            {
-                ResultList.IsMultiSelectCheckBoxEnabled = hasResults;
-            }
-
-            if (ResultList.SelectionMode != selectionMode)
-            {
-                ResultList.SelectionMode = selectionMode;
-            }
-
             if (!ReferenceEquals(ResultList.ItemsSource, _visibleResults))
             {
                 ResultList.ItemsSource = _visibleResults;
             }
 
             UpdateVisibleResults(results);
-        }
-
-        private void ClearResultSelection()
-        {
-            if (ResultList?.SelectedItems.Count > 0)
-            {
-                ResultList.SelectedItems.Clear();
-            }
         }
 
         private void UpdateVisibleResults(IReadOnlyList<SearchResult>? results)
@@ -649,32 +497,6 @@ namespace IPAbuyer.Views
             {
                 _visibleResults.Add(result);
             }
-        }
-
-        private void ResultList_Sorting(object sender, WinUI.TableView.TableViewSortingEventArgs e)
-        {
-            ScrollResultListToTop();
-        }
-
-        private void ResultList_ClearSorting(object sender, WinUI.TableView.TableViewClearSortingEventArgs e)
-        {
-            ScrollResultListToTop();
-        }
-
-        private void ScrollResultListToTop()
-        {
-            if (ResultList == null)
-            {
-                return;
-            }
-
-            DispatcherQueue.TryEnqueue(() =>
-            {
-                if (_visibleResults.Count > 0)
-                {
-                    ResultList.ScrollRowIntoView(0);
-                }
-            });
         }
 
         private List<SearchResult> GetFilteredResults()
@@ -1301,6 +1123,74 @@ namespace IPAbuyer.Views
             }
 
             return null;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            throw new NotSupportedException();
+        }
+    }
+
+    public sealed class MainPageImageUriConverter : IValueConverter
+    {
+        public object? Convert(object value, Type targetType, object parameter, string language)
+        {
+            return value is string uri && Uri.TryCreate(uri, UriKind.Absolute, out Uri? result)
+                ? result
+                : null;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            throw new NotSupportedException();
+        }
+    }
+
+    public sealed class MainPageAppActionTextConverter : IValueConverter
+    {
+        private static readonly ResourceLoader Loader = new();
+        private static readonly string PurchasedText = Loader.GetString("Common/Status/Purchased");
+        private static readonly string OwnedText = Loader.GetString("Common/Status/Owned");
+        private static readonly string PurchaseBlockedText = Loader.GetString("Common/Status/PurchaseBlocked");
+
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            string? status = value as string;
+            if (IsStatus(status, PurchaseBlockedText))
+            {
+                return PurchaseBlockedText;
+            }
+
+            if (IsStatus(status, PurchasedText) || IsStatus(status, OwnedText))
+            {
+                return Loader.GetString("MainPage/Context/AddToQueueItem/Text");
+            }
+
+            return Loader.GetString("MainPage/Context/PurchaseItem/Text");
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            throw new NotSupportedException();
+        }
+
+        private static bool IsStatus(string? status, string expected)
+        {
+            return !string.IsNullOrWhiteSpace(status)
+                && status.Trim().Equals(expected, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    public sealed class MainPageAppActionEnabledConverter : IValueConverter
+    {
+        private static readonly ResourceLoader Loader = new();
+        private static readonly string PurchaseBlockedText = Loader.GetString("Common/Status/PurchaseBlocked");
+
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            string? status = value as string;
+            return string.IsNullOrWhiteSpace(status)
+                || !status.Trim().Equals(PurchaseBlockedText, StringComparison.OrdinalIgnoreCase);
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, string language)
