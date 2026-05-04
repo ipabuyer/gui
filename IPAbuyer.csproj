@@ -90,13 +90,6 @@
         </Page>
     </ItemGroup>
 
-    <ItemGroup Condition="'$(Configuration)' != 'Debug'">
-        <TrimmerRootAssembly Include="CommunityToolkit.WinUI.Controls.SettingsControls" />
-        <TrimmerRootAssembly Include="CommunityToolkit.WinUI.Helpers" />
-        <TrimmerRootAssembly Include="CommunityToolkit.WinUI.Triggers" />
-        <TrimmerRootAssembly Include="System.Text.Json" />
-    </ItemGroup>
-
     <!-- 
         Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution 
         Explorer "Package and Publish" context menu entry to be enabled for this project even if 
