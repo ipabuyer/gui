@@ -19,7 +19,6 @@ namespace IPAbuyer.Views
         private readonly List<SearchResult> _allResults = new();
         private SearchResult[] _visibleResults = Array.Empty<SearchResult>();
         private string[] _visibleResultSnapshots = Array.Empty<string>();
-        private bool[] _visibleResultChanged = Array.Empty<bool>();
         private readonly DownloadQueueService _downloadQueueService = DownloadQueueService.Instance;
         private readonly StringBuilder _homeLogBuilder = new();
         private readonly List<UiLogEntry> _homeLogEntries = new();
@@ -498,12 +497,10 @@ namespace IPAbuyer.Views
             {
                 _visibleResults = Array.Empty<SearchResult>();
                 _visibleResultSnapshots = Array.Empty<string>();
-                _visibleResultChanged = Array.Empty<bool>();
                 return;
             }
 
             string[] snapshots = results.Select(CreateSearchResultSnapshot).ToArray();
-            bool[] changed = new bool[results.Count];
             if (_visibleResults.Length == results.Count && _visibleResultSnapshots.Length == snapshots.Length)
             {
                 bool sameItems = true;
@@ -512,25 +509,18 @@ namespace IPAbuyer.Views
                     if (!ReferenceEquals(_visibleResults[i], results[i])
                         || !string.Equals(_visibleResultSnapshots[i], snapshots[i], StringComparison.Ordinal))
                     {
-                        changed[i] = true;
                         sameItems = false;
                     }
                 }
 
                 if (sameItems)
                 {
-                    _visibleResultChanged = Array.Empty<bool>();
                     return;
                 }
-            }
-            else
-            {
-                Array.Fill(changed, true);
             }
 
             _visibleResults = results.ToArray();
             _visibleResultSnapshots = snapshots;
-            _visibleResultChanged = changed;
         }
 
         private void SyncResultListItems()
