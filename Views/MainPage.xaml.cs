@@ -72,11 +72,11 @@ namespace IPAbuyer.Views
         {
             if (string.IsNullOrWhiteSpace(appName))
             {
-                AppendHomeLog(L("MainPage/Log/SearchEmptyIgnored"));
+                AppendHomeLog(L("MainPage/Log/SearchEmptyIgnored"), UiLogLevel.Tip);
                 return;
             }
 
-            AppendHomeLog(LF("MainPage/Log/SearchStarted", appName.Trim()));
+            AppendHomeLog(LF("MainPage/Log/SearchStarted", appName.Trim()), UiLogLevel.Info);
             SetTableLoading(true);
             try
             {
@@ -84,7 +84,7 @@ namespace IPAbuyer.Views
             }
             catch (Exception ex)
             {
-                AppendHomeLog(LF("MainPage/Log/SearchException", ex.Message));
+                AppendHomeLog(LF("MainPage/Log/SearchException", ex.Message), UiLogLevel.Error);
             }
             finally
             {
@@ -105,7 +105,7 @@ namespace IPAbuyer.Views
                     SetResultListItemsSource(null);
                 }
 
-                AppendHomeLog(L("MainPage/Log/SearchTimeoutOrEmpty"));
+                AppendHomeLog(L("MainPage/Log/SearchTimeoutOrEmpty"), UiLogLevel.Error);
                 return;
             }
 
@@ -162,7 +162,7 @@ namespace IPAbuyer.Views
                 }
 
                 ApplyFilterAndRefresh();
-                AppendHomeLog(LF("MainPage/Log/SearchCompleted", _allResults.Count));
+                AppendHomeLog(LF("MainPage/Log/SearchCompleted", _allResults.Count), UiLogLevel.Success);
             }
             catch (Newtonsoft.Json.JsonException)
             {
@@ -171,7 +171,7 @@ namespace IPAbuyer.Views
                     SetResultListItemsSource(null);
                 }
 
-                AppendHomeLog(L("MainPage/Log/SearchParseFailed"));
+                AppendHomeLog(L("MainPage/Log/SearchParseFailed"), UiLogLevel.Error);
             }
         }
 
@@ -196,11 +196,11 @@ namespace IPAbuyer.Views
             }
             catch (OperationCanceledException)
             {
-                AppendHomeLog(L("MainPage/Log/ContextPurchaseCanceled"));
+                AppendHomeLog(L("MainPage/Log/ContextPurchaseCanceled"), UiLogLevel.Tip);
             }
             catch (Exception ex)
             {
-                AppendHomeLog(LF("MainPage/Log/ContextPurchaseException", ex.Message));
+                AppendHomeLog(LF("MainPage/Log/ContextPurchaseException", ex.Message), UiLogLevel.Error);
             }
             finally
             {
@@ -218,11 +218,11 @@ namespace IPAbuyer.Views
 
             if (added == 0 && updated == 0)
             {
-                AppendHomeLog(ignored > 0 ? L("MainPage/DownloadQueue/AddContextIgnored") : L("MainPage/DownloadQueue/AddContextEmpty"));
+                AppendHomeLog(ignored > 0 ? L("MainPage/DownloadQueue/AddContextIgnored") : L("MainPage/DownloadQueue/AddContextEmpty"), UiLogLevel.Tip);
                 return;
             }
 
-            AppendHomeLog(BuildDownloadQueueAddSummary(added, updated));
+            AppendHomeLog(BuildDownloadQueueAddSummary(added, updated), UiLogLevel.Success);
             await StartDownloadQueueFromMainAsync();
         }
 
@@ -230,7 +230,7 @@ namespace IPAbuyer.Views
         {
             if (_downloadQueueService.IsRunning)
             {
-                AppendHomeLog(L("MainPage/DownloadQueue/AlreadyRunningContinue"));
+                AppendHomeLog(L("MainPage/DownloadQueue/AlreadyRunningContinue"), UiLogLevel.Info);
                 UpdateDownloadActionState();
                 return;
             }
@@ -242,7 +242,7 @@ namespace IPAbuyer.Views
             }
             catch (Exception ex)
             {
-                AppendHomeLog(LF("MainPage/DownloadQueue/StartFailed", ex.Message));
+                AppendHomeLog(LF("MainPage/DownloadQueue/StartFailed", ex.Message), UiLogLevel.Error);
             }
             finally
             {
@@ -297,7 +297,7 @@ namespace IPAbuyer.Views
         {
             DispatcherQueue.TryEnqueue(() =>
             {
-                AppendHomeLog(log.Message, log.Source);
+                AppendHomeLog(log.Message, log.Level, log.Source);
             });
         }
 
@@ -396,7 +396,7 @@ namespace IPAbuyer.Views
             }
 
             ApplyFilterAndRefresh();
-            AppendHomeLog(LF("MainPage/Log/MarkedStatus", selectedApps.Count, status));
+            AppendHomeLog(LF("MainPage/Log/MarkedStatus", selectedApps.Count, status), UiLogLevel.Success);
         }
 
         private void ContextMenuCopyName_Click(object sender, RoutedEventArgs e)
@@ -420,7 +420,7 @@ namespace IPAbuyer.Views
             string value = string.Join(Environment.NewLine, selectedApps.Select(selector).Where(v => !string.IsNullOrWhiteSpace(v)));
             if (string.IsNullOrWhiteSpace(value))
             {
-                AppendHomeLog(LF("MainPage/Log/CopyFieldEmpty", fieldName));
+                AppendHomeLog(LF("MainPage/Log/CopyFieldEmpty", fieldName), UiLogLevel.Tip);
                 return;
             }
 
@@ -428,7 +428,7 @@ namespace IPAbuyer.Views
             package.SetText(value);
             Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
             Windows.ApplicationModel.DataTransfer.Clipboard.Flush();
-            AppendHomeLog(LF("MainPage/Log/CopyFieldSuccess", fieldName, selectedApps.Count));
+            AppendHomeLog(LF("MainPage/Log/CopyFieldSuccess", fieldName, selectedApps.Count), UiLogLevel.Success);
         }
 
         private void FilterButton_Click(object sender, RoutedEventArgs e)
@@ -441,7 +441,7 @@ namespace IPAbuyer.Views
             _selectedFilter = selected.Tag?.ToString() ?? "All";
             UpdateFilterButtonState();
             ApplyFilterAndRefresh();
-            AppendHomeLog(LF("MainPage/Log/FilterChanged", _selectedFilter));
+            AppendHomeLog(LF("MainPage/Log/FilterChanged", _selectedFilter), UiLogLevel.Info);
         }
 
         private void UpdateFilterButtonState()
@@ -541,7 +541,7 @@ namespace IPAbuyer.Views
                 string message = SessionState.IsLoggedIn
                     ? L("MainPage/Purchase/MissingSessionEmail")
                     : L("MainPage/Purchase/LoginRequired");
-                AppendHomeLog(message);
+                AppendHomeLog(message, UiLogLevel.Error);
                 return false;
             }
 
@@ -563,7 +563,7 @@ namespace IPAbuyer.Views
 
                 if (!IsPriceFree(app.price))
                 {
-                    AppendHomeLog(LF("MainPage/Purchase/SkipNonFree", app.name ?? app.bundleId));
+                    AppendHomeLog(LF("MainPage/Purchase/SkipNonFree", app.name ?? app.bundleId), UiLogLevel.Tip);
                     continue;
                 }
 
@@ -571,7 +571,7 @@ namespace IPAbuyer.Views
                 {
                     app.purchased = StatusPurchased;
                     PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusPurchased);
-                    AppendHomeLog(LF("MainPage/Purchase/MockSuccess", app.name ?? app.bundleId));
+                    AppendHomeLog(LF("MainPage/Purchase/MockSuccess", app.name ?? app.bundleId), UiLogLevel.Success);
                     continue;
                 }
 
@@ -580,13 +580,13 @@ namespace IPAbuyer.Views
                 {
                     app.purchased = StatusOwned;
                     PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusOwned);
-                    AppendHomeLog(LF("MainPage/Purchase/OwnedDetected", app.name ?? app.bundleId));
+                    AppendHomeLog(LF("MainPage/Purchase/OwnedDetected", app.name ?? app.bundleId), UiLogLevel.Success);
                 }
                 else if (IsPurchaseSuccess(result.OutputOrError))
                 {
                     app.purchased = StatusPurchased;
                     PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusPurchased);
-                    AppendHomeLog(LF("MainPage/Purchase/Success", app.name ?? app.bundleId));
+                    AppendHomeLog(LF("MainPage/Purchase/Success", app.name ?? app.bundleId), UiLogLevel.Success);
                 }
                 else
                 {
@@ -597,11 +597,11 @@ namespace IPAbuyer.Views
                         {
                             app.purchased = StatusOwned;
                             PurchasedAppDb.SavePurchasedApp(app.bundleId, account, StatusOwned);
-                            AppendHomeLog(LF("MainPage/Purchase/OwnedMarked", app.name ?? app.bundleId));
+                            AppendHomeLog(LF("MainPage/Purchase/OwnedMarked", app.name ?? app.bundleId), UiLogLevel.Success);
                         }
                         else
                         {
-                            AppendHomeLog(LF("MainPage/Purchase/OwnedNotMarked", app.name ?? app.bundleId));
+                            AppendHomeLog(LF("MainPage/Purchase/OwnedNotMarked", app.name ?? app.bundleId), UiLogLevel.Info);
                         }
                     }
                     else
@@ -609,7 +609,7 @@ namespace IPAbuyer.Views
                         string reason = string.IsNullOrWhiteSpace(result.OutputOrError)
                             ? L("MainPage/Purchase/UnknownError")
                             : result.OutputOrError;
-                        AppendHomeLog(LF("MainPage/Purchase/Failed", app.name ?? app.bundleId, reason));
+                        AppendHomeLog(LF("MainPage/Purchase/Failed", app.name ?? app.bundleId, reason), UiLogLevel.Error);
                     }
                 }
             }
@@ -871,7 +871,7 @@ namespace IPAbuyer.Views
             string text = _homeLogBuilder.ToString();
             if (string.IsNullOrWhiteSpace(text))
             {
-                AppendHomeLog(L("MainPage/Log/CopyEmptyLog"));
+                AppendHomeLog(L("MainPage/Log/CopyEmptyLog"), UiLogLevel.Tip);
                 return;
             }
 
@@ -879,7 +879,7 @@ namespace IPAbuyer.Views
             package.SetText(text);
             Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
             Windows.ApplicationModel.DataTransfer.Clipboard.Flush();
-            AppendHomeLog(L("MainPage/Log/CopiedToClipboard"));
+            AppendHomeLog(L("MainPage/Log/CopiedToClipboard"), UiLogLevel.Success);
         }
 
         private void ClearHomeLog_Click(object sender, RoutedEventArgs e)
@@ -891,7 +891,7 @@ namespace IPAbuyer.Views
         {
             _homeLogBuilder.Clear();
             _homeLogEntries.Clear();
-            AppendHomeLog(L("MainPage/Log/Cleared"));
+            AppendHomeLog(L("MainPage/Log/Cleared"), UiLogLevel.Info);
         }
 
         private async void ShowHomeLogDialog_Click(object sender, RoutedEventArgs e)
@@ -924,14 +924,14 @@ namespace IPAbuyer.Views
             }
         }
 
-        private void AppendHomeLog(string message, UiLogSource source = UiLogSource.App)
+        private void AppendHomeLog(string message, UiLogLevel level, UiLogSource source = UiLogSource.App)
         {
             if (string.IsNullOrWhiteSpace(message))
             {
                 return;
             }
 
-            UiLogEntry entry = UiLogFormatter.Build(message, source);
+            UiLogEntry entry = UiLogFormatter.Build(message, level);
             _homeLogEntries.Add(entry);
             if (_homeLogEntries.Count > MaxLogLines)
             {
@@ -1077,7 +1077,7 @@ namespace IPAbuyer.Views
         {
             DispatcherQueue.TryEnqueue(() =>
             {
-                AppendHomeLog(command, UiLogSource.Ipatool);
+                AppendHomeLog(command, UiLogLevel.Ipatool, UiLogSource.Ipatool);
             });
         }
 
@@ -1085,7 +1085,7 @@ namespace IPAbuyer.Views
         {
             DispatcherQueue.TryEnqueue(() =>
             {
-                AppendHomeLog(line, UiLogSource.Ipatool);
+                AppendHomeLog(line, UiLogLevel.Ipatool, UiLogSource.Ipatool);
             });
         }
 

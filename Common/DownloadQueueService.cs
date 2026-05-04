@@ -73,7 +73,8 @@ namespace IPAbuyer.Common
 
                 EmitLog(requeued
                     ? LF("DownloadQueue/Log/Requeued", existing.Name, existing.BundleId)
-                    : LF("DownloadQueue/Log/Updated", existing.Name, existing.BundleId));
+                    : LF("DownloadQueue/Log/Updated", existing.Name, existing.BundleId),
+                    UiLogLevel.Success);
                 NotifyQueueChanged();
                 return requeued ? DownloadQueueAddResult.Requeued : DownloadQueueAddResult.Updated;
             }
@@ -92,7 +93,7 @@ namespace IPAbuyer.Common
             };
 
             _items.Add(item);
-            EmitLog(LF("DownloadQueue/Log/Added", item.Name, item.BundleId));
+            EmitLog(LF("DownloadQueue/Log/Added", item.Name, item.BundleId), UiLogLevel.Success);
             NotifyQueueChanged();
             return DownloadQueueAddResult.Added;
         }
@@ -122,7 +123,7 @@ namespace IPAbuyer.Common
 
             if (removed > 0)
             {
-                EmitLog(LF("DownloadQueue/Log/Removed", removed));
+                EmitLog(LF("DownloadQueue/Log/Removed", removed), UiLogLevel.Success);
                 NotifyQueueChanged();
             }
 
@@ -136,14 +137,14 @@ namespace IPAbuyer.Common
             {
                 if (_isRunning)
                 {
-                    EmitLog(L("DownloadQueue/Log/AlreadyRunning"));
+                    EmitLog(L("DownloadQueue/Log/AlreadyRunning"), UiLogLevel.Info);
                     return 0;
                 }
 
                 int initialCount = CountRunnableItems();
                 if (initialCount == 0)
                 {
-                    EmitLog(L("DownloadQueue/Log/NoPendingItems"));
+                    EmitLog(L("DownloadQueue/Log/NoPendingItems"), UiLogLevel.Tip);
                     return 0;
                 }
 
@@ -154,7 +155,7 @@ namespace IPAbuyer.Common
                 }
                 catch (InvalidOperationException ex)
                 {
-                    EmitLog(ex.Message);
+                    EmitLog(ex.Message, UiLogLevel.Error);
                     return 0;
                 }
 
@@ -168,7 +169,7 @@ namespace IPAbuyer.Common
                     && SessionState.IsMockAccount
                     && string.Equals(SessionState.CurrentAccount, account, StringComparison.OrdinalIgnoreCase);
 
-                EmitLog(LF("DownloadQueue/Log/StartQueue", initialCount, outputDirectory));
+                EmitLog(LF("DownloadQueue/Log/StartQueue", initialCount, outputDirectory), UiLogLevel.Info);
 
                 int completed = 0;
                 int processed = 0;
@@ -191,7 +192,7 @@ namespace IPAbuyer.Common
                             item.Status = DownloadQueueStatus.Success;
                             item.LastMessage = L("DownloadQueue/Status/Success");
                             completed++;
-                            EmitLog(LF("DownloadQueue/Log/MockSuccess", item.Name));
+                            EmitLog(LF("DownloadQueue/Log/MockSuccess", item.Name), UiLogLevel.Success);
                         }
                         else
                         {
@@ -222,14 +223,14 @@ namespace IPAbuyer.Common
                                 item.Status = DownloadQueueStatus.Success;
                                 item.LastMessage = L("DownloadQueue/Status/Success");
                                 completed++;
-                                EmitLog(LF("DownloadQueue/Log/Success", item.Name));
+                                EmitLog(LF("DownloadQueue/Log/Success", item.Name), UiLogLevel.Success);
                             }
                             else
                             {
                                 string message = BuildErrorMessage(result);
                                 item.Status = DownloadQueueStatus.Failed;
                                 item.LastMessage = message;
-                                EmitLog(LF("DownloadQueue/Log/Failed", item.Name, message));
+                                EmitLog(LF("DownloadQueue/Log/Failed", item.Name, message), UiLogLevel.Error);
                             }
                         }
                     }
@@ -237,13 +238,13 @@ namespace IPAbuyer.Common
                     {
                         item.Status = DownloadQueueStatus.Canceled;
                         item.LastMessage = L("DownloadQueue/Status/Canceled");
-                        EmitLog(LF("DownloadQueue/Log/Canceled", item.Name));
+                        EmitLog(LF("DownloadQueue/Log/Canceled", item.Name), UiLogLevel.Tip);
                     }
                     catch (Exception ex)
                     {
                         item.Status = DownloadQueueStatus.Failed;
                         item.LastMessage = ex.Message;
-                        EmitLog(LF("DownloadQueue/Log/Exception", item.Name, ex.Message));
+                        EmitLog(LF("DownloadQueue/Log/Exception", item.Name, ex.Message), UiLogLevel.Error);
                     }
                     finally
                     {
@@ -253,12 +254,12 @@ namespace IPAbuyer.Common
                     }
                 }
 
-                EmitLog(LF("DownloadQueue/Log/Completed", completed, processed));
+                EmitLog(LF("DownloadQueue/Log/Completed", completed, processed), UiLogLevel.Success);
                 return completed;
             }
             catch (OperationCanceledException)
             {
-                EmitLog(L("DownloadQueue/Log/QueueCanceled"));
+                EmitLog(L("DownloadQueue/Log/QueueCanceled"), UiLogLevel.Tip);
                 return 0;
             }
             finally
@@ -276,7 +277,7 @@ namespace IPAbuyer.Common
         public void CancelCurrent()
         {
             _currentItemCts?.Cancel();
-            EmitLog(L("DownloadQueue/Log/CancelCurrentRequested"));
+            EmitLog(L("DownloadQueue/Log/CancelCurrentRequested"), UiLogLevel.Tip);
         }
 
         public void CancelAll()
@@ -290,7 +291,7 @@ namespace IPAbuyer.Common
                 item.LastMessage = L("DownloadQueue/Status/QueueCanceled");
             }
 
-            EmitLog(L("DownloadQueue/Log/CancelAllRequested"));
+            EmitLog(L("DownloadQueue/Log/CancelAllRequested"), UiLogLevel.Tip);
             NotifyQueueChanged();
         }
 
@@ -594,7 +595,7 @@ namespace IPAbuyer.Common
             }
 
             lastChunkLog = line;
-            EmitLog($"[{appName}] {line}", UiLogSource.Ipatool);
+            EmitLog($"[{appName}] {line}", UiLogLevel.Ipatool, UiLogSource.Ipatool);
         }
 
         private static string SanitizeForParsing(string input)
@@ -642,9 +643,9 @@ namespace IPAbuyer.Common
             return true;
         }
 
-        private void EmitLog(string message, UiLogSource source = UiLogSource.App)
+        private void EmitLog(string message, UiLogLevel level, UiLogSource source = UiLogSource.App)
         {
-            LogReceived?.Invoke(new UiLogMessage(message, source));
+            LogReceived?.Invoke(new UiLogMessage(message, level, source));
         }
 
         private static string L(string key)
