@@ -1,4 +1,6 @@
 .vs/
+AppPackages/
+BundleArtifacts/
 bin/
 obj/
 *.user
