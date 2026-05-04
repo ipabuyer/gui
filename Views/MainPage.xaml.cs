@@ -610,6 +610,11 @@ namespace IPAbuyer.Views
             return updated;
         }
 
+        private static string GetAppDisplayLabel(SearchResult app, string fallbackBundleId)
+        {
+            return string.IsNullOrWhiteSpace(app.name) ? fallbackBundleId : app.name;
+        }
+
         private double? GetResultListVerticalOffset()
         {
             ScrollViewer? scrollViewer = FindDescendantScrollViewer(ResultList);
@@ -691,6 +696,7 @@ namespace IPAbuyer.Views
                 {
                     continue;
                 }
+                string appLabel = GetAppDisplayLabel(app, bundleId);
 
                 if (IsPurchasedStatus(app.purchased) || IsOwnedStatus(app.purchased))
                 {
@@ -699,7 +705,7 @@ namespace IPAbuyer.Views
 
                 if (!IsPriceFree(app.price))
                 {
-                    AppendHomeLog(LF("MainPage/Purchase/SkipNonFree", app.name ?? app.bundleId), UiLogLevel.Tip);
+                    AppendHomeLog(LF("MainPage/Purchase/SkipNonFree", appLabel), UiLogLevel.Tip);
                     continue;
                 }
 
@@ -707,7 +713,7 @@ namespace IPAbuyer.Views
                 {
                     SearchResult updatedApp = ReplaceSearchResultStatus(app, StatusPurchased);
                     PurchasedAppDb.SavePurchasedApp(bundleId, account, StatusPurchased);
-                    AppendHomeLog(LF("MainPage/Purchase/MockSuccess", updatedApp.name ?? updatedApp.bundleId), UiLogLevel.Success);
+                    AppendHomeLog(LF("MainPage/Purchase/MockSuccess", GetAppDisplayLabel(updatedApp, bundleId)), UiLogLevel.Success);
                     continue;
                 }
 
@@ -716,13 +722,13 @@ namespace IPAbuyer.Views
                 {
                     SearchResult updatedApp = ReplaceSearchResultStatus(app, StatusOwned);
                     PurchasedAppDb.SavePurchasedApp(bundleId, account, StatusOwned);
-                    AppendHomeLog(LF("MainPage/Purchase/OwnedDetected", updatedApp.name ?? updatedApp.bundleId), UiLogLevel.Success);
+                    AppendHomeLog(LF("MainPage/Purchase/OwnedDetected", GetAppDisplayLabel(updatedApp, bundleId)), UiLogLevel.Success);
                 }
                 else if (IsPurchaseSuccess(result.OutputOrError))
                 {
                     SearchResult updatedApp = ReplaceSearchResultStatus(app, StatusPurchased);
                     PurchasedAppDb.SavePurchasedApp(bundleId, account, StatusPurchased);
-                    AppendHomeLog(LF("MainPage/Purchase/Success", updatedApp.name ?? updatedApp.bundleId), UiLogLevel.Success);
+                    AppendHomeLog(LF("MainPage/Purchase/Success", GetAppDisplayLabel(updatedApp, bundleId)), UiLogLevel.Success);
                 }
                 else
                 {
@@ -733,11 +739,11 @@ namespace IPAbuyer.Views
                         {
                             SearchResult updatedApp = ReplaceSearchResultStatus(app, StatusOwned);
                             PurchasedAppDb.SavePurchasedApp(bundleId, account, StatusOwned);
-                            AppendHomeLog(LF("MainPage/Purchase/OwnedMarked", updatedApp.name ?? updatedApp.bundleId), UiLogLevel.Success);
+                            AppendHomeLog(LF("MainPage/Purchase/OwnedMarked", GetAppDisplayLabel(updatedApp, bundleId)), UiLogLevel.Success);
                         }
                         else
                         {
-                            AppendHomeLog(LF("MainPage/Purchase/OwnedNotMarked", app.name ?? app.bundleId), UiLogLevel.Info);
+                            AppendHomeLog(LF("MainPage/Purchase/OwnedNotMarked", appLabel), UiLogLevel.Info);
                         }
                     }
                     else
@@ -745,7 +751,7 @@ namespace IPAbuyer.Views
                         string reason = string.IsNullOrWhiteSpace(result.OutputOrError)
                             ? L("MainPage/Purchase/UnknownError")
                             : result.OutputOrError;
-                        AppendHomeLog(LF("MainPage/Purchase/Failed", app.name ?? app.bundleId, reason), UiLogLevel.Error);
+                        AppendHomeLog(LF("MainPage/Purchase/Failed", appLabel, reason), UiLogLevel.Error);
                     }
                 }
             }
