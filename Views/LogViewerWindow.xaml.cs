@@ -55,7 +55,8 @@ namespace IPAbuyer.Views
             _ownerWindow = ownerWindow;
 
             Title = L("Common/LogDialog/Title");
-            LogTitleTextBlock.Text = Title;
+            LogTitleBar.Title = Title;
+            LogTitleBar.Subtitle = L("Common/LogDialog/Subtitle");
             CopyButton.Content = L("Common/LogDialog/CopyButton");
             ClearButton.Content = L("Common/LogDialog/ClearButton");
             CloseButton.Content = L("Common/LogDialog/CloseButton");
