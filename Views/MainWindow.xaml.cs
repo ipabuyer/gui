@@ -27,6 +27,7 @@ namespace IPAbuyer.Views
 
             Title = L("MainWindow/TitleBarTitle");
             AppTitleBar.Title = Title;
+            AppTitleBar.Subtitle = L("MainWindow/TitleBarSubtitle");
             SetWindowIcon(this);
             UpdateLoginStatusPicture();
             SessionState.LoginStateChanged -= OnLoginStateChanged;
