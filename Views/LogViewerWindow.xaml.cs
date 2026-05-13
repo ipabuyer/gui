@@ -2,7 +2,6 @@ using IPAbuyer.Common;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Windows.ApplicationModel.Resources;
@@ -12,7 +11,7 @@ using WinRT.Interop;
 
 namespace IPAbuyer.Views
 {
-    public sealed class LogViewerWindow : Window
+    public sealed partial class LogViewerWindow : Window
     {
         private static readonly ResourceLoader Loader = new();
 
@@ -20,14 +19,11 @@ namespace IPAbuyer.Views
         private readonly Func<UiLogLevel, Windows.UI.Color> _colorResolver;
         private readonly Action _onCopy;
         private readonly Action _onClear;
-        private readonly RichTextBlock _logViewer;
-        private readonly ScrollViewer _logScrollViewer;
         private readonly DispatcherQueueTimer _refreshTimer;
         private readonly Window? _ownerWindow;
         private int _lastLogSignature = int.MinValue;
         private bool _hasStartedRefreshTimer;
         private bool _isClosed;
-        private const double FooterButtonWidth = 132;
         private const int DefaultWindowWidth = 1100;
         private const int DefaultWindowHeight = 700;
         private const int GwlHwndParent = -8;
@@ -39,137 +35,71 @@ namespace IPAbuyer.Views
             Action onClear,
             Window? ownerWindow)
         {
+            InitializeComponent();
+
             _entries = entries;
             _colorResolver = colorResolver;
             _onCopy = onCopy;
             _onClear = onClear;
             _ownerWindow = ownerWindow;
 
-            _logViewer = new RichTextBlock
-            {
-                IsTextSelectionEnabled = true,
-                TextWrapping = TextWrapping.Wrap,
-                FontFamily = new FontFamily("Cascadia Mono, Consolas"),
-                FontSize = 13
-            };
-            _logScrollViewer = new ScrollViewer
-            {
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
-                Content = _logViewer
-            };
+            Title = L("Common/LogDialog/Title");
+            CopyButton.Content = L("Common/LogDialog/CopyButton");
+            ClearButton.Content = L("Common/LogDialog/ClearButton");
+            CloseButton.Content = L("Common/LogDialog/CloseButton");
+
             _refreshTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
             _refreshTimer.Interval = TimeSpan.FromMilliseconds(250);
             _refreshTimer.Tick += (_, _) => RefreshLogIfChanged();
 
-            var copyButton = new Button
-            {
-                Content = L("Common/LogDialog/CopyButton"),
-                MinHeight = 32,
-                Width = FooterButtonWidth,
-                Padding = new Thickness(12, 0, 12, 0)
-            };
-            copyButton.Click += (_, _) =>
-            {
-                _onCopy();
-                RefreshLog();
-                QueueScrollToBottom();
-            };
-
-            var clearButton = new Button
-            {
-                Content = L("Common/LogDialog/ClearButton"),
-                MinHeight = 32,
-                Width = FooterButtonWidth,
-                Padding = new Thickness(12, 0, 12, 0)
-            };
-            clearButton.Click += (_, _) =>
-            {
-                _onClear();
-                RefreshLog();
-            };
-
-            var closeButton = new Button
-            {
-                Content = L("Common/LogDialog/CloseButton"),
-                MinHeight = 32,
-                Width = FooterButtonWidth,
-                Padding = new Thickness(12, 0, 12, 0)
-            };
-            closeButton.Click += (_, _) => Close();
-
-            var footer = new StackPanel
-            {
-                Orientation = Orientation.Horizontal,
-                HorizontalAlignment = HorizontalAlignment.Right,
-                Spacing = 8,
-                Margin = new Thickness(0, 12, 0, 0),
-                Children =
-                {
-                    copyButton,
-                    clearButton,
-                    closeButton
-                }
-            };
-
-            Title = L("Common/LogDialog/Title");
             ConfigureSystemBackdrop();
-            Content = new Grid
-            {
-                Padding = new Thickness(16),
-                Background = new SolidColorBrush(Windows.UI.Color.FromArgb(0x00, 0x00, 0x00, 0x00)),
-                Children =
-                {
-                    new Grid
-                    {
-                        RowDefinitions =
-                        {
-                            new RowDefinition { Height = new GridLength(1, GridUnitType.Star) },
-                            new RowDefinition { Height = GridLength.Auto }
-                        },
-                        Children =
-                        {
-                            new Border
-                            {
-                                CornerRadius = new CornerRadius(8),
-                                Background = new SolidColorBrush(Windows.UI.Color.FromArgb(0xFF, 0x12, 0x12, 0x12)),
-                                BorderBrush = new SolidColorBrush(Windows.UI.Color.FromArgb(0xFF, 0x2A, 0x2A, 0x2A)),
-                                BorderThickness = new Thickness(1),
-                                Padding = new Thickness(12),
-                                Child = _logScrollViewer
-                            },
-                            footer
-                        }
-                    }
-                }
-            };
-            Grid.SetRow(footer, 1);
-
             ConfigureWindow(ownerWindow);
-            Activated += (_, _) =>
-            {
-                if (_hasStartedRefreshTimer)
-                {
-                    return;
-                }
-
-                _hasStartedRefreshTimer = true;
-                _lastLogSignature = int.MinValue;
-                RefreshLogIfChanged();
-                QueueScrollToBottom();
-                _refreshTimer.Start();
-            };
-            Closed += (_, _) =>
-            {
-                _isClosed = true;
-                _refreshTimer.Stop();
-                if (_ownerWindow != null)
-                {
-                    _ownerWindow.Closed -= OwnerWindow_Closed;
-                }
-            };
+            Activated += LogViewerWindow_Activated;
+            Closed += LogViewerWindow_Closed;
 
             RefreshLog();
+        }
+
+        private void LogViewerWindow_Activated(object sender, WindowActivatedEventArgs args)
+        {
+            if (_hasStartedRefreshTimer)
+            {
+                return;
+            }
+
+            _hasStartedRefreshTimer = true;
+            _lastLogSignature = int.MinValue;
+            RefreshLogIfChanged();
+            QueueScrollToBottom();
+            _refreshTimer.Start();
+        }
+
+        private void LogViewerWindow_Closed(object sender, WindowEventArgs args)
+        {
+            _isClosed = true;
+            _refreshTimer.Stop();
+            if (_ownerWindow != null)
+            {
+                _ownerWindow.Closed -= OwnerWindow_Closed;
+            }
+        }
+
+        private void CopyButton_Click(object sender, RoutedEventArgs e)
+        {
+            _onCopy();
+            RefreshLog();
+            QueueScrollToBottom();
+        }
+
+        private void ClearButton_Click(object sender, RoutedEventArgs e)
+        {
+            _onClear();
+            RefreshLog();
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
         }
 
         private void ConfigureWindow(Window? ownerWindow)
@@ -263,7 +193,7 @@ namespace IPAbuyer.Views
 
         private void RefreshLog()
         {
-            _logViewer.Blocks.Clear();
+            LogViewer.Blocks.Clear();
             var paragraph = new Paragraph();
             foreach (UiLogEntry entry in _entries)
             {
@@ -275,22 +205,22 @@ namespace IPAbuyer.Views
                 paragraph.Inlines.Add(new LineBreak());
             }
 
-            _logViewer.Blocks.Add(paragraph);
+            LogViewer.Blocks.Add(paragraph);
         }
 
         private void QueueScrollToBottom()
         {
-            _logScrollViewer.DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
+            LogScrollViewer.DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
             {
                 ScrollToBottom();
-                _logScrollViewer.DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, ScrollToBottom);
+                LogScrollViewer.DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, ScrollToBottom);
             });
         }
 
         private void ScrollToBottom()
         {
-            _logScrollViewer.UpdateLayout();
-            _logScrollViewer.ChangeView(null, _logScrollViewer.ScrollableHeight, null, true);
+            LogScrollViewer.UpdateLayout();
+            LogScrollViewer.ChangeView(null, LogScrollViewer.ScrollableHeight, null, true);
         }
 
         private static string AddStrictWrapPoints(string text)
