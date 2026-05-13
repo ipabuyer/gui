@@ -34,7 +34,7 @@
                 Background="#121212"
                 BorderBrush="#2A2A2A"
                 BorderThickness="1"
-                CornerRadius="8">
+                CornerRadius="{StaticResource AppControlCornerRadius}">
                 <ScrollViewer
                     x:Name="LogScrollViewer"
                     HorizontalScrollBarVisibility="Disabled"
