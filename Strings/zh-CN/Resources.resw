@@ -327,8 +327,20 @@
   <data name="MainWindow/TitleBar/TitleText.Text" xml:space="preserve">
     <value>IPAbuyer</value>
   </data>
+  <data name="MainWindow/TitleBarTitle" xml:space="preserve">
+    <value>IPAbuyer</value>
+  </data>
+  <data name="MainWindow/TitleBarSubtitle" xml:space="preserve">
+    <value>快速购买AppStore中的应用</value>
+  </data>
   <data name="MainWindow/SearchBox.PlaceholderText" xml:space="preserve">
     <value>搜索 App 名称</value>
+  </data>
+  <data name="MainWindow/LoginStatus/LoggedIn" xml:space="preserve">
+    <value>已登录：{0}</value>
+  </data>
+  <data name="MainWindow/LoginStatus/LoggedOut" xml:space="preserve">
+    <value>未登录</value>
   </data>
   <data name="MainWindow/Nav/Main.Content" xml:space="preserve">
     <value>主页</value>
@@ -1073,6 +1085,15 @@
   </data>
   <data name="Common/LogDialog/CloseButton" xml:space="preserve">
     <value>关闭</value>
+  </data>
+  <data name="Common/LogDialog/CopyEmptyLog" xml:space="preserve">
+    <value>日志为空，无可复制内容。</value>
+  </data>
+  <data name="Common/LogDialog/CopiedToClipboard" xml:space="preserve">
+    <value>日志已复制到剪贴板。</value>
+  </data>
+  <data name="Common/LogDialog/Cleared" xml:space="preserve">
+    <value>日志已清空。</value>
   </data>
   <data name="MainPage/EmptySearchHintTextBlock.Text" xml:space="preserve">
     <value>请在搜索框搜索应用</value>

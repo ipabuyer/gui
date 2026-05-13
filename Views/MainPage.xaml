@@ -129,14 +129,38 @@
                                             </Button.Content>
                                             <Button.Flyout>
                                                 <MenuFlyout>
-                                                    <MenuFlyoutItem x:Uid="MainPage/Context/MarkNotPurchasedItem" Click="ContextMenuMarkNotPurchased_Click" />
-                                                    <MenuFlyoutItem x:Uid="MainPage/Context/MarkPurchasedItem" Click="ContextMenuMarkPurchased_Click" />
-                                                    <MenuFlyoutItem x:Uid="MainPage/Context/MarkOwnedItem" Click="ContextMenuMarkOwned_Click" />
+                                                    <MenuFlyoutItem x:Uid="MainPage/Context/MarkNotPurchasedItem" Click="ContextMenuMarkNotPurchased_Click">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <SymbolIcon Symbol="Cancel" />
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
+                                                    <MenuFlyoutItem x:Uid="MainPage/Context/MarkPurchasedItem" Click="ContextMenuMarkPurchased_Click">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <SymbolIcon Symbol="Accept" />
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
+                                                    <MenuFlyoutItem x:Uid="MainPage/Context/MarkOwnedItem" Click="ContextMenuMarkOwned_Click">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <SymbolIcon Symbol="Contact" />
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
                                                     <MenuFlyoutSeparator />
-                                                    <MenuFlyoutItem x:Uid="MainPage/Context/CopyNameItem" Click="ContextMenuCopyName_Click" />
-                                                    <MenuFlyoutItem x:Uid="MainPage/Context/CopyIdItem" Click="ContextMenuCopyId_Click" />
+                                                    <MenuFlyoutItem x:Uid="MainPage/Context/CopyNameItem" Click="ContextMenuCopyName_Click">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <SymbolIcon Symbol="Copy" />
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
+                                                    <MenuFlyoutItem x:Uid="MainPage/Context/CopyIdItem" Click="ContextMenuCopyId_Click">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <SymbolIcon Symbol="Copy" />
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
                                                     <MenuFlyoutSeparator />
-                                                    <MenuFlyoutItem x:Uid="MainPage/Context/OpenAppStoreItem" Click="ContextMenuOpenAppStore_Click" />
+                                                    <MenuFlyoutItem x:Uid="MainPage/Context/OpenAppStoreItem" Click="ContextMenuOpenAppStore_Click">
+                                                        <MenuFlyoutItem.Icon>
+                                                            <SymbolIcon Symbol="World" />
+                                                        </MenuFlyoutItem.Icon>
+                                                    </MenuFlyoutItem>
                                                 </MenuFlyout>
                                             </Button.Flyout>
                                         </Button>

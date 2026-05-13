@@ -28,24 +28,11 @@
             IsBackButtonVisible="False"
             IsPaneToggleButtonVisible="True"
             PaneToggleRequested="TitleBar_PaneToggleRequested">
-            <TitleBar.LeftHeader>
-                <StackPanel
-                    Margin="12,0,16,0"
-                    Orientation="Horizontal"
-                    Spacing="8"
-                    VerticalAlignment="Center">
-                    <Image
-                        Width="20"
-                        Height="20"
-                        Source="ms-appx:///Assets/Square44x44Logo.scale-200.png" />
-                    <TextBlock
-                        x:Uid="MainWindow/TitleBar/TitleText"
-                        x:Name="TitleBarTextBlock"
-                        VerticalAlignment="Center" />
-                </StackPanel>
-            </TitleBar.LeftHeader>
+            <TitleBar.IconSource>
+                <ImageIconSource ImageSource="/Assets/Square44x44Logo.scale-200.png" />
+            </TitleBar.IconSource>
             <TitleBar.Content>
-                <Grid x:Name="SearchBoxHost">
+                <Grid>
                     <AutoSuggestBox
                         x:Uid="MainWindow/SearchBox"
                         x:Name="AppNameBox"
@@ -58,6 +45,12 @@
                         QuerySubmitted="AppNameBox_QuerySubmitted" />
                 </Grid>
             </TitleBar.Content>
+            <TitleBar.RightHeader>
+                <PersonPicture
+                    x:Name="LoginStatusPicture"
+                    Width="30"
+                    Height="30" />
+            </TitleBar.RightHeader>
         </TitleBar>
 
         <NavigationView

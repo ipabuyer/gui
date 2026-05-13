@@ -6,7 +6,6 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.Windows.ApplicationModel.Resources;
 using System.Diagnostics;
 using System.Globalization;
-using System.Text;
 
 namespace IPAbuyer.Views
 {
@@ -14,8 +13,6 @@ namespace IPAbuyer.Views
     {
         private static readonly ResourceLoader Loader = new();
         private CancellationTokenSource _pageCts = new();
-        private readonly StringBuilder _loginLogBuilder = new();
-        private readonly System.Collections.Generic.List<UiLogEntry> _loginLogEntries = new();
         private CancellationTokenSource? _currentOperationCts;
 
         private string _account = "example@icloud.com";
@@ -23,8 +20,6 @@ namespace IPAbuyer.Views
         private string _passphrase = string.Empty;
         private bool _isTwoFactorPending;
         private bool _operationLocked;
-        private bool _isLoginLogDialogOpen;
-        private const int MaxLogLines = 1000;
 
         public LoginPage()
         {
@@ -698,57 +693,18 @@ namespace IPAbuyer.Views
             }
         }
 
-        private async void ShowLoginLogDialog_Click(object sender, RoutedEventArgs e)
+        private void ShowLoginLogDialog_Click(object sender, RoutedEventArgs e)
         {
-            await TryShowLoginLogDialogAsync();
+            TryShowLoginLogWindow();
         }
 
-        private async Task TryShowLoginLogDialogAsync()
+        private void TryShowLoginLogWindow()
         {
-            if (_isLoginLogDialogOpen || XamlRoot == null)
-            {
-                return;
-            }
+            Window? ownerWindow = Application.Current is App app
+                ? app.MainWindowInstance
+                : null;
 
-            _isLoginLogDialogOpen = true;
-            try
-            {
-                var dialog = new LogViewerDialog(
-                    _loginLogEntries,
-                    GetLogColor,
-                    CopyLoginLog,
-                    ClearLoginLog,
-                    XamlRoot);
-
-                await dialog.ShowAsync();
-            }
-            finally
-            {
-                _isLoginLogDialogOpen = false;
-            }
-        }
-
-        private void CopyLoginLog()
-        {
-            string text = _loginLogBuilder.ToString();
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                AppendLoginLog(L("LoginPage/Log/CopyEmptyLog"), UiLogLevel.Tip);
-                return;
-            }
-
-            var package = new Windows.ApplicationModel.DataTransfer.DataPackage();
-            package.SetText(text);
-            Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
-            Windows.ApplicationModel.DataTransfer.Clipboard.Flush();
-            AppendLoginLog(L("LoginPage/Log/CopiedToClipboard"), UiLogLevel.Success);
-        }
-
-        private void ClearLoginLog()
-        {
-            _loginLogBuilder.Clear();
-            _loginLogEntries.Clear();
-            AppendLoginLog(L("LoginPage/Log/Cleared"), UiLogLevel.Info);
+            LogViewerWindow.ShowOrActivate(ownerWindow);
         }
 
         private void AppendLoginLog(string message, UiLogLevel level, UiLogSource source = UiLogSource.App)
@@ -758,35 +714,7 @@ namespace IPAbuyer.Views
                 return;
             }
 
-            UiLogEntry entry = UiLogFormatter.Build(message, level);
-            _loginLogEntries.Add(entry);
-            if (_loginLogEntries.Count > MaxLogLines)
-            {
-                _loginLogEntries.RemoveAt(0);
-            }
-
-            RebuildLoginLogText();
-        }
-
-        private void RebuildLoginLogText()
-        {
-            _loginLogBuilder.Clear();
-            foreach (UiLogEntry entry in _loginLogEntries)
-            {
-                _loginLogBuilder.AppendLine(entry.FormattedText);
-            }
-        }
-
-        private Windows.UI.Color GetLogColor(UiLogLevel level)
-        {
-            return level switch
-            {
-                UiLogLevel.Tip => Windows.UI.Color.FromArgb(0xFF, 0xFF, 0xD5, 0x8A),
-                UiLogLevel.Success => Windows.UI.Color.FromArgb(0xFF, 0x8D, 0xE6, 0x9A),
-                UiLogLevel.Error => Windows.UI.Color.FromArgb(0xFF, 0xFF, 0x99, 0x99),
-                UiLogLevel.Ipatool => Windows.UI.Color.FromArgb(0xFF, 0x9C, 0xC8, 0xFF),
-                _ => Windows.UI.Color.FromArgb(0xFF, 0xE6, 0xE6, 0xE6)
-            };
+            _ = UiLogStore.Append(message, level);
         }
 
         private void CancelCurrentOperation()
