@@ -26,7 +26,6 @@ namespace IPAbuyer.Views
         private bool _isClosed;
         private const int DefaultWindowWidth = 1100;
         private const int DefaultWindowHeight = 700;
-        private const int GwlHwndParent = -8;
 
         public LogViewerWindow(
             IReadOnlyList<UiLogEntry> entries,
@@ -121,7 +120,6 @@ namespace IPAbuyer.Views
                 return;
             }
 
-            _ = SetWindowLongPtr(windowHandle, GwlHwndParent, ownerHandle);
             ownerWindow.Closed += OwnerWindow_Closed;
             CenterNearOwner(ownerHandle, appWindow);
         }
@@ -269,9 +267,6 @@ namespace IPAbuyer.Views
         {
             return Loader.GetString(key);
         }
-
-        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW", SetLastError = true)]
-        private static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
 
         [DllImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
