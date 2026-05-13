@@ -1,4 +1,5 @@
 using IPAbuyer.Common;
+using Microsoft.UI;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -54,6 +55,7 @@ namespace IPAbuyer.Views
             _ownerWindow = ownerWindow;
 
             Title = L("Common/LogDialog/Title");
+            LogTitleTextBlock.Text = Title;
             CopyButton.Content = L("Common/LogDialog/CopyButton");
             ClearButton.Content = L("Common/LogDialog/ClearButton");
             CloseButton.Content = L("Common/LogDialog/CloseButton");
@@ -134,6 +136,8 @@ namespace IPAbuyer.Views
             AppWindow? appWindow = AppWindow.GetFromWindowId(windowId);
             appWindow?.Resize(new SizeInt32(DefaultWindowWidth, DefaultWindowHeight));
             SetWindowIcon(appWindow);
+            ApplyCaptionButtonColors(appWindow);
+            LogViewerRoot.ActualThemeChanged += (_, _) => ApplyCaptionButtonColors(appWindow);
 
             if (ownerWindow == null)
             {
@@ -160,6 +164,9 @@ namespace IPAbuyer.Views
 
         private void ConfigureSystemBackdrop()
         {
+            ExtendsContentIntoTitleBar = true;
+            SetTitleBar(LogTitleBar);
+
             try
             {
                 SystemBackdrop = new MicaBackdrop();
@@ -168,6 +175,32 @@ namespace IPAbuyer.Views
             {
                 // ignore on unsupported systems
             }
+        }
+
+        private void ApplyCaptionButtonColors(AppWindow? appWindow)
+        {
+            if (appWindow?.TitleBar == null)
+            {
+                return;
+            }
+
+            bool isDark = LogViewerRoot.ActualTheme == ElementTheme.Dark;
+            var foreground = isDark ? Colors.White : Colors.Black;
+            var hoverBackground = isDark
+                ? Windows.UI.Color.FromArgb(0x33, 0xFF, 0xFF, 0xFF)
+                : Windows.UI.Color.FromArgb(0x1A, 0x00, 0x00, 0x00);
+            var pressedBackground = isDark
+                ? Windows.UI.Color.FromArgb(0x4D, 0xFF, 0xFF, 0xFF)
+                : Windows.UI.Color.FromArgb(0x26, 0x00, 0x00, 0x00);
+
+            appWindow.TitleBar.ButtonForegroundColor = foreground;
+            appWindow.TitleBar.ButtonInactiveForegroundColor = foreground;
+            appWindow.TitleBar.ButtonHoverForegroundColor = foreground;
+            appWindow.TitleBar.ButtonPressedForegroundColor = foreground;
+            appWindow.TitleBar.ButtonBackgroundColor = Colors.Transparent;
+            appWindow.TitleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
+            appWindow.TitleBar.ButtonHoverBackgroundColor = hoverBackground;
+            appWindow.TitleBar.ButtonPressedBackgroundColor = pressedBackground;
         }
 
         private static void CenterNearOwner(IntPtr ownerHandle, AppWindow? appWindow)
