@@ -333,6 +333,12 @@
   <data name="MainWindow/SearchBox.PlaceholderText" xml:space="preserve">
     <value>搜索 App 名称</value>
   </data>
+  <data name="MainWindow/LoginStatus/LoggedIn" xml:space="preserve">
+    <value>已登录：{0}</value>
+  </data>
+  <data name="MainWindow/LoginStatus/LoggedOut" xml:space="preserve">
+    <value>未登录</value>
+  </data>
   <data name="MainWindow/Nav/Main.Content" xml:space="preserve">
     <value>主页</value>
   </data>

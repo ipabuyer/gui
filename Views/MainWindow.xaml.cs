@@ -1,9 +1,11 @@
+using IPAbuyer.Common;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Windows.ApplicationModel.Resources;
+using System.Globalization;
 
 namespace IPAbuyer.Views
 {
@@ -26,6 +28,10 @@ namespace IPAbuyer.Views
             Title = L("MainWindow/TitleBarTitle");
             AppTitleBar.Title = Title;
             SetWindowIcon(this);
+            UpdateLoginStatusPicture();
+            SessionState.LoginStateChanged -= OnLoginStateChanged;
+            SessionState.LoginStateChanged += OnLoginStateChanged;
+            Closed += MainWindow_Closed;
 
             ContentFrame.Navigated += ContentFrame_Navigated;
             ContentFrame.Navigate(typeof(MainPage));
@@ -56,6 +62,11 @@ namespace IPAbuyer.Views
         private static string L(string key)
         {
             return Loader.GetString(key);
+        }
+
+        private static string LF(string key, params object[] args)
+        {
+            return string.Format(CultureInfo.CurrentCulture, L(key), args);
         }
 
         private void AppNameBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
@@ -163,6 +174,28 @@ namespace IPAbuyer.Views
         {
             bool isMainPage = _currentMainPage != null;
             AppNameBox.IsEnabled = isMainPage;
+        }
+
+        private void OnLoginStateChanged()
+        {
+            DispatcherQueue.TryEnqueue(UpdateLoginStatusPicture);
+        }
+
+        private void UpdateLoginStatusPicture()
+        {
+            bool isLoggedIn = SessionState.IsLoggedIn;
+            LoginStatusPicture.Background = new SolidColorBrush(isLoggedIn
+                ? Windows.UI.Color.FromArgb(0xFF, 0x2E, 0xA0, 0x43)
+                : Windows.UI.Color.FromArgb(0xFF, 0xC4, 0x2B, 0x1C));
+            LoginStatusPicture.DisplayName = string.Empty;
+            ToolTipService.SetToolTip(LoginStatusPicture, isLoggedIn
+                ? LF("MainWindow/LoginStatus/LoggedIn", SessionState.CurrentAccount)
+                : L("MainWindow/LoginStatus/LoggedOut"));
+        }
+
+        private void MainWindow_Closed(object sender, WindowEventArgs args)
+        {
+            SessionState.LoginStateChanged -= OnLoginStateChanged;
         }
 
     }

@@ -45,6 +45,12 @@
                         QuerySubmitted="AppNameBox_QuerySubmitted" />
                 </Grid>
             </TitleBar.Content>
+            <TitleBar.RightHeader>
+                <PersonPicture
+                    x:Name="LoginStatusPicture"
+                    Width="30"
+                    Height="30" />
+            </TitleBar.RightHeader>
         </TitleBar>
 
         <NavigationView
