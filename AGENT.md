@@ -23,6 +23,7 @@
 4. 主窗口标题栏使用WinUI `TitleBar`控件，参考WinUI Gallery风格
 5. 主窗口标题栏图标使用`Assets/Square44x44Logo.scale-200.png`，不要在`TitleBar.IconSource`中使用`.ico`，避免运行时异常
 6. 不要给主窗口`TitleBar`设置`x:Uid="MainWindow/TitleBar"`，避免与`MainWindow/TitleBar/TitleText.Text`资源键冲突
+7. 主窗口标题栏右侧使用`TitleBar.RightHeader`放置`PersonPicture`显示登录状态：已登录为绿色人头头像，未登录为红色人头头像
 
 ## 主页界面
 
