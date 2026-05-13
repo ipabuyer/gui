@@ -23,7 +23,7 @@ namespace IPAbuyer.Views
         private string _passphrase = string.Empty;
         private bool _isTwoFactorPending;
         private bool _operationLocked;
-        private bool _isLoginLogDialogOpen;
+        private LogViewerWindow? _loginLogWindow;
         private const int MaxLogLines = 1000;
 
         public LoginPage()
@@ -698,34 +698,34 @@ namespace IPAbuyer.Views
             }
         }
 
-        private async void ShowLoginLogDialog_Click(object sender, RoutedEventArgs e)
+        private void ShowLoginLogDialog_Click(object sender, RoutedEventArgs e)
         {
-            await TryShowLoginLogDialogAsync();
+            TryShowLoginLogWindow();
         }
 
-        private async Task TryShowLoginLogDialogAsync()
+        private void TryShowLoginLogWindow()
         {
-            if (_isLoginLogDialogOpen || XamlRoot == null)
+            if (_loginLogWindow != null)
             {
+                _loginLogWindow.Activate();
                 return;
             }
 
-            _isLoginLogDialogOpen = true;
-            try
-            {
-                var dialog = new LogViewerDialog(
-                    _loginLogEntries,
-                    GetLogColor,
-                    CopyLoginLog,
-                    ClearLoginLog,
-                    XamlRoot);
+            Window? ownerWindow = Application.Current is App app
+                ? app.MainWindowInstance
+                : null;
 
-                await dialog.ShowAsync();
-            }
-            finally
+            _loginLogWindow = new LogViewerWindow(
+                _loginLogEntries,
+                GetLogColor,
+                CopyLoginLog,
+                ClearLoginLog,
+                ownerWindow);
+            _loginLogWindow.Closed += (_, _) =>
             {
-                _isLoginLogDialogOpen = false;
-            }
+                _loginLogWindow = null;
+            };
+            _loginLogWindow.Activate();
         }
 
         private void CopyLoginLog()

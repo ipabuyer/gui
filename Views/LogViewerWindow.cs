@@ -1,14 +1,18 @@
-﻿using IPAbuyer.Common;
+using IPAbuyer.Common;
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Windows.ApplicationModel.Resources;
+using System.Runtime.InteropServices;
+using Windows.Graphics;
+using WinRT.Interop;
 
 namespace IPAbuyer.Views
 {
-    public sealed class LogViewerDialog : ContentDialog
+    public sealed class LogViewerWindow : Window
     {
         private static readonly ResourceLoader Loader = new();
 
@@ -19,28 +23,27 @@ namespace IPAbuyer.Views
         private readonly RichTextBlock _logViewer;
         private readonly ScrollViewer _logScrollViewer;
         private readonly DispatcherQueueTimer _refreshTimer;
+        private readonly Window? _ownerWindow;
         private int _lastLogSignature = int.MinValue;
+        private bool _hasStartedRefreshTimer;
+        private bool _isClosed;
         private const double FooterButtonWidth = 132;
+        private const int DefaultWindowWidth = 1100;
+        private const int DefaultWindowHeight = 700;
+        private const int GwlHwndParent = -8;
 
-        public LogViewerDialog(
+        public LogViewerWindow(
             IReadOnlyList<UiLogEntry> entries,
             Func<UiLogLevel, Windows.UI.Color> colorResolver,
             Action onCopy,
             Action onClear,
-            XamlRoot xamlRoot)
+            Window? ownerWindow)
         {
             _entries = entries;
             _colorResolver = colorResolver;
             _onCopy = onCopy;
             _onClear = onClear;
-
-            double dialogWidth = Math.Clamp(xamlRoot.Size.Width * 0.8, 980, 1440);
-            double dialogHeight = Math.Clamp(xamlRoot.Size.Height * 0.8, 560, 920);
-            double contentHeight = Math.Max(420, dialogHeight - 130);
-            Resources["ContentDialogMinWidth"] = dialogWidth;
-            Resources["ContentDialogMaxWidth"] = dialogWidth;
-            HorizontalAlignment = HorizontalAlignment.Center;
-            VerticalAlignment = VerticalAlignment.Center;
+            _ownerWindow = ownerWindow;
 
             _logViewer = new RichTextBlock
             {
@@ -86,8 +89,6 @@ namespace IPAbuyer.Views
                 RefreshLog();
             };
 
-            var header = new Grid { Margin = new Thickness(0, 0, 0, 10) };
-
             var closeButton = new Button
             {
                 Content = L("Common/LogDialog/CloseButton"),
@@ -95,7 +96,7 @@ namespace IPAbuyer.Views
                 Width = FooterButtonWidth,
                 Padding = new Thickness(12, 0, 12, 0)
             };
-            closeButton.Click += (_, _) => Hide();
+            closeButton.Click += (_, _) => Close();
 
             var footer = new StackPanel
             {
@@ -112,30 +113,47 @@ namespace IPAbuyer.Views
             };
 
             Title = L("Common/LogDialog/Title");
-            Content = new StackPanel
+            ConfigureSystemBackdrop();
+            Content = new Grid
             {
-                Spacing = 0,
-                Height = contentHeight,
+                Padding = new Thickness(16),
+                Background = new SolidColorBrush(Windows.UI.Color.FromArgb(0x00, 0x00, 0x00, 0x00)),
                 Children =
                 {
-                    header,
-                    new Border
+                    new Grid
                     {
-                        CornerRadius = new CornerRadius(8),
-                        Background = new SolidColorBrush(Windows.UI.Color.FromArgb(0xFF, 0x12, 0x12, 0x12)),
-                        BorderBrush = new SolidColorBrush(Windows.UI.Color.FromArgb(0xFF, 0x2A, 0x2A, 0x2A)),
-                        BorderThickness = new Thickness(1),
-                        Padding = new Thickness(12),
-                        Height = Math.Max(320, contentHeight - 54),
-                        Child = _logScrollViewer
-                    },
-                    footer
+                        RowDefinitions =
+                        {
+                            new RowDefinition { Height = new GridLength(1, GridUnitType.Star) },
+                            new RowDefinition { Height = GridLength.Auto }
+                        },
+                        Children =
+                        {
+                            new Border
+                            {
+                                CornerRadius = new CornerRadius(8),
+                                Background = new SolidColorBrush(Windows.UI.Color.FromArgb(0xFF, 0x12, 0x12, 0x12)),
+                                BorderBrush = new SolidColorBrush(Windows.UI.Color.FromArgb(0xFF, 0x2A, 0x2A, 0x2A)),
+                                BorderThickness = new Thickness(1),
+                                Padding = new Thickness(12),
+                                Child = _logScrollViewer
+                            },
+                            footer
+                        }
+                    }
                 }
             };
-            CloseButtonText = string.Empty;
-            XamlRoot = xamlRoot;
-            Opened += (_, _) =>
+            Grid.SetRow(footer, 1);
+
+            ConfigureWindow(ownerWindow);
+            Activated += (_, _) =>
             {
+                if (_hasStartedRefreshTimer)
+                {
+                    return;
+                }
+
+                _hasStartedRefreshTimer = true;
                 _lastLogSignature = int.MinValue;
                 RefreshLogIfChanged();
                 QueueScrollToBottom();
@@ -143,10 +161,89 @@ namespace IPAbuyer.Views
             };
             Closed += (_, _) =>
             {
+                _isClosed = true;
                 _refreshTimer.Stop();
+                if (_ownerWindow != null)
+                {
+                    _ownerWindow.Closed -= OwnerWindow_Closed;
+                }
             };
 
             RefreshLog();
+        }
+
+        private void ConfigureWindow(Window? ownerWindow)
+        {
+            IntPtr windowHandle = WindowNative.GetWindowHandle(this);
+            var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(windowHandle);
+            AppWindow? appWindow = AppWindow.GetFromWindowId(windowId);
+            appWindow?.Resize(new SizeInt32(DefaultWindowWidth, DefaultWindowHeight));
+            SetWindowIcon(appWindow);
+
+            if (ownerWindow == null)
+            {
+                return;
+            }
+
+            IntPtr ownerHandle = WindowNative.GetWindowHandle(ownerWindow);
+            if (ownerHandle == IntPtr.Zero || windowHandle == IntPtr.Zero)
+            {
+                return;
+            }
+
+            _ = SetWindowLongPtr(windowHandle, GwlHwndParent, ownerHandle);
+            ownerWindow.Closed += OwnerWindow_Closed;
+            CenterNearOwner(ownerHandle, appWindow);
+        }
+
+        private void OwnerWindow_Closed(object sender, WindowEventArgs args)
+        {
+            if (!_isClosed)
+            {
+                Close();
+            }
+        }
+
+        private void ConfigureSystemBackdrop()
+        {
+            try
+            {
+                SystemBackdrop = new MicaBackdrop();
+            }
+            catch
+            {
+                // ignore on unsupported systems
+            }
+        }
+
+        private static void CenterNearOwner(IntPtr ownerHandle, AppWindow? appWindow)
+        {
+            if (appWindow == null || !GetWindowRect(ownerHandle, out Rect ownerRect))
+            {
+                return;
+            }
+
+            int ownerWidth = ownerRect.Right - ownerRect.Left;
+            int ownerHeight = ownerRect.Bottom - ownerRect.Top;
+            int x = ownerRect.Left + Math.Max(0, (ownerWidth - DefaultWindowWidth) / 2);
+            int y = ownerRect.Top + Math.Max(0, (ownerHeight - DefaultWindowHeight) / 2);
+            appWindow.Move(new PointInt32(x, y));
+        }
+
+        private static void SetWindowIcon(AppWindow? appWindow)
+        {
+            try
+            {
+                string iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "Icon.ico");
+                if (System.IO.File.Exists(iconPath))
+                {
+                    appWindow?.SetIcon(iconPath);
+                }
+            }
+            catch
+            {
+                // ignore icon load failures
+            }
         }
 
         private void RefreshLogIfChanged()
@@ -241,6 +338,22 @@ namespace IPAbuyer.Views
         private static string L(string key)
         {
             return Loader.GetString(key);
+        }
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW", SetLastError = true)]
+        private static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool GetWindowRect(IntPtr hWnd, out Rect lpRect);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct Rect
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
         }
     }
 }

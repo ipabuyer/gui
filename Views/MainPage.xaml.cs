@@ -23,7 +23,7 @@ namespace IPAbuyer.Views
         private readonly StringBuilder _homeLogBuilder = new();
         private readonly List<UiLogEntry> _homeLogEntries = new();
         private CancellationTokenSource _pageCts = new();
-        private bool _isHomeLogDialogOpen;
+        private LogViewerWindow? _homeLogWindow;
         private bool _hasCompletedSearch;
         private string _selectedFilter = "All";
         private static readonly string StatusPurchased = L("Common/Status/Purchased");
@@ -1068,34 +1068,34 @@ namespace IPAbuyer.Views
             AppendHomeLog(L("MainPage/Log/Cleared"), UiLogLevel.Info);
         }
 
-        private async void ShowHomeLogDialog_Click(object sender, RoutedEventArgs e)
+        private void ShowHomeLogDialog_Click(object sender, RoutedEventArgs e)
         {
-            await TryShowHomeLogDialogAsync();
+            TryShowHomeLogWindow();
         }
 
-        private async Task TryShowHomeLogDialogAsync()
+        private void TryShowHomeLogWindow()
         {
-            if (_isHomeLogDialogOpen || XamlRoot == null)
+            if (_homeLogWindow != null)
             {
+                _homeLogWindow.Activate();
                 return;
             }
 
-            _isHomeLogDialogOpen = true;
-            try
-            {
-                var dialog = new LogViewerDialog(
-                    _homeLogEntries,
-                    GetLogColor,
-                    CopyHomeLog,
-                    ClearHomeLog,
-                    XamlRoot);
+            Window? ownerWindow = Application.Current is App app
+                ? app.MainWindowInstance
+                : null;
 
-                await dialog.ShowAsync();
-            }
-            finally
+            _homeLogWindow = new LogViewerWindow(
+                _homeLogEntries,
+                GetLogColor,
+                CopyHomeLog,
+                ClearHomeLog,
+                ownerWindow);
+            _homeLogWindow.Closed += (_, _) =>
             {
-                _isHomeLogDialogOpen = false;
-            }
+                _homeLogWindow = null;
+            };
+            _homeLogWindow.Activate();
         }
 
         private void AppendHomeLog(string message, UiLogLevel level, UiLogSource source = UiLogSource.App)
