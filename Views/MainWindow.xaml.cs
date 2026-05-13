@@ -162,7 +162,7 @@ namespace IPAbuyer.Views
         private void UpdateSearchBoxState()
         {
             bool isMainPage = _currentMainPage != null;
-            AppTitleBar.Content = isMainPage ? SearchBoxHost : null;
+            AppNameBox.IsEnabled = isMainPage;
         }
 
     }

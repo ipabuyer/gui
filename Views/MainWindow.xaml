@@ -32,7 +32,7 @@
                 <ImageIconSource ImageSource="/Assets/Square44x44Logo.scale-200.png" />
             </TitleBar.IconSource>
             <TitleBar.Content>
-                <Grid x:Name="SearchBoxHost">
+                <Grid>
                     <AutoSuggestBox
                         x:Uid="MainWindow/SearchBox"
                         x:Name="AppNameBox"
