@@ -247,15 +247,20 @@ namespace IPAbuyer.Views
             }
 
             _lastLogSignature = signature;
-            RefreshLog();
+            RefreshLog(entries);
             QueueScrollToBottom();
         }
 
         private void RefreshLog()
         {
+            RefreshLog(_entryProvider());
+        }
+
+        private void RefreshLog(IReadOnlyList<UiLogEntry> entries)
+        {
             LogViewer.Blocks.Clear();
             var paragraph = new Paragraph();
-            foreach (UiLogEntry entry in _entryProvider())
+            foreach (UiLogEntry entry in entries)
             {
                 paragraph.Inlines.Add(new Run
                 {
