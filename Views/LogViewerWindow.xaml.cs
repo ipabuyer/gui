@@ -297,24 +297,13 @@ namespace IPAbuyer.Views
 
         private Windows.UI.Color GetLogColor(UiLogLevel level)
         {
-            bool isDark = LogViewerRoot.ActualTheme == ElementTheme.Dark;
             return level switch
             {
-                UiLogLevel.Tip => isDark
-                    ? Windows.UI.Color.FromArgb(0xFF, 0xFF, 0xD5, 0x8A)
-                    : Windows.UI.Color.FromArgb(0xFF, 0x9A, 0x67, 0x00),
-                UiLogLevel.Success => isDark
-                    ? Windows.UI.Color.FromArgb(0xFF, 0x8D, 0xE6, 0x9A)
-                    : Windows.UI.Color.FromArgb(0xFF, 0x0F, 0x6B, 0x2B),
-                UiLogLevel.Error => isDark
-                    ? Windows.UI.Color.FromArgb(0xFF, 0xFF, 0x99, 0x99)
-                    : Windows.UI.Color.FromArgb(0xFF, 0xB0, 0x00, 0x20),
-                UiLogLevel.Ipatool => isDark
-                    ? Windows.UI.Color.FromArgb(0xFF, 0x9C, 0xC8, 0xFF)
-                    : Windows.UI.Color.FromArgb(0xFF, 0x00, 0x5A, 0xB8),
-                _ => isDark
-                    ? Windows.UI.Color.FromArgb(0xFF, 0xE6, 0xE6, 0xE6)
-                    : Windows.UI.Color.FromArgb(0xFF, 0x1F, 0x1F, 0x1F)
+                UiLogLevel.Tip => Windows.UI.Color.FromArgb(0xFF, 0xFF, 0xD5, 0x8A),
+                UiLogLevel.Success => Windows.UI.Color.FromArgb(0xFF, 0x8D, 0xE6, 0x9A),
+                UiLogLevel.Error => Windows.UI.Color.FromArgb(0xFF, 0xFF, 0x99, 0x99),
+                UiLogLevel.Ipatool => Windows.UI.Color.FromArgb(0xFF, 0x9C, 0xC8, 0xFF),
+                _ => Windows.UI.Color.FromArgb(0xFF, 0xE6, 0xE6, 0xE6)
             };
         }
 
