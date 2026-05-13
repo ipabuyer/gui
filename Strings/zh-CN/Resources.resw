@@ -327,6 +327,9 @@
   <data name="MainWindow/TitleBar/TitleText.Text" xml:space="preserve">
     <value>IPAbuyer</value>
   </data>
+  <data name="MainWindow/TitleBarTitle" xml:space="preserve">
+    <value>IPAbuyer</value>
+  </data>
   <data name="MainWindow/SearchBox.PlaceholderText" xml:space="preserve">
     <value>搜索 App 名称</value>
   </data>

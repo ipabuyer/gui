@@ -3,11 +3,13 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.Windows.ApplicationModel.Resources;
 
 namespace IPAbuyer.Views
 {
     public sealed partial class MainWindow : Window
     {
+        private static readonly ResourceLoader Loader = new();
         private MainPage? _currentMainPage;
         private AppWindow? _appWindow;
 
@@ -21,7 +23,8 @@ namespace IPAbuyer.Views
             ApplyCaptionButtonColors();
             AppTitleBar.ActualThemeChanged += (_, _) => ApplyCaptionButtonColors();
 
-            Title = TitleBarTextBlock.Text;
+            Title = L("MainWindow/TitleBarTitle");
+            AppTitleBar.Title = Title;
             SetWindowIcon(this);
 
             ContentFrame.Navigated += ContentFrame_Navigated;
@@ -48,6 +51,11 @@ namespace IPAbuyer.Views
             {
                 // ignore on unsupported systems
             }
+        }
+
+        private static string L(string key)
+        {
+            return Loader.GetString(key);
         }
 
         private void AppNameBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
