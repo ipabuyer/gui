@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Windows.ApplicationModel.Resources;
 using System.Runtime.InteropServices;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Graphics;
 using WinRT.Interop;
 
@@ -14,11 +15,9 @@ namespace IPAbuyer.Views
     public sealed partial class LogViewerWindow : Window
     {
         private static readonly ResourceLoader Loader = new();
+        private static LogViewerWindow? ActiveWindow;
 
-        private readonly IReadOnlyList<UiLogEntry> _entries;
-        private readonly Func<UiLogLevel, Windows.UI.Color> _colorResolver;
-        private readonly Action _onCopy;
-        private readonly Action _onClear;
+        private readonly Func<IReadOnlyList<UiLogEntry>> _entryProvider;
         private readonly DispatcherQueueTimer _refreshTimer;
         private readonly Window? _ownerWindow;
         private int _lastLogSignature = int.MinValue;
@@ -27,19 +26,31 @@ namespace IPAbuyer.Views
         private const int DefaultWindowWidth = 1100;
         private const int DefaultWindowHeight = 700;
 
+        public static void ShowOrActivate(Window? ownerWindow)
+        {
+            if (ActiveWindow != null)
+            {
+                ActiveWindow.Activate();
+                return;
+            }
+
+            ActiveWindow = new LogViewerWindow(
+                UiLogStore.GetSnapshot,
+                ownerWindow);
+            ActiveWindow.Closed += (_, _) =>
+            {
+                ActiveWindow = null;
+            };
+            ActiveWindow.Activate();
+        }
+
         public LogViewerWindow(
-            IReadOnlyList<UiLogEntry> entries,
-            Func<UiLogLevel, Windows.UI.Color> colorResolver,
-            Action onCopy,
-            Action onClear,
+            Func<IReadOnlyList<UiLogEntry>> entryProvider,
             Window? ownerWindow)
         {
             InitializeComponent();
 
-            _entries = entries;
-            _colorResolver = colorResolver;
-            _onCopy = onCopy;
-            _onClear = onClear;
+            _entryProvider = entryProvider;
             _ownerWindow = ownerWindow;
 
             Title = L("Common/LogDialog/Title");
@@ -85,15 +96,30 @@ namespace IPAbuyer.Views
 
         private void CopyButton_Click(object sender, RoutedEventArgs e)
         {
-            _onCopy();
+            string text = UiLogStore.GetText();
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                UiLogStore.Append(L("Common/LogDialog/CopyEmptyLog"), UiLogLevel.Tip);
+                RefreshLog();
+                QueueScrollToBottom();
+                return;
+            }
+
+            var package = new DataPackage();
+            package.SetText(text);
+            Clipboard.SetContent(package);
+            Clipboard.Flush();
+            UiLogStore.Append(L("Common/LogDialog/CopiedToClipboard"), UiLogLevel.Success);
             RefreshLog();
             QueueScrollToBottom();
         }
 
         private void ClearButton_Click(object sender, RoutedEventArgs e)
         {
-            _onClear();
+            UiLogStore.Clear();
+            UiLogStore.Append(L("Common/LogDialog/Cleared"), UiLogLevel.Info);
             RefreshLog();
+            QueueScrollToBottom();
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
@@ -176,8 +202,9 @@ namespace IPAbuyer.Views
 
         private void RefreshLogIfChanged()
         {
-            int count = _entries.Count;
-            string tail = count > 0 ? _entries[count - 1].FormattedText : string.Empty;
+            IReadOnlyList<UiLogEntry> entries = _entryProvider();
+            int count = entries.Count;
+            string tail = count > 0 ? entries[count - 1].FormattedText : string.Empty;
             int signature = HashCode.Combine(count, tail);
             if (signature == _lastLogSignature)
             {
@@ -193,12 +220,12 @@ namespace IPAbuyer.Views
         {
             LogViewer.Blocks.Clear();
             var paragraph = new Paragraph();
-            foreach (UiLogEntry entry in _entries)
+            foreach (UiLogEntry entry in _entryProvider())
             {
                 paragraph.Inlines.Add(new Run
                 {
                     Text = AddStrictWrapPoints(entry.FormattedText),
-                    Foreground = new SolidColorBrush(_colorResolver(entry.Level))
+                    Foreground = new SolidColorBrush(GetLogColor(entry.Level))
                 });
                 paragraph.Inlines.Add(new LineBreak());
             }
@@ -266,6 +293,29 @@ namespace IPAbuyer.Views
         private static string L(string key)
         {
             return Loader.GetString(key);
+        }
+
+        private Windows.UI.Color GetLogColor(UiLogLevel level)
+        {
+            bool isDark = LogViewerRoot.ActualTheme == ElementTheme.Dark;
+            return level switch
+            {
+                UiLogLevel.Tip => isDark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0xFF, 0xD5, 0x8A)
+                    : Windows.UI.Color.FromArgb(0xFF, 0x9A, 0x67, 0x00),
+                UiLogLevel.Success => isDark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0x8D, 0xE6, 0x9A)
+                    : Windows.UI.Color.FromArgb(0xFF, 0x0F, 0x6B, 0x2B),
+                UiLogLevel.Error => isDark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0xFF, 0x99, 0x99)
+                    : Windows.UI.Color.FromArgb(0xFF, 0xB0, 0x00, 0x20),
+                UiLogLevel.Ipatool => isDark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0x9C, 0xC8, 0xFF)
+                    : Windows.UI.Color.FromArgb(0xFF, 0x00, 0x5A, 0xB8),
+                _ => isDark
+                    ? Windows.UI.Color.FromArgb(0xFF, 0xE6, 0xE6, 0xE6)
+                    : Windows.UI.Color.FromArgb(0xFF, 0x1F, 0x1F, 0x1F)
+            };
         }
 
         [DllImport("user32.dll", SetLastError = true)]

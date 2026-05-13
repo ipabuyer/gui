@@ -1074,6 +1074,15 @@
   <data name="Common/LogDialog/CloseButton" xml:space="preserve">
     <value>关闭</value>
   </data>
+  <data name="Common/LogDialog/CopyEmptyLog" xml:space="preserve">
+    <value>日志为空，无可复制内容。</value>
+  </data>
+  <data name="Common/LogDialog/CopiedToClipboard" xml:space="preserve">
+    <value>日志已复制到剪贴板。</value>
+  </data>
+  <data name="Common/LogDialog/Cleared" xml:space="preserve">
+    <value>日志已清空。</value>
+  </data>
   <data name="MainPage/EmptySearchHintTextBlock.Text" xml:space="preserve">
     <value>请在搜索框搜索应用</value>
   </data>

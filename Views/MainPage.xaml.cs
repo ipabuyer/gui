@@ -8,7 +8,6 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Windows.ApplicationModel.Resources;
 using System.Globalization;
-using System.Text;
 using System.Text.Json;
 
 namespace IPAbuyer.Views
@@ -20,10 +19,7 @@ namespace IPAbuyer.Views
         private SearchResult[] _visibleResults = Array.Empty<SearchResult>();
         private string[] _visibleResultSnapshots = Array.Empty<string>();
         private readonly DownloadQueueService _downloadQueueService = DownloadQueueService.Instance;
-        private readonly StringBuilder _homeLogBuilder = new();
-        private readonly List<UiLogEntry> _homeLogEntries = new();
         private CancellationTokenSource _pageCts = new();
-        private LogViewerWindow? _homeLogWindow;
         private bool _hasCompletedSearch;
         private string _selectedFilter = "All";
         private static readonly string StatusPurchased = L("Common/Status/Purchased");
@@ -34,7 +30,6 @@ namespace IPAbuyer.Views
         private static readonly string[] PurchasedAliases = { StatusPurchased };
         private static readonly string[] OwnedAliases = { StatusOwned };
         private static readonly string[] CanPurchaseAliases = { L("Common/Status/CanPurchase"), StatusCanPurchase };
-        private const int MaxLogLines = 1000;
 
         public int SearchLimitNum { get; set; } = 200;
 
@@ -1035,39 +1030,6 @@ namespace IPAbuyer.Views
             return KeychainConfig.IsValidCountryCode(normalized) ? normalized : "cn";
         }
 
-        private void CopyHomeLog_Click(object sender, RoutedEventArgs e)
-        {
-            CopyHomeLog();
-        }
-
-        private void CopyHomeLog()
-        {
-            string text = _homeLogBuilder.ToString();
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                AppendHomeLog(L("MainPage/Log/CopyEmptyLog"), UiLogLevel.Tip);
-                return;
-            }
-
-            var package = new Windows.ApplicationModel.DataTransfer.DataPackage();
-            package.SetText(text);
-            Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(package);
-            Windows.ApplicationModel.DataTransfer.Clipboard.Flush();
-            AppendHomeLog(L("MainPage/Log/CopiedToClipboard"), UiLogLevel.Success);
-        }
-
-        private void ClearHomeLog_Click(object sender, RoutedEventArgs e)
-        {
-            ClearHomeLog();
-        }
-
-        private void ClearHomeLog()
-        {
-            _homeLogBuilder.Clear();
-            _homeLogEntries.Clear();
-            AppendHomeLog(L("MainPage/Log/Cleared"), UiLogLevel.Info);
-        }
-
         private void ShowHomeLogDialog_Click(object sender, RoutedEventArgs e)
         {
             TryShowHomeLogWindow();
@@ -1075,27 +1037,11 @@ namespace IPAbuyer.Views
 
         private void TryShowHomeLogWindow()
         {
-            if (_homeLogWindow != null)
-            {
-                _homeLogWindow.Activate();
-                return;
-            }
-
             Window? ownerWindow = Application.Current is App app
                 ? app.MainWindowInstance
                 : null;
 
-            _homeLogWindow = new LogViewerWindow(
-                _homeLogEntries,
-                GetLogColor,
-                CopyHomeLog,
-                ClearHomeLog,
-                ownerWindow);
-            _homeLogWindow.Closed += (_, _) =>
-            {
-                _homeLogWindow = null;
-            };
-            _homeLogWindow.Activate();
+            LogViewerWindow.ShowOrActivate(ownerWindow);
         }
 
         private void AppendHomeLog(string message, UiLogLevel level, UiLogSource source = UiLogSource.App)
@@ -1105,14 +1051,7 @@ namespace IPAbuyer.Views
                 return;
             }
 
-            UiLogEntry entry = UiLogFormatter.Build(message, level);
-            _homeLogEntries.Add(entry);
-            if (_homeLogEntries.Count > MaxLogLines)
-            {
-                _homeLogEntries.RemoveAt(0);
-            }
-
-            RebuildHomeLogView();
+            UiLogEntry entry = UiLogStore.Append(message, level);
             EnsureHomeLogScrollToBottom();
             if (source == UiLogSource.App)
             {
@@ -1194,35 +1133,6 @@ namespace IPAbuyer.Views
         private void EnsureHomeLogScrollToBottom()
         {
             // Popup log mode does not need in-page auto scrolling.
-        }
-
-        private void RebuildHomeLogView()
-        {
-            _homeLogBuilder.Clear();
-            foreach (UiLogEntry entry in _homeLogEntries)
-            {
-                _homeLogBuilder.AppendLine(entry.FormattedText);
-            }
-        }
-
-        private Windows.UI.Color GetLogColor(UiLogLevel level)
-        {
-            return level switch
-            {
-                UiLogLevel.Tip => ActualTheme == ElementTheme.Dark
-                    ? Windows.UI.Color.FromArgb(0xFF, 0xFF, 0xD5, 0x8A)
-                    : Windows.UI.Color.FromArgb(0xFF, 0x9A, 0x67, 0x00),
-                UiLogLevel.Success => ActualTheme == ElementTheme.Dark
-                    ? Windows.UI.Color.FromArgb(0xFF, 0x8D, 0xE6, 0x9A)
-                    : Windows.UI.Color.FromArgb(0xFF, 0x2E, 0xA0, 0x43),
-                UiLogLevel.Error => ActualTheme == ElementTheme.Dark
-                    ? Windows.UI.Color.FromArgb(0xFF, 0xFF, 0x99, 0x99)
-                    : Windows.UI.Color.FromArgb(0xFF, 0xC4, 0x2B, 0x1C),
-                UiLogLevel.Ipatool => ActualTheme == ElementTheme.Dark
-                    ? Windows.UI.Color.FromArgb(0xFF, 0x9C, 0xC8, 0xFF)
-                    : Windows.UI.Color.FromArgb(0xFF, 0x00, 0x55, 0xAA),
-                _ => Windows.UI.Color.FromArgb(0xFF, 0xE6, 0xE6, 0xE6)
-            };
         }
 
         protected override void OnNavigatedFrom(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
