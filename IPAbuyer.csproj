@@ -22,7 +22,6 @@
         <UseRidGraph>true</UseRidGraph>
         <Platforms>x64;ARM64</Platforms>
         <ApplicationManifest>app.manifest</ApplicationManifest>
-        <PublishProfile>win-$(Platform).pubxml</PublishProfile>
         <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &gt;= 8">
             win-x64;win-arm64</RuntimeIdentifiers>
         <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &lt; 8">
@@ -34,6 +33,14 @@
         <RepositoryUrl>https://github.com/ipabuyer/gui</RepositoryUrl>
         <Copyright>Copyright © 2025-2026 IPAbuyer. 保留所有权利。</Copyright>
         <PackageProjectUrl>https://github.com/ipabuyer/gui</PackageProjectUrl>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Platform)' == 'x64' And '$(RuntimeIdentifier)' == ''">
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Platform)' == 'ARM64' And '$(RuntimeIdentifier)' == ''">
+        <RuntimeIdentifier>win-arm64</RuntimeIdentifier>
     </PropertyGroup>
 
     <ItemGroup>
@@ -113,9 +120,18 @@
 
     <!-- Publish Properties -->
     <PropertyGroup>
-        <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
-        <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
-        <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
-        <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+        <PublishReadyToRun>False</PublishReadyToRun>
+        <PublishTrimmed>True</PublishTrimmed>
+        <TrimMode>full</TrimMode>
+        <EnableTrimAnalyzer>True</EnableTrimAnalyzer>
+        <SuppressTrimAnalysisWarnings>False</SuppressTrimAnalysisWarnings>
+        <TrimmerSingleWarn>True</TrimmerSingleWarn>
+        <ILLinkTreatWarningsAsErrors>False</ILLinkTreatWarningsAsErrors>
+        <PublishProtocol>FileSystem</PublishProtocol>
+        <PublishDir>bin\$(Configuration)\$(TargetFramework)\$(RuntimeIdentifier)\publish\</PublishDir>
+        <SelfContained>true</SelfContained>
+        <PublishSingleFile>False</PublishSingleFile>
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <SignAssembly>False</SignAssembly>
     </PropertyGroup>
 </Project>

@@ -117,6 +117,12 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AppDisplayName" xml:space="preserve">
+    <value>IPAbuyer</value>
+  </data>
+  <data name="AppDescription" xml:space="preserve">
+    <value>快速购买和下载 App Store 中的应用</value>
+  </data>
   <data name="Settings/Button/EditCountryCode.Content" xml:space="preserve">
     <value>修改</value>
     <comment>设置页面的子标题：软件相关，的内容：国家地区代码，的按钮</comment>
