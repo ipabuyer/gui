@@ -107,7 +107,7 @@
 5. 登录成功后保存当前输入框中的加密密钥；查询登录状态时优先使用输入框中的值，输入为空时再使用已保存的值。
 6. 购买和下载等需要 `--keychain-passphrase` 的命令不从账户输入框直接读取，而是通过 `KeychainConfig.GetPassphrase(null)` 获取当前保存的值。
 7. 如果用户需要修改加密密钥，提示其退出登录，编辑输入框中的新密钥后重新登录。
-8. 退出登录成功后，如果设置项 `keychain_passphrase_rotation` 为 `true`，自动生成新的 UUID 密钥并更新输入框；如果为 `false`，保留当前密钥。
+8. 退出登录成功后，如果设置项 `KeychainPassphraseRotationEnabled` 为 `true`，自动生成新的 UUID 密钥并更新输入框；如果为 `false`，保留当前密钥。
 
 ## 日志弹窗
 
@@ -123,29 +123,30 @@
 
 ## 设置界面
 
-1. 设置界面的配置写入 `settings.json` 文件，存放于数据库目录。
-2. 修改和重置国家代码（默认为 `cn`）功能：
-   1. 设置名称：`country`
+1. 设置界面的配置写入 packaged 应用的 `ApplicationData.Current.LocalSettings`。
+2. 如果旧版 `settings.json` 存在，需要先迁移到 LocalSettings；迁移成功后将原文件改名为 `settings.json.migrated`。
+3. 修改和重置国家代码（默认为 `cn`）功能：
+   1. LocalSettings 名称：`CountryCode`
    2. 需要提示用户：跨地区购买会导致标记为疑似已拥有。
-3. 修改和重置下载目录功能，默认为当前用户的下载文件夹：
-   1. 设置名称：`download_dir`
-4. 详细日志选框，勾选后所有 `ipatool` 命令都显示在日志区，显示在软件日志输出前：
-   1. 设置名称：`verbose`
+4. 修改和重置下载目录功能，默认为当前用户的下载文件夹：
+   1. LocalSettings 名称：`DownloadDirectory`
+5. 详细日志选框，勾选后所有 `ipatool` 命令都显示在日志区，显示在软件日志输出前：
+   1. LocalSettings 名称：`DetailedIpatoolLogEnabled`
    2. 需要提示用户：勾选后所有 `ipatool` 的命令和输出都显示在日志区。
-5. 标记为已拥有前的提示：
-   1. 设置名称：`owned_check`
-   2. `owned_check` 为 `true` 时，标记为已拥有不再弹窗询问；为 `false` 时，标记前需要弹窗确认。
-6. 关闭加密密钥轮换功能：
-   1. 设置名称：`keychain_passphrase_rotation`
-7. 开发者官方网站（按钮跳转 <https://ipa.blazesnow.com>）：
+6. 标记为已拥有前的提示：
+   1. LocalSettings 名称：`OwnedCheckEnabled`
+   2. `OwnedCheckEnabled` 为 `true` 时，标记为已拥有不再弹窗询问；为 `false` 时，标记前需要弹窗确认。
+7. 关闭加密密钥轮换功能：
+   1. LocalSettings 名称：`KeychainPassphraseRotationEnabled`
+8. 开发者官方网站（按钮跳转 <https://ipa.blazesnow.com>）：
    1. 需要提示用户：打开开发者官方网站，查看 Q&A 及更多信息。
-8. 反馈邮箱（按钮复制 <ipa@blazesnow.com>）：
+9. 反馈邮箱（按钮复制 <ipa@blazesnow.com>）：
    1. 需要提示用户：附带屏幕截图和复现步骤，有助于更快地修复问题。
-9. 清空本地数据库按钮与介绍。
-10. 清空 `ipatool` 数据按钮与介绍，`ipatool` 数据目录：`%USERNAME%/.ipatool/`
-11. 导出 `ipatool.exe` 功能，默认输出目录为下载目录。
-12. 导出 `ipatool.exe` 卡片需要展示当前主线 `ipatool` 的短 Git 提交值，例如 `main@dcddce4`，完整提交值通过 tooltip 展示。
-13. 设置页最底部显示软件版本卡片，仅显示版本号，不需要 Description。
+10. 清空本地数据库按钮与介绍。
+11. 清空 `ipatool` 数据按钮与介绍，`ipatool` 数据目录：`%USERNAME%/.ipatool/`
+12. 导出 `ipatool.exe` 功能，默认输出目录为下载目录。
+13. 导出 `ipatool.exe` 卡片需要展示当前主线 `ipatool` 的短 Git 提交值，例如 `main@dcddce4`，完整提交值通过 tooltip 展示。
+14. 设置页最底部显示软件版本卡片，仅显示版本号，不需要 Description。
 
 ## 搜索功能
 
