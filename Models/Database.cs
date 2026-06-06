@@ -1,6 +1,5 @@
 using Microsoft.Windows.ApplicationModel.Resources;
 using System.Diagnostics;
-using Windows.ApplicationModel;
 using Windows.Storage;
 
 namespace IPAbuyer.Models
@@ -33,60 +32,19 @@ namespace IPAbuyer.Models
             catch (Exception ex)
             {
                 Debug.WriteLine(LF("Database/Debug/Error", ex.Message));
-                try
-                {
-                    string fallback = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IPAbuyer");
-                    Directory.CreateDirectory(fallback);
-                    path = fallback;
-                    appDb = Path.Combine(path, appDbName);
-                    if (!File.Exists(appDb))
-                    {
-                        File.Create(appDb).Close();
-                    }
-                }
-                catch (Exception fallbackEx)
-                {
-                    Debug.WriteLine(LF("Database/Debug/FallbackFailed", fallbackEx.Message));
-                }
             }
         }
 
         private static string ResolveDatabaseDirectory()
         {
-            // 打包环境优先使用 LocalState；取不到时回退到 LocalAppData\IPAbuyer。
-            try
+            string localState = ApplicationData.Current.LocalFolder.Path;
+            if (string.IsNullOrWhiteSpace(localState))
             {
-                if (IsPackaged())
-                {
-                    string localState = ApplicationData.Current.LocalFolder.Path;
-                    if (!string.IsNullOrWhiteSpace(localState))
-                    {
-                        Directory.CreateDirectory(localState);
-                        return localState;
-                    }
-                }
-            }
-            catch
-            {
-                // ignore and fallback
+                throw new InvalidOperationException(L("Database/Debug/LocalStatePathMissing"));
             }
 
-            string fallback = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IPAbuyer");
-            Directory.CreateDirectory(fallback);
-            return fallback;
-        }
-
-        private static bool IsPackaged()
-        {
-            try
-            {
-                _ = Package.Current.Id.FullName;
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
+            Directory.CreateDirectory(localState);
+            return localState;
         }
 
         private static string LF(string key, params object[] args)

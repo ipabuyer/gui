@@ -574,23 +574,14 @@ namespace IPAbuyer.Common
 
         private static string ResolveDataDirectory()
         {
-            try
+            string localPath = ApplicationData.Current.LocalFolder.Path;
+            if (string.IsNullOrWhiteSpace(localPath))
             {
-                if (ApplicationData.Current != null)
-                {
-                    string localPath = ApplicationData.Current.LocalFolder.Path;
-                    Directory.CreateDirectory(localPath);
-                    return localPath;
-                }
-            }
-            catch
-            {
-                // ignore and fall back
+                throw new InvalidOperationException(L("Database/Debug/LocalStatePathMissing"));
             }
 
-            string fallback = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IPAbuyer");
-            Directory.CreateDirectory(fallback);
-            return fallback;
+            Directory.CreateDirectory(localPath);
+            return localPath;
         }
 
         private static void RemoveLegacyKeychainDatabase()

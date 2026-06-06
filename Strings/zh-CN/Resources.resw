@@ -759,8 +759,8 @@
   <data name="Database/Debug/Error" xml:space="preserve">
     <value>数据库错误: {0}</value>
   </data>
-  <data name="Database/Debug/FallbackFailed" xml:space="preserve">
-    <value>数据库兜底路径初始化失败: {0}</value>
+  <data name="Database/Debug/LocalStatePathMissing" xml:space="preserve">
+    <value>无法获取 packaged 应用 LocalState 路径。</value>
   </data>
   <data name="Settings/Debug/InitializeCountryCodeFailed" xml:space="preserve">
     <value>初始化国家代码失败: {0}</value>

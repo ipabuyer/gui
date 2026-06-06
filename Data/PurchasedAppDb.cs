@@ -2,7 +2,6 @@ using IPAbuyer.Models;
 using Microsoft.Data.Sqlite;
 using Microsoft.Windows.ApplicationModel.Resources;
 using System.Diagnostics;
-using Windows.Storage;
 
 namespace IPAbuyer.Data
 {
@@ -273,27 +272,6 @@ namespace IPAbuyer.Data
         private static string NormalizeAppId(string appId)
         {
             return appId.Trim().ToLowerInvariant();
-        }
-
-        private static string ResolveDataDirectory()
-        {
-            try
-            {
-                if (ApplicationData.Current != null)
-                {
-                    string localPath = Path.Combine(ApplicationData.Current.LocalFolder.Path, "IPAbuyer");
-                    Directory.CreateDirectory(localPath);
-                    return localPath;
-                }
-            }
-            catch
-            {
-                // ignore and fall back
-            }
-
-            string fallback = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IPAbuyer");
-            Directory.CreateDirectory(fallback);
-            return fallback;
         }
 
         private static string L(string key)
