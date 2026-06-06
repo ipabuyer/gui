@@ -17,12 +17,14 @@ namespace IPAbuyer.Views
         private bool _isInitializingDetailedLogOption;
         private bool _isInitializingOwnedCheckOption;
         private bool _isInitializingPassphraseRotationOption;
+        private const string IpatoolGitRevision = "dcddce4650d49d64aaff1b0785d76de01f5227af";
 
         public Settings()
         {
             InitializeComponent();
             InitializeCountryCode();
             InitializeDownloadDirectory();
+            InitializeIpatoolGitRevision();
             InitializeDetailedIpatoolLogOption();
             InitializeOwnedCheckOption();
             InitializeKeychainPassphraseRotationOption();
@@ -383,6 +385,20 @@ namespace IPAbuyer.Views
                     L("Settings/Dialog/OperationFailedTitle"),
                     LF("Settings/IpatoolExport/FailMessage", ex.Message));
             }
+        }
+
+        private void InitializeIpatoolGitRevision()
+        {
+            if (IpatoolGitRevisionTextBlock == null)
+            {
+                return;
+            }
+
+            string shortRevision = IpatoolGitRevision[..7];
+            IpatoolGitRevisionTextBlock.Text = LF("Settings/IpatoolExport/GitRevisionShortFormat", shortRevision);
+            ToolTipService.SetToolTip(
+                IpatoolGitRevisionTextBlock,
+                LF("Settings/IpatoolExport/GitRevisionTooltipFormat", IpatoolGitRevision));
         }
 
         private void InitializeAppVersion()

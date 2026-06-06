@@ -261,6 +261,12 @@
   <data name="Settings/IpatoolExport/SuccessMessage" xml:space="preserve">
     <value>ipatool.exe 已导出到：{0}</value>
   </data>
+  <data name="Settings/IpatoolExport/GitRevisionShortFormat" xml:space="preserve">
+    <value>main@{0}</value>
+  </data>
+  <data name="Settings/IpatoolExport/GitRevisionTooltipFormat" xml:space="preserve">
+    <value>ipatool main 分支构建提交：{0}</value>
+  </data>
   <data name="Settings/Card/ClearIpatoolData.Description" xml:space="preserve">
     <value>清除本机缓存与认证数据。</value>
   </data>
