@@ -100,12 +100,14 @@
 
 ### 账户加密密钥处理
 
-1. 加密密钥即 `keychain-passphrase`，显示于输入框。
-2. 账户登录时，需要生成 `keychain-passphrase` 用于加密 `ipatool` 的配置文件。
-3. 加密密钥生成使用 UUID。
-4. 在账户页面，若用户需要修改加密密钥，提示其退出登录并重新登录，在这个过程中输入新的加密密钥。
-5. 只有 `ipatool auth` 处于登录状态时，才存在加密密钥。
-6. 加密密钥用 `passphrase.txt` 存储。
+1. 加密密钥即 `keychain-passphrase`，显示于账户页输入框，供用户查看和复制。
+2. 账户页初始化时读取当前保存的加密密钥；如果不存在则自动生成一个 UUID 格式的新密钥并写入输入框。
+3. 加密密钥主要存储在 Windows PasswordVault 中，资源名为 `IPAbuyer.ipatool.passphrase`，用户键为 `__default__`。
+4. `passphrase.txt` 仅作为 legacy 迁移或 PasswordVault 不可用时的兜底文件；当成功迁移或成功写入 PasswordVault 后，需要删除 legacy `passphrase.txt`。
+5. 登录成功后保存当前输入框中的加密密钥；查询登录状态时优先使用输入框中的值，输入为空时再使用已保存的值。
+6. 购买和下载等需要 `--keychain-passphrase` 的命令不从账户输入框直接读取，而是通过 `KeychainConfig.GetPassphrase(null)` 获取当前保存的值。
+7. 如果用户需要修改加密密钥，提示其退出登录，编辑输入框中的新密钥后重新登录。
+8. 退出登录成功后，如果设置项 `keychain_passphrase_rotation` 为 `true`，自动生成新的 UUID 密钥并更新输入框；如果为 `false`，保留当前密钥。
 
 ## 日志弹窗
 
