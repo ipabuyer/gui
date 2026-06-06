@@ -14,11 +14,15 @@
 3. 调用 `ipatool.exe` 执行命令。
 4. 最终发布至 Microsoft Store。
 5. 每次更新发布配置、发布包版本或准备发布前，需要提示用户确认 `ipatool` 的 Git 提交值是否发生变化。
+6. 发布配置集中在 `IPAbuyer.csproj` 中维护，不使用独立 `.pubxml` 作为主要发布配置来源。
 
 ## exe 可执行文件
 
 1. `ipatool.exe` 位于 `Include` 目录，注意区分 `amd64` 和 `arm64`。
-2. 针对 `ipatool` 输出的内容，需要在命令中加入 `--format text` 或 `--format json`。
+2. 当前主线 `ipatool` 来源为自行拉取上游仓库 `main` 分支构建，不是正式 release 版；设置页需要展示短 Git 提交值，并通过 tooltip 保留完整提交值。
+3. `ipatool-main-windows-*.exe` 打包后映射为 `ipatool.exe`，用于搜索以外的购买、下载等主流程。
+4. `ipatool-2.3.0-windows-*.exe` 打包后映射为 `ipatool-legacy.exe`，用于认证登录等需要 legacy 行为的流程。
+5. 针对 `ipatool` 输出的内容，需要在命令中加入 `--format json`；详细日志开启时记录命令和输出。
 
 ## 数据库
 
@@ -32,7 +36,7 @@
 
 1. 适配系统明暗模式并自动切换。
 2. 使用侧边栏定位页面，侧边栏有 icon 并可折叠，折叠按钮位于标题栏上。
-3. 共 3 个页面：主页、账户、设置。
+3. 共 3 个导航页面：主页、账户、设置。
 4. 主窗口标题栏使用 WinUI `TitleBar` 控件，参考 WinUI Gallery 风格。
 5. 主窗口标题栏图标使用 `Assets/Square44x44Logo.scale-200.png`，不要在 `TitleBar.IconSource` 中使用 `.ico`，避免运行时异常。
 6. 不要给主窗口 `TitleBar` 设置 `x:Uid="MainWindow/TitleBar"`，避免与 `MainWindow/TitleBar/TitleText.Text` 资源键冲突。
@@ -40,29 +44,34 @@
 
 ## 主页界面
 
-1. 主页包含搜索框、操作区、表格区。
+1. 主页包含标题栏搜索框、筛选/日志操作区、搜索结果卡片列表和底部状态提示。
 2. 搜索框嵌入标题栏并居中。
 3. 主页标题栏保留搜索框；非主页仅将搜索框设为禁用，不移除、不隐藏、不使用额外占位控件。
-4. 操作区包含：“购买”按钮、“下载”按钮、“日志”按钮、“筛选”选框，形成一排；最右端有一个“终止下载”按钮，仅在下载开始后显示。
-5. 表格要求：
-   1. 表头为 App 名称、App ID、开发者、版本号、价格、购买状态。
-   2. App 名称、App ID、开发者、版本号、价格来自搜索功能，购买状态来自数据库。
-   3. 表头始终可见。
-   4. App 带 icon。
-   5. App 带复选框，配合操作区实现多 App 处理，也要配合主页右键实现多 App 处理。
+4. 操作区左侧使用筛选 ToggleButton：“全部”、“未购买”、“已购买”、“已拥有”；右侧包含“日志”按钮和仅在下载队列运行时显示的“终止下载”按钮。
+5. 搜索结果使用 `ListView` + CommunityToolkit `SettingsCard` 卡片列表，不再使用带表头的传统表格，也不使用批量复选框。
+6. 搜索结果卡片要求：
+   1. Header 显示 App 名称，Description 显示开发者。
+   2. HeaderIcon 显示 App 图标。
+   3. 卡片右侧显示版本号、购买状态、单项操作按钮和“三个点”菜单。
+   4. 购买状态来自数据库；App 名称、App ID、开发者、版本号、价格、图标来自搜索结果。
+   5. 购买状态文字需要区分颜色：已购买/已拥有为绿色，无法购买为红色。
+   6. 单项操作按钮根据状态切换：未购买时为购买；已购买/已拥有时为下载；无法购买时禁用。
+7. 搜索结果列表为空时显示空状态提示；搜索中显示居中的 `ProgressRing`。
+8. 主页使用 `InfoBar` 展示操作状态，详细日志通过全局日志窗口查看。
 
 ### 购买状态
 
 1. 分为“全部”、“未购买”、“已购买”和“已拥有”。
 2. “已购买”指通过本软件进行购买的 App。
 3. “已拥有”指用户购买过的 App，但不是通过本软件购买的。
-4. “已购买”和“已拥有”需要写入数据库文件。
-5. 当 `ipatool` 返回 `failed to purchase item with param 'STDQ'` 时，判断 App 为疑似已拥有，弹窗询问用户是否要标记为已拥有，并提供不再提示选框。
+4. 另有“无法购买”状态，用于非免费或当前不可购买的 App；该状态不应作为可执行购买状态处理。
+5. “已购买”和“已拥有”需要写入数据库文件。
+6. 当 `ipatool` 返回 `failed to purchase item with param 'STDQ'` 时，判断 App 为疑似已拥有，按设置决定是否弹窗询问用户是否要标记为已拥有，并提供不再提示选框。
 
 ### 主页右键
 
-1. 主页的表格区支持右键项目。
-2. 右键分三个区：标记区、复制区、操作区。
+1. 主页搜索结果卡片使用“三个点”按钮打开菜单，不再依赖传统表格行右键。
+2. 菜单分三个区：标记区、复制区、操作区。
 3. 标记区：标记为未购买、已购买、已拥有。
 4. 复制区：复制 App 名称、ID。
 5. 操作区：打开 App Store 中该软件详情页。
@@ -83,7 +92,7 @@
    3. 需要提示用户：新创建的苹果账号不能直接用于购买和下载，必须先在苹果设备上登录过一次 App Store 并完成一次 App 购买。
 3. 查询登录状态命令：`ipatool.exe auth info --keychain-passphrase 加密密钥`
    1. 打开软件时，自动静默执行查询登录状态命令。
-   2. 如果是登录状态，则为操作区添加一个锁定浅灰色蒙版，只允许退出登录按钮和查询登录状态按钮。
+   2. 如果是登录状态，则为输入区添加一个锁定浅灰色蒙版，只允许退出登录按钮和查询登录状态按钮。
    3. 如果是登录状态，则将 `ipatool` 返回的 `email` 即用户邮箱写入输入框。
 4. 退出登录命令：`ipatool.exe auth revoke`
 5. 为了测试用途，准备用户名 `test` 和密码 `test` 的账户，该账户购买或下载任何 App 都直接成功，用于界面测试。
@@ -120,9 +129,9 @@
 4. 详细日志选框，勾选后所有 `ipatool` 命令都显示在日志区，显示在软件日志输出前：
    1. 设置名称：`verbose`
    2. 需要提示用户：勾选后所有 `ipatool` 的命令和输出都显示在日志区。
-5. 标记为已拥有前的提示，取消勾选后，标记为已拥有前要弹窗询问用户：
+5. 标记为已拥有前的提示：
    1. 设置名称：`owned_check`
-   2. 需要提示用户：勾选后，标记为已拥有将不再弹窗询问。
+   2. `owned_check` 为 `true` 时，标记为已拥有不再弹窗询问；为 `false` 时，标记前需要弹窗确认。
 6. 关闭加密密钥轮换功能：
    1. 设置名称：`keychain_passphrase_rotation`
 7. 开发者官方网站（按钮跳转 <https://ipa.blazesnow.com>）：
@@ -132,16 +141,22 @@
 9. 清空本地数据库按钮与介绍。
 10. 清空 `ipatool` 数据按钮与介绍，`ipatool` 数据目录：`%USERNAME%/.ipatool/`
 11. 导出 `ipatool.exe` 功能，默认输出目录为下载目录。
+12. 导出 `ipatool.exe` 卡片需要展示当前主线 `ipatool` 的短 Git 提交值，例如 `main@dcddce4`，完整提交值通过 tooltip 展示。
+13. 设置页最底部显示软件版本卡片，仅显示版本号，不需要 Description。
 
 ## 搜索功能
 
 1. 通过 `https://itunes.apple.com/search?term=搜索名称&entity=software&limit=限制输出&country=国家代码` 向 Apple 服务器查询相关的软件列表。
 2. 国家代码遵循 ISO 3166-1 Alpha-2。
-3. 处理返回的 JSON 数据并展示在主页表格中。
+3. 搜索默认限制为 200 条结果。
+4. 处理返回的 JSON 数据并展示在主页搜索结果卡片列表中。
 
 ## App 处理
 
-1. 获取 App 列表，用户选中一些 App 后，可以进行购买或者下载。
-2. 购买命令：`ipatool.exe purchase --keychain-passphrase 加密密钥 --bundle-identifier APPID`
-3. 下载命令：`ipatool.exe download --keychain-passphrase 加密密钥 --output 输出位置 --bundle-identifier APPID`
-4. 需要捕获 `ipatool` 的输出信息并进行处理。
+1. 获取 App 列表后，用户通过单个卡片的操作按钮购买或加入下载队列。
+2. 当前主页不做批量选择、批量购买或批量下载。
+3. 购买命令基于：`ipatool.exe purchase --bundle-identifier APPID --keychain-passphrase 加密密钥 --format json --non-interactive --verbose`
+4. 下载命令基于：`ipatool.exe download --output 输出位置 --bundle-identifier APPID --keychain-passphrase 加密密钥 --format json --non-interactive --verbose`
+5. 已购买或已拥有的 App 点击操作按钮后加入全局下载队列，并在队列未运行时启动下载队列。
+6. 下载队列需要支持待下载、下载中、成功、失败、已取消等状态；主页仅显示“终止下载”入口，队列细节由 `DownloadQueueService` 管理。
+7. 需要捕获 `ipatool` 的输出信息并进行处理；详细日志关闭时避免刷屏，详细日志开启时显示命令、输出和下载进度片段。
