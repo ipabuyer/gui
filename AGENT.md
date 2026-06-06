@@ -15,6 +15,7 @@
 4. 最终发布至 Microsoft Store。
 5. 每次更新发布配置、发布包版本或准备发布前，需要提示用户确认 `ipatool` 的 Git 提交值是否发生变化。
 6. 发布配置集中在 `IPAbuyer.csproj` 中维护，不使用独立 `.pubxml` 作为主要发布配置来源。
+7. 本地测试使用 Visual Studio packaged 模式；本项目不考虑未打包运行状态。
 
 ## exe 可执行文件
 
@@ -28,9 +29,9 @@
 
 1. `PurchasedAppDb.db` 文件存放已购买 App、购买 App 的邮箱地址、App 的状态（即“已购买”和“已拥有”）。
 2. 数据库文件目录：
-   1. 打包应用：`%AppData%\Local\Packages\IPAbuyer.IPAbuyer_kr1hdvrv6tpd0\LocalState\`
-   2. 未打包应用：回退到 `%AppData%\Local\IPAbuyer\`
-   3. 通过 Windows API 获取上述路径。
+   1. 使用 packaged 应用 LocalState 路径：`%AppData%\Local\Packages\IPAbuyer.IPAbuyer_kr1hdvrv6tpd0\LocalState\`
+   2. 通过 Windows API 获取上述路径。
+   3. 不需要实现或保留未打包运行状态的本地目录回退逻辑。
 
 ## UI 界面
 
