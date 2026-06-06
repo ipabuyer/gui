@@ -83,6 +83,12 @@
                 </controls:SettingsCard.HeaderIcon>
                 <Button x:Uid="Settings/Button/ExportIpatool" Click="ExportIpatoolButton_Click" />
             </controls:SettingsCard>
+            <controls:SettingsCard x:Uid="Settings/Card/AppVersion" HorizontalAlignment="Stretch">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontSize="20" Glyph="&#xE946;" />
+                </controls:SettingsCard.HeaderIcon>
+                <TextBlock x:Name="AppVersionValueTextBlock" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
+            </controls:SettingsCard>
         </StackPanel>
     </ScrollViewer>
 </Page>

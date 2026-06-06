@@ -26,6 +26,7 @@ namespace IPAbuyer.Views
             InitializeDetailedIpatoolLogOption();
             InitializeOwnedCheckOption();
             InitializeKeychainPassphraseRotationOption();
+            InitializeAppVersion();
         }
 
         private void GithubButton(object sender, RoutedEventArgs e)
@@ -382,6 +383,17 @@ namespace IPAbuyer.Views
                     L("Settings/Dialog/OperationFailedTitle"),
                     LF("Settings/IpatoolExport/FailMessage", ex.Message));
             }
+        }
+
+        private void InitializeAppVersion()
+        {
+            if (AppVersionValueTextBlock == null)
+            {
+                return;
+            }
+
+            var version = Windows.ApplicationModel.Package.Current.Id.Version;
+            AppVersionValueTextBlock.Text = $"{version.Major}.{version.Minor}.{version.Build}.{version.Revision}";
         }
 
         private void InitializeDetailedIpatoolLogOption()

@@ -303,6 +303,9 @@
   <data name="Settings/Card/ExportIpatool.Header" xml:space="preserve">
     <value>导出 ipatool.exe</value>
   </data>
+  <data name="Settings/Card/AppVersion.Header" xml:space="preserve">
+    <value>软件版本</value>
+  </data>
   <data name="Settings/Card/FeedbackEmail.Description" xml:space="preserve">
     <value>使用本软件时遇到问题，欢迎反馈</value>
   </data>
