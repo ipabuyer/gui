@@ -40,7 +40,7 @@ namespace IPAbuyer.Models
             string localState = ApplicationData.Current.LocalFolder.Path;
             if (string.IsNullOrWhiteSpace(localState))
             {
-                throw new InvalidOperationException(L("Database/Debug/LocalStatePathMissing"));
+                throw new InvalidOperationException(Loader.GetString("Database/Debug/LocalStatePathMissing"));
             }
 
             Directory.CreateDirectory(localState);
