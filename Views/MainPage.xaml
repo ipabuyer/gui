@@ -14,6 +14,8 @@
         <local:MainPageFreePriceVisibilityConverter x:Key="MainPageFreePriceVisibilityConverter" />
         <local:MainPageNonFreePriceVisibilityConverter x:Key="MainPageNonFreePriceVisibilityConverter" />
         <local:MainPagePurchasedForegroundConverter x:Key="MainPagePurchasedForegroundConverter" />
+        <local:MainPagePurchaseBlockedHelpVisibilityConverter x:Key="MainPagePurchaseBlockedHelpVisibilityConverter" />
+        <local:MainPagePurchaseBlockedReasonConverter x:Key="MainPagePurchaseBlockedReasonConverter" />
         <local:MainPageImageUriConverter x:Key="MainPageImageUriConverter" />
         <local:MainPageAppActionTextConverter x:Key="MainPageAppActionTextConverter" />
         <local:MainPageAppActionEnabledConverter x:Key="MainPageAppActionEnabledConverter" />
@@ -105,13 +107,32 @@
                                             Text="{Binding version}"
                                             TextTrimming="CharacterEllipsis"
                                             ToolTipService.ToolTip="{Binding version}" />
-                                        <TextBlock
+                                        <StackPanel
                                             Grid.Column="1"
                                             VerticalAlignment="Center"
-                                            Foreground="{Binding purchased, Converter={StaticResource MainPagePurchasedForegroundConverter}}"
-                                            Text="{Binding purchased}"
-                                            TextTrimming="CharacterEllipsis"
-                                            ToolTipService.ToolTip="{Binding purchased}" />
+                                            Orientation="Horizontal"
+                                            Spacing="6">
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                Foreground="{Binding purchased, Converter={StaticResource MainPagePurchasedForegroundConverter}}"
+                                                Text="{Binding purchased}"
+                                                TextTrimming="CharacterEllipsis"
+                                                ToolTipService.ToolTip="{Binding purchased}" />
+                                            <TextBlock
+                                                x:Uid="MainPage/PurchaseBlockedHelpGlyph"
+                                                VerticalAlignment="Center"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Visibility="{Binding purchased, Converter={StaticResource MainPagePurchaseBlockedHelpVisibilityConverter}}">
+                                                <ToolTipService.ToolTip>
+                                                    <ToolTip>
+                                                        <TextBlock
+                                                            MaxWidth="320"
+                                                            Text="{Binding price, Converter={StaticResource MainPagePurchaseBlockedReasonConverter}}"
+                                                            TextWrapping="WrapWholeWords" />
+                                                    </ToolTip>
+                                                </ToolTipService.ToolTip>
+                                            </TextBlock>
+                                        </StackPanel>
                                         <Button
                                             Grid.Column="2"
                                             MinWidth="96"

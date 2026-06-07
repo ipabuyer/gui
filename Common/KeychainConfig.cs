@@ -7,16 +7,27 @@ using Windows.Storage;
 namespace IPAbuyer.Common
 {
     /// <summary>
-    /// 本地配置读写（文件版，不使用 KeychainConfig.db）
+    /// 本地配置读写（LocalSettings 版，不使用 KeychainConfig.db）
     /// </summary>
     public static partial class KeychainConfig
     {
         private static readonly ResourceLoader Loader = new();
         private const string SettingsFileName = "settings.json";
+        private const string SettingsMigratedSuffix = ".migrated";
         private const string PassphraseFileName = "passphrase.txt";
         private const string PassphraseVaultResource = "IPAbuyer.ipatool.passphrase";
         private const string DefaultPassphraseVaultUser = "__default__";
         private const string DefaultCountryCode = "cn";
+        private const string CountryCodeSettingKey = "CountryCode";
+        private const string DownloadDirectorySettingKey = "DownloadDirectory";
+        private const string DetailedIpatoolLogEnabledSettingKey = "DetailedIpatoolLogEnabled";
+        private const string OwnedCheckEnabledSettingKey = "OwnedCheckEnabled";
+        private const string KeychainPassphraseRotationEnabledSettingKey = "KeychainPassphraseRotationEnabled";
+        public const string IpatoolFlavorMain = "Main";
+        public const string IpatoolFlavorLegacy = "Legacy";
+        public const string IpatoolFlavorCustom = "Custom";
+        private const string IpatoolFlavorSettingKey = "IpatoolFlavor";
+        private const string CustomIpatoolPathSettingKey = "CustomIpatoolPath";
         private static readonly object SyncRoot = new();
 
         private static readonly HashSet<string> ValidCountryCodes = new(StringComparer.OrdinalIgnoreCase)
@@ -256,6 +267,77 @@ namespace IPAbuyer.Common
             }
         }
 
+        public static string GetIpatoolFlavor()
+        {
+            lock (SyncRoot)
+            {
+                return LoadSettingsInternal().IpatoolFlavor;
+            }
+        }
+
+        public static void SaveIpatoolFlavor(string flavor)
+        {
+            lock (SyncRoot)
+            {
+                var settings = LoadSettingsInternal();
+                settings.IpatoolFlavor = NormalizeIpatoolFlavor(flavor);
+                SaveSettingsInternal(settings);
+            }
+        }
+
+        public static string GetCustomIpatoolPath()
+        {
+            lock (SyncRoot)
+            {
+                return LoadSettingsInternal().CustomIpatoolPath;
+            }
+        }
+
+        public static bool HasUsableCustomIpatoolPath()
+        {
+            lock (SyncRoot)
+            {
+                string path = LoadSettingsInternal().CustomIpatoolPath;
+                return !string.IsNullOrWhiteSpace(path) && File.Exists(path);
+            }
+        }
+
+        public static void SaveCustomIpatoolPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                throw new ArgumentException(L("KeychainConfig/Error/CustomIpatoolPathRequired"), nameof(path));
+            }
+
+            string normalized = Path.GetFullPath(path.Trim());
+            if (!File.Exists(normalized))
+            {
+                throw new FileNotFoundException(L("KeychainConfig/Error/CustomIpatoolPathNotFound"), normalized);
+            }
+
+            lock (SyncRoot)
+            {
+                var settings = LoadSettingsInternal();
+                settings.CustomIpatoolPath = normalized;
+                SaveSettingsInternal(settings);
+            }
+        }
+
+        public static void DeleteCustomIpatoolPath()
+        {
+            lock (SyncRoot)
+            {
+                var settings = LoadSettingsInternal();
+                settings.CustomIpatoolPath = string.Empty;
+                if (string.Equals(settings.IpatoolFlavor, IpatoolFlavorCustom, StringComparison.OrdinalIgnoreCase))
+                {
+                    settings.IpatoolFlavor = IpatoolFlavorMain;
+                }
+
+                SaveSettingsInternal(settings);
+            }
+        }
+
         public static bool IsValidCountryCode(string? code)
         {
             if (string.IsNullOrWhiteSpace(code))
@@ -416,83 +498,158 @@ namespace IPAbuyer.Common
 
         private static LocalSettingsModel LoadSettingsInternal()
         {
+            TryMigrateLegacySettingsFile();
+
+            var model = CreateDefaultSettings();
+            var values = ApplicationData.Current.LocalSettings.Values;
+            if (TryReadStringSetting(values, out string? countryValue, CountryCodeSettingKey, "country"))
+            {
+                model.CountryCode = countryValue ?? DefaultCountryCode;
+            }
+
+            if (TryReadStringSetting(values, out string? downloadDirectoryValue, DownloadDirectorySettingKey, "download_dir"))
+            {
+                model.DownloadDirectory = downloadDirectoryValue ?? string.Empty;
+            }
+
+            if (TryReadBooleanSetting(values, out bool verboseValue, DetailedIpatoolLogEnabledSettingKey, "verbose"))
+            {
+                model.DetailedIpatoolLogEnabled = verboseValue;
+            }
+
+            if (TryReadBooleanSetting(values, out bool ownedCheckValue, OwnedCheckEnabledSettingKey, "owned_check"))
+            {
+                model.OwnedCheckEnabled = ownedCheckValue;
+            }
+
+            if (TryReadBooleanSetting(values, out bool rotationValue, KeychainPassphraseRotationEnabledSettingKey, "keychain_passphrase_rotation"))
+            {
+                model.KeychainPassphraseRotationEnabled = rotationValue;
+            }
+
+            if (TryReadStringSetting(values, out string? ipatoolFlavorValue, IpatoolFlavorSettingKey, "AuthIpatoolFlavor", "auth_ipatool_flavor"))
+            {
+                model.IpatoolFlavor = NormalizeIpatoolFlavor(ipatoolFlavorValue);
+            }
+
+            if (TryReadStringSetting(values, out string? customIpatoolPathValue, CustomIpatoolPathSettingKey, "custom_ipatool_path"))
+            {
+                model.CustomIpatoolPath = customIpatoolPathValue ?? string.Empty;
+            }
+
+            NormalizeSettings(model);
+            SaveSettingsInternal(model);
+            return model;
+        }
+
+        private static void TryMigrateLegacySettingsFile()
+        {
             string path = GetSettingsFilePath();
             if (!File.Exists(path))
             {
-                var defaults = CreateDefaultSettings();
-                SaveSettingsInternal(defaults);
-                return defaults;
+                return;
             }
 
+            LocalSettingsModel model;
             try
             {
-                string json = File.ReadAllText(path, Encoding.UTF8);
-                var model = CreateDefaultSettings();
-                if (!string.IsNullOrWhiteSpace(json))
-                {
-                    using JsonDocument document = JsonDocument.Parse(json);
-                    JsonElement root = document.RootElement;
-                    if (TryReadStringProperty(root, out string? countryValue, "country", "CountryCode"))
-                    {
-                        model.CountryCode = countryValue ?? DefaultCountryCode;
-                    }
-
-                    if (TryReadStringProperty(root, out string? downloadDirectoryValue, "download_dir", "DownloadDirectory"))
-                    {
-                        model.DownloadDirectory = downloadDirectoryValue ?? string.Empty;
-                    }
-
-                    if (TryReadBooleanProperty(root, out bool verboseValue, "verbose", "DetailedIpatoolLogEnabled"))
-                    {
-                        model.DetailedIpatoolLogEnabled = verboseValue;
-                    }
-
-                    if (TryReadBooleanProperty(root, out bool ownedCheckValue, "owned_check", "OwnedCheckEnabled"))
-                    {
-                        model.OwnedCheckEnabled = ownedCheckValue;
-                    }
-
-                    if (TryReadBooleanProperty(root, out bool rotationValue, "keychain_passphrase_rotation", "KeychainPassphraseRotationEnabled"))
-                    {
-                        model.KeychainPassphraseRotationEnabled = rotationValue;
-                    }
-                }
-
+                model = ReadLegacySettingsFile(path);
                 NormalizeSettings(model);
-                SaveSettingsInternal(model);
-                return model;
             }
             catch
             {
-                var defaults = CreateDefaultSettings();
-                SaveSettingsInternal(defaults);
-                return defaults;
+                return;
             }
+
+            SaveSettingsInternal(model);
+            MarkLegacySettingsFileMigrated(path);
         }
 
         private static void SaveSettingsInternal(LocalSettingsModel settings)
         {
             NormalizeSettings(settings);
-            string path = GetSettingsFilePath();
-            var jsonOptions = new JsonWriterOptions
-            {
-                Indented = true
-            };
+            var values = ApplicationData.Current.LocalSettings.Values;
+            values[CountryCodeSettingKey] = settings.CountryCode;
+            values[DownloadDirectorySettingKey] = settings.DownloadDirectory;
+            values[DetailedIpatoolLogEnabledSettingKey] = settings.DetailedIpatoolLogEnabled;
+            values[OwnedCheckEnabledSettingKey] = settings.OwnedCheckEnabled;
+            values[KeychainPassphraseRotationEnabledSettingKey] = settings.KeychainPassphraseRotationEnabled;
+            values[IpatoolFlavorSettingKey] = settings.IpatoolFlavor;
+            values[CustomIpatoolPathSettingKey] = settings.CustomIpatoolPath;
+            RemoveLegacySettingAliases(values);
+        }
 
-            using var stream = new MemoryStream();
-            using (var writer = new Utf8JsonWriter(stream, jsonOptions))
+        private static void RemoveLegacySettingAliases(IDictionary<string, object> values)
+        {
+            values.Remove("country");
+            values.Remove("download_dir");
+            values.Remove("verbose");
+            values.Remove("owned_check");
+            values.Remove("keychain_passphrase_rotation");
+            values.Remove("AuthIpatoolFlavor");
+            values.Remove("auth_ipatool_flavor");
+            values.Remove("custom_ipatool_path");
+        }
+
+        private static LocalSettingsModel ReadLegacySettingsFile(string path)
+        {
+            string json = File.ReadAllText(path, Encoding.UTF8);
+            var model = CreateDefaultSettings();
+            if (string.IsNullOrWhiteSpace(json))
             {
-                writer.WriteStartObject();
-                writer.WriteString("country", settings.CountryCode);
-                writer.WriteString("download_dir", settings.DownloadDirectory);
-                writer.WriteBoolean("verbose", settings.DetailedIpatoolLogEnabled);
-                writer.WriteBoolean("owned_check", settings.OwnedCheckEnabled);
-                writer.WriteBoolean("keychain_passphrase_rotation", settings.KeychainPassphraseRotationEnabled);
-                writer.WriteEndObject();
+                return model;
             }
 
-            string json = Encoding.UTF8.GetString(stream.ToArray());
-            File.WriteAllText(path, json, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            using JsonDocument document = JsonDocument.Parse(json);
+            JsonElement root = document.RootElement;
+            if (TryReadStringProperty(root, out string? countryValue, "country", "CountryCode"))
+            {
+                model.CountryCode = countryValue ?? DefaultCountryCode;
+            }
+
+            if (TryReadStringProperty(root, out string? downloadDirectoryValue, "download_dir", "DownloadDirectory"))
+            {
+                model.DownloadDirectory = downloadDirectoryValue ?? string.Empty;
+            }
+
+            if (TryReadBooleanProperty(root, out bool verboseValue, "verbose", "DetailedIpatoolLogEnabled"))
+            {
+                model.DetailedIpatoolLogEnabled = verboseValue;
+            }
+
+            if (TryReadBooleanProperty(root, out bool ownedCheckValue, "owned_check", "OwnedCheckEnabled"))
+            {
+                model.OwnedCheckEnabled = ownedCheckValue;
+            }
+
+            if (TryReadBooleanProperty(root, out bool rotationValue, "keychain_passphrase_rotation", "KeychainPassphraseRotationEnabled"))
+            {
+                model.KeychainPassphraseRotationEnabled = rotationValue;
+            }
+
+            if (TryReadStringProperty(root, out string? ipatoolFlavorValue, "IpatoolFlavor", "AuthIpatoolFlavor", "auth_ipatool_flavor"))
+            {
+                model.IpatoolFlavor = NormalizeIpatoolFlavor(ipatoolFlavorValue);
+            }
+
+            if (TryReadStringProperty(root, out string? customIpatoolPathValue, "CustomIpatoolPath", "custom_ipatool_path"))
+            {
+                model.CustomIpatoolPath = customIpatoolPathValue ?? string.Empty;
+            }
+
+            return model;
+        }
+
+        private static void MarkLegacySettingsFileMigrated(string path)
+        {
+            try
+            {
+                File.Move(path, path + SettingsMigratedSuffix, overwrite: true);
+            }
+            catch
+            {
+                // LocalSettings already contains the migrated values; keep the original file if it cannot be renamed.
+            }
         }
 
         private static void NormalizeSettings(LocalSettingsModel settings)
@@ -508,6 +665,16 @@ namespace IPAbuyer.Common
             settings.DownloadDirectory = string.IsNullOrWhiteSpace(settings.DownloadDirectory)
                 ? GetDefaultDownloadDirectory()
                 : Path.GetFullPath(settings.DownloadDirectory.Trim());
+
+            settings.IpatoolFlavor = NormalizeIpatoolFlavor(settings.IpatoolFlavor);
+            settings.CustomIpatoolPath = string.IsNullOrWhiteSpace(settings.CustomIpatoolPath)
+                ? string.Empty
+                : Path.GetFullPath(settings.CustomIpatoolPath.Trim());
+            if (string.Equals(settings.IpatoolFlavor, IpatoolFlavorCustom, StringComparison.OrdinalIgnoreCase)
+                && (string.IsNullOrWhiteSpace(settings.CustomIpatoolPath) || !File.Exists(settings.CustomIpatoolPath)))
+            {
+                settings.IpatoolFlavor = IpatoolFlavorMain;
+            }
         }
 
         private static LocalSettingsModel CreateDefaultSettings()
@@ -518,8 +685,25 @@ namespace IPAbuyer.Common
                 DownloadDirectory = GetDefaultDownloadDirectory(),
                 DetailedIpatoolLogEnabled = false,
                 OwnedCheckEnabled = false,
-                KeychainPassphraseRotationEnabled = true
+                KeychainPassphraseRotationEnabled = true,
+                IpatoolFlavor = IpatoolFlavorMain,
+                CustomIpatoolPath = string.Empty
             };
+        }
+
+        private static string NormalizeIpatoolFlavor(string? flavor)
+        {
+            if (string.Equals(flavor?.Trim(), IpatoolFlavorCustom, StringComparison.OrdinalIgnoreCase))
+            {
+                return IpatoolFlavorCustom;
+            }
+
+            if (string.Equals(flavor?.Trim(), IpatoolFlavorLegacy, StringComparison.OrdinalIgnoreCase))
+            {
+                return IpatoolFlavorLegacy;
+            }
+
+            return IpatoolFlavorMain;
         }
 
         private static bool TryReadStringProperty(JsonElement root, out string? value, params string[] names)
@@ -572,25 +756,57 @@ namespace IPAbuyer.Common
             return false;
         }
 
-        private static string ResolveDataDirectory()
+        private static bool TryReadStringSetting(IDictionary<string, object> values, out string? value, params string[] names)
         {
-            try
+            foreach (string name in names)
             {
-                if (ApplicationData.Current != null)
+                if (values.TryGetValue(name, out object? raw) && raw != null)
                 {
-                    string localPath = ApplicationData.Current.LocalFolder.Path;
-                    Directory.CreateDirectory(localPath);
-                    return localPath;
+                    value = raw as string ?? raw.ToString();
+                    return true;
                 }
             }
-            catch
+
+            value = null;
+            return false;
+        }
+
+        private static bool TryReadBooleanSetting(IDictionary<string, object> values, out bool value, params string[] names)
+        {
+            foreach (string name in names)
             {
-                // ignore and fall back
+                if (!values.TryGetValue(name, out object? raw) || raw == null)
+                {
+                    continue;
+                }
+
+                if (raw is bool boolValue)
+                {
+                    value = boolValue;
+                    return true;
+                }
+
+                if (bool.TryParse(raw.ToString(), out bool parsed))
+                {
+                    value = parsed;
+                    return true;
+                }
             }
 
-            string fallback = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "IPAbuyer");
-            Directory.CreateDirectory(fallback);
-            return fallback;
+            value = false;
+            return false;
+        }
+
+        private static string ResolveDataDirectory()
+        {
+            string localPath = ApplicationData.Current.LocalFolder.Path;
+            if (string.IsNullOrWhiteSpace(localPath))
+            {
+                throw new InvalidOperationException(L("Database/Debug/LocalStatePathMissing"));
+            }
+
+            Directory.CreateDirectory(localPath);
+            return localPath;
         }
 
         private static void RemoveLegacyKeychainDatabase()
@@ -620,6 +836,10 @@ namespace IPAbuyer.Common
             public bool OwnedCheckEnabled { get; set; }
 
             public bool KeychainPassphraseRotationEnabled { get; set; } = true;
+
+            public string IpatoolFlavor { get; set; } = IpatoolFlavorMain;
+
+            public string CustomIpatoolPath { get; set; } = string.Empty;
         }
 
         private static string L(string key)

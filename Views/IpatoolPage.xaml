@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="IPAbuyer.Views.IpatoolPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+    <Page.Background>Transparent</Page.Background>
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+        <StackPanel Padding="{StaticResource AppPagePadding}" Spacing="12">
+            <TextBlock
+                x:Uid="IpatoolPage/DescriptionTextBlock"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                TextWrapping="Wrap" />
+
+            <controls:SettingsCard x:Uid="IpatoolPage/Card/Main" HorizontalAlignment="Stretch">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontSize="20" Glyph="&#xE756;" />
+                </controls:SettingsCard.HeaderIcon>
+                <Grid ColumnSpacing="12" VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        x:Name="MainGitRevisionTextBlock"
+                        Grid.Column="0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextTrimming="CharacterEllipsis"
+                        TextWrapping="NoWrap" />
+                    <Grid Grid.Column="1">
+                        <Button
+                            x:Name="MainSelectButton"
+                            Click="IpatoolFlavorButton_Click"
+                            Tag="Main" />
+                        <Border
+                            x:Name="MainCurrentBadge"
+                            MinWidth="72"
+                            Padding="10,4"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Background="#107C10"
+                            CornerRadius="4"
+                            Visibility="Collapsed">
+                            <TextBlock
+                                x:Name="MainCurrentBadgeTextBlock"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Foreground="White" />
+                        </Border>
+                    </Grid>
+                    <Button
+                        x:Uid="IpatoolPage/Main/MenuButton"
+                        Grid.Column="2">
+                        <FontIcon Glyph="&#xE712;" />
+                        <Button.Flyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem
+                                    x:Uid="IpatoolPage/Main/Menu/Export"
+                                    Click="ExportIpatoolMenuItem_Click"
+                                    Tag="Main">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xEDE1;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                </Grid>
+            </controls:SettingsCard>
+
+            <controls:SettingsCard x:Uid="IpatoolPage/Card/Release" HorizontalAlignment="Stretch">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontSize="20" Glyph="&#xE7C3;" />
+                </controls:SettingsCard.HeaderIcon>
+                <Grid ColumnSpacing="12" VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        x:Uid="IpatoolPage/Release/VersionTextBlock"
+                        Grid.Column="0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextTrimming="CharacterEllipsis"
+                        TextWrapping="NoWrap" />
+                    <Grid Grid.Column="1">
+                        <Button
+                            x:Name="ReleaseSelectButton"
+                            Click="IpatoolFlavorButton_Click"
+                            Tag="Legacy" />
+                        <Border
+                            x:Name="ReleaseCurrentBadge"
+                            MinWidth="72"
+                            Padding="10,4"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Background="#107C10"
+                            CornerRadius="4"
+                            Visibility="Collapsed">
+                            <TextBlock
+                                x:Name="ReleaseCurrentBadgeTextBlock"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Foreground="White" />
+                        </Border>
+                    </Grid>
+                    <Button
+                        x:Uid="IpatoolPage/Release/MenuButton"
+                        Grid.Column="2">
+                        <FontIcon Glyph="&#xE712;" />
+                        <Button.Flyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem
+                                    x:Uid="IpatoolPage/Release/Menu/Export"
+                                    Click="ExportIpatoolMenuItem_Click"
+                                    Tag="Legacy">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xEDE1;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                </Grid>
+            </controls:SettingsCard>
+
+            <controls:SettingsCard x:Uid="IpatoolPage/Card/Custom" HorizontalAlignment="Stretch">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontSize="20" Glyph="&#xE8B7;" />
+                </controls:SettingsCard.HeaderIcon>
+                <Grid ColumnSpacing="12" VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        x:Name="CustomIpatoolPathTextBlock"
+                        Grid.Column="0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextTrimming="CharacterEllipsis"
+                        TextWrapping="NoWrap" />
+                    <Grid Grid.Column="1">
+                        <Button
+                            x:Name="CustomSelectButton"
+                            Click="IpatoolFlavorButton_Click"
+                            Tag="Custom" />
+                        <Border
+                            x:Name="CustomCurrentBadge"
+                            MinWidth="72"
+                            Padding="10,4"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Background="#107C10"
+                            CornerRadius="4"
+                            Visibility="Collapsed">
+                            <TextBlock
+                                x:Name="CustomCurrentBadgeTextBlock"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Foreground="White" />
+                        </Border>
+                    </Grid>
+                    <Button
+                        x:Uid="IpatoolPage/Custom/MenuButton"
+                        Grid.Column="2">
+                        <FontIcon Glyph="&#xE712;" />
+                        <Button.Flyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem
+                                    x:Uid="IpatoolPage/Custom/Menu/Delete"
+                                    Click="DeleteCustomIpatoolMenuItem_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE74D;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                </Grid>
+            </controls:SettingsCard>
+
+            <Border Height="1" Margin="0,4" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+            <controls:SettingsCard x:Uid="IpatoolPage/Card/DetailedIpatoolLog" HorizontalAlignment="Stretch">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontSize="20" Glyph="&#xE9D5;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ToggleSwitch x:Name="DetailedIpatoolLogCheckBox" Toggled="DetailedIpatoolLogCheckBox_Toggled" />
+            </controls:SettingsCard>
+
+            <controls:SettingsCard x:Uid="IpatoolPage/Card/ClearIpatoolData" HorizontalAlignment="Stretch">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontSize="20" Glyph="&#xE74D;" />
+                </controls:SettingsCard.HeaderIcon>
+                <Button x:Uid="IpatoolPage/ClearIpatoolDataButton" Click="ClearIpatoolDataButton_Click" HorizontalAlignment="Right" />
+            </controls:SettingsCard>
+
+            <controls:SettingsCard x:Uid="IpatoolPage/Card/Repository" HorizontalAlignment="Stretch">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontSize="20" Glyph="&#xE943;" />
+                </controls:SettingsCard.HeaderIcon>
+                <Button x:Uid="IpatoolPage/Repository/OpenButton" Click="OpenRepositoryButton_Click" HorizontalAlignment="Right" />
+            </controls:SettingsCard>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

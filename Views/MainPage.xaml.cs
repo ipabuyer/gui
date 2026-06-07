@@ -1264,6 +1264,47 @@ namespace IPAbuyer.Views
         }
     }
 
+    public sealed class MainPagePurchaseBlockedHelpVisibilityConverter : IValueConverter
+    {
+        private static readonly ResourceLoader Loader = new();
+        private static readonly string PurchaseBlockedText = Loader.GetString("Common/Status/PurchaseBlocked");
+
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            string? status = value as string;
+            return !string.IsNullOrWhiteSpace(status)
+                && status.Trim().Equals(PurchaseBlockedText, StringComparison.OrdinalIgnoreCase)
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            throw new NotSupportedException();
+        }
+    }
+
+    public sealed class MainPagePurchaseBlockedReasonConverter : IValueConverter
+    {
+        private static readonly ResourceLoader Loader = new();
+
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            string price = value as string ?? string.Empty;
+            return string.IsNullOrWhiteSpace(price)
+                ? Loader.GetString("MainPage/PurchaseBlockedReason/Unknown")
+                : string.Format(
+                    CultureInfo.CurrentCulture,
+                    Loader.GetString("MainPage/PurchaseBlockedReason/NonFree"),
+                    price.Trim());
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            throw new NotSupportedException();
+        }
+    }
+
     public sealed class MainPageImageUriConverter : IValueConverter
     {
         public object? Convert(object value, Type targetType, object parameter, string language)

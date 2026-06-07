@@ -22,7 +22,6 @@
         <UseRidGraph>true</UseRidGraph>
         <Platforms>x64;ARM64</Platforms>
         <ApplicationManifest>app.manifest</ApplicationManifest>
-        <PublishProfile>win-$(Platform).pubxml</PublishProfile>
         <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &gt;= 8">
             win-x64;win-arm64</RuntimeIdentifiers>
         <RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &lt; 8">
@@ -36,6 +35,14 @@
         <PackageProjectUrl>https://github.com/ipabuyer/gui</PackageProjectUrl>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(Platform)' == 'x64' And '$(RuntimeIdentifier)' == ''">
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Platform)' == 'ARM64' And '$(RuntimeIdentifier)' == ''">
+        <RuntimeIdentifier>win-arm64</RuntimeIdentifier>
+    </PropertyGroup>
+
     <ItemGroup>
         <Content Include="Assets\*.png" />
         <Content Include="Assets\*.ico">
@@ -46,7 +53,7 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.8" />
         <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
-        <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.0.1" />
+        <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.1.3" />
         <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1839" />
         <Manifest Include="$(ApplicationManifest)" />
 
@@ -88,6 +95,9 @@
             <Generator>MSBuild:Compile</Generator>
         </Page>
     </ItemGroup>
+    <ItemGroup>
+        <TrimmerRootDescriptor Include="ILLink.Descriptors.xml" />
+    </ItemGroup>
 
     <!-- 
         Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution 
@@ -99,23 +109,32 @@
         <ApplicationIcon>Assets\Icon.ico</ApplicationIcon>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-      <NoWarn>IL2104</NoWarn>
+      <NoWarn></NoWarn>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
-      <NoWarn>IL2104</NoWarn>
+      <NoWarn></NoWarn>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-      <NoWarn>IL2104</NoWarn>
+      <NoWarn></NoWarn>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
-      <NoWarn>IL2104</NoWarn>
+      <NoWarn></NoWarn>
     </PropertyGroup>
 
     <!-- Publish Properties -->
     <PropertyGroup>
-        <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
-        <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
-        <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
-        <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+        <PublishReadyToRun>False</PublishReadyToRun>
+        <PublishTrimmed>True</PublishTrimmed>
+        <TrimMode>full</TrimMode>
+        <EnableTrimAnalyzer>True</EnableTrimAnalyzer>
+        <SuppressTrimAnalysisWarnings>False</SuppressTrimAnalysisWarnings>
+        <TrimmerSingleWarn>True</TrimmerSingleWarn>
+        <ILLinkTreatWarningsAsErrors>False</ILLinkTreatWarningsAsErrors>
+        <PublishProtocol>FileSystem</PublishProtocol>
+        <PublishDir>bin\$(Configuration)\$(TargetFramework)\$(RuntimeIdentifier)\publish\</PublishDir>
+        <SelfContained>true</SelfContained>
+        <PublishSingleFile>False</PublishSingleFile>
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <SignAssembly>False</SignAssembly>
     </PropertyGroup>
 </Project>

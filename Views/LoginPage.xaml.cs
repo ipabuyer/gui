@@ -592,25 +592,25 @@ namespace IPAbuyer.Views
         private void ShowError(string message)
         {
             ShowStatus(message, InfoBarSeverity.Error);
-            AppendLoginLog(LF("LoginPage/Log/ErrorPrefixFormat", message), UiLogLevel.Error);
+            AppendLoginLog(message, UiLogLevel.Error);
         }
 
         private void ShowSuccess(string message)
         {
             ShowStatus(message, InfoBarSeverity.Success);
-            AppendLoginLog(LF("LoginPage/Log/SuccessPrefixFormat", message), UiLogLevel.Success);
+            AppendLoginLog(message, UiLogLevel.Success);
         }
 
         private void ShowAuthError(string message)
         {
             ShowStatus(message, InfoBarSeverity.Error);
-            AppendLoginLog(LF("LoginPage/Log/AuthErrorPrefixFormat", message), UiLogLevel.Error);
+            AppendLoginLog(message, UiLogLevel.Error);
         }
 
         private void ShowAuthWarning(string message)
         {
             ShowStatus(message, InfoBarSeverity.Warning);
-            AppendLoginLog(LF("LoginPage/Log/AuthWarningPrefixFormat", message), UiLogLevel.Tip);
+            AppendLoginLog(message, UiLogLevel.Tip);
         }
 
         private void HideAuthMessage()

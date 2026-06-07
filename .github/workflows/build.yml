@@ -42,15 +42,12 @@ jobs:
 
         echo "THUMBPRINT=$($cert.Thumbprint)" >> $env:GITHUB_OUTPUT
 
-    - name: Dotnet Restore
-      shell: pwsh
-      run: dotnet restore ${{ env.PROJECTCSPROJ }}
-
-    - name: Dotnet Build
+    - name: MSBuild Package
       shell: pwsh
       run: |
-        dotnet build ${{ env.PROJECTCSPROJ }} `
-          -c Release `
+        msbuild ${{ env.PROJECTCSPROJ }} `
+          /restore `
+          /p:Configuration=Release `
           /p:WindowsPackageType=MSIX `
           /p:GenerateAppxPackageOnBuild=true `
           /p:AppxBundle=Always `
