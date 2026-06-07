@@ -336,11 +336,11 @@
   <data name="IpatoolPage/Release/DisplayName" xml:space="preserve">
     <value>正式版 2.3.0</value>
   </data>
-  <data name="IpatoolPage/Button/Current" xml:space="preserve">
-    <value>当前使用</value>
-  </data>
   <data name="IpatoolPage/Button/Switch" xml:space="preserve">
     <value>切换</value>
+  </data>
+  <data name="IpatoolPage/Badge/Current" xml:space="preserve">
+    <value>当前使用</value>
   </data>
   <data name="IpatoolPage/Main/MenuButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>更多操作</value>
@@ -641,6 +641,15 @@
   </data>
   <data name="MainPage/Purchase/SkipNonFree" xml:space="preserve">
     <value>非免费应用，已跳过购买: {0}</value>
+  </data>
+  <data name="MainPage/PurchaseBlockedHelpGlyph.Text" xml:space="preserve">
+    <value>?</value>
+  </data>
+  <data name="MainPage/PurchaseBlockedReason/NonFree" xml:space="preserve">
+    <value>当前价格为 {0}，本软件仅支持购买免费 App。</value>
+  </data>
+  <data name="MainPage/PurchaseBlockedReason/Unknown" xml:space="preserve">
+    <value>该 App 当前不可购买，可能不是免费 App 或 App Store 暂不允许购买。</value>
   </data>
   <data name="MainPage/Purchase/MockSuccess" xml:space="preserve">
     <value>测试账户购买成功: {0}</value>

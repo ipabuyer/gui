@@ -244,25 +244,32 @@ namespace IPAbuyer.Views
             try
             {
                 bool isMainSelected = string.Equals(flavor, KeychainConfig.IpatoolFlavorMain, StringComparison.OrdinalIgnoreCase);
+                bool isReleaseSelected = string.Equals(flavor, KeychainConfig.IpatoolFlavorLegacy, StringComparison.OrdinalIgnoreCase);
                 bool isCustomSelected = string.Equals(flavor, KeychainConfig.IpatoolFlavorCustom, StringComparison.OrdinalIgnoreCase);
                 string customPath = KeychainConfig.GetCustomIpatoolPath();
                 bool hasCustomPath = !string.IsNullOrWhiteSpace(customPath) && File.Exists(customPath);
-                MainSelectButton.Content = isMainSelected
-                    ? L("IpatoolPage/Button/Current")
-                    : L("IpatoolPage/Button/Switch");
-                MainSelectButton.IsEnabled = !isMainSelected;
-                ReleaseSelectButton.Content = string.Equals(flavor, KeychainConfig.IpatoolFlavorLegacy, StringComparison.OrdinalIgnoreCase)
-                    ? L("IpatoolPage/Button/Current")
-                    : L("IpatoolPage/Button/Switch");
-                ReleaseSelectButton.IsEnabled = !string.Equals(flavor, KeychainConfig.IpatoolFlavorLegacy, StringComparison.OrdinalIgnoreCase);
+                string currentText = L("IpatoolPage/Badge/Current");
+
+                MainCurrentBadgeTextBlock.Text = currentText;
+                MainCurrentBadge.Visibility = isMainSelected ? Visibility.Visible : Visibility.Collapsed;
+                MainSelectButton.Visibility = isMainSelected ? Visibility.Collapsed : Visibility.Visible;
+                MainSelectButton.Content = L("IpatoolPage/Button/Switch");
+
+                ReleaseCurrentBadgeTextBlock.Text = currentText;
+                ReleaseCurrentBadge.Visibility = isReleaseSelected ? Visibility.Visible : Visibility.Collapsed;
+                ReleaseSelectButton.Visibility = isReleaseSelected ? Visibility.Collapsed : Visibility.Visible;
+                ReleaseSelectButton.Content = L("IpatoolPage/Button/Switch");
+
                 CustomIpatoolPathTextBlock.Text = hasCustomPath
                     ? customPath
                     : L("IpatoolPage/Custom/EmptyPath");
                 ToolTipService.SetToolTip(CustomIpatoolPathTextBlock, hasCustomPath ? customPath : null);
+                CustomCurrentBadgeTextBlock.Text = currentText;
+                CustomCurrentBadge.Visibility = hasCustomPath && isCustomSelected ? Visibility.Visible : Visibility.Collapsed;
+                CustomSelectButton.Visibility = hasCustomPath && isCustomSelected ? Visibility.Collapsed : Visibility.Visible;
                 CustomSelectButton.Content = hasCustomPath
-                    ? (isCustomSelected ? L("IpatoolPage/Button/Current") : L("IpatoolPage/Button/Switch"))
+                    ? L("IpatoolPage/Button/Switch")
                     : L("IpatoolPage/Button/Pick");
-                CustomSelectButton.IsEnabled = !hasCustomPath || !isCustomSelected;
             }
             finally
             {
