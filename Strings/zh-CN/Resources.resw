@@ -375,8 +375,8 @@
   <data name="IpatoolPage/Card/Main.Header" xml:space="preserve">
     <value>main 构建</value>
   </data>
-  <data name="IpatoolPage/Card/Main.Description" xml:space="preserve">
-    <value>使用自行从 main 分支构建的 ipatool 处理所有命令。</value>
+  <data name="IpatoolPage/DescriptionTextBlock.Text" xml:space="preserve">
+    <value>选择所有 ipatool 命令使用的版本。默认使用最新 main 构建。</value>
   </data>
   <data name="IpatoolPage/Main/GitRevisionShortFormat" xml:space="preserve">
     <value>main@{0}</value>
@@ -387,23 +387,14 @@
   <data name="IpatoolPage/Main/ExecutableTextBlock.Text" xml:space="preserve">
     <value>ipatool.exe</value>
   </data>
-  <data name="IpatoolPage/Main/RadioButton.Content" xml:space="preserve">
-    <value>使用</value>
-  </data>
   <data name="IpatoolPage/Card/Legacy.Header" xml:space="preserve">
     <value>legacy 2.3.0</value>
-  </data>
-  <data name="IpatoolPage/Card/Legacy.Description" xml:space="preserve">
-    <value>使用 release 版 ipatool 处理所有命令。</value>
   </data>
   <data name="IpatoolPage/Legacy/VersionTextBlock.Text" xml:space="preserve">
     <value>release@2.3.0</value>
   </data>
   <data name="IpatoolPage/Legacy/ExecutableTextBlock.Text" xml:space="preserve">
     <value>ipatool-legacy.exe</value>
-  </data>
-  <data name="IpatoolPage/Legacy/RadioButton.Content" xml:space="preserve">
-    <value>使用</value>
   </data>
   <data name="MainPage/Action/BatchPurchaseButton.Content" xml:space="preserve">
     <value>购买</value>
