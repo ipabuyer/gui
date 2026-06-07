@@ -2,6 +2,7 @@ using IPAbuyer.Common;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Windows.ApplicationModel.Resources;
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 
@@ -43,6 +44,15 @@ namespace IPAbuyer.Views
 
             KeychainConfig.SaveIpatoolFlavor(flavor);
             UpdateSelectionButtons(flavor);
+        }
+
+        private void OpenRepositoryButton_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://github.com/majd/ipatool",
+                UseShellExecute = true
+            });
         }
 
         private async void ExportIpatoolMenuItem_Click(object sender, RoutedEventArgs e)
@@ -90,10 +100,28 @@ namespace IPAbuyer.Views
                     return;
                 }
 
+                if (File.Exists(targetPath))
+                {
+                    var overwriteDialog = new ContentDialog
+                    {
+                        Title = L("IpatoolPage/Export/OverwriteTitle"),
+                        Content = LF("IpatoolPage/Export/OverwriteMessage", targetPath),
+                        PrimaryButtonText = L("IpatoolPage/Export/OverwritePrimary"),
+                        CloseButtonText = L("Settings/Dialog/ConfirmAction/Close"),
+                        XamlRoot = XamlRoot
+                    };
+
+                    if (await overwriteDialog.ShowAsync() != ContentDialogResult.Primary)
+                    {
+                        return;
+                    }
+                }
+
                 File.Copy(sourcePath, targetPath, overwrite: true);
                 await ShowDialogAsync(
                     L("Settings/Dialog/SuccessTitle"),
                     LF("IpatoolPage/Export/SuccessMessage", displayName, targetPath));
+                RevealExportedFile(targetPath);
             }
             catch (Exception ex)
             {
@@ -158,6 +186,24 @@ namespace IPAbuyer.Views
             return Directory.GetFiles(includeDirectory, pattern, SearchOption.TopDirectoryOnly)
                 .OrderByDescending(path => path, StringComparer.OrdinalIgnoreCase)
                 .FirstOrDefault();
+        }
+
+        private static void RevealExportedFile(string path)
+        {
+            try
+            {
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = "explorer.exe",
+                    Arguments = $"/select,\"{path}\"",
+                    UseShellExecute = true
+                };
+                Process.Start(startInfo);
+            }
+            catch
+            {
+                // 导出已经完成，忽略打开资源管理器失败。
+            }
         }
 
         private async Task ShowDialogAsync(string title, string message)

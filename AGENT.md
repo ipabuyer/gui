@@ -95,6 +95,7 @@
    3. 默认值：`Main`
 5. `IpatoolFlavor` 控制认证登录、查询登录状态、退出登录、购买、下载等所有 `ipatool` 命令使用的版本。
 6. 每个 `ipatool` 版本卡片右端使用三点菜单提供导出功能，导出当前卡片对应版本到下载目录，目标文件名为 `ipatool.exe`。
+7. 页面底部显示 `majd/ipatool` 仓库卡片，Description 写完整网址 <https://github.com/majd/ipatool>，按钮打开该网址。
 
 ### 登录账户
 

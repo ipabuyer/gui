@@ -396,8 +396,26 @@
   <data name="IpatoolPage/Export/NotFoundMessage" xml:space="preserve">
     <value>未在应用目录中找到可导出的 {0}。</value>
   </data>
+  <data name="IpatoolPage/Export/OverwriteMessage" xml:space="preserve">
+    <value>目标文件已存在，继续导出会覆盖：{0}</value>
+  </data>
+  <data name="IpatoolPage/Export/OverwritePrimary" xml:space="preserve">
+    <value>覆盖</value>
+  </data>
+  <data name="IpatoolPage/Export/OverwriteTitle" xml:space="preserve">
+    <value>确认覆盖</value>
+  </data>
   <data name="IpatoolPage/Export/SuccessMessage" xml:space="preserve">
     <value>{0} 已导出到：{1}</value>
+  </data>
+  <data name="IpatoolPage/Card/Repository.Header" xml:space="preserve">
+    <value>ipatool 仓库</value>
+  </data>
+  <data name="IpatoolPage/Card/Repository.Description" xml:space="preserve">
+    <value>https://github.com/majd/ipatool</value>
+  </data>
+  <data name="IpatoolPage/Repository/OpenButton.Content" xml:space="preserve">
+    <value>打开</value>
   </data>
   <data name="MainPage/Action/BatchPurchaseButton.Content" xml:space="preserve">
     <value>购买</value>
