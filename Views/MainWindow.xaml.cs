@@ -164,6 +164,9 @@ namespace IPAbuyer.Views
                     case "LoginPage":
                         ContentFrame.Navigate(typeof(LoginPage));
                         break;
+                    case "IpatoolPage":
+                        ContentFrame.Navigate(typeof(IpatoolPage));
+                        break;
                     case "SettingsPage":
                         ContentFrame.Navigate(typeof(Settings));
                         break;

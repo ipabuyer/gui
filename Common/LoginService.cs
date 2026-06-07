@@ -147,7 +147,7 @@ namespace IPAbuyer.Common
                 message = payload;
             }
 
-            if (DetectTwoFactorRequirement(message))
+            if (DetectTwoFactorRequirement(message) || (!isTwoFactor && DetectGenericAppleAuthFailure(message)))
             {
                 return new LoginResult(LoginStatus.RequiresTwoFactor, L("LoginService/Status/RequiresTwoFactor"), payload);
             }
@@ -182,8 +182,17 @@ namespace IPAbuyer.Common
                 || message.Contains("two factor")
                 || message.Contains("2fa")
                 || message.Contains("请输入验证码")
-                || message.Contains("authentication code")
-                || message.Contains("something went wrong");
+                || message.Contains("authentication code");
+        }
+
+        private static bool DetectGenericAppleAuthFailure(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return false;
+            }
+
+            return message.Contains("something went wrong", StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool DetectInvalidCredential(string message)

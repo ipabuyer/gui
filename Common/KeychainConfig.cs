@@ -23,6 +23,9 @@ namespace IPAbuyer.Common
         private const string DetailedIpatoolLogEnabledSettingKey = "DetailedIpatoolLogEnabled";
         private const string OwnedCheckEnabledSettingKey = "OwnedCheckEnabled";
         private const string KeychainPassphraseRotationEnabledSettingKey = "KeychainPassphraseRotationEnabled";
+        public const string IpatoolFlavorMain = "Main";
+        public const string IpatoolFlavorLegacy = "Legacy";
+        private const string IpatoolFlavorSettingKey = "IpatoolFlavor";
         private static readonly object SyncRoot = new();
 
         private static readonly HashSet<string> ValidCountryCodes = new(StringComparer.OrdinalIgnoreCase)
@@ -262,6 +265,24 @@ namespace IPAbuyer.Common
             }
         }
 
+        public static string GetIpatoolFlavor()
+        {
+            lock (SyncRoot)
+            {
+                return LoadSettingsInternal().IpatoolFlavor;
+            }
+        }
+
+        public static void SaveIpatoolFlavor(string flavor)
+        {
+            lock (SyncRoot)
+            {
+                var settings = LoadSettingsInternal();
+                settings.IpatoolFlavor = NormalizeIpatoolFlavor(flavor);
+                SaveSettingsInternal(settings);
+            }
+        }
+
         public static bool IsValidCountryCode(string? code)
         {
             if (string.IsNullOrWhiteSpace(code))
@@ -451,6 +472,11 @@ namespace IPAbuyer.Common
                 model.KeychainPassphraseRotationEnabled = rotationValue;
             }
 
+            if (TryReadStringSetting(values, out string? ipatoolFlavorValue, IpatoolFlavorSettingKey, "AuthIpatoolFlavor", "auth_ipatool_flavor"))
+            {
+                model.IpatoolFlavor = NormalizeIpatoolFlavor(ipatoolFlavorValue);
+            }
+
             NormalizeSettings(model);
             SaveSettingsInternal(model);
             return model;
@@ -488,6 +514,7 @@ namespace IPAbuyer.Common
             values[DetailedIpatoolLogEnabledSettingKey] = settings.DetailedIpatoolLogEnabled;
             values[OwnedCheckEnabledSettingKey] = settings.OwnedCheckEnabled;
             values[KeychainPassphraseRotationEnabledSettingKey] = settings.KeychainPassphraseRotationEnabled;
+            values[IpatoolFlavorSettingKey] = settings.IpatoolFlavor;
             RemoveLegacySettingAliases(values);
         }
 
@@ -498,6 +525,8 @@ namespace IPAbuyer.Common
             values.Remove("verbose");
             values.Remove("owned_check");
             values.Remove("keychain_passphrase_rotation");
+            values.Remove("AuthIpatoolFlavor");
+            values.Remove("auth_ipatool_flavor");
         }
 
         private static LocalSettingsModel ReadLegacySettingsFile(string path)
@@ -536,6 +565,11 @@ namespace IPAbuyer.Common
                 model.KeychainPassphraseRotationEnabled = rotationValue;
             }
 
+            if (TryReadStringProperty(root, out string? ipatoolFlavorValue, "IpatoolFlavor", "AuthIpatoolFlavor", "auth_ipatool_flavor"))
+            {
+                model.IpatoolFlavor = NormalizeIpatoolFlavor(ipatoolFlavorValue);
+            }
+
             return model;
         }
 
@@ -564,6 +598,8 @@ namespace IPAbuyer.Common
             settings.DownloadDirectory = string.IsNullOrWhiteSpace(settings.DownloadDirectory)
                 ? GetDefaultDownloadDirectory()
                 : Path.GetFullPath(settings.DownloadDirectory.Trim());
+
+            settings.IpatoolFlavor = NormalizeIpatoolFlavor(settings.IpatoolFlavor);
         }
 
         private static LocalSettingsModel CreateDefaultSettings()
@@ -574,8 +610,19 @@ namespace IPAbuyer.Common
                 DownloadDirectory = GetDefaultDownloadDirectory(),
                 DetailedIpatoolLogEnabled = false,
                 OwnedCheckEnabled = false,
-                KeychainPassphraseRotationEnabled = true
+                KeychainPassphraseRotationEnabled = true,
+                IpatoolFlavor = IpatoolFlavorMain
             };
+        }
+
+        private static string NormalizeIpatoolFlavor(string? flavor)
+        {
+            if (string.Equals(flavor?.Trim(), IpatoolFlavorLegacy, StringComparison.OrdinalIgnoreCase))
+            {
+                return IpatoolFlavorLegacy;
+            }
+
+            return IpatoolFlavorMain;
         }
 
         private static bool TryReadStringProperty(JsonElement root, out string? value, params string[] names)
@@ -708,6 +755,8 @@ namespace IPAbuyer.Common
             public bool OwnedCheckEnabled { get; set; }
 
             public bool KeychainPassphraseRotationEnabled { get; set; } = true;
+
+            public string IpatoolFlavor { get; set; } = IpatoolFlavorMain;
         }
 
         private static string L(string key)

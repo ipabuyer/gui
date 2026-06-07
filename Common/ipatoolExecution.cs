@@ -11,7 +11,7 @@ namespace IPAbuyer.Common
         private enum IpatoolFlavor
         {
             Main,
-            AuthLegacy
+            Legacy
         }
 
         private static readonly ResourceLoader Loader = new();
@@ -26,6 +26,9 @@ namespace IPAbuyer.Common
         };
         private static readonly Regex EmailRegex = new(
             @"[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex SensitiveJsonPropertyRegex = new(
+            "(\"(?:password|authCode|keychainPassphrase|keychain-passphrase|keychain_passphrase|passphrase|PasswordToken)\"\\s*:\\s*)\"(?:\\\\.|[^\"])*\"",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         public sealed record IpatoolResult(string? Output, string? Error, int ExitCode, bool TimedOut)
@@ -64,12 +67,12 @@ namespace IPAbuyer.Common
                 arguments.Add(authCode);
             }
 
-            return ExecuteIpatoolAsync(arguments, account, passphrase, cancellationToken, flavor: IpatoolFlavor.AuthLegacy);
+            return ExecuteIpatoolAsync(arguments, account, passphrase, cancellationToken, flavor: GetConfiguredIpatoolFlavor());
         }
 
         public static Task<IpatoolResult> AuthLogoutAsync(CancellationToken cancellationToken = default)
         {
-            return ExecuteIpatoolAsync(new[] { "auth", "revoke" }, account: string.Empty, passphrase: null, cancellationToken);
+            return ExecuteIpatoolAsync(new[] { "auth", "revoke" }, account: string.Empty, passphrase: null, cancellationToken, flavor: GetConfiguredIpatoolFlavor());
         }
 
         public static async Task<IpatoolResult> SearchAppAsync(string name, int limit, string account, string countryCode, CancellationToken cancellationToken = default)
@@ -127,7 +130,8 @@ namespace IPAbuyer.Common
                 account: string.Empty,
                 passphrase: passphrase,
                 cancellationToken,
-                suppressLogEvents: silent);
+                suppressLogEvents: silent,
+                flavor: GetConfiguredIpatoolFlavor());
         }
 
         public static string ExtractEmailFromPayload(string? payload)
@@ -204,7 +208,8 @@ namespace IPAbuyer.Common
                 new[] { "purchase", "--bundle-identifier", bundleId },
                 account,
                 null,
-                cancellationToken);
+                cancellationToken,
+                flavor: GetConfiguredIpatoolFlavor());
         }
 
         public static Task<IpatoolResult> DownloadAppAsync(string bundleId, string outputDirectory, string account, CancellationToken cancellationToken = default)
@@ -236,7 +241,7 @@ namespace IPAbuyer.Common
 
             Directory.CreateDirectory(outputDirectory);
 
-            string ipatoolPath = ResolveIpatoolPath(IpatoolFlavor.Main);
+            string ipatoolPath = ResolveIpatoolPath(GetConfiguredIpatoolFlavor());
             string workingDirectory = Path.GetDirectoryName(ipatoolPath) ?? AppContext.BaseDirectory;
             string effectivePassphrase = EnsurePassphrase(null);
             var finalArguments = new List<string>
@@ -443,7 +448,7 @@ namespace IPAbuyer.Common
         private static string ResolveIpatoolPath(IpatoolFlavor flavor)
         {
             string baseDirectory = AppContext.BaseDirectory;
-            string defaultExecutableName = flavor == IpatoolFlavor.AuthLegacy ? "ipatool-legacy.exe" : "ipatool.exe";
+            string defaultExecutableName = flavor == IpatoolFlavor.Legacy ? "ipatool-legacy.exe" : "ipatool.exe";
             string defaultPath = Path.Combine(baseDirectory, defaultExecutableName);
             if (File.Exists(defaultPath))
             {
@@ -462,7 +467,7 @@ namespace IPAbuyer.Common
 
                 if (!string.IsNullOrEmpty(architectureSuffix))
                 {
-                    string pattern = flavor == IpatoolFlavor.AuthLegacy
+                    string pattern = flavor == IpatoolFlavor.Legacy
                         ? $"ipatool-2.3.0-windows-{architectureSuffix}.exe"
                         : $"ipatool-main-windows-{architectureSuffix}.exe";
                     string? candidate = Directory.GetFiles(includeDirectory, pattern, SearchOption.TopDirectoryOnly)
@@ -478,6 +483,14 @@ namespace IPAbuyer.Common
 
             Debug.WriteLine(L("Ipatool/Debug/FallbackToPath"));
             return "ipatool.exe";
+        }
+
+        private static IpatoolFlavor GetConfiguredIpatoolFlavor()
+        {
+            string flavor = KeychainConfig.GetIpatoolFlavor();
+            return string.Equals(flavor, KeychainConfig.IpatoolFlavorLegacy, StringComparison.OrdinalIgnoreCase)
+                ? IpatoolFlavor.Legacy
+                : IpatoolFlavor.Main;
         }
 
         private static string EnsurePassphrase(string? passphrase)
@@ -603,6 +616,7 @@ namespace IPAbuyer.Common
                 return string.Empty;
             }
 
+            value = SanitizeLogText(value);
             return value.Length <= MaxPreviewLength ? value : value.Substring(0, MaxPreviewLength) + "...";
         }
 
@@ -683,13 +697,23 @@ namespace IPAbuyer.Common
 
             foreach (string line in EnumerateLines(output))
             {
-                CommandOutputReceived?.Invoke(line);
+                CommandOutputReceived?.Invoke(SanitizeLogText(line));
             }
 
             foreach (string line in EnumerateLines(error))
             {
-                CommandOutputReceived?.Invoke(line);
+                CommandOutputReceived?.Invoke(SanitizeLogText(line));
             }
+        }
+
+        private static string SanitizeLogText(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return string.Empty;
+            }
+
+            return SensitiveJsonPropertyRegex.Replace(value, "$1\"***\"");
         }
 
         private static IEnumerable<string> EnumerateLines(string? text)

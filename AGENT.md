@@ -21,8 +21,8 @@
 
 1. `ipatool.exe` 位于 `Include` 目录，注意区分 `amd64` 和 `arm64`。
 2. 当前主线 `ipatool` 来源为自行拉取上游仓库 `main` 分支构建，不是正式 release 版；设置页需要展示短 Git 提交值，并通过 tooltip 保留完整提交值。
-3. `ipatool-main-windows-*.exe` 打包后映射为 `ipatool.exe`，用于搜索以外的购买、下载等主流程。
-4. `ipatool-2.3.0-windows-*.exe` 打包后映射为 `ipatool-legacy.exe`，用于认证登录等需要 legacy 行为的流程。
+3. `ipatool-main-windows-*.exe` 打包后映射为 `ipatool.exe`，可由用户选择用于所有 `ipatool` 命令。
+4. `ipatool-2.3.0-windows-*.exe` 打包后映射为 `ipatool-legacy.exe`，可由用户选择用于所有 `ipatool` 命令。
 5. 针对 `ipatool` 输出的内容，需要在命令中加入 `--format json`；详细日志开启时记录命令和输出。
 
 ## 数据库
@@ -37,7 +37,7 @@
 
 1. 适配系统明暗模式并自动切换。
 2. 使用侧边栏定位页面，侧边栏有 icon 并可折叠，折叠按钮位于标题栏上。
-3. 共 3 个导航页面：主页、账户、设置。
+3. 共 4 个导航页面：主页、账户、ipatool、设置。
 4. 主窗口标题栏使用 WinUI `TitleBar` 控件，参考 WinUI Gallery 风格。
 5. 主窗口标题栏图标使用 `Assets/Square44x44Logo.scale-200.png`，不要在 `TitleBar.IconSource` 中使用 `.ico`，避免运行时异常。
 6. 不要给主窗口 `TitleBar` 设置 `x:Uid="MainWindow/TitleBar"`，避免与 `MainWindow/TitleBar/TitleText.Text` 资源键冲突。
@@ -83,6 +83,17 @@
 1. 含四个输入框和按钮。
 2. 输入框：账户、密码、双重验证码、加密密钥，分别对应 `email`、`password`、`auth-code`、`keychain-passphrase`。
 3. 按钮：“查询登录状态”、“登录”、“退出登录”、“打开苹果账户官网”、“日志”，按钮大小保持统一。
+
+## ipatool 界面
+
+1. 使用 CommunityToolkit `SettingsCard` 展示两个全局可选的 `ipatool` 版本。
+2. 主线版本展示为 `main@短 Git 值`，完整 Git 提交值通过 tooltip 展示。
+3. legacy 版本展示为 `release@2.3.0`。
+4. 用户选择写入 packaged 应用的 `ApplicationData.Current.LocalSettings`：
+   1. LocalSettings 名称：`IpatoolFlavor`
+   2. 可选值：`Main`、`Legacy`
+   3. 默认值：`Main`
+5. `IpatoolFlavor` 控制认证登录、查询登录状态、退出登录、购买、下载等所有 `ipatool` 命令使用的版本。
 
 ### 登录账户
 
