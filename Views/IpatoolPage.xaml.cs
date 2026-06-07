@@ -30,27 +30,39 @@ namespace IPAbuyer.Views
 
         private void InitializeSelection()
         {
-            _isInitializing = true;
-            try
-            {
-                string flavor = KeychainConfig.GetIpatoolFlavor();
-                MainRadioButton.IsChecked = string.Equals(flavor, KeychainConfig.IpatoolFlavorMain, StringComparison.OrdinalIgnoreCase);
-                LegacyRadioButton.IsChecked = !MainRadioButton.IsChecked;
-            }
-            finally
-            {
-                _isInitializing = false;
-            }
+            UpdateSelectionButtons(KeychainConfig.GetIpatoolFlavor());
         }
 
-        private void IpatoolFlavorRadioButton_Checked(object sender, RoutedEventArgs e)
+        private void IpatoolFlavorButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_isInitializing || sender is not RadioButton radioButton || radioButton.Tag is not string flavor)
+            if (_isInitializing || sender is not Button button || button.Tag is not string flavor)
             {
                 return;
             }
 
             KeychainConfig.SaveIpatoolFlavor(flavor);
+            UpdateSelectionButtons(flavor);
+        }
+
+        private void UpdateSelectionButtons(string flavor)
+        {
+            _isInitializing = true;
+            try
+            {
+                bool isMainSelected = string.Equals(flavor, KeychainConfig.IpatoolFlavorMain, StringComparison.OrdinalIgnoreCase);
+                MainSelectButton.Content = isMainSelected
+                    ? L("IpatoolPage/Button/Current")
+                    : L("IpatoolPage/Button/Switch");
+                MainSelectButton.IsEnabled = !isMainSelected;
+                ReleaseSelectButton.Content = isMainSelected
+                    ? L("IpatoolPage/Button/Switch")
+                    : L("IpatoolPage/Button/Current");
+                ReleaseSelectButton.IsEnabled = isMainSelected;
+            }
+            finally
+            {
+                _isInitializing = false;
+            }
         }
 
         private static string L(string key)

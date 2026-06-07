@@ -88,10 +88,10 @@
 
 1. 使用 CommunityToolkit `SettingsCard` 展示两个全局可选的 `ipatool` 版本。
 2. 主线版本展示为 `main@短 Git 值`，完整 Git 提交值通过 tooltip 展示。
-3. legacy 版本展示为 `release@2.3.0`。
+3. 正式版展示为 `release@2.3.0`，界面不要暴露 `legacy` 称号。
 4. 用户选择写入 packaged 应用的 `ApplicationData.Current.LocalSettings`：
    1. LocalSettings 名称：`IpatoolFlavor`
-   2. 可选值：`Main`、`Legacy`
+   2. 内部可选值：`Main`、`Legacy`
    3. 默认值：`Main`
 5. `IpatoolFlavor` 控制认证登录、查询登录状态、退出登录、购买、下载等所有 `ipatool` 命令使用的版本。
 

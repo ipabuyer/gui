@@ -21,16 +21,10 @@
                 </controls:SettingsCard.HeaderIcon>
                 <Grid ColumnSpacing="12" VerticalAlignment="Center">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <RadioButton
-                        x:Name="MainRadioButton"
-                        Grid.Column="0"
-                        Checked="IpatoolFlavorRadioButton_Checked"
-                        GroupName="IpatoolFlavorGroup"
-                        Tag="Main" />
-                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" Spacing="2">
+                    <StackPanel Grid.Column="0" HorizontalAlignment="Right" Spacing="2">
                         <TextBlock
                             x:Name="MainGitRevisionTextBlock"
                             HorizontalAlignment="Right"
@@ -45,39 +39,43 @@
                             TextTrimming="CharacterEllipsis"
                             TextWrapping="NoWrap" />
                     </StackPanel>
+                    <Button
+                        x:Name="MainSelectButton"
+                        Grid.Column="1"
+                        Click="IpatoolFlavorButton_Click"
+                        Tag="Main" />
                 </Grid>
             </controls:SettingsCard>
 
-            <controls:SettingsCard x:Uid="IpatoolPage/Card/Legacy" HorizontalAlignment="Stretch">
+            <controls:SettingsCard x:Uid="IpatoolPage/Card/Release" HorizontalAlignment="Stretch">
                 <controls:SettingsCard.HeaderIcon>
                     <FontIcon FontSize="20" Glyph="&#xE7C3;" />
                 </controls:SettingsCard.HeaderIcon>
                 <Grid ColumnSpacing="12" VerticalAlignment="Center">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <RadioButton
-                        x:Name="LegacyRadioButton"
-                        Grid.Column="0"
-                        Checked="IpatoolFlavorRadioButton_Checked"
-                        GroupName="IpatoolFlavorGroup"
-                        Tag="Legacy" />
-                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" Spacing="2">
+                    <StackPanel Grid.Column="0" HorizontalAlignment="Right" Spacing="2">
                         <TextBlock
-                            x:Uid="IpatoolPage/Legacy/VersionTextBlock"
+                            x:Uid="IpatoolPage/Release/VersionTextBlock"
                             HorizontalAlignment="Right"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                             TextTrimming="CharacterEllipsis"
                             TextWrapping="NoWrap" />
                         <TextBlock
-                            x:Uid="IpatoolPage/Legacy/ExecutableTextBlock"
+                            x:Uid="IpatoolPage/Release/ExecutableTextBlock"
                             HorizontalAlignment="Right"
                             FontSize="12"
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                             TextTrimming="CharacterEllipsis"
                             TextWrapping="NoWrap" />
                     </StackPanel>
+                    <Button
+                        x:Name="ReleaseSelectButton"
+                        Grid.Column="1"
+                        Click="IpatoolFlavorButton_Click"
+                        Tag="Legacy" />
                 </Grid>
             </controls:SettingsCard>
         </StackPanel>

@@ -387,14 +387,20 @@
   <data name="IpatoolPage/Main/ExecutableTextBlock.Text" xml:space="preserve">
     <value>ipatool.exe</value>
   </data>
-  <data name="IpatoolPage/Card/Legacy.Header" xml:space="preserve">
-    <value>legacy 2.3.0</value>
+  <data name="IpatoolPage/Card/Release.Header" xml:space="preserve">
+    <value>正式版 2.3.0</value>
   </data>
-  <data name="IpatoolPage/Legacy/VersionTextBlock.Text" xml:space="preserve">
+  <data name="IpatoolPage/Release/VersionTextBlock.Text" xml:space="preserve">
     <value>release@2.3.0</value>
   </data>
-  <data name="IpatoolPage/Legacy/ExecutableTextBlock.Text" xml:space="preserve">
-    <value>ipatool-legacy.exe</value>
+  <data name="IpatoolPage/Release/ExecutableTextBlock.Text" xml:space="preserve">
+    <value>ipatool.exe 2.3.0</value>
+  </data>
+  <data name="IpatoolPage/Button/Current" xml:space="preserve">
+    <value>当前使用</value>
+  </data>
+  <data name="IpatoolPage/Button/Switch" xml:space="preserve">
+    <value>切换</value>
   </data>
   <data name="MainPage/Action/BatchPurchaseButton.Content" xml:space="preserve">
     <value>购买</value>
