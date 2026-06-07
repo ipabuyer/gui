@@ -25,7 +25,9 @@ namespace IPAbuyer.Common
         private const string KeychainPassphraseRotationEnabledSettingKey = "KeychainPassphraseRotationEnabled";
         public const string IpatoolFlavorMain = "Main";
         public const string IpatoolFlavorLegacy = "Legacy";
+        public const string IpatoolFlavorCustom = "Custom";
         private const string IpatoolFlavorSettingKey = "IpatoolFlavor";
+        private const string CustomIpatoolPathSettingKey = "CustomIpatoolPath";
         private static readonly object SyncRoot = new();
 
         private static readonly HashSet<string> ValidCountryCodes = new(StringComparer.OrdinalIgnoreCase)
@@ -283,6 +285,59 @@ namespace IPAbuyer.Common
             }
         }
 
+        public static string GetCustomIpatoolPath()
+        {
+            lock (SyncRoot)
+            {
+                return LoadSettingsInternal().CustomIpatoolPath;
+            }
+        }
+
+        public static bool HasUsableCustomIpatoolPath()
+        {
+            lock (SyncRoot)
+            {
+                string path = LoadSettingsInternal().CustomIpatoolPath;
+                return !string.IsNullOrWhiteSpace(path) && File.Exists(path);
+            }
+        }
+
+        public static void SaveCustomIpatoolPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                throw new ArgumentException(L("KeychainConfig/Error/CustomIpatoolPathRequired"), nameof(path));
+            }
+
+            string normalized = Path.GetFullPath(path.Trim());
+            if (!File.Exists(normalized))
+            {
+                throw new FileNotFoundException(L("KeychainConfig/Error/CustomIpatoolPathNotFound"), normalized);
+            }
+
+            lock (SyncRoot)
+            {
+                var settings = LoadSettingsInternal();
+                settings.CustomIpatoolPath = normalized;
+                SaveSettingsInternal(settings);
+            }
+        }
+
+        public static void DeleteCustomIpatoolPath()
+        {
+            lock (SyncRoot)
+            {
+                var settings = LoadSettingsInternal();
+                settings.CustomIpatoolPath = string.Empty;
+                if (string.Equals(settings.IpatoolFlavor, IpatoolFlavorCustom, StringComparison.OrdinalIgnoreCase))
+                {
+                    settings.IpatoolFlavor = IpatoolFlavorMain;
+                }
+
+                SaveSettingsInternal(settings);
+            }
+        }
+
         public static bool IsValidCountryCode(string? code)
         {
             if (string.IsNullOrWhiteSpace(code))
@@ -477,6 +532,11 @@ namespace IPAbuyer.Common
                 model.IpatoolFlavor = NormalizeIpatoolFlavor(ipatoolFlavorValue);
             }
 
+            if (TryReadStringSetting(values, out string? customIpatoolPathValue, CustomIpatoolPathSettingKey, "custom_ipatool_path"))
+            {
+                model.CustomIpatoolPath = customIpatoolPathValue ?? string.Empty;
+            }
+
             NormalizeSettings(model);
             SaveSettingsInternal(model);
             return model;
@@ -515,6 +575,7 @@ namespace IPAbuyer.Common
             values[OwnedCheckEnabledSettingKey] = settings.OwnedCheckEnabled;
             values[KeychainPassphraseRotationEnabledSettingKey] = settings.KeychainPassphraseRotationEnabled;
             values[IpatoolFlavorSettingKey] = settings.IpatoolFlavor;
+            values[CustomIpatoolPathSettingKey] = settings.CustomIpatoolPath;
             RemoveLegacySettingAliases(values);
         }
 
@@ -527,6 +588,7 @@ namespace IPAbuyer.Common
             values.Remove("keychain_passphrase_rotation");
             values.Remove("AuthIpatoolFlavor");
             values.Remove("auth_ipatool_flavor");
+            values.Remove("custom_ipatool_path");
         }
 
         private static LocalSettingsModel ReadLegacySettingsFile(string path)
@@ -570,6 +632,11 @@ namespace IPAbuyer.Common
                 model.IpatoolFlavor = NormalizeIpatoolFlavor(ipatoolFlavorValue);
             }
 
+            if (TryReadStringProperty(root, out string? customIpatoolPathValue, "CustomIpatoolPath", "custom_ipatool_path"))
+            {
+                model.CustomIpatoolPath = customIpatoolPathValue ?? string.Empty;
+            }
+
             return model;
         }
 
@@ -600,6 +667,14 @@ namespace IPAbuyer.Common
                 : Path.GetFullPath(settings.DownloadDirectory.Trim());
 
             settings.IpatoolFlavor = NormalizeIpatoolFlavor(settings.IpatoolFlavor);
+            settings.CustomIpatoolPath = string.IsNullOrWhiteSpace(settings.CustomIpatoolPath)
+                ? string.Empty
+                : Path.GetFullPath(settings.CustomIpatoolPath.Trim());
+            if (string.Equals(settings.IpatoolFlavor, IpatoolFlavorCustom, StringComparison.OrdinalIgnoreCase)
+                && (string.IsNullOrWhiteSpace(settings.CustomIpatoolPath) || !File.Exists(settings.CustomIpatoolPath)))
+            {
+                settings.IpatoolFlavor = IpatoolFlavorMain;
+            }
         }
 
         private static LocalSettingsModel CreateDefaultSettings()
@@ -611,12 +686,18 @@ namespace IPAbuyer.Common
                 DetailedIpatoolLogEnabled = false,
                 OwnedCheckEnabled = false,
                 KeychainPassphraseRotationEnabled = true,
-                IpatoolFlavor = IpatoolFlavorMain
+                IpatoolFlavor = IpatoolFlavorMain,
+                CustomIpatoolPath = string.Empty
             };
         }
 
         private static string NormalizeIpatoolFlavor(string? flavor)
         {
+            if (string.Equals(flavor?.Trim(), IpatoolFlavorCustom, StringComparison.OrdinalIgnoreCase))
+            {
+                return IpatoolFlavorCustom;
+            }
+
             if (string.Equals(flavor?.Trim(), IpatoolFlavorLegacy, StringComparison.OrdinalIgnoreCase))
             {
                 return IpatoolFlavorLegacy;
@@ -757,6 +838,8 @@ namespace IPAbuyer.Common
             public bool KeychainPassphraseRotationEnabled { get; set; } = true;
 
             public string IpatoolFlavor { get; set; } = IpatoolFlavorMain;
+
+            public string CustomIpatoolPath { get; set; } = string.Empty;
         }
 
         private static string L(string key)

@@ -5,6 +5,8 @@ using Microsoft.Windows.ApplicationModel.Resources;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using Windows.Storage.Pickers;
+using WinRT.Interop;
 
 namespace IPAbuyer.Views
 {
@@ -37,10 +39,17 @@ namespace IPAbuyer.Views
             UpdateSelectionButtons(KeychainConfig.GetIpatoolFlavor());
         }
 
-        private void IpatoolFlavorButton_Click(object sender, RoutedEventArgs e)
+        private async void IpatoolFlavorButton_Click(object sender, RoutedEventArgs e)
         {
             if (_isInitializing || sender is not Button button || button.Tag is not string flavor)
             {
+                return;
+            }
+
+            if (string.Equals(flavor, KeychainConfig.IpatoolFlavorCustom, StringComparison.OrdinalIgnoreCase)
+                && !KeychainConfig.HasUsableCustomIpatoolPath())
+            {
+                await PickCustomIpatoolAsync(selectAfterPick: true);
                 return;
             }
 
@@ -133,6 +142,36 @@ namespace IPAbuyer.Views
             }
         }
 
+        private async void PickCustomIpatoolMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            await PickCustomIpatoolAsync(selectAfterPick: true);
+        }
+
+        private async void DeleteCustomIpatoolMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(KeychainConfig.GetCustomIpatoolPath()))
+            {
+                return;
+            }
+
+            var dialog = new ContentDialog
+            {
+                Title = L("IpatoolPage/Custom/DeleteConfirmTitle"),
+                Content = L("IpatoolPage/Custom/DeleteConfirmMessage"),
+                PrimaryButtonText = L("IpatoolPage/Custom/DeleteConfirmPrimary"),
+                CloseButtonText = L("Settings/Dialog/ConfirmAction/Close"),
+                XamlRoot = XamlRoot
+            };
+
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+            {
+                return;
+            }
+
+            KeychainConfig.DeleteCustomIpatoolPath();
+            UpdateSelectionButtons(KeychainConfig.GetIpatoolFlavor());
+        }
+
         private async void ClearIpatoolDataButton_Click(object sender, RoutedEventArgs e)
         {
             string ipatoolDirectory = Path.Combine(
@@ -210,18 +249,80 @@ namespace IPAbuyer.Views
             try
             {
                 bool isMainSelected = string.Equals(flavor, KeychainConfig.IpatoolFlavorMain, StringComparison.OrdinalIgnoreCase);
+                bool isCustomSelected = string.Equals(flavor, KeychainConfig.IpatoolFlavorCustom, StringComparison.OrdinalIgnoreCase);
+                string customPath = KeychainConfig.GetCustomIpatoolPath();
+                bool hasCustomPath = !string.IsNullOrWhiteSpace(customPath) && File.Exists(customPath);
                 MainSelectButton.Content = isMainSelected
                     ? L("IpatoolPage/Button/Current")
                     : L("IpatoolPage/Button/Switch");
                 MainSelectButton.IsEnabled = !isMainSelected;
-                ReleaseSelectButton.Content = isMainSelected
-                    ? L("IpatoolPage/Button/Switch")
-                    : L("IpatoolPage/Button/Current");
-                ReleaseSelectButton.IsEnabled = isMainSelected;
+                ReleaseSelectButton.Content = string.Equals(flavor, KeychainConfig.IpatoolFlavorLegacy, StringComparison.OrdinalIgnoreCase)
+                    ? L("IpatoolPage/Button/Current")
+                    : L("IpatoolPage/Button/Switch");
+                ReleaseSelectButton.IsEnabled = !string.Equals(flavor, KeychainConfig.IpatoolFlavorLegacy, StringComparison.OrdinalIgnoreCase);
+                CustomIpatoolPathTextBlock.Text = hasCustomPath
+                    ? customPath
+                    : L("IpatoolPage/Custom/EmptyPath");
+                ToolTipService.SetToolTip(CustomIpatoolPathTextBlock, hasCustomPath ? customPath : null);
+                CustomSelectButton.Content = hasCustomPath
+                    ? (isCustomSelected ? L("IpatoolPage/Button/Current") : L("IpatoolPage/Button/Switch"))
+                    : L("IpatoolPage/Button/Pick");
+                CustomSelectButton.IsEnabled = !hasCustomPath || !isCustomSelected;
             }
             finally
             {
                 _isInitializing = false;
+            }
+        }
+
+        private async Task PickCustomIpatoolAsync(bool selectAfterPick)
+        {
+            var picker = new FileOpenPicker
+            {
+                SuggestedStartLocation = PickerLocationId.Downloads
+            };
+            picker.FileTypeFilter.Add(".exe");
+
+            if (Application.Current is App app && app.MainWindowInstance != null)
+            {
+                IntPtr hwnd = WindowNative.GetWindowHandle(app.MainWindowInstance);
+                InitializeWithWindow.Initialize(picker, hwnd);
+            }
+
+            Windows.Storage.StorageFile? file = await picker.PickSingleFileAsync();
+            if (file == null)
+            {
+                return;
+            }
+
+            if (!string.Equals(file.Name, "ipatool.exe", StringComparison.OrdinalIgnoreCase))
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = L("IpatoolPage/Custom/InvalidFileTitle"),
+                    Content = L("IpatoolPage/Custom/InvalidFileMessage"),
+                    CloseButtonText = L("Settings/Dialog/CloseButton"),
+                    XamlRoot = XamlRoot
+                };
+                await dialog.ShowAsync();
+                return;
+            }
+
+            try
+            {
+                KeychainConfig.SaveCustomIpatoolPath(file.Path);
+                if (selectAfterPick)
+                {
+                    KeychainConfig.SaveIpatoolFlavor(KeychainConfig.IpatoolFlavorCustom);
+                }
+
+                UpdateSelectionButtons(KeychainConfig.GetIpatoolFlavor());
+            }
+            catch (Exception ex)
+            {
+                await ShowDialogAsync(
+                    L("Settings/Dialog/OperationFailedTitle"),
+                    LF("IpatoolPage/Custom/SaveFailMessage", ex.Message));
             }
         }
 

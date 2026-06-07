@@ -101,6 +101,55 @@
                 </Grid>
             </controls:SettingsCard>
 
+            <controls:SettingsCard x:Uid="IpatoolPage/Card/Custom" HorizontalAlignment="Stretch">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontSize="20" Glyph="&#xE8B7;" />
+                </controls:SettingsCard.HeaderIcon>
+                <Grid ColumnSpacing="12" VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        x:Name="CustomIpatoolPathTextBlock"
+                        Grid.Column="0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextTrimming="CharacterEllipsis"
+                        TextWrapping="NoWrap" />
+                    <Button
+                        x:Name="CustomSelectButton"
+                        Grid.Column="1"
+                        Click="IpatoolFlavorButton_Click"
+                        Tag="Custom" />
+                    <Button
+                        x:Uid="IpatoolPage/Custom/MenuButton"
+                        Grid.Column="2">
+                        <FontIcon Glyph="&#xE712;" />
+                        <Button.Flyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem
+                                    x:Uid="IpatoolPage/Custom/Menu/Pick"
+                                    Click="PickCustomIpatoolMenuItem_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE8B7;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                                <MenuFlyoutItem
+                                    x:Uid="IpatoolPage/Custom/Menu/Delete"
+                                    Click="DeleteCustomIpatoolMenuItem_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE74D;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                </Grid>
+            </controls:SettingsCard>
+
             <controls:SettingsCard x:Uid="IpatoolPage/Card/DetailedIpatoolLog" HorizontalAlignment="Stretch">
                 <controls:SettingsCard.HeaderIcon>
                     <FontIcon FontSize="20" Glyph="&#xE9D5;" />

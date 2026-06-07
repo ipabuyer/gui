@@ -91,13 +91,15 @@
 3. 正式版展示为 `release@2.3.0`，界面不要暴露 `legacy` 称号。
 4. 用户选择写入 packaged 应用的 `ApplicationData.Current.LocalSettings`：
    1. LocalSettings 名称：`IpatoolFlavor`
-   2. 内部可选值：`Main`、`Legacy`
+   2. 内部可选值：`Main`、`Legacy`、`Custom`
    3. 默认值：`Main`
-5. `IpatoolFlavor` 控制认证登录、查询登录状态、退出登录、购买、下载等所有 `ipatool` 命令使用的版本。
-6. 每个 `ipatool` 版本卡片右端使用三点菜单提供导出功能，导出当前卡片对应版本到下载目录，目标文件名为 `ipatool.exe`。
-7. 显示详细日志开关写入 LocalSettings 名称：`DetailedIpatoolLogEnabled`，勾选后所有 `ipatool` 的命令和输出都显示在日志区。
-8. 页面底部显示清空 `ipatool` 数据卡片，`ipatool` 数据目录：`%USERNAME%/.ipatool/`。
-9. 页面底部显示 `majd/ipatool` 仓库卡片，Description 写完整网址 <https://github.com/majd/ipatool>，按钮打开该网址。
+5. 自定义 `ipatool.exe` 路径写入 LocalSettings 名称：`CustomIpatoolPath`；自定义文件必须命名为 `ipatool.exe`。
+6. `IpatoolFlavor` 控制认证登录、查询登录状态、退出登录、购买、下载等所有 `ipatool` 命令使用的版本；当自定义路径不存在时回退到 `Main`。
+7. 每个内置 `ipatool` 版本卡片右端使用三点菜单提供导出功能，导出当前卡片对应版本到下载目录，目标文件名为 `ipatool.exe`。
+8. 自定义 `ipatool.exe` 卡片右端使用三点菜单提供选择文件和删除插槽功能；删除插槽只移除 LocalSettings 路径，不删除原文件。
+9. 显示详细日志开关写入 LocalSettings 名称：`DetailedIpatoolLogEnabled`，勾选后所有 `ipatool` 的命令和输出都显示在日志区。
+10. 页面底部显示清空 `ipatool` 数据卡片，`ipatool` 数据目录：`%USERNAME%/.ipatool/`。
+11. 页面底部显示 `majd/ipatool` 仓库卡片，Description 写完整网址 <https://github.com/majd/ipatool>，按钮打开该网址。
 
 ### 登录账户
 

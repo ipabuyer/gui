@@ -354,6 +354,42 @@
   <data name="IpatoolPage/Release/Menu/Export.Text" xml:space="preserve">
     <value>导出</value>
   </data>
+  <data name="IpatoolPage/Card/Custom.Header" xml:space="preserve">
+    <value>自定义 ipatool.exe</value>
+  </data>
+  <data name="IpatoolPage/Custom/EmptyPath" xml:space="preserve">
+    <value>未设置</value>
+  </data>
+  <data name="IpatoolPage/Custom/MenuButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>更多操作</value>
+  </data>
+  <data name="IpatoolPage/Custom/Menu/Pick.Text" xml:space="preserve">
+    <value>选择文件</value>
+  </data>
+  <data name="IpatoolPage/Custom/Menu/Delete.Text" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="IpatoolPage/Button/Pick" xml:space="preserve">
+    <value>选择</value>
+  </data>
+  <data name="IpatoolPage/Custom/DeleteConfirmTitle" xml:space="preserve">
+    <value>删除自定义插槽</value>
+  </data>
+  <data name="IpatoolPage/Custom/DeleteConfirmMessage" xml:space="preserve">
+    <value>将移除当前自定义 ipatool.exe 路径，文件本身不会被删除。</value>
+  </data>
+  <data name="IpatoolPage/Custom/DeleteConfirmPrimary" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="IpatoolPage/Custom/InvalidFileTitle" xml:space="preserve">
+    <value>文件无效</value>
+  </data>
+  <data name="IpatoolPage/Custom/InvalidFileMessage" xml:space="preserve">
+    <value>请选择名为 ipatool.exe 的可执行文件。</value>
+  </data>
+  <data name="IpatoolPage/Custom/SaveFailMessage" xml:space="preserve">
+    <value>保存自定义 ipatool.exe 失败：{0}</value>
+  </data>
   <data name="IpatoolPage/Export/AlreadyInTargetMessage" xml:space="preserve">
     <value>ipatool.exe 已位于目标目录：{0}</value>
   </data>
@@ -797,6 +833,12 @@
   </data>
   <data name="KeychainConfig/Error/DownloadDirectoryRequired" xml:space="preserve">
     <value>下载目录不能为空</value>
+  </data>
+  <data name="KeychainConfig/Error/CustomIpatoolPathRequired" xml:space="preserve">
+    <value>自定义 ipatool.exe 路径不能为空</value>
+  </data>
+  <data name="KeychainConfig/Error/CustomIpatoolPathNotFound" xml:space="preserve">
+    <value>自定义 ipatool.exe 文件不存在</value>
   </data>
   <data name="PurchasedAppDb/Error/DatabasePathNotInitialized" xml:space="preserve">
     <value>App 数据库路径未初始化</value>

@@ -11,7 +11,8 @@ namespace IPAbuyer.Common
         private enum IpatoolFlavor
         {
             Main,
-            Legacy
+            Legacy,
+            Custom
         }
 
         private static readonly ResourceLoader Loader = new();
@@ -448,6 +449,17 @@ namespace IPAbuyer.Common
         private static string ResolveIpatoolPath(IpatoolFlavor flavor)
         {
             string baseDirectory = AppContext.BaseDirectory;
+            if (flavor == IpatoolFlavor.Custom)
+            {
+                string customPath = KeychainConfig.GetCustomIpatoolPath();
+                if (!string.IsNullOrWhiteSpace(customPath) && File.Exists(customPath))
+                {
+                    return customPath;
+                }
+
+                flavor = IpatoolFlavor.Main;
+            }
+
             string defaultExecutableName = flavor == IpatoolFlavor.Legacy ? "ipatool-legacy.exe" : "ipatool.exe";
             string defaultPath = Path.Combine(baseDirectory, defaultExecutableName);
             if (File.Exists(defaultPath))
@@ -488,6 +500,12 @@ namespace IPAbuyer.Common
         private static IpatoolFlavor GetConfiguredIpatoolFlavor()
         {
             string flavor = KeychainConfig.GetIpatoolFlavor();
+            if (string.Equals(flavor, KeychainConfig.IpatoolFlavorCustom, StringComparison.OrdinalIgnoreCase)
+                && KeychainConfig.HasUsableCustomIpatoolPath())
+            {
+                return IpatoolFlavor.Custom;
+            }
+
             return string.Equals(flavor, KeychainConfig.IpatoolFlavorLegacy, StringComparison.OrdinalIgnoreCase)
                 ? IpatoolFlavor.Legacy
                 : IpatoolFlavor.Main;
