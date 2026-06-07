@@ -363,9 +363,6 @@
   <data name="IpatoolPage/Custom/MenuButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>更多操作</value>
   </data>
-  <data name="IpatoolPage/Custom/Menu/Pick.Text" xml:space="preserve">
-    <value>选择文件</value>
-  </data>
   <data name="IpatoolPage/Custom/Menu/Delete.Text" xml:space="preserve">
     <value>删除</value>
   </data>
@@ -380,12 +377,6 @@
   </data>
   <data name="IpatoolPage/Custom/DeleteConfirmPrimary" xml:space="preserve">
     <value>删除</value>
-  </data>
-  <data name="IpatoolPage/Custom/InvalidFileTitle" xml:space="preserve">
-    <value>文件无效</value>
-  </data>
-  <data name="IpatoolPage/Custom/InvalidFileMessage" xml:space="preserve">
-    <value>请选择名为 ipatool.exe 的可执行文件。</value>
   </data>
   <data name="IpatoolPage/Custom/SaveFailMessage" xml:space="preserve">
     <value>保存自定义 ipatool.exe 失败：{0}</value>

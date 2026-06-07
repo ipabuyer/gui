@@ -131,13 +131,6 @@
                         <Button.Flyout>
                             <MenuFlyout>
                                 <MenuFlyoutItem
-                                    x:Uid="IpatoolPage/Custom/Menu/Pick"
-                                    Click="PickCustomIpatoolMenuItem_Click">
-                                    <MenuFlyoutItem.Icon>
-                                        <FontIcon Glyph="&#xE8B7;" />
-                                    </MenuFlyoutItem.Icon>
-                                </MenuFlyoutItem>
-                                <MenuFlyoutItem
                                     x:Uid="IpatoolPage/Custom/Menu/Delete"
                                     Click="DeleteCustomIpatoolMenuItem_Click">
                                     <MenuFlyoutItem.Icon>

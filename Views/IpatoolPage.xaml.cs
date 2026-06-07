@@ -142,11 +142,6 @@ namespace IPAbuyer.Views
             }
         }
 
-        private async void PickCustomIpatoolMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            await PickCustomIpatoolAsync(selectAfterPick: true);
-        }
-
         private async void DeleteCustomIpatoolMenuItem_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(KeychainConfig.GetCustomIpatoolPath()))
@@ -292,19 +287,6 @@ namespace IPAbuyer.Views
             Windows.Storage.StorageFile? file = await picker.PickSingleFileAsync();
             if (file == null)
             {
-                return;
-            }
-
-            if (!string.Equals(file.Name, "ipatool.exe", StringComparison.OrdinalIgnoreCase))
-            {
-                var dialog = new ContentDialog
-                {
-                    Title = L("IpatoolPage/Custom/InvalidFileTitle"),
-                    Content = L("IpatoolPage/Custom/InvalidFileMessage"),
-                    CloseButtonText = L("Settings/Dialog/CloseButton"),
-                    XamlRoot = XamlRoot
-                };
-                await dialog.ShowAsync();
                 return;
             }
 
