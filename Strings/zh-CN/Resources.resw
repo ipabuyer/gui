@@ -328,13 +328,13 @@
     <value>main 构建</value>
   </data>
   <data name="IpatoolPage/Card/Release.Header" xml:space="preserve">
-    <value>正式版 2.3.0</value>
+    <value>正式版 ipatool</value>
   </data>
   <data name="IpatoolPage/Release/VersionTextBlock.Text" xml:space="preserve">
     <value>release@2.3.0</value>
   </data>
   <data name="IpatoolPage/Release/DisplayName" xml:space="preserve">
-    <value>正式版 2.3.0</value>
+    <value>正式版 ipatool</value>
   </data>
   <data name="IpatoolPage/Button/Switch" xml:space="preserve">
     <value>切换</value>
