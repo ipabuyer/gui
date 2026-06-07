@@ -131,6 +131,49 @@ namespace IPAbuyer.Views
             }
         }
 
+        private async void ClearIpatoolDataButton_Click(object sender, RoutedEventArgs e)
+        {
+            string ipatoolDirectory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".ipatool");
+
+            var dialog = new ContentDialog
+            {
+                Title = L("Settings/Dialog/ConfirmAction/Title"),
+                Content = LF(
+                    "IpatoolPage/Data/ClearConfirmMessage",
+                    Environment.NewLine,
+                    ipatoolDirectory),
+                PrimaryButtonText = L("Settings/Dialog/ConfirmAction/Primary"),
+                CloseButtonText = L("Settings/Dialog/ConfirmAction/Close"),
+                XamlRoot = XamlRoot
+            };
+
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+            {
+                return;
+            }
+
+            try
+            {
+                if (Directory.Exists(ipatoolDirectory))
+                {
+                    Directory.Delete(ipatoolDirectory, recursive: true);
+                }
+
+                Directory.CreateDirectory(ipatoolDirectory);
+                await ShowDialogAsync(
+                    L("Settings/Dialog/SuccessTitle"),
+                    L("IpatoolPage/Data/ClearSuccessMessage"));
+            }
+            catch (Exception ex)
+            {
+                await ShowDialogAsync(
+                    L("Settings/Dialog/OperationFailedTitle"),
+                    LF("IpatoolPage/Data/ClearFailMessage", ex.Message));
+            }
+        }
+
         private void UpdateSelectionButtons(string flavor)
         {
             _isInitializing = true;

@@ -231,21 +231,6 @@
   <data name="Settings/Feedback/CopyFailMessage" xml:space="preserve">
     <value>复制邮箱失败：{0}</value>
   </data>
-  <data name="Settings/IpatoolData/ClearConfirmMessage" xml:space="preserve">
-    <value>确定要清空以下目录吗？{0}{1}{0}此操作不可恢复。</value>
-  </data>
-  <data name="Settings/IpatoolData/ClearFailMessage" xml:space="preserve">
-    <value>清空 ipatool 数据失败：{0}</value>
-  </data>
-  <data name="Settings/IpatoolData/ClearSuccessMessage" xml:space="preserve">
-    <value>ipatool 数据目录已清空。</value>
-  </data>
-  <data name="Settings/Card/ClearIpatoolData.Description" xml:space="preserve">
-    <value>清除本机缓存与认证数据。</value>
-  </data>
-  <data name="Settings/Card/ClearIpatoolData.Header" xml:space="preserve">
-    <value>清空 ipatool 数据</value>
-  </data>
   <data name="Settings/Card/ClearLocalDatabase.Description" xml:space="preserve">
     <value>仅清除本地记录，不影响 Apple 购买历史。</value>
   </data>
@@ -296,9 +281,6 @@
   </data>
   <data name="Settings/Card/KeychainPassphraseRotation.Header" xml:space="preserve">
     <value>加密密钥轮换</value>
-  </data>
-  <data name="Settings/Button/ClearIpatoolData.Content" xml:space="preserve">
-    <value>清空数据</value>
   </data>
   <data name="Settings/Button/ResetCountryCode.Content" xml:space="preserve">
     <value>恢复默认</value>
@@ -407,6 +389,24 @@
   </data>
   <data name="IpatoolPage/Export/SuccessMessage" xml:space="preserve">
     <value>{0} 已导出到：{1}</value>
+  </data>
+  <data name="IpatoolPage/Card/ClearIpatoolData.Header" xml:space="preserve">
+    <value>清空 ipatool 数据</value>
+  </data>
+  <data name="IpatoolPage/Card/ClearIpatoolData.Description" xml:space="preserve">
+    <value>清除本机缓存与认证数据。</value>
+  </data>
+  <data name="IpatoolPage/ClearIpatoolDataButton.Content" xml:space="preserve">
+    <value>清空数据</value>
+  </data>
+  <data name="IpatoolPage/Data/ClearConfirmMessage" xml:space="preserve">
+    <value>确定要清空以下目录吗？{0}{1}{0}此操作不可恢复。</value>
+  </data>
+  <data name="IpatoolPage/Data/ClearFailMessage" xml:space="preserve">
+    <value>清空 ipatool 数据失败：{0}</value>
+  </data>
+  <data name="IpatoolPage/Data/ClearSuccessMessage" xml:space="preserve">
+    <value>ipatool 数据目录已清空。</value>
   </data>
   <data name="IpatoolPage/Card/Repository.Header" xml:space="preserve">
     <value>ipatool 仓库</value>

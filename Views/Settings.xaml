@@ -71,12 +71,6 @@
                 </controls:SettingsCard.HeaderIcon>
                 <Button x:Uid="Settings/Button/ClearLocalDatabase" Click="DeleteDataBase" HorizontalAlignment="Right" />
             </controls:SettingsCard>
-            <controls:SettingsCard x:Uid="Settings/Card/ClearIpatoolData" HorizontalAlignment="Stretch">
-                <controls:SettingsCard.HeaderIcon>
-                    <FontIcon FontSize="20" Glyph="&#xE74D;" />
-                </controls:SettingsCard.HeaderIcon>
-                <Button x:Uid="Settings/Button/ClearIpatoolData" Click="ClearIpatoolDataButton_Click" />
-            </controls:SettingsCard>
             <controls:SettingsCard x:Uid="Settings/Card/AppVersion" HorizontalAlignment="Stretch">
                 <controls:SettingsCard.HeaderIcon>
                     <FontIcon FontSize="20" Glyph="&#xE946;" />

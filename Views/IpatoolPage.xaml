@@ -101,6 +101,13 @@
                 </Grid>
             </controls:SettingsCard>
 
+            <controls:SettingsCard x:Uid="IpatoolPage/Card/ClearIpatoolData" HorizontalAlignment="Stretch">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontSize="20" Glyph="&#xE74D;" />
+                </controls:SettingsCard.HeaderIcon>
+                <Button x:Uid="IpatoolPage/ClearIpatoolDataButton" Click="ClearIpatoolDataButton_Click" HorizontalAlignment="Right" />
+            </controls:SettingsCard>
+
             <controls:SettingsCard x:Uid="IpatoolPage/Card/Repository" HorizontalAlignment="Stretch">
                 <controls:SettingsCard.HeaderIcon>
                     <FontIcon FontSize="20" Glyph="&#xE943;" />

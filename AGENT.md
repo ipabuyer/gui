@@ -95,7 +95,8 @@
    3. 默认值：`Main`
 5. `IpatoolFlavor` 控制认证登录、查询登录状态、退出登录、购买、下载等所有 `ipatool` 命令使用的版本。
 6. 每个 `ipatool` 版本卡片右端使用三点菜单提供导出功能，导出当前卡片对应版本到下载目录，目标文件名为 `ipatool.exe`。
-7. 页面底部显示 `majd/ipatool` 仓库卡片，Description 写完整网址 <https://github.com/majd/ipatool>，按钮打开该网址。
+7. 页面底部显示清空 `ipatool` 数据卡片，`ipatool` 数据目录：`%USERNAME%/.ipatool/`。
+8. 页面底部显示 `majd/ipatool` 仓库卡片，Description 写完整网址 <https://github.com/majd/ipatool>，按钮打开该网址。
 
 ### 登录账户
 
@@ -156,8 +157,7 @@
 9. 反馈邮箱（按钮复制 <ipa@blazesnow.com>）：
    1. 需要提示用户：附带屏幕截图和复现步骤，有助于更快地修复问题。
 10. 清空本地数据库按钮与介绍。
-11. 清空 `ipatool` 数据按钮与介绍，`ipatool` 数据目录：`%USERNAME%/.ipatool/`
-12. 设置页最底部显示软件版本卡片，仅显示版本号，不需要 Description。
+11. 设置页最底部显示软件版本卡片，仅显示版本号，不需要 Description。
 
 ## 搜索功能
 
