@@ -316,7 +316,7 @@
     <value>main 构建</value>
   </data>
   <data name="IpatoolPage/DescriptionTextBlock.Text" xml:space="preserve">
-    <value>选择所有 ipatool 命令使用的版本。默认使用最新 main 构建。</value>
+    <value>选择所有 ipatool 命令使用的版本。默认使用 main 构建。</value>
   </data>
   <data name="IpatoolPage/Main/GitRevisionShortFormat" xml:space="preserve">
     <value>main@{0}</value>
