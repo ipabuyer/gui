@@ -143,6 +143,8 @@
                 </Grid>
             </controls:SettingsCard>
 
+            <Border Height="1" Margin="0,4" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
             <controls:SettingsCard x:Uid="IpatoolPage/Card/DetailedIpatoolLog" HorizontalAlignment="Stretch">
                 <controls:SettingsCard.HeaderIcon>
                     <FontIcon FontSize="20" Glyph="&#xE9D5;" />
