@@ -384,17 +384,11 @@
   <data name="IpatoolPage/Main/GitRevisionTooltipFormat" xml:space="preserve">
     <value>ipatool main 分支构建提交：{0}</value>
   </data>
-  <data name="IpatoolPage/Main/ExecutableTextBlock.Text" xml:space="preserve">
-    <value>ipatool.exe</value>
-  </data>
   <data name="IpatoolPage/Card/Release.Header" xml:space="preserve">
     <value>正式版 2.3.0</value>
   </data>
   <data name="IpatoolPage/Release/VersionTextBlock.Text" xml:space="preserve">
     <value>release@2.3.0</value>
-  </data>
-  <data name="IpatoolPage/Release/ExecutableTextBlock.Text" xml:space="preserve">
-    <value>ipatool.exe 2.3.0</value>
   </data>
   <data name="IpatoolPage/Button/Current" xml:space="preserve">
     <value>当前使用</value>
