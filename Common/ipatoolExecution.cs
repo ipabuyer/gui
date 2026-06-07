@@ -702,8 +702,7 @@ namespace IPAbuyer.Common
             }
 
             string rendered = RenderArgumentsForDisplay(arguments);
-            string executableName = Path.GetFileName(ipatoolPath);
-            CommandExecuting?.Invoke($"{executableName} {rendered}");
+            CommandExecuting?.Invoke($"ipatool {rendered}");
         }
 
         private static void EmitDetailedOutputLogs(string? output, string? error)
