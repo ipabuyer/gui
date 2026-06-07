@@ -16,6 +16,7 @@
 5. 每次更新发布配置、发布包版本或准备发布前，需要提示用户确认 `ipatool` 的 Git 提交值是否发生变化。
 6. 发布配置集中在 `IPAbuyer.csproj` 中维护，不使用独立 `.pubxml` 作为主要发布配置来源。
 7. 本地测试使用 Visual Studio packaged 模式；本项目不考虑未打包运行状态。
+8. 发布 trim 使用 `ILLink.Descriptors.xml`，并在 `IPAbuyer.csproj` 中通过 `TrimmerRootDescriptor` 引用。
 
 ## exe 可执行文件
 
