@@ -1137,18 +1137,6 @@
   <data name="LoginPage/Log/LoginFailed" xml:space="preserve">
     <value>登录失败: {0}</value>
   </data>
-  <data name="LoginPage/Log/ErrorPrefixFormat" xml:space="preserve">
-    <value>[错误] {0}</value>
-  </data>
-  <data name="LoginPage/Log/SuccessPrefixFormat" xml:space="preserve">
-    <value>[成功] {0}</value>
-  </data>
-  <data name="LoginPage/Log/AuthErrorPrefixFormat" xml:space="preserve">
-    <value>[验证码错误] {0}</value>
-  </data>
-  <data name="LoginPage/Log/AuthWarningPrefixFormat" xml:space="preserve">
-    <value>[验证码提示] {0}</value>
-  </data>
   <data name="LoginPage/Debug/SaveAccountInfoFailed" xml:space="preserve">
     <value>保存账户信息失败: {0}</value>
   </data>
