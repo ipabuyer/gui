@@ -23,6 +23,7 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBlock
                         x:Name="MainGitRevisionTextBlock"
@@ -37,6 +38,23 @@
                         Grid.Column="1"
                         Click="IpatoolFlavorButton_Click"
                         Tag="Main" />
+                    <Button
+                        x:Uid="IpatoolPage/Main/MenuButton"
+                        Grid.Column="2">
+                        <FontIcon Glyph="&#xE712;" />
+                        <Button.Flyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem
+                                    x:Uid="IpatoolPage/Main/Menu/Export"
+                                    Click="ExportIpatoolMenuItem_Click"
+                                    Tag="Main">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xEDE1;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
                 </Grid>
             </controls:SettingsCard>
 
@@ -47,6 +65,7 @@
                 <Grid ColumnSpacing="12" VerticalAlignment="Center">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBlock
@@ -62,6 +81,23 @@
                         Grid.Column="1"
                         Click="IpatoolFlavorButton_Click"
                         Tag="Legacy" />
+                    <Button
+                        x:Uid="IpatoolPage/Release/MenuButton"
+                        Grid.Column="2">
+                        <FontIcon Glyph="&#xE712;" />
+                        <Button.Flyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem
+                                    x:Uid="IpatoolPage/Release/Menu/Export"
+                                    Click="ExportIpatoolMenuItem_Click"
+                                    Tag="Legacy">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xEDE1;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
                 </Grid>
             </controls:SettingsCard>
         </StackPanel>

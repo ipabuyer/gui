@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Windows.ApplicationModel.Resources;
 using System.Globalization;
+using System.Runtime.InteropServices;
 
 namespace IPAbuyer.Views
 {
@@ -44,6 +45,64 @@ namespace IPAbuyer.Views
             UpdateSelectionButtons(flavor);
         }
 
+        private async void ExportIpatoolMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not MenuFlyoutItem menuItem || menuItem.Tag is not string flavor)
+            {
+                return;
+            }
+
+            try
+            {
+                string outputDirectory = KeychainConfig.GetDownloadDirectory();
+                string displayName = GetFlavorDisplayName(flavor);
+                var confirmDialog = new ContentDialog
+                {
+                    Title = L("IpatoolPage/Export/ConfirmTitle"),
+                    Content = LF("IpatoolPage/Export/ConfirmMessage", displayName, outputDirectory),
+                    PrimaryButtonText = L("IpatoolPage/Export/ConfirmPrimary"),
+                    CloseButtonText = L("Settings/Dialog/ConfirmAction/Close"),
+                    XamlRoot = XamlRoot
+                };
+
+                if (await confirmDialog.ShowAsync() != ContentDialogResult.Primary)
+                {
+                    return;
+                }
+
+                string? sourcePath = ResolveBundledIpatoolPath(flavor);
+                if (string.IsNullOrWhiteSpace(sourcePath))
+                {
+                    await ShowDialogAsync(
+                        L("Settings/Dialog/OperationFailedTitle"),
+                        LF("IpatoolPage/Export/NotFoundMessage", displayName));
+                    return;
+                }
+
+                Directory.CreateDirectory(outputDirectory);
+
+                string targetPath = Path.Combine(outputDirectory, "ipatool.exe");
+                if (string.Equals(Path.GetFullPath(sourcePath), Path.GetFullPath(targetPath), StringComparison.OrdinalIgnoreCase))
+                {
+                    await ShowDialogAsync(
+                        L("Settings/Dialog/SuccessTitle"),
+                        LF("IpatoolPage/Export/AlreadyInTargetMessage", targetPath));
+                    return;
+                }
+
+                File.Copy(sourcePath, targetPath, overwrite: true);
+                await ShowDialogAsync(
+                    L("Settings/Dialog/SuccessTitle"),
+                    LF("IpatoolPage/Export/SuccessMessage", displayName, targetPath));
+            }
+            catch (Exception ex)
+            {
+                await ShowDialogAsync(
+                    L("Settings/Dialog/OperationFailedTitle"),
+                    LF("IpatoolPage/Export/FailMessage", ex.Message));
+            }
+        }
+
         private void UpdateSelectionButtons(string flavor)
         {
             _isInitializing = true;
@@ -63,6 +122,62 @@ namespace IPAbuyer.Views
             {
                 _isInitializing = false;
             }
+        }
+
+        private static string? ResolveBundledIpatoolPath(string flavor)
+        {
+            bool isRelease = string.Equals(flavor, KeychainConfig.IpatoolFlavorLegacy, StringComparison.OrdinalIgnoreCase);
+            string baseDirectory = AppContext.BaseDirectory;
+            string defaultPath = Path.Combine(baseDirectory, isRelease ? "ipatool-legacy.exe" : "ipatool.exe");
+            if (File.Exists(defaultPath))
+            {
+                return defaultPath;
+            }
+
+            string includeDirectory = Path.Combine(baseDirectory, "Include");
+            if (!Directory.Exists(includeDirectory))
+            {
+                return null;
+            }
+
+            string architectureSuffix = RuntimeInformation.ProcessArchitecture switch
+            {
+                Architecture.Arm64 => "arm64",
+                Architecture.X64 => "amd64",
+                _ => string.Empty
+            };
+
+            if (string.IsNullOrWhiteSpace(architectureSuffix))
+            {
+                return null;
+            }
+
+            string pattern = isRelease
+                ? $"ipatool-2.3.0-windows-{architectureSuffix}.exe"
+                : $"ipatool-main-windows-{architectureSuffix}.exe";
+            return Directory.GetFiles(includeDirectory, pattern, SearchOption.TopDirectoryOnly)
+                .OrderByDescending(path => path, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault();
+        }
+
+        private async Task ShowDialogAsync(string title, string message)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = title,
+                Content = message,
+                CloseButtonText = L("Settings/Dialog/CloseButton"),
+                XamlRoot = XamlRoot
+            };
+
+            await dialog.ShowAsync();
+        }
+
+        private static string GetFlavorDisplayName(string flavor)
+        {
+            return string.Equals(flavor, KeychainConfig.IpatoolFlavorLegacy, StringComparison.OrdinalIgnoreCase)
+                ? L("IpatoolPage/Release/DisplayName")
+                : L("IpatoolPage/Main/DisplayName");
         }
 
         private static string L(string key)

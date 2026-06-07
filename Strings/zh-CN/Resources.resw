@@ -240,33 +240,6 @@
   <data name="Settings/IpatoolData/ClearSuccessMessage" xml:space="preserve">
     <value>ipatool 数据目录已清空。</value>
   </data>
-  <data name="Settings/IpatoolExport/AlreadyInTargetMessage" xml:space="preserve">
-    <value>ipatool.exe 已位于目标目录：{0}</value>
-  </data>
-  <data name="Settings/IpatoolExport/ConfirmMessage" xml:space="preserve">
-    <value>将导出 ipatool.exe 到以下目录：{0}</value>
-  </data>
-  <data name="Settings/IpatoolExport/ConfirmPrimary" xml:space="preserve">
-    <value>导出</value>
-  </data>
-  <data name="Settings/IpatoolExport/ConfirmTitle" xml:space="preserve">
-    <value>确认导出</value>
-  </data>
-  <data name="Settings/IpatoolExport/FailMessage" xml:space="preserve">
-    <value>导出 ipatool.exe 失败：{0}</value>
-  </data>
-  <data name="Settings/IpatoolExport/NotFoundMessage" xml:space="preserve">
-    <value>未在应用目录中找到可导出的 ipatool.exe。</value>
-  </data>
-  <data name="Settings/IpatoolExport/SuccessMessage" xml:space="preserve">
-    <value>ipatool.exe 已导出到：{0}</value>
-  </data>
-  <data name="Settings/IpatoolExport/GitRevisionShortFormat" xml:space="preserve">
-    <value>main@{0}</value>
-  </data>
-  <data name="Settings/IpatoolExport/GitRevisionTooltipFormat" xml:space="preserve">
-    <value>ipatool main 分支构建提交：{0}</value>
-  </data>
   <data name="Settings/Card/ClearIpatoolData.Description" xml:space="preserve">
     <value>清除本机缓存与认证数据。</value>
   </data>
@@ -303,12 +276,6 @@
   <data name="Settings/Card/DownloadDirectory.Header" xml:space="preserve">
     <value>下载目录</value>
   </data>
-  <data name="Settings/Card/ExportIpatool.Description" xml:space="preserve">
-    <value>导出当前架构对应的可执行文件到下载目录。</value>
-  </data>
-  <data name="Settings/Card/ExportIpatool.Header" xml:space="preserve">
-    <value>导出 ipatool.exe</value>
-  </data>
   <data name="Settings/Card/AppVersion.Header" xml:space="preserve">
     <value>软件版本</value>
   </data>
@@ -332,9 +299,6 @@
   </data>
   <data name="Settings/Button/ClearIpatoolData.Content" xml:space="preserve">
     <value>清空数据</value>
-  </data>
-  <data name="Settings/Button/ExportIpatool.Content" xml:space="preserve">
-    <value>导出 ipatool.exe</value>
   </data>
   <data name="Settings/Button/ResetCountryCode.Content" xml:space="preserve">
     <value>恢复默认</value>
@@ -384,17 +348,56 @@
   <data name="IpatoolPage/Main/GitRevisionTooltipFormat" xml:space="preserve">
     <value>ipatool main 分支构建提交：{0}</value>
   </data>
+  <data name="IpatoolPage/Main/DisplayName" xml:space="preserve">
+    <value>main 构建</value>
+  </data>
   <data name="IpatoolPage/Card/Release.Header" xml:space="preserve">
     <value>正式版 2.3.0</value>
   </data>
   <data name="IpatoolPage/Release/VersionTextBlock.Text" xml:space="preserve">
     <value>release@2.3.0</value>
   </data>
+  <data name="IpatoolPage/Release/DisplayName" xml:space="preserve">
+    <value>正式版 2.3.0</value>
+  </data>
   <data name="IpatoolPage/Button/Current" xml:space="preserve">
     <value>当前使用</value>
   </data>
   <data name="IpatoolPage/Button/Switch" xml:space="preserve">
     <value>切换</value>
+  </data>
+  <data name="IpatoolPage/Main/MenuButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>更多操作</value>
+  </data>
+  <data name="IpatoolPage/Main/Menu/Export.Text" xml:space="preserve">
+    <value>导出</value>
+  </data>
+  <data name="IpatoolPage/Release/MenuButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>更多操作</value>
+  </data>
+  <data name="IpatoolPage/Release/Menu/Export.Text" xml:space="preserve">
+    <value>导出</value>
+  </data>
+  <data name="IpatoolPage/Export/AlreadyInTargetMessage" xml:space="preserve">
+    <value>ipatool.exe 已位于目标目录：{0}</value>
+  </data>
+  <data name="IpatoolPage/Export/ConfirmMessage" xml:space="preserve">
+    <value>将导出 {0} 到以下目录：{1}</value>
+  </data>
+  <data name="IpatoolPage/Export/ConfirmPrimary" xml:space="preserve">
+    <value>导出</value>
+  </data>
+  <data name="IpatoolPage/Export/ConfirmTitle" xml:space="preserve">
+    <value>确认导出</value>
+  </data>
+  <data name="IpatoolPage/Export/FailMessage" xml:space="preserve">
+    <value>导出 ipatool.exe 失败：{0}</value>
+  </data>
+  <data name="IpatoolPage/Export/NotFoundMessage" xml:space="preserve">
+    <value>未在应用目录中找到可导出的 {0}。</value>
+  </data>
+  <data name="IpatoolPage/Export/SuccessMessage" xml:space="preserve">
+    <value>{0} 已导出到：{1}</value>
   </data>
   <data name="MainPage/Action/BatchPurchaseButton.Content" xml:space="preserve">
     <value>购买</value>

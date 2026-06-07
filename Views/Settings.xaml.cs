@@ -4,7 +4,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Windows.ApplicationModel.Resources;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
@@ -17,14 +16,12 @@ namespace IPAbuyer.Views
         private bool _isInitializingDetailedLogOption;
         private bool _isInitializingOwnedCheckOption;
         private bool _isInitializingPassphraseRotationOption;
-        private const string IpatoolGitRevision = "dcddce4650d49d64aaff1b0785d76de01f5227af";
 
         public Settings()
         {
             InitializeComponent();
             InitializeCountryCode();
             InitializeDownloadDirectory();
-            InitializeIpatoolGitRevision();
             InitializeDetailedIpatoolLogOption();
             InitializeOwnedCheckOption();
             InitializeKeychainPassphraseRotationOption();
@@ -335,72 +332,6 @@ namespace IPAbuyer.Views
             }
         }
 
-        private async void ExportIpatoolButton_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                string outputDirectory = KeychainConfig.GetDownloadDirectory();
-                var confirmDialog = new ContentDialog
-                {
-                    Title = L("Settings/IpatoolExport/ConfirmTitle"),
-                    Content = LF("Settings/IpatoolExport/ConfirmMessage", outputDirectory),
-                    PrimaryButtonText = L("Settings/IpatoolExport/ConfirmPrimary"),
-                    CloseButtonText = L("Settings/Dialog/ConfirmAction/Close"),
-                    XamlRoot = XamlRoot
-                };
-
-                if (await confirmDialog.ShowAsync() != ContentDialogResult.Primary)
-                {
-                    return;
-                }
-
-                string? sourcePath = ResolveBundledIpatoolPath();
-                if (string.IsNullOrWhiteSpace(sourcePath))
-                {
-                    await ShowDialogAsync(
-                        L("Settings/Dialog/OperationFailedTitle"),
-                        L("Settings/IpatoolExport/NotFoundMessage"));
-                    return;
-                }
-
-                Directory.CreateDirectory(outputDirectory);
-
-                string targetPath = Path.Combine(outputDirectory, "ipatool.exe");
-                if (string.Equals(Path.GetFullPath(sourcePath), Path.GetFullPath(targetPath), StringComparison.OrdinalIgnoreCase))
-                {
-                    await ShowDialogAsync(
-                        L("Settings/Dialog/SuccessTitle"),
-                        LF("Settings/IpatoolExport/AlreadyInTargetMessage", targetPath));
-                    return;
-                }
-
-                File.Copy(sourcePath, targetPath, overwrite: true);
-                await ShowDialogAsync(
-                    L("Settings/Dialog/SuccessTitle"),
-                    LF("Settings/IpatoolExport/SuccessMessage", targetPath));
-            }
-            catch (Exception ex)
-            {
-                await ShowDialogAsync(
-                    L("Settings/Dialog/OperationFailedTitle"),
-                    LF("Settings/IpatoolExport/FailMessage", ex.Message));
-            }
-        }
-
-        private void InitializeIpatoolGitRevision()
-        {
-            if (IpatoolGitRevisionTextBlock == null)
-            {
-                return;
-            }
-
-            string shortRevision = IpatoolGitRevision[..7];
-            IpatoolGitRevisionTextBlock.Text = LF("Settings/IpatoolExport/GitRevisionShortFormat", shortRevision);
-            ToolTipService.SetToolTip(
-                IpatoolGitRevisionTextBlock,
-                LF("Settings/IpatoolExport/GitRevisionTooltipFormat", IpatoolGitRevision));
-        }
-
         private void InitializeAppVersion()
         {
             if (AppVersionValueTextBlock == null)
@@ -494,39 +425,6 @@ namespace IPAbuyer.Views
             }
 
             KeychainConfig.SaveKeychainPassphraseRotationEnabled(KeychainPassphraseRotationCheckBox.IsOn);
-        }
-
-        private static string? ResolveBundledIpatoolPath()
-        {
-            string baseDirectory = AppContext.BaseDirectory;
-            string defaultPath = Path.Combine(baseDirectory, "ipatool.exe");
-            if (File.Exists(defaultPath))
-            {
-                return defaultPath;
-            }
-
-            string includeDirectory = Path.Combine(baseDirectory, "Include");
-            if (!Directory.Exists(includeDirectory))
-            {
-                return null;
-            }
-
-            string architectureSuffix = RuntimeInformation.ProcessArchitecture switch
-            {
-                Architecture.Arm64 => "arm64",
-                Architecture.X64 => "amd64",
-                _ => string.Empty
-            };
-
-            if (string.IsNullOrWhiteSpace(architectureSuffix))
-            {
-                return null;
-            }
-
-            string pattern = $"ipatool-main-windows-{architectureSuffix}.exe";
-            return Directory.GetFiles(includeDirectory, pattern, SearchOption.TopDirectoryOnly)
-                .OrderByDescending(path => path, StringComparer.OrdinalIgnoreCase)
-                .FirstOrDefault();
         }
 
         private async Task ShowDialogAsync(string title, string message)

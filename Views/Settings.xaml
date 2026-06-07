@@ -77,19 +77,6 @@
                 </controls:SettingsCard.HeaderIcon>
                 <Button x:Uid="Settings/Button/ClearIpatoolData" Click="ClearIpatoolDataButton_Click" />
             </controls:SettingsCard>
-            <controls:SettingsCard x:Uid="Settings/Card/ExportIpatool" HorizontalAlignment="Stretch">
-                <controls:SettingsCard.HeaderIcon>
-                    <FontIcon FontSize="20" Glyph="&#xEDE1;" />
-                </controls:SettingsCard.HeaderIcon>
-                <Grid ColumnSpacing="12" VerticalAlignment="Center">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock x:Name="IpatoolGitRevisionTextBlock" Grid.Column="0" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" />
-                    <Button x:Uid="Settings/Button/ExportIpatool" Grid.Column="1" Click="ExportIpatoolButton_Click" />
-                </Grid>
-            </controls:SettingsCard>
             <controls:SettingsCard x:Uid="Settings/Card/AppVersion" HorizontalAlignment="Stretch">
                 <controls:SettingsCard.HeaderIcon>
                     <FontIcon FontSize="20" Glyph="&#xE946;" />
