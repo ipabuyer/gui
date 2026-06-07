@@ -13,7 +13,6 @@ namespace IPAbuyer.Views
     public sealed partial class Settings : Page
     {
         private static readonly ResourceLoader Loader = new();
-        private bool _isInitializingDetailedLogOption;
         private bool _isInitializingOwnedCheckOption;
         private bool _isInitializingPassphraseRotationOption;
 
@@ -22,7 +21,6 @@ namespace IPAbuyer.Views
             InitializeComponent();
             InitializeCountryCode();
             InitializeDownloadDirectory();
-            InitializeDetailedIpatoolLogOption();
             InitializeOwnedCheckOption();
             InitializeKeychainPassphraseRotationOption();
             InitializeAppVersion();
@@ -298,34 +296,6 @@ namespace IPAbuyer.Views
 
             var version = Windows.ApplicationModel.Package.Current.Id.Version;
             AppVersionValueTextBlock.Text = $"{version.Major}.{version.Minor}.{version.Build}.{version.Revision}";
-        }
-
-        private void InitializeDetailedIpatoolLogOption()
-        {
-            if (DetailedIpatoolLogCheckBox == null)
-            {
-                return;
-            }
-
-            _isInitializingDetailedLogOption = true;
-            try
-            {
-                DetailedIpatoolLogCheckBox.IsOn = KeychainConfig.GetDetailedIpatoolLogEnabled();
-            }
-            finally
-            {
-                _isInitializingDetailedLogOption = false;
-            }
-        }
-
-        private void DetailedIpatoolLogCheckBox_Toggled(object sender, RoutedEventArgs e)
-        {
-            if (_isInitializingDetailedLogOption)
-            {
-                return;
-            }
-
-            KeychainConfig.SaveDetailedIpatoolLogEnabled(DetailedIpatoolLogCheckBox.IsOn);
         }
 
         private void InitializeOwnedCheckOption()

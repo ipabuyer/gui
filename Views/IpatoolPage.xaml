@@ -101,6 +101,13 @@
                 </Grid>
             </controls:SettingsCard>
 
+            <controls:SettingsCard x:Uid="IpatoolPage/Card/DetailedIpatoolLog" HorizontalAlignment="Stretch">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontSize="20" Glyph="&#xE9D5;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ToggleSwitch x:Name="DetailedIpatoolLogCheckBox" Toggled="DetailedIpatoolLogCheckBox_Toggled" />
+            </controls:SettingsCard>
+
             <controls:SettingsCard x:Uid="IpatoolPage/Card/ClearIpatoolData" HorizontalAlignment="Stretch">
                 <controls:SettingsCard.HeaderIcon>
                     <FontIcon FontSize="20" Glyph="&#xE74D;" />

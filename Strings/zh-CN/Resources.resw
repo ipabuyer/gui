@@ -243,12 +243,6 @@
   <data name="Settings/Card/CountryCode.Header" xml:space="preserve">
     <value>国家/地区代码</value>
   </data>
-  <data name="Settings/Card/DetailedIpatoolLog.Description" xml:space="preserve">
-    <value>显示完整的 ipatool 命令与输出。</value>
-  </data>
-  <data name="Settings/Card/DetailedIpatoolLog.Header" xml:space="preserve">
-    <value>显示详细日志</value>
-  </data>
   <data name="Settings/Card/DeveloperSite.Description" xml:space="preserve">
     <value>查看项目说明与常见问题。</value>
   </data>
@@ -389,6 +383,12 @@
   </data>
   <data name="IpatoolPage/Export/SuccessMessage" xml:space="preserve">
     <value>{0} 已导出到：{1}</value>
+  </data>
+  <data name="IpatoolPage/Card/DetailedIpatoolLog.Header" xml:space="preserve">
+    <value>显示详细日志</value>
+  </data>
+  <data name="IpatoolPage/Card/DetailedIpatoolLog.Description" xml:space="preserve">
+    <value>显示完整的 ipatool 命令与输出。</value>
   </data>
   <data name="IpatoolPage/Card/ClearIpatoolData.Header" xml:space="preserve">
     <value>清空 ipatool 数据</value>

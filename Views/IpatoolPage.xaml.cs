@@ -13,12 +13,14 @@ namespace IPAbuyer.Views
         private static readonly ResourceLoader Loader = new();
         private const string IpatoolGitRevision = "dcddce4650d49d64aaff1b0785d76de01f5227af";
         private bool _isInitializing;
+        private bool _isInitializingDetailedLogOption;
 
         public IpatoolPage()
         {
             InitializeComponent();
             InitializeMainGitRevision();
             InitializeSelection();
+            InitializeDetailedIpatoolLogOption();
         }
 
         private void InitializeMainGitRevision()
@@ -172,6 +174,34 @@ namespace IPAbuyer.Views
                     L("Settings/Dialog/OperationFailedTitle"),
                     LF("IpatoolPage/Data/ClearFailMessage", ex.Message));
             }
+        }
+
+        private void InitializeDetailedIpatoolLogOption()
+        {
+            if (DetailedIpatoolLogCheckBox == null)
+            {
+                return;
+            }
+
+            _isInitializingDetailedLogOption = true;
+            try
+            {
+                DetailedIpatoolLogCheckBox.IsOn = KeychainConfig.GetDetailedIpatoolLogEnabled();
+            }
+            finally
+            {
+                _isInitializingDetailedLogOption = false;
+            }
+        }
+
+        private void DetailedIpatoolLogCheckBox_Toggled(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializingDetailedLogOption)
+            {
+                return;
+            }
+
+            KeychainConfig.SaveDetailedIpatoolLogEnabled(DetailedIpatoolLogCheckBox.IsOn);
         }
 
         private void UpdateSelectionButtons(string flavor)
