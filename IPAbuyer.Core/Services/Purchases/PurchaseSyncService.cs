@@ -119,7 +119,14 @@ namespace IPAbuyer.Core.Services.Purchases
 
                     if (!status.Running)
                     {
-                        return string.Equals(status.Outcome?.Kind, "completed", StringComparison.Ordinal);
+                        bool completed = string.Equals(status.Outcome?.Kind, "completed", StringComparison.Ordinal);
+                        // Core 侧部分失败路径（如数据库打开失败）只写 outcome 不发日志，这里兜底展示原因。
+                        if (!completed && !string.IsNullOrWhiteSpace(status.Outcome?.Message))
+                        {
+                            EmitLog(LF("PurchaseSync/Log/Failed", status.Outcome.Message), UiLogLevel.Error);
+                        }
+
+                        return completed;
                     }
 
                     await Task.Delay(PollIntervalMilliseconds, cancellationToken).ConfigureAwait(false);
