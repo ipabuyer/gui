@@ -230,11 +230,9 @@ namespace IPAbuyer.Pages
             string currentText = L("IpatoolPage/Badge/Current");
             ReleaseCurrentBadgeTextBlock.Text = currentText;
             ReleaseCurrentBadge.Visibility = isCustomSelected ? Visibility.Collapsed : Visibility.Visible;
-            ReleaseSelectButton.Content = L("IpatoolPage/Button/Use");
             ReleaseSelectButton.Visibility = isCustomSelected ? Visibility.Visible : Visibility.Collapsed;
             CustomCurrentBadgeTextBlock.Text = currentText;
             CustomCurrentBadge.Visibility = isCustomSelected ? Visibility.Visible : Visibility.Collapsed;
-            CustomUseButton.Content = L("IpatoolPage/Button/Use");
             CustomUseButton.Visibility = hasCustomPath && !isCustomSelected ? Visibility.Visible : Visibility.Collapsed;
         }
 
@@ -246,9 +244,9 @@ namespace IPAbuyer.Pages
             };
             picker.FileTypeFilter.Add(".exe");
 
-            if (WindowContext.MainWindow != null)
+            if (Application.Current is App app && app.MainWindowInstance != null)
             {
-                IntPtr hwnd = WindowNative.GetWindowHandle(WindowContext.MainWindow);
+                IntPtr hwnd = WindowNative.GetWindowHandle(app.MainWindowInstance);
                 InitializeWithWindow.Initialize(picker, hwnd);
             }
 

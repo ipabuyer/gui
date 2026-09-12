@@ -839,7 +839,7 @@ namespace IPAbuyer.Pages
 
         private void TryShowHomeLogWindow()
         {
-            Window? ownerWindow = WindowContext.MainWindow;
+            Window? ownerWindow = (Application.Current as App)?.MainWindowInstance;
 
             LogViewerWindow.ShowOrActivate(ownerWindow);
         }

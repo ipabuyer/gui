@@ -24,6 +24,7 @@
 
         <TitleBar
             x:Name="AppTitleBar"
+            x:Uid="MainWindow/TitleBar"
             Grid.Row="0"
             IsBackButtonVisible="False"
             IsPaneToggleButtonVisible="True"

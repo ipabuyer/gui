@@ -21,7 +21,6 @@ namespace IPAbuyer.Pages
         public MainWindow()
         {
             InitializeComponent();
-            WindowContext.SetMainWindow(this);
             _appWindow = GetAppWindow(this);
             ConfigureSystemBackdrop();
 
@@ -29,9 +28,7 @@ namespace IPAbuyer.Pages
             ApplyCaptionButtonColors();
             AppTitleBar.ActualThemeChanged += (_, _) => ApplyCaptionButtonColors();
 
-            Title = L("MainWindow/TitleBarTitle");
-            AppTitleBar.Title = Title;
-            AppTitleBar.Subtitle = L("MainWindow/TitleBarSubtitle");
+            Title = AppTitleBar.Title;
             SetWindowIcon(this);
             SessionState.LoginStateChanged -= OnLoginStateChanged;
             SessionState.LoginStateChanged += OnLoginStateChanged;
@@ -218,7 +215,10 @@ namespace IPAbuyer.Pages
             _isClosing = true;
             DownloadQueueService.Instance.CancelAll();
             IpatoolClient.BeginShutdown();
-            WindowContext.ClearMainWindow(this);
+            if (Application.Current is App app)
+            {
+                app.MainWindowInstance = null;
+            }
             SessionState.LoginStateChanged -= OnLoginStateChanged;
         }
 

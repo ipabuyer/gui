@@ -54,12 +54,7 @@ namespace IPAbuyer.Pages
             _entryProvider = entryProvider;
             _ownerWindow = ownerWindow;
 
-            Title = L("Common/LogDialog/Title");
-            LogTitleBar.Title = Title;
-            LogTitleBar.Subtitle = L("Common/LogDialog/Subtitle");
-            CopyButton.Content = L("Common/LogDialog/CopyButton");
-            ClearButton.Content = L("Common/LogDialog/ClearButton");
-            CloseButton.Content = L("Common/LogDialog/CloseButton");
+            Title = LogTitleBar.Title;
 
             _refreshTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
             _refreshTimer.Interval = TimeSpan.FromMilliseconds(250);

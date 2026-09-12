@@ -145,7 +145,7 @@ namespace IPAbuyer.Pages
                 }
 
                 LanguageSettings.SavePreference(selectedPreference);
-                string? failureReason = WindowContext.RequestRestart();
+                string? failureReason = App.RestartApplication();
                 if (!string.IsNullOrWhiteSpace(failureReason))
                 {
                     await ShowDialogAsync(
@@ -340,9 +340,9 @@ namespace IPAbuyer.Pages
 
             try
             {
-                if (WindowContext.MainWindow != null)
+                if (Application.Current is App app && app.MainWindowInstance != null)
                 {
-                    IntPtr hwnd = WindowNative.GetWindowHandle(WindowContext.MainWindow);
+                    IntPtr hwnd = WindowNative.GetWindowHandle(app.MainWindowInstance);
                     InitializeWithWindow.Initialize(folderPicker, hwnd);
                 }
 

@@ -260,13 +260,10 @@
   <data name="Settings/Card/KeychainPassphraseRotation.Header" xml:space="preserve">
     <value>加密密钥轮换</value>
   </data>
-  <data name="MainWindow/TitleBar/TitleText.Text" xml:space="preserve">
+  <data name="MainWindow/TitleBar.Title" xml:space="preserve">
     <value>IPAbuyer</value>
   </data>
-  <data name="MainWindow/TitleBarTitle" xml:space="preserve">
-    <value>IPAbuyer</value>
-  </data>
-  <data name="MainWindow/TitleBarSubtitle" xml:space="preserve">
+  <data name="MainWindow/TitleBar.Subtitle" xml:space="preserve">
     <value>快速购买AppStore中的应用</value>
   </data>
   <data name="MainWindow/SearchBox.PlaceholderText" xml:space="preserve">
@@ -332,7 +329,10 @@
   <data name="IpatoolPage/Button/Replace" xml:space="preserve">
     <value>更换</value>
   </data>
-  <data name="IpatoolPage/Button/Use" xml:space="preserve">
+  <data name="IpatoolPage/Release/UseButton.Content" xml:space="preserve">
+    <value>使用</value>
+  </data>
+  <data name="IpatoolPage/Custom/UseButton.Content" xml:space="preserve">
     <value>使用</value>
   </data>
   <data name="IpatoolPage/Custom/DeleteConfirmTitle" xml:space="preserve">
@@ -1160,19 +1160,19 @@
   <data name="LoginPage/Log/ClearButton.Content" xml:space="preserve">
     <value>清空</value>
   </data>
-  <data name="Common/LogDialog/Title" xml:space="preserve">
+  <data name="LogViewerWindow/TitleBar.Title" xml:space="preserve">
     <value>日志</value>
   </data>
-  <data name="Common/LogDialog/Subtitle" xml:space="preserve">
+  <data name="LogViewerWindow/TitleBar.Subtitle" xml:space="preserve">
     <value>实时日志</value>
   </data>
-  <data name="Common/LogDialog/CopyButton" xml:space="preserve">
+  <data name="LogViewerWindow/CopyButton.Content" xml:space="preserve">
     <value>复制日志</value>
   </data>
-  <data name="Common/LogDialog/ClearButton" xml:space="preserve">
+  <data name="LogViewerWindow/ClearButton.Content" xml:space="preserve">
     <value>清空日志</value>
   </data>
-  <data name="Common/LogDialog/CloseButton" xml:space="preserve">
+  <data name="LogViewerWindow/CloseButton.Content" xml:space="preserve">
     <value>关闭</value>
   </data>
   <data name="Common/LogDialog/CopyEmptyLog" xml:space="preserve">

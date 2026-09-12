@@ -712,7 +712,7 @@ namespace IPAbuyer.Pages
 
         private void TryShowLoginLogWindow()
         {
-            Window? ownerWindow = WindowContext.MainWindow;
+            Window? ownerWindow = (Application.Current as App)?.MainWindowInstance;
 
             LogViewerWindow.ShowOrActivate(ownerWindow);
         }

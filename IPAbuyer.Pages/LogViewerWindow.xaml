@@ -11,6 +11,7 @@
 
         <TitleBar
             x:Name="LogTitleBar"
+            x:Uid="LogViewerWindow/TitleBar"
             Grid.Row="0"
             IsBackButtonVisible="False"
             IsPaneToggleButtonVisible="False">
@@ -56,18 +57,21 @@
                 Spacing="8">
                 <Button
                     x:Name="CopyButton"
+                    x:Uid="LogViewerWindow/CopyButton"
                     Width="132"
                     MinHeight="32"
                     Padding="12,0,12,0"
                     Click="CopyButton_Click" />
                 <Button
                     x:Name="ClearButton"
+                    x:Uid="LogViewerWindow/ClearButton"
                     Width="132"
                     MinHeight="32"
                     Padding="12,0,12,0"
                     Click="ClearButton_Click" />
                 <Button
                     x:Name="CloseButton"
+                    x:Uid="LogViewerWindow/CloseButton"
                     Width="132"
                     MinHeight="32"
                     Padding="12,0,12,0"

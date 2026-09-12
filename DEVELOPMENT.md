@@ -160,7 +160,7 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
 3. 共 4 个导航页面：主页、账户、ipatool、设置（对应 `MainPage`、`LoginPage`、`IpatoolPage`、`Settings`）。
 4. 主窗口标题栏使用 WinUI `TitleBar` 控件，参考 WinUI Gallery 风格。
 5. 主窗口标题栏图标使用 `Assets/Square44x44Logo.scale-200.png`，不要在 `TitleBar.IconSource` 中使用 `.ico`，避免运行时异常。
-6. 不要给主窗口 `TitleBar` 设置 `x:Uid="MainWindow/TitleBar"`，避免与 `MainWindow/TitleBar/TitleText.Text` 资源键冲突。
+6. 主窗口标题栏的 `Title` 与 `Subtitle` 通过 `x:Uid="MainWindow/TitleBar"` 与键 `MainWindow/TitleBar.Title`、`MainWindow/TitleBar.Subtitle` 设置，`Window.Title` 在代码中取自 `AppTitleBar.Title`；不要保留 `MainWindow/TitleBar/TitleText.Text` 之类无法映射到属性的键，会导致 x:Uid 应用异常。
 7. 主窗口标题栏右侧使用 `TitleBar.RightHeader` 放置 `PersonPicture` 显示登录状态：已登录为绿色人头头像，未登录为红色人头头像。
 
 ## 12. 主页（MainPage）

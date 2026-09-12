@@ -260,13 +260,10 @@
   <data name="Settings/Card/KeychainPassphraseRotation.Header" xml:space="preserve">
     <value>Encryption key rotation</value>
   </data>
-  <data name="MainWindow/TitleBar/TitleText.Text" xml:space="preserve">
+  <data name="MainWindow/TitleBar.Title" xml:space="preserve">
     <value>IPAbuyer</value>
   </data>
-  <data name="MainWindow/TitleBarTitle" xml:space="preserve">
-    <value>IPAbuyer</value>
-  </data>
-  <data name="MainWindow/TitleBarSubtitle" xml:space="preserve">
+  <data name="MainWindow/TitleBar.Subtitle" xml:space="preserve">
     <value>Quickly purchase apps from the AppStore</value>
   </data>
   <data name="MainWindow/SearchBox.PlaceholderText" xml:space="preserve">
@@ -332,7 +329,10 @@
   <data name="IpatoolPage/Button/Replace" xml:space="preserve">
     <value>replace</value>
   </data>
-  <data name="IpatoolPage/Button/Use" xml:space="preserve">
+  <data name="IpatoolPage/Release/UseButton.Content" xml:space="preserve">
+    <value>use</value>
+  </data>
+  <data name="IpatoolPage/Custom/UseButton.Content" xml:space="preserve">
     <value>use</value>
   </data>
   <data name="IpatoolPage/Custom/DeleteConfirmTitle" xml:space="preserve">
@@ -1160,19 +1160,19 @@
   <data name="LoginPage/Log/ClearButton.Content" xml:space="preserve">
     <value>Clear</value>
   </data>
-  <data name="Common/LogDialog/Title" xml:space="preserve">
+  <data name="LogViewerWindow/TitleBar.Title" xml:space="preserve">
     <value>log</value>
   </data>
-  <data name="Common/LogDialog/Subtitle" xml:space="preserve">
+  <data name="LogViewerWindow/TitleBar.Subtitle" xml:space="preserve">
     <value>real time log</value>
   </data>
-  <data name="Common/LogDialog/CopyButton" xml:space="preserve">
+  <data name="LogViewerWindow/CopyButton.Content" xml:space="preserve">
     <value>Copy log</value>
   </data>
-  <data name="Common/LogDialog/ClearButton" xml:space="preserve">
+  <data name="LogViewerWindow/ClearButton.Content" xml:space="preserve">
     <value>Clear log</value>
   </data>
-  <data name="Common/LogDialog/CloseButton" xml:space="preserve">
+  <data name="LogViewerWindow/CloseButton.Content" xml:space="preserve">
     <value>closure</value>
   </data>
   <data name="Common/LogDialog/CopyEmptyLog" xml:space="preserve">

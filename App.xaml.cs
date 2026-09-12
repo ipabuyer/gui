@@ -14,8 +14,7 @@ namespace IPAbuyer
     public partial class App : Application
     {
         private static readonly ResourceLoader Loader = new();
-        private Window? _window;
-        public Window? MainWindowInstance => _window;
+        public Window? MainWindowInstance { get; internal set; }
 
         // 构造函数
         public App()
@@ -30,8 +29,6 @@ namespace IPAbuyer
                 {
                     // Language preference must never prevent the app from starting.
                 }
-
-                WindowContext.RegisterRestartHandler(RestartApplication);
 
                 try
                 {
@@ -68,9 +65,9 @@ namespace IPAbuyer
             try
             {
                 _ = WarmupAuthInfoAsync();
-                _window = new MainWindow();
+                MainWindowInstance = new MainWindow();
                 // 激活窗口
-                _window.Activate();
+                MainWindowInstance.Activate();
             }
             catch (Exception ex)
             {
@@ -79,7 +76,7 @@ namespace IPAbuyer
             }
         }
 
-        private static string? RestartApplication()
+        internal static string? RestartApplication()
         {
             try
             {
