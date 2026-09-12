@@ -62,7 +62,7 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
 | 目录 | 内容 |
 | --- | --- |
 | `Assets/` | 应用图标与商店素材 |
-| `Include/` | 内置 `ipatool.exe`（amd64 / arm64）、Rust core DLL（`ipabuyer-core-windows-*.dll`）与 `get-ipatool-release.ps1` |
+| `Include/` | 内置 `ipatool.exe`、Rust core DLL（`ipabuyer-core-windows-*.dll`）与 `get-ipatool-release.ps1`、`get-core-release.ps1` |
 | `Strings/` | `zh-Hans` 与 `en-US` 的 `Resources.resw` |
 | `Scripts/` | `Verify-LocalizationResources.ps1` 本地化校验脚本 |
 | `ILLink.Descriptors.xml` | 发布 trim 的根描述文件 |
@@ -73,7 +73,7 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
 2. C# 侧封装位于 `IPAbuyer.Core/Native/`：`CoreNative`（P/Invoke + 状态码/last_error 约定）、`CoreDtos`（JSON 契约 DTO 与源生成序列化上下文，发布 full trim 下不使用反射序列化）、`CoreMessages`（键名/原文消息渲染）。
 3. 服务类（`PurchasedAppDb`、`LoginService`、`AppCatalogService`、`PurchaseService`、`PurchaseSyncService`、`DownloadQueueService`、`IpatoolClient`）保留原有公共 API 作为门面，UI 层不直接触达 FFI。
 4. 长任务（同步、下载队列）采用 Core 侧轮询句柄：C# 侧 `Task.Run` 包装阻塞调用并以 200ms 间隔轮询 `*_status`，取消经 `*_cancel`（队列取消为队列级：终止当前下载并结束本轮）。
-5. DLL 不入 git：本地测试版构建后复制到 `Include/ipabuyer-core-windows-x64.dll`（已被 `.gitignore` 排除）；正式版（含 arm64）由 Core 仓库打 `v*` 标签经 GitHub Actions 发布，从 Release 下载后放入 `Include/`。文件名不含版本号，避免每次更新改 csproj；文件缺失时对应平台的打包产物会缺少该 DLL。
+5. DLL 不入 git：本地测试版构建后复制到 `Include/ipabuyer-core-windows-<arch>.dll`（已被 `.gitignore` 排除）；正式版由 Core 仓库打 `v*` 标签经 GitHub Actions 发布，运行 `Include/get-core-release.ps1`（可带 `-Version x.y.z`）下载并校验后写入 `Include/`，文件名不含版本号，避免每次更新改 csproj；文件缺失时对应平台的打包产物会缺少该 DLL。
 
 ## 4. 构建与调试
 

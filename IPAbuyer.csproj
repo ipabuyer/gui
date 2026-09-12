@@ -67,7 +67,7 @@
 
         <!-- Rust core（IPAbuyer.Core 仓库产物）：文件名不含版本号，避免每次发版改 csproj；
              arm64 DLL 由 GitHub Actions 发布后放入 Include\ -->
-        <Content Include="Include\ipabuyer-core-windows-x64.dll" Condition="'$(Platform)' == 'x64' Or '$(RuntimeIdentifier)' == 'win-x64' Or '$(RuntimeIdentifier)' == 'win10-x64'">
+        <Content Include="Include\ipabuyer-core-windows-amd64.dll" Condition="'$(Platform)' == 'x64' Or '$(RuntimeIdentifier)' == 'win-x64' Or '$(RuntimeIdentifier)' == 'win10-x64'">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <TargetPath>ipabuyer_core.dll</TargetPath>
             <IncludeInPackage>true</IncludeInPackage>
