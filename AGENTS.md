@@ -20,7 +20,7 @@ IPAbuyer：WinUI 3 桌面应用，调用 [ipatool](https://github.com/majd/ipato
 
 - 4 个导航页：主页（`MainPage`）、账户（`LoginPage`）、ipatool（`IpatoolPage`）、设置（`Settings`）；另有全局日志窗口 `LogViewerWindow`。
 - 数据库：`PurchasedAppDb.db`（LocalState 目录），记录已购买 App 与邮箱；"已拥有"已合并为"已购买"，账户级同步时间存于 `SyncState` 表。
-- 已购买列表同步由 `PurchaseSyncService` 管理：调用 `list-purchases` 全量同步（每页 100，消耗大），触发时机为登录后未同步过、启动时距上次成功同步超过 7 天、用户在设置页手动刷新。
+- 已购买列表同步由 `PurchaseSyncService` 管理：调用 `list-purchases` 全量同步（每页 100，消耗大），仅在设置页由用户手动触发。
 - 下载队列由 `DownloadQueueService` 管理，主页只有“终止下载”入口；主页不做批量操作。
 - 设置写入 `ApplicationData.Current.LocalSettings`；加密密钥存于 Windows PasswordVault。
 

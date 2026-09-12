@@ -202,7 +202,7 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
 4. 当 `ipatool` 返回 `alreadyOwned` 或 `failed to purchase item with param 'STDQ'` 时，直接在本地标记为已购买，不弹窗确认。
 5. 已购买列表同步由 `PurchaseSyncService`（`IPAbuyer.Core/Services/Purchases/PurchaseSyncService.cs`）负责：
    1. 通过 `list-purchases` 分页拉取全量（每页 100，为 ipatool 单页上限），逐页写入数据库并统一标记为已购买，进度逐页写入日志；页面解析位于 `OwnedAppsPageParser`。
-   2. 触发时机：登录成功且该账户从未同步过；应用启动且距上次成功同步超过 7 天（后台静默执行）；设置页“刷新已购买列表”手动触发。
+   2. 触发时机：仅由用户在设置页“刷新已购买列表”手动触发，不做任何自动同步。
    3. `list-purchases` 消耗较大，自动同步按 `SyncState` 表中上次成功时间判定阈值，失败不推进成功时间；同步进行中忽略新的同步请求。
    4. 测试账户（`test`/`test`）不执行同步。
 
@@ -241,7 +241,7 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
    2. 需要提示用户：跨地区购买会导致已拥有 App 不在同步列表中。
 4. 修改和重置下载目录功能，默认为当前用户的下载文件夹：
    1. LocalSettings 名称：`DownloadDirectory`
-5. 刷新已购买列表卡片：显示上次同步时间，按钮手动触发 `PurchaseSyncService` 全量同步，点击后自动打开日志窗口并在日志中显示逐页进度；若已有同步在进行（如启动时的后台自动同步），仅打开日志窗口并提示进行中；未登录或测试账户时弹窗提示。
+5. 刷新已购买列表卡片：显示上次同步时间，按钮手动触发 `PurchaseSyncService` 全量同步，点击后自动打开日志窗口并在日志中显示逐页进度；若已有同步在进行，仅打开日志窗口并提示进行中；未登录或测试账户时弹窗提示。
 6. 关闭加密密钥轮换功能：
    1. LocalSettings 名称：`KeychainPassphraseRotationEnabled`
 7. 开发者官方网站（按钮跳转 <https://www.blazesnow.com/ipa/>）：

@@ -249,7 +249,7 @@
     <value>项目仓库</value>
   </data>
   <data name="Settings/Card/PurchaseSync.Description" xml:space="preserve">
-    <value>同步 Apple 账户的已拥有 App 列表并标记为已购买；登录后与每间隔一段时间会自动同步。</value>
+    <value>同步 Apple 账户的已拥有 App 列表并标记为已购买。</value>
   </data>
   <data name="Settings/Card/PurchaseSync.Header" xml:space="preserve">
     <value>刷新已购买列表</value>

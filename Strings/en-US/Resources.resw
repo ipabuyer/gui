@@ -249,7 +249,7 @@
     <value>Project repository</value>
   </data>
   <data name="Settings/Card/PurchaseSync.Description" xml:space="preserve">
-    <value>Sync the list of apps owned by the Apple account and mark them as purchased. The app syncs automatically after sign-in and at intervals.</value>
+    <value>Sync the list of apps owned by the Apple account and mark them as purchased.</value>
   </data>
   <data name="Settings/Card/PurchaseSync.Header" xml:space="preserve">
     <value>Refresh purchased list</value>

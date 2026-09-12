@@ -7,15 +7,11 @@ namespace IPAbuyer.Core.Services.Purchases
 {
     /// <summary>
     /// 通过 ipatool list-purchases 全量同步账户的已拥有 App，并统一标记为已购买。
-    /// list-purchases 消耗较大（每 100 个 App 一页请求），刷新时机遵循：
-    /// 登录成功且从未同步时、启动且距上次成功同步超过阈值时、用户手动刷新时。
+    /// list-purchases 消耗较大（每 100 个 App 一页请求），仅在设置页由用户手动触发。
     /// </summary>
     public sealed class PurchaseSyncService
     {
         private static readonly ResourceLoader Loader = new();
-
-        /// <summary>自动同步的最小间隔；低于该间隔的启动触发会被跳过。</summary>
-        public static readonly TimeSpan AutoSyncInterval = TimeSpan.FromDays(7);
 
         /// <summary>list-purchases 单页数量上限（受 ipatool 限制不得超过 100）。</summary>
         public const int PageSize = 100;
@@ -29,18 +25,6 @@ namespace IPAbuyer.Core.Services.Purchases
 
         /// <summary>同步进度回调：(已同步数量, 总数量)。</summary>
         public event Action<int, int>? ProgressChanged;
-
-        /// <summary>判断账户是否需要自动同步（从未同步或超过阈值）。</summary>
-        public bool ShouldAutoSync(string account)
-        {
-            if (string.IsNullOrWhiteSpace(account))
-            {
-                return false;
-            }
-
-            DateTime? lastSyncUtc = PurchaseHistoryService.GetLastSuccessfulSyncUtc(account);
-            return lastSyncUtc == null || DateTime.UtcNow - lastSyncUtc.Value >= AutoSyncInterval;
-        }
 
         /// <summary>
         /// 全量同步账户已拥有 App 并标记为已购买。逐页写入，中断时已拉取的页保留。
