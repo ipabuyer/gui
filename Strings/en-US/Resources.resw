@@ -347,6 +347,15 @@
   <data name="IpatoolPage/Custom/SaveFailMessage" xml:space="preserve">
     <value>Failed to save custom ipatool.exe: {0}</value>
   </data>
+  <data name="IpatoolPage/Card/VersionRequirement.Header" xml:space="preserve">
+    <value>ipatool Version Requirement</value>
+  </data>
+  <data name="IpatoolPage/Card/VersionRequirement.Description" xml:space="preserve">
+    <value>The purchased-app features rely on new logic introduced in ipatool 2.5.0</value>
+  </data>
+  <data name="IpatoolPage/VersionRequirement/MinimumVersionTextBlock.Text" xml:space="preserve">
+    <value>≥ 2.5.0</value>
+  </data>
   <data name="IpatoolPage/Export/AlreadyInTargetMessage" xml:space="preserve">
     <value>ipatool.exe is already located in the target directory: {0}</value>
   </data>

@@ -206,14 +206,15 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
 
 1. 使用 CommunityToolkit `SettingsCard` 展示内置 `ipatool` 与可选的自定义 `ipatool.exe`。
 2. 内置版本展示为 `release@2.5.0`（随内置版本同步更新）。
-3. 内置与自定义来源选择写入 LocalSettings 名称：`IpatoolFlavor`，内部值为 `Main`（内置正式版）和 `Custom`；默认值为 `Main`。
-4. 自定义 `ipatool.exe` 路径写入 LocalSettings 名称：`CustomIpatoolPath`；自定义文件只要求扩展名为 `.exe`。
-5. 认证登录、查询登录状态、退出登录、购买、下载等所有 `ipatool` 命令使用当前选择的来源；自定义路径失效时回退到内置正式版。
-6. 内置版本卡片右端使用三点菜单提供导出功能，导出内置版本到下载目录，目标文件名为 `ipatool.exe`。
-7. 自定义 `ipatool.exe` 卡片通过主按钮选择或更换文件，提供“使用”按钮切换来源，右端三点菜单只提供删除插槽功能；删除插槽只移除 LocalSettings 路径，不删除原文件。
-8. 显示详细日志开关写入 LocalSettings 名称：`DetailedIpatoolLogEnabled`，勾选后所有 `ipatool` 的命令和输出都显示在日志区。
-9. 页面底部显示清空 `ipatool` 数据卡片，`ipatool` 数据目录：`%USERNAME%/.ipatool/`。
-10. 页面底部显示 `majd/ipatool` 仓库卡片，Description 写完整网址 <https://github.com/majd/ipatool>，按钮打开该网址。
+3. 显示版本要求卡片：内置与自定义 `ipatool` 均要求版本 ≥ `2.5.0`（已购买功能依赖 2.5.0 引入的新逻辑，含破坏性更改）。
+4. 内置与自定义来源选择写入 LocalSettings 名称：`IpatoolFlavor`，内部值为 `Main`（内置正式版）和 `Custom`；默认值为 `Main`。
+5. 自定义 `ipatool.exe` 路径写入 LocalSettings 名称：`CustomIpatoolPath`；自定义文件只要求扩展名为 `.exe`。
+6. 认证登录、查询登录状态、退出登录、购买、下载等所有 `ipatool` 命令使用当前选择的来源；自定义路径失效时回退到内置正式版。
+7. 内置版本卡片右端使用三点菜单提供导出功能，导出内置版本到下载目录，目标文件名为 `ipatool.exe`。
+8. 自定义 `ipatool.exe` 卡片通过主按钮选择或更换文件，提供“使用”按钮切换来源，右端三点菜单只提供删除插槽功能；删除插槽只移除 LocalSettings 路径，不删除原文件。
+9. 显示详细日志开关写入 LocalSettings 名称：`DetailedIpatoolLogEnabled`，勾选后所有 `ipatool` 的命令和输出都显示在日志区。
+10. 页面底部显示清空 `ipatool` 数据卡片，`ipatool` 数据目录：`%USERNAME%/.ipatool/`。
+11. 页面底部显示 `majd/ipatool` 仓库卡片，Description 写完整网址 <https://github.com/majd/ipatool>，按钮打开该网址。
 
 ## 15. 日志系统
 

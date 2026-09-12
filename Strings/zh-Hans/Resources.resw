@@ -347,6 +347,15 @@
   <data name="IpatoolPage/Custom/SaveFailMessage" xml:space="preserve">
     <value>保存自定义 ipatool.exe 失败：{0}</value>
   </data>
+  <data name="IpatoolPage/Card/VersionRequirement.Header" xml:space="preserve">
+    <value>ipatool 版本要求</value>
+  </data>
+  <data name="IpatoolPage/Card/VersionRequirement.Description" xml:space="preserve">
+    <value>已购买功能依赖 ipatool 2.5.0 引入的新逻辑</value>
+  </data>
+  <data name="IpatoolPage/VersionRequirement/MinimumVersionTextBlock.Text" xml:space="preserve">
+    <value>≥ 2.5.0</value>
+  </data>
   <data name="IpatoolPage/Export/AlreadyInTargetMessage" xml:space="preserve">
     <value>ipatool.exe 已位于目标目录：{0}</value>
   </data>
