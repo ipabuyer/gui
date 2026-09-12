@@ -490,9 +490,7 @@ namespace IPAbuyer.Pages
             try
             {
                 var resourceManager = new ResourceManager();
-                var resourceMap = resourceManager.MainResourceMap
-                    .GetSubtree("IPAbuyer.Pages")
-                    .GetSubtree("Resources");
+                var resourceMap = resourceManager.MainResourceMap.GetSubtree("Resources");
                 var context = resourceManager.CreateResourceContext();
                 context.QualifierValues["Language"] = language;
 
