@@ -1,3 +1,30 @@
+# 所有文件均为 UTF-8；文本文件在仓库内统一存储为 LF，换行检出行为见下方规则。
+
+# 默认：自动识别文本/二进制，提交时规范化为 LF
+* text=auto
+
+# 源码与配置（显式声明，避免依赖本机 core.autocrlf 设置）
+*.cs text diff=csharp
+*.xaml text
+*.csproj text
+*.slnx text
+*.resw text
+*.xml text
+*.appxmanifest text
+*.manifest text
+*.json text
+*.jsonc text
+*.yml text
+*.md text
+*.editorconfig text
+*.gitignore text
+*.gitattributes text
+LICENSE text
+
+# Windows PowerShell 脚本统一 CRLF
+*.ps1 text eol=crlf
+
+# 二进制资源走 Git LFS
 *.exe filter=lfs diff=lfs merge=lfs -text
 *.png filter=lfs diff=lfs merge=lfs -text
 *.ico filter=lfs diff=lfs merge=lfs -text
