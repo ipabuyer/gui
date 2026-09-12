@@ -106,6 +106,7 @@ namespace IPAbuyer.Core.Services.Purchases
                         PurchaseHistoryService.BulkMarkPurchased(parsed.BundleIds, normalizedAccount);
                         synced += parsed.BundleIds.Count;
                         ProgressChanged?.Invoke(synced, Math.Max(total, synced));
+                        EmitLog(LF("PurchaseSync/Log/Progress", synced, Math.Max(total, synced)), UiLogLevel.Info);
                     }
 
                     bool hasMorePages = synced < total && parsed.BundleIds.Count > 0;

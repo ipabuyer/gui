@@ -266,6 +266,9 @@
   <data name="Settings/PurchaseSync/ProgressFormat" xml:space="preserve">
     <value>Syncing… {0}/{1}</value>
   </data>
+  <data name="Settings/PurchaseSync/Running" xml:space="preserve">
+    <value>Sync in progress; see the log window</value>
+  </data>
   <data name="Settings/PurchaseSync/LoginRequiredTitle" xml:space="preserve">
     <value>Not signed in</value>
   </data>
@@ -283,6 +286,9 @@
   </data>
   <data name="PurchaseSync/Log/Start" xml:space="preserve">
     <value>Start syncing purchased list: {0}</value>
+  </data>
+  <data name="PurchaseSync/Log/Progress" xml:space="preserve">
+    <value>Sync progress: {0}/{1}</value>
   </data>
   <data name="PurchaseSync/Log/Completed" xml:space="preserve">
     <value>Sync finished: {0} apps this run ({1} in account)</value>

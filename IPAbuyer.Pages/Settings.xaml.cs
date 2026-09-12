@@ -452,6 +452,16 @@ namespace IPAbuyer.Pages
                 return;
             }
 
+            // 无论是否已有同步在进行，都打开日志窗口展示实时进度（含启动时的后台自动同步）。
+            Window? ownerWindow = (Application.Current as App)?.MainWindowInstance;
+            LogViewerWindow.ShowOrActivate(ownerWindow);
+
+            if (PurchaseSyncService.Instance.IsRunning)
+            {
+                PurchaseSyncStatusTextBlock.Text = L("Settings/PurchaseSync/Running");
+                return;
+            }
+
             RefreshPurchasedListButton.IsEnabled = false;
             void OnProgress(int synced, int total)
             {
