@@ -288,7 +288,7 @@
     <value>download</value>
   </data>
   <data name="MainWindow/Nav/Settings.Content" xml:space="preserve">
-    <value>set up</value>
+    <value>Settings</value>
   </data>
   <data name="IpatoolPage/DescriptionTextBlock.Text" xml:space="preserve">
     <value>You can switch between the built-in official version of ipatool and customized ipatool.exe.</value>
