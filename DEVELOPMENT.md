@@ -96,7 +96,7 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
 ## 6. 内置 ipatool 可执行文件
 
 1. 内置 `ipatool.exe` 位于 `Include` 目录，注意区分 `amd64` 和 `arm64`。
-2. 当前内置版本为上游正式版 `2.4.0`，文件名为 `ipatool-2.4.0-windows-*.exe`，打包后映射为 `ipatool.exe`（`TargetPath`），用于所有内置 `ipatool` 命令。
+2. 当前内置版本为上游正式版 `2.5.0`，文件名为 `ipatool-2.5.0-windows-*.exe`，打包后映射为 `ipatool.exe`（`TargetPath`），用于所有内置 `ipatool` 命令。
 3. `Include/get-ipatool-release.ps1` 可获取并校验上游最新正式版，流程见[上文](#更新内置-ipatool-版本)。
 4. 用户可通过设置页（ipatool 页）配置并选择自定义 `ipatool.exe`；未选择或路径失效时使用内置版本。
 5. 针对 `ipatool` 输出的内容，需要在命令中加入 `--format json`；详细日志开启时记录命令和输出。
@@ -205,7 +205,7 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
 ## 14. ipatool 页（IpatoolPage）
 
 1. 使用 CommunityToolkit `SettingsCard` 展示内置 `ipatool` 与可选的自定义 `ipatool.exe`。
-2. 内置版本展示为 `release@2.4.0`（随内置版本同步更新）。
+2. 内置版本展示为 `release@2.5.0`（随内置版本同步更新）。
 3. 内置与自定义来源选择写入 LocalSettings 名称：`IpatoolFlavor`，内部值为 `Main`（内置正式版）和 `Custom`；默认值为 `Main`。
 4. 自定义 `ipatool.exe` 路径写入 LocalSettings 名称：`CustomIpatoolPath`；自定义文件只要求扩展名为 `.exe`。
 5. 认证登录、查询登录状态、退出登录、购买、下载等所有 `ipatool` 命令使用当前选择的来源；自定义路径失效时回退到内置正式版。

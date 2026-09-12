@@ -291,7 +291,7 @@ namespace IPAbuyer.Pages
                 return null;
             }
 
-            string includePath = Path.Combine(baseDirectory, "Include", $"ipatool-2.4.0-windows-{architectureSuffix}.exe");
+            string includePath = Path.Combine(baseDirectory, "Include", $"ipatool-2.5.0-windows-{architectureSuffix}.exe");
             return File.Exists(includePath) ? includePath : null;
         }
 

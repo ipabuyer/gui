@@ -300,7 +300,7 @@
     <value>Built-in ipatool</value>
   </data>
   <data name="IpatoolPage/Release/VersionTextBlock.Text" xml:space="preserve">
-    <value>release@2.4.0</value>
+    <value>release@2.5.0</value>
   </data>
   <data name="IpatoolPage/Release/DisplayName" xml:space="preserve">
     <value>Built-in official version of ipatool</value>

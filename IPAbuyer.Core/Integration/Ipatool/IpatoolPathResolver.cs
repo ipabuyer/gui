@@ -30,7 +30,7 @@ namespace IPAbuyer.Core.Integration.Ipatool
                 Architecture.X64 => "amd64",
                 _ => string.Empty
             };
-            string includePath = Path.Combine(baseDirectory, "Include", $"ipatool-2.4.0-windows-{architectureSuffix}.exe");
+            string includePath = Path.Combine(baseDirectory, "Include", $"ipatool-2.5.0-windows-{architectureSuffix}.exe");
             if (!string.IsNullOrWhiteSpace(architectureSuffix) && File.Exists(includePath))
             {
                 return includePath;
