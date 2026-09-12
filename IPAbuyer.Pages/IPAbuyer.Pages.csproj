@@ -21,7 +21,6 @@
     <ItemGroup>
         <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
         <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.4.0" />
-        <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="3.53.3" />
         <ProjectReference Include="..\IPAbuyer.Core\IPAbuyer.Core.csproj" />
     </ItemGroup>
 

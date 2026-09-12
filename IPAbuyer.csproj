@@ -52,7 +52,6 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.4.0" />
-        <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="3.53.3" />
         <ProjectReference Include="IPAbuyer.Core\IPAbuyer.Core.csproj" />
         <ProjectReference Include="IPAbuyer.Pages\IPAbuyer.Pages.csproj" />
         <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2705" />
