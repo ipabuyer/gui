@@ -19,8 +19,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\IPAbuyer.Core.Execution\IPAbuyer.Core.Execution.csproj" />
-        <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
         <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.4.0" />
     </ItemGroup>
 </Project>

@@ -7,3 +7,6 @@ obj/
 .agents/
 .zcode/
 *.pfx
+
+# Rust core DLL：不入库，本地构建后复制或从 IPAbuyer.Core Release 下载
+Include/ipabuyer-core-windows-*.dll

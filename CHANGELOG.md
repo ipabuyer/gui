@@ -14,6 +14,10 @@
 5. 移除 `WindowContext` 桥接层，静态 UI 文本改由 XAML 资源注入（IPAbuyer.Pages 已并入主工程）
 6. 更新依赖包：Microsoft.Data.Sqlite 10.0.11 -> 10.0.12、Microsoft.NET.Test.Sdk 18.9.0 -> 18.10.0
 7. 工程与仓库维护：IPAbuyer.Pages 合并进主工程、补全 `.gitattributes` 文本与换行规则
+8. 核心业务迁移至 Rust 仓库 [IPAbuyer.Core](https://github.com/ipabuyer/IPAbuyer.Core)：数据库、ipatool 进程编排与解析、搜索、购买、已购买同步、下载队列改为经 C ABI 动态库 `ipabuyer_core.dll` 调用
+   1. C# 侧保留原服务公共 API 作为门面（`IPAbuyer.Core/Native/` 承载 P/Invoke 封装与 JSON 契约），UI 层无感知
+   2. 移除 `IPAbuyer.Core.Execution` 工程与 `Microsoft.Data.Sqlite` 依赖
+   3. 下载详细日志改由 Core 按设置开关返回，同步/队列进度经轮询句柄获取
 
 ## v2026.8.29.0
 

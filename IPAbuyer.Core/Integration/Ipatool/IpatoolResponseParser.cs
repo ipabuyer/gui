@@ -1,9 +1,13 @@
 using IPAbuyer.Core.Serialization;
-using Microsoft.Windows.ApplicationModel.Resources;
 using System.Text.RegularExpressions;
 
 namespace IPAbuyer.Core.Integration.Ipatool
 {
+    /// <summary>
+    /// ipatool 输出的轻量判定：对 payload 字符串做成功/失败/邮箱/keyring 缺失识别。
+    /// 命令执行与响应归一化已移入 Rust core；这四个判定保留在宿主侧，
+    /// 因为调用方以 payload 字符串为契约（配合 <see cref="IpatoolClient"/> 的静态封装）。
+    /// </summary>
     internal static class IpatoolResponseParser
     {
         private static readonly Regex EmailRegex = new(
@@ -50,69 +54,6 @@ namespace IPAbuyer.Core.Integration.Ipatool
             return !string.IsNullOrWhiteSpace(payload)
                 && payload.Contains("failed to get account", StringComparison.OrdinalIgnoreCase)
                 && payload.Contains("could not be found in the keyring", StringComparison.OrdinalIgnoreCase);
-        }
-
-        internal static (string Output, string Error) NormalizeStreams(string? stdout, string? stderr, int exitCode)
-        {
-            string outputText = stdout?.Trim() ?? string.Empty;
-            string errorText = stderr?.Trim() ?? string.Empty;
-            string normalizedOutput = ExtractMeaningfulJson(outputText) ?? outputText;
-            string normalizedError = ExtractMeaningfulJson(errorText) ?? errorText;
-
-            if (string.IsNullOrWhiteSpace(normalizedOutput))
-            {
-                normalizedOutput = BuildReadableError(normalizedError, exitCode);
-            }
-
-            if (string.IsNullOrWhiteSpace(normalizedError) && exitCode != 0)
-            {
-                normalizedError = BuildReadableError(normalizedOutput, exitCode);
-            }
-
-            return (normalizedOutput, normalizedError);
-        }
-
-        private static string? ExtractMeaningfulJson(string? content)
-        {
-            if (string.IsNullOrWhiteSpace(content))
-            {
-                return null;
-            }
-
-            string trimmed = content.Trim();
-            if (trimmed.StartsWith("{") || trimmed.StartsWith("["))
-            {
-                return trimmed;
-            }
-
-            var jsonLines = trimmed.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
-                .Select(line => line.Trim())
-                .Where(line => line.StartsWith("{") || line.StartsWith("["));
-            string result = string.Join(Environment.NewLine, jsonLines);
-            return string.IsNullOrWhiteSpace(result) ? null : result;
-        }
-
-        private static string BuildReadableError(string? text, int exitCode)
-        {
-            if (!string.IsNullOrWhiteSpace(text))
-            {
-                string trimmed = text.Trim();
-                if (JsonPayload.TryParseToken(trimmed, out var token)
-                    && JsonPayload.TryReadString(token, out string? message, "error", "message")
-                    && !string.IsNullOrWhiteSpace(message))
-                {
-                    return string.Format(System.Globalization.CultureInfo.CurrentCulture, GetResourceString("Ipatool/Error/ReadableJsonError"), message, exitCode);
-                }
-
-                return trimmed;
-            }
-
-            return string.Format(System.Globalization.CultureInfo.CurrentCulture, GetResourceString("Ipatool/Error/ExecutionFailed"), exitCode);
-        }
-
-        private static string GetResourceString(string key)
-        {
-            return new ResourceLoader().GetString(key);
         }
     }
 }

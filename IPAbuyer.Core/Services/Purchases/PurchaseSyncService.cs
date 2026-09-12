@@ -1,5 +1,8 @@
+using IPAbuyer.Core.Configuration;
+using IPAbuyer.Core.Data.PurchasedApps;
 using IPAbuyer.Core.Integration.Ipatool;
 using IPAbuyer.Core.Logging;
+using IPAbuyer.Core.Native;
 using Microsoft.Windows.ApplicationModel.Resources;
 using System.Globalization;
 
@@ -8,20 +11,25 @@ namespace IPAbuyer.Core.Services.Purchases
     /// <summary>
     /// 通过 ipatool list-purchases 全量同步账户的已拥有 App，并统一标记为已购买。
     /// list-purchases 消耗较大（每 100 个 App 一页请求），仅在设置页由用户手动触发。
+    /// 分页拉取、逐页写入与进度/日志上报在 Rust core（轮询句柄）；
+    /// 这里以 200ms 间隔轮询 sync_status，把进度与日志转交宿主。
     /// </summary>
     public sealed class PurchaseSyncService
     {
         private static readonly ResourceLoader Loader = new();
 
-        /// <summary>list-purchases 单页数量上限（受 ipatool 限制不得超过 100）。</summary>
+        /// <summary>list-purchases 单页数量上限（受 ipatool 限制不得超过 100；Core 侧常量一致）。</summary>
         public const int PageSize = 100;
 
-        private readonly SemaphoreSlim _syncLock = new(1, 1);
+        private const int PollIntervalMilliseconds = 200;
+
+        private readonly object _syncLock = new();
+        private IntPtr _handle = IntPtr.Zero;
         private bool _isRunning;
 
         public static PurchaseSyncService Instance { get; } = new();
 
-        public bool IsRunning => _isRunning;
+        public bool IsRunning => Volatile.Read(ref _isRunning);
 
         /// <summary>同步进度回调：(已同步数量, 总数量)。</summary>
         public event Action<int, int>? ProgressChanged;
@@ -37,9 +45,7 @@ namespace IPAbuyer.Core.Services.Purchases
                 return false;
             }
 
-            await _syncLock.WaitAsync().ConfigureAwait(false);
-            bool started = false;
-            try
+            lock (_syncLock)
             {
                 if (_isRunning)
                 {
@@ -48,80 +54,135 @@ namespace IPAbuyer.Core.Services.Purchases
                 }
 
                 _isRunning = true;
-                started = true;
-            }
-            finally
-            {
-                if (!started)
-                {
-                    _syncLock.Release();
-                }
             }
 
             try
             {
-                EmitLog(LF("PurchaseSync/Log/Start", normalizedAccount), UiLogLevel.Info);
-                int page = 1;
-                int synced = 0;
-                int total = -1;
+                return await RunSyncAsync(normalizedAccount, cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                Volatile.Write(ref _isRunning, false);
+            }
+        }
+
+        /// <summary>应用关停：请求 Core 取消在跑的同步（尽力而为，不等待）。</summary>
+        public void CancelActive()
+        {
+            IntPtr handle = Interlocked.Exchange(ref _handle, IntPtr.Zero);
+            if (handle != IntPtr.Zero)
+            {
+                try
+                {
+                    CoreNative.SyncCancel(handle);
+                }
+                catch
+                {
+                    // 关停路径：取消失败无需处理。
+                }
+
+                // 句柄交还：同步流程仍需 destroy 释放并等待线程结束。
+                Interlocked.Exchange(ref _handle, handle);
+            }
+        }
+
+        private async Task<bool> RunSyncAsync(string normalizedAccount, CancellationToken cancellationToken)
+        {
+            string dbPath = PurchasedAppDb.GetDatabasePath();
+            string executablePath = IpatoolPathResolver.ResolveExecutablePath();
+            string passphrase = IpatoolClient.ResolvePassphrase(null);
+            bool detailedLog = ApplicationSettings.GetDetailedIpatoolLogEnabled();
+
+            int emittedLogs = 0;
+            long lastSynced = -1;
+            long lastTotal = -1;
+
+            try
+            {
+                _handle = await Task.Run(() => CoreNative.SyncCreate(dbPath, executablePath, passphrase, normalizedAccount, detailedLog))
+                    .ConfigureAwait(false);
+                IntPtr handle = _handle;
 
                 while (true)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    IpatoolResult result = await IpatoolClient.ListPurchasesAsync(
-                        PageSize,
-                        page,
-                        cancellationToken).ConfigureAwait(false);
 
-                    OwnedAppsPage parsed = OwnedAppsPageParser.Parse(result.OutputOrError);
-                    if (!parsed.Success)
+                    CoreSyncStatus status = await Task.Run(() => CoreNative.SyncStatus(handle)).ConfigureAwait(false);
+                    DrainLogs(status.Logs, ref emittedLogs);
+
+                    if (status.Progress.Synced != lastSynced || status.Progress.Total != lastTotal)
                     {
-                        string message = parsed.ErrorMessage ?? L("PurchaseSync/Error/EmptyResponse");
-                        throw new InvalidOperationException(message);
+                        lastSynced = status.Progress.Synced;
+                        lastTotal = status.Progress.Total;
+                        ProgressChanged?.Invoke((int)Math.Max(lastSynced, 0), (int)Math.Max(lastTotal, lastSynced));
                     }
 
-                    if (total < 0)
+                    if (!status.Running)
                     {
-                        total = parsed.TotalCount;
+                        return string.Equals(status.Outcome?.Kind, "completed", StringComparison.Ordinal);
                     }
 
-                    if (parsed.BundleIds.Count > 0)
-                    {
-                        PurchaseHistoryService.BulkMarkPurchased(parsed.BundleIds, normalizedAccount);
-                        synced += parsed.BundleIds.Count;
-                        ProgressChanged?.Invoke(synced, Math.Max(total, synced));
-                        EmitLog(LF("PurchaseSync/Log/Progress", synced, Math.Max(total, synced)), UiLogLevel.Info);
-                    }
-
-                    bool hasMorePages = synced < total && parsed.BundleIds.Count > 0;
-                    if (!hasMorePages)
-                    {
-                        break;
-                    }
-
-                    page++;
+                    await Task.Delay(PollIntervalMilliseconds, cancellationToken).ConfigureAwait(false);
                 }
-
-                PurchaseHistoryService.RecordSyncAttempt(normalizedAccount, true);
-                EmitLog(LF("PurchaseSync/Log/Completed", synced, Math.Max(total, 0)), UiLogLevel.Success);
-                return true;
             }
             catch (OperationCanceledException)
             {
-                PurchaseHistoryService.RecordSyncAttempt(normalizedAccount, false);
+                CancelHandleQuietly();
                 EmitLog(L("PurchaseSync/Log/Canceled"), UiLogLevel.Tip);
                 return false;
             }
             catch (Exception ex)
             {
-                PurchaseHistoryService.RecordSyncAttempt(normalizedAccount, false);
                 EmitLog(LF("PurchaseSync/Log/Failed", ex.Message), UiLogLevel.Error);
                 return false;
             }
             finally
             {
-                _isRunning = false;
-                _syncLock.Release();
+                DestroyHandleQuietly();
+            }
+        }
+
+        private void DrainLogs(List<CoreLogEntry> logs, ref int emittedCount)
+        {
+            for (int i = emittedCount; i < logs.Count; i++)
+            {
+                CoreLogEntry entry = logs[i];
+                EmitLog(CoreMessages.Render(entry.Message), CoreMessages.ToUiLogLevel(entry.Level));
+            }
+
+            emittedCount = logs.Count;
+        }
+
+        private void CancelHandleQuietly()
+        {
+            IntPtr handle = _handle;
+            if (handle != IntPtr.Zero)
+            {
+                try
+                {
+                    CoreNative.SyncCancel(handle);
+                }
+                catch
+                {
+                    // 取消路径：Core 已在收尾时自行终止子进程。
+                }
+            }
+        }
+
+        private void DestroyHandleQuietly()
+        {
+            IntPtr handle = Interlocked.Exchange(ref _handle, IntPtr.Zero);
+            if (handle != IntPtr.Zero)
+            {
+                try
+                {
+                    // destroy 会请求取消并等待 Core 工作线程结束（含子进程终止）。
+                    CoreNative.SyncDestroy(handle);
+                }
+                catch
+                {
+                    // 句柄释放失败无法恢复。
+                }
             }
         }
 

@@ -54,8 +54,7 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
 | 项目 | 职责 |
 | --- | --- |
 | `IPAbuyer`（`IPAbuyer.csproj`） | 主应用入口（`App.xaml`），打包与发布配置集中于此；全部 UI 同在本工程（源码位于 `IPAbuyer.Pages/` 目录，保留 `IPAbuyer.Pages` 命名空间）：`MainWindow`、`MainPage`（主页）、`LoginPage`（账户）、`IpatoolPage`、`Settings`（设置）、`LogViewerWindow`（日志窗口） |
-| `IPAbuyer.Core` | 业务逻辑：配置、数据库、ipatool 集成、搜索、购买、下载队列、日志存储 |
-| `IPAbuyer.Core.Execution` | 进程执行基础设施（无 WinUI 依赖） |
+| `IPAbuyer.Core` | 业务门面：配置、状态、日志存储与对 Rust core 的 FFI 调用封装（数据库、ipatool 集成、搜索、购买、同步、下载队列） |
 | `IPAbuyer.Tests` | xUnit 单元测试，仅引用 `IPAbuyer.Core` |
 
 关键目录：
@@ -63,15 +62,24 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
 | 目录 | 内容 |
 | --- | --- |
 | `Assets/` | 应用图标与商店素材 |
-| `Include/` | 内置 `ipatool.exe`（amd64 / arm64）与 `get-ipatool-release.ps1` |
+| `Include/` | 内置 `ipatool.exe`（amd64 / arm64）、Rust core DLL（`ipabuyer-core-windows-*.dll`）与 `get-ipatool-release.ps1` |
 | `Strings/` | `zh-Hans` 与 `en-US` 的 `Resources.resw` |
 | `Scripts/` | `Verify-LocalizationResources.ps1` 本地化校验脚本 |
 | `ILLink.Descriptors.xml` | 发布 trim 的根描述文件 |
+
+### Rust Core（ipabuyer_core.dll）
+
+1. 核心业务（数据库、ipatool 进程编排与命令解析、搜索、购买、已购买同步、下载队列）由独立 Rust 仓库 [IPAbuyer.Core](https://github.com/ipabuyer/IPAbuyer.Core) 实现，编译为 C ABI 动态库 `ipabuyer_core.dll`；导出清单与 JSON 契约见该仓库 DEVELOPMENT.md 第 5 节。
+2. C# 侧封装位于 `IPAbuyer.Core/Native/`：`CoreNative`（P/Invoke + 状态码/last_error 约定）、`CoreDtos`（JSON 契约 DTO 与源生成序列化上下文，发布 full trim 下不使用反射序列化）、`CoreMessages`（键名/原文消息渲染）。
+3. 服务类（`PurchasedAppDb`、`LoginService`、`AppCatalogService`、`PurchaseService`、`PurchaseSyncService`、`DownloadQueueService`、`IpatoolClient`）保留原有公共 API 作为门面，UI 层不直接触达 FFI。
+4. 长任务（同步、下载队列）采用 Core 侧轮询句柄：C# 侧 `Task.Run` 包装阻塞调用并以 200ms 间隔轮询 `*_status`，取消经 `*_cancel`（队列取消为队列级：终止当前下载并结束本轮）。
+5. DLL 不入 git：本地测试版构建后复制到 `Include/ipabuyer-core-windows-x64.dll`（已被 `.gitignore` 排除）；正式版（含 arm64）由 Core 仓库打 `v*` 标签经 GitHub Actions 发布，从 Release 下载后放入 `Include/`。文件名不含版本号，避免每次更新改 csproj；文件缺失时对应平台的打包产物会缺少该 DLL。
 
 ## 4. 构建与调试
 
 1. 本地测试使用 Visual Studio packaged 模式；本项目不考虑未打包运行状态，也不实现、不保留未打包回退逻辑。
 2. 单元测试可通过 `dotnet test --project IPAbuyer.Tests/IPAbuyer.Tests.csproj -p:Platform=x64` 自行构建运行（测试项目仅引用 `IPAbuyer.Core`，无需打包）；`global.json` 已声明 `Microsoft.Testing.Platform` 测试运行器，适配 .NET 10 SDK 的 dotnet test MTP 模式。
+3. Rust core 的构建、测试与发版流程见 Core 仓库（`cargo test` / `tag.ps1`）；主工程编译要求 `Include/ipabuyer-core-windows-*.dll` 已就位（对应平台缺失时打包会缺少该 DLL）。
 
 ## 5. 发布与版本管理
 
@@ -99,7 +107,7 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
 3. `Include/get-ipatool-release.ps1` 可获取并校验上游最新正式版，流程见[上文](#更新内置-ipatool-版本)。
 4. 用户可通过设置页（ipatool 页）配置并选择自定义 `ipatool.exe`；未选择或路径失效时使用内置版本。
 5. 针对 `ipatool` 输出的内容，需要在命令中加入 `--format json`；详细日志开启时记录命令和输出。
-6. 所有 ipatool 命令统一由 `IPAbuyer.Core/Integration/Ipatool/` 下的 `IpatoolClient`、`IpatoolCommandBuilder`、`IpatoolPathResolver` 组装与执行，路径解析规则：优先当前选择的来源（内置或自定义），自定义路径失效时回退到内置正式版。
+6. 所有 ipatool 命令的组装与执行在 Rust core（`ipabuyer_core_*` 导出）；`IpatoolPathResolver` 只负责解析可执行文件路径（优先当前选择的来源：内置或自定义，自定义路径失效时回退到内置正式版），并经 FFI 传给 Core；`IpatoolClient` 保留认证查询/登出与详细日志事件门面。
 
 ## 7. ipatool 命令参考
 
@@ -153,7 +161,7 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
    1. 使用 packaged 应用 LocalState 路径：`%AppData%\Local\Packages\IPAbuyer.IPAbuyer_kr1hdvrv6tpd0\LocalState\`。
    2. 通过 Windows API（`ApplicationData.Current.LocalFolder`）获取上述路径。
    3. 不需要实现或保留未打包运行状态的本地目录回退逻辑。
-4. 实现位于 `IPAbuyer.Core/Data/PurchasedApps/`（`Database.cs`、`PurchasedAppDb.cs`），使用 Microsoft.Data.Sqlite。
+4. 实现位于 `IPAbuyer.Core/Data/PurchasedApps/`（`Database.cs` 解析路径、`PurchasedAppDb.cs` 门面）；存储与迁移由 Rust core（rusqlite）承担，C# 侧以全局锁串行化句柄访问。
 
 ## 11. UI 总体规范
 
@@ -201,7 +209,7 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
 3. 另有“无法购买”状态，用于非免费或当前不可购买的 App；该状态不入库，由价格推导，不应作为可执行购买状态处理。
 4. 当 `ipatool` 返回 `alreadyOwned` 或 `failed to purchase item with param 'STDQ'` 时，直接在本地标记为已购买，不弹窗确认。
 5. 已购买列表同步由 `PurchaseSyncService`（`IPAbuyer.Core/Services/Purchases/PurchaseSyncService.cs`）负责：
-   1. 通过 `list-purchases` 分页拉取全量（每页 100，为 ipatool 单页上限），逐页写入数据库并统一标记为已购买，进度逐页写入日志；页面解析位于 `OwnedAppsPageParser`。
+   1. 通过 `list-purchases` 分页拉取全量（每页 100，为 ipatool 单页上限），逐页写入数据库并统一标记为已购买，进度逐页写入日志；分页拉取、页面解析与写入在 Rust core（`ipabuyer_core_sync_*` 轮询句柄，同步线程内自建数据库连接），C# 门面以 200ms 轮询转交进度与日志。
    2. 触发时机：仅由用户在设置页“刷新已购买列表”手动触发，不做任何自动同步。
    3. `list-purchases` 消耗较大，自动同步按 `SyncState` 表中上次成功时间判定阈值，失败不推进成功时间；同步进行中忽略新的同步请求。
    4. 测试账户（`test`/`test`）不执行同步。
@@ -268,7 +276,7 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
 2. 国家代码遵循 ISO 3166-1 Alpha-2。
 3. 搜索默认限制为 200 条结果。
 4. 处理返回的 JSON 数据并展示在主页搜索结果卡片列表中。
-5. 实现位于 `IPAbuyer.Core/Services/AppCatalog/`（`AppleAppStoreSearchClient`、`AppCatalogService`、`AppStoreSearchResponseParser`）。
+5. 搜索请求、响应解析与已购买状态合成在 Rust core（`ipabuyer_core_catalog_search`）；`IPAbuyer.Core/Services/AppCatalog/` 保留 `AppCatalogService` 门面（规范值到本地化显示串的映射）与 `DeveloperFilter`（开发者筛选）。
 
 ## 18. App 处理与下载队列
 
@@ -277,7 +285,7 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
 3. 购买命令基于：`ipatool.exe purchase --bundle-identifier APPID --keychain-passphrase 加密密钥 --format json --non-interactive --verbose`
 4. 下载命令基于：`ipatool.exe download --output 输出位置 --bundle-identifier APPID --keychain-passphrase 加密密钥 --format json --non-interactive --verbose`
 5. 已购买或已拥有的 App 点击操作按钮后加入全局下载队列，并在队列未运行时启动下载队列。
-6. 下载队列需要支持待下载、下载中、成功、失败、已取消等状态；主页仅显示“终止下载”入口，队列细节由 `DownloadQueueService` 管理（`IPAbuyer.Core/Services/Downloads/DownloadQueueService.cs`）。
+6. 下载队列需要支持待下载、下载中、成功、失败、已取消等状态；主页仅显示“终止下载”入口。队列状态机、输出解析与进程编排在 Rust core（`ipabuyer_core_queue_*` 轮询句柄）；`DownloadQueueService`（`IPAbuyer.Core/Services/Downloads/DownloadQueueService.cs`）作为门面维护 `ObservableCollection` 镜像并以 200ms 轮询同步条目状态与日志。“终止下载”与关停取消为队列级：终止当前下载并结束本轮队列，剩余条目保留原状态，可再次启动继续。
 7. 需要捕获 `ipatool` 的输出信息并进行处理；详细日志关闭时避免刷屏，详细日志开启时显示命令、输出和下载进度片段。
 8. 下载命令不设置固定超时；长时间下载依靠用户“终止下载”或应用关闭时终止进程。登录命令超时 60 秒，查询登录状态与购买命令为 2 分钟超时。所有子进程的标准输入在启动后立即关闭，交互式提示会因 EOF 立即结束而不是挂起等待。
 
@@ -290,7 +298,7 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
 ## 20. 测试
 
 1. 单元测试位于 `IPAbuyer.Tests`，使用 xUnit v3，仅引用 `IPAbuyer.Core`（不依赖 UI）。
-2. 覆盖范围包括配置、ipatool 响应解析、下载输出解析、购买状态判定、序列化等纯逻辑。
+2. 覆盖范围包括配置、ipatool payload 判定、购买状态判定、日志格式化、序列化等宿主侧纯逻辑；ipatool 命令构建/响应解析/下载输出解析等已迁入 Rust core，对应测试位于 Core 仓库（含假 `.cmd` 脚本的 FFI 端到端测试）。
 3. 新增或修改 `IPAbuyer.Core` 中的可测逻辑时，应补充对应测试。
 
 ## 21. 参考链接

@@ -1,152 +1,80 @@
-using IPAbuyer.Core.Execution;
-using Microsoft.Windows.ApplicationModel.Resources;
-using System.Diagnostics;
+using IPAbuyer.Core.Configuration;
+using IPAbuyer.Core.Native;
+using IPAbuyer.Core.Services.Downloads;
+using IPAbuyer.Core.Services.Purchases;
 
 namespace IPAbuyer.Core.Integration.Ipatool
 {
+    /// <summary>
+    /// ipatool 操作的门面：命令执行已移入 Rust core（ipabuyer_core.dll），
+    /// 这里只保留宿主侧的静态 API——认证查询/登出、payload 判定、
+    /// 详细日志事件与关停钩子。页面代码继续按原有签名调用。
+    /// </summary>
     public static class IpatoolClient
     {
-        private static readonly ResourceLoader Loader = new();
-        private static readonly ProcessExecutionService ProcessExecutionService = new();
-        private static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(2);
-
-        // 登录最多包含两次认证尝试，正常耗时以秒计；缩短超时以限制异常情况下界面的无响应时长。
-        private static readonly TimeSpan AuthLoginTimeout = TimeSpan.FromSeconds(60);
-
-        // 下载大体积 App 可能远超常规命令耗时，不设固定超时，由“终止下载”或应用关闭终止进程。
-        private static readonly TimeSpan DownloadTimeout = System.Threading.Timeout.InfiniteTimeSpan;
-
         public static event Action<string>? CommandExecuting;
         public static event Action<string>? CommandOutputReceived;
 
+        /// <summary>应用关停：请求取消 Core 侧所有在跑任务（同步、下载队列），
+        /// Core 会在进程等待检查点终止子进程。对齐原 ProcessExecutionService.BeginShutdown 的尽力而为语义。</summary>
         public static void BeginShutdown()
         {
-            ProcessExecutionService.BeginShutdown();
+            PurchaseSyncService.Instance.CancelActive();
+            DownloadQueueService.Instance.CancelActive();
         }
 
-        public static Task<IpatoolResult> AuthLoginAsync(string account, string password, string authCode, string passphrase, CancellationToken cancellationToken = default)
+        /// <summary>查询登录状态。silent 为 true 时不上报详细日志事件（启动预热路径）。</summary>
+        public static async Task<IpatoolResult> AuthInfoAsync(string? passphrase = null, CancellationToken cancellationToken = default, bool silent = false)
         {
-            if (string.IsNullOrWhiteSpace(account))
-            {
-                throw new ArgumentException(LF("Ipatool/Error/RequiredArgument", "account"), nameof(account));
-            }
-
-            if (string.IsNullOrWhiteSpace(password))
-            {
-                throw new ArgumentException(LF("Ipatool/Error/RequiredArgument", "password"), nameof(password));
-            }
-
-            var arguments = new List<string> { "auth", "login", "--email", account, "--password", password };
-            if (!string.IsNullOrWhiteSpace(authCode))
-            {
-                arguments.Add("--auth-code");
-                arguments.Add(authCode);
-            }
-
-            return ExecuteAsync(arguments, passphrase, cancellationToken, timeout: AuthLoginTimeout);
-        }
-
-        public static Task<IpatoolResult> AuthLogoutAsync(CancellationToken cancellationToken = default)
-        {
-            return ExecuteAsync(new[] { "auth", "revoke" }, null, cancellationToken);
-        }
-
-        public static Task<IpatoolResult> AuthInfoAsync(string? passphrase = null, CancellationToken cancellationToken = default, bool silent = false)
-        {
-            return ExecuteAsync(new[] { "auth", "info" }, passphrase, cancellationToken, silent);
-        }
-
-        public static Task<IpatoolResult> ListPurchasesAsync(int maxResults, int page, CancellationToken cancellationToken = default)
-        {
-            return ExecuteAsync(
-                IpatoolCommandBuilder.BuildListPurchasesArguments(maxResults, page),
-                passphrase: null,
-                cancellationToken);
-        }
-
-        public static Task<IpatoolResult> PurchaseAppAsync(string bundleId, string account, CancellationToken cancellationToken = default)
-        {
-            if (string.IsNullOrWhiteSpace(account))
-            {
-                throw new ArgumentException(LF("Ipatool/Error/RequiredArgument", "account"), nameof(account));
-            }
-
-            if (string.IsNullOrWhiteSpace(bundleId))
-            {
-                throw new ArgumentException(LF("Ipatool/Error/RequiredArgument", "bundleId"), nameof(bundleId));
-            }
-
-            return ExecuteAsync(new[] { "purchase", "--bundle-identifier", bundleId }, null, cancellationToken);
-        }
-
-        public static Task<IpatoolResult> DownloadAppAsync(string bundleId, string outputDirectory, string account, CancellationToken cancellationToken = default)
-        {
-            return DownloadAppWithProgressAsync(bundleId, outputDirectory, account, null, cancellationToken);
-        }
-
-        public static async Task<IpatoolResult> DownloadAppWithProgressAsync(
-            string bundleId,
-            string outputDirectory,
-            string account,
-            Action<string>? outputChunkCallback,
-            CancellationToken cancellationToken = default)
-        {
-            if (string.IsNullOrWhiteSpace(account))
-            {
-                throw new ArgumentException(LF("Ipatool/Error/RequiredArgument", "account"), nameof(account));
-            }
-
-            if (string.IsNullOrWhiteSpace(bundleId))
-            {
-                throw new ArgumentException(LF("Ipatool/Error/RequiredArgument", "bundleId"), nameof(bundleId));
-            }
-
-            if (string.IsNullOrWhiteSpace(outputDirectory))
-            {
-                throw new ArgumentException(LF("Ipatool/Error/RequiredArgument", "outputDirectory"), nameof(outputDirectory));
-            }
-
-            Directory.CreateDirectory(outputDirectory);
             string executablePath = IpatoolPathResolver.ResolveExecutablePath();
-            IReadOnlyList<string> arguments = IpatoolCommandBuilder.BuildDownloadArguments(
-                bundleId,
-                outputDirectory,
-                IpatoolCommandBuilder.ResolvePassphrase(null));
+            string resolvedPassphrase = ResolvePassphrase(passphrase);
+            bool detailedLog = !silent && ApplicationSettings.GetDetailedIpatoolLogEnabled();
 
-            try
+            CoreAuthInfo info = await Task.Run(() =>
             {
-                IpatoolCommandLog.EmitCommandIfEnabled(arguments, CommandExecuting);
-                var request = new ProcessExecutionRequest(
-                    executablePath,
-                    IpatoolPathResolver.GetWorkingDirectory(executablePath),
-                    arguments,
-                    DownloadTimeout,
-                    IpatoolCommandBuilder.CreateEnvironmentVariables(),
-                    outputChunkCallback);
-                ProcessExecutionResult result = await ProcessExecutionService.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);
-                if (result.TimedOut)
-                {
-                    return new IpatoolResult(null, LF("Ipatool/Error/ExecutionTimeout", $"download --bundle-identifier {bundleId}"), -1, true);
-                }
+                using var cancel = new CoreCancelFlag();
+                using CancellationTokenRegistration registration = cancellationToken.Register(cancel.Cancel);
+                return CoreNative.AuthInfo(executablePath, resolvedPassphrase, detailedLog, cancel.Handle);
+            }).ConfigureAwait(false);
 
-                if (outputChunkCallback == null)
-                {
-                    IpatoolCommandLog.EmitOutputIfEnabled(result.StandardOutput, result.StandardError, CommandOutputReceived);
-                }
+            if (cancellationToken.IsCancellationRequested)
+            {
+                throw new OperationCanceledException(cancellationToken);
+            }
 
-                Debug.WriteLine($"ipatool output: {IpatoolCommandLog.Preview(result.StandardOutput)}");
-                Debug.WriteLine($"ipatool stderr: {IpatoolCommandLog.Preview(result.StandardError)}");
-                (string output, string error) = IpatoolResponseParser.NormalizeStreams(result.StandardOutput, result.StandardError, result.ExitCode);
-                return new IpatoolResult(output, error, result.ExitCode, false);
-            }
-            catch (OperationCanceledException)
+            if (!silent)
             {
-                throw;
+                EmitCoreLogs(info.Logs);
             }
-            catch (Exception ex)
+
+            // ExitCode 承载 Core 解析出的 is_success，供 IsSuccessResponse 判定。
+            return new IpatoolResult(info.Payload, null, info.IsSuccess ? 0 : 1, false);
+        }
+
+        public static async Task<IpatoolResult> AuthLogoutAsync(CancellationToken cancellationToken = default)
+        {
+            string executablePath = IpatoolPathResolver.ResolveExecutablePath();
+            bool detailedLog = ApplicationSettings.GetDetailedIpatoolLogEnabled();
+
+            CoreLogoutResult logout = await Task.Run(() =>
             {
-                return new IpatoolResult(null, ex.Message, -1, false);
+                using var cancel = new CoreCancelFlag();
+                using CancellationTokenRegistration registration = cancellationToken.Register(cancel.Cancel);
+                return CoreNative.AuthLogout(executablePath, detailedLog, cancel.Handle);
+            }).ConfigureAwait(false);
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                throw new OperationCanceledException(cancellationToken);
             }
+
+            EmitCoreLogs(logout.Logs);
+            // 失败时的可读消息：取 ipatool 的输出行（已随 logs 透传）。
+            string output = string.Join(
+                Environment.NewLine,
+                logout.Logs.Select(log => CoreMessages.Render(log.Message))
+                    .Where(line => !string.IsNullOrWhiteSpace(line)));
+            return new IpatoolResult(output, null, logout.Success ? 0 : 1, false);
         }
 
         public static string ExtractEmailFromPayload(string? payload) => IpatoolResponseParser.ExtractEmail(payload);
@@ -157,74 +85,39 @@ namespace IPAbuyer.Core.Integration.Ipatool
 
         public static bool IsAccountMissingFromKeyring(string? payload) => IpatoolResponseParser.IsAccountMissingFromKeyring(payload);
 
-        private static async Task<IpatoolResult> ExecuteAsync(
-            IReadOnlyList<string> commandArguments,
-            string? passphrase,
-            CancellationToken cancellationToken,
-            bool suppressLogEvents = false,
-            TimeSpan? timeout = null)
+        /// <summary>把 Core 返回的结构化日志透传到命令事件（详细日志开关已在 Core 侧生效）。
+        /// "ipatool ..." 命令行走 CommandExecuting，其余输出行走 CommandOutputReceived，
+        /// 对齐原命令执行器的两类事件。</summary>
+        internal static void EmitCoreLogs(IEnumerable<CoreLogEntry> logs)
         {
-            bool isLogout = IpatoolCommandBuilder.IsLogout(commandArguments);
-            string executablePath = IpatoolPathResolver.ResolveExecutablePath();
-            IReadOnlyList<string> arguments = IpatoolCommandBuilder.BuildStandardArguments(
-                commandArguments,
-                IpatoolCommandBuilder.ResolvePassphrase(passphrase),
-                isLogout);
-
-            try
+            foreach (CoreLogEntry entry in logs)
             {
-                if (isLogout)
+                string text = CoreMessages.Render(entry.Message);
+                if (string.IsNullOrWhiteSpace(text))
                 {
-                    IpatoolPathResolver.DeleteCookieLockFile();
+                    continue;
                 }
 
-                if (!suppressLogEvents)
+                if (text.StartsWith("ipatool ", StringComparison.Ordinal))
                 {
-                    IpatoolCommandLog.EmitCommandIfEnabled(arguments, CommandExecuting);
+                    CommandExecuting?.Invoke(text);
                 }
-
-                var request = new ProcessExecutionRequest(
-                    executablePath,
-                    IpatoolPathResolver.GetWorkingDirectory(executablePath),
-                    arguments,
-                    timeout ?? DefaultTimeout,
-                    IpatoolCommandBuilder.CreateEnvironmentVariables());
-                ProcessExecutionResult result = await ProcessExecutionService.ExecuteAsync(request, cancellationToken).ConfigureAwait(false);
-                if (result.TimedOut)
+                else
                 {
-                    return new IpatoolResult(null, LF("Ipatool/Error/ExecutionTimeout", IpatoolCommandBuilder.GetSafeCommandLabel(commandArguments)), -1, true);
-                }
-
-                if (!suppressLogEvents)
-                {
-                    IpatoolCommandLog.EmitOutputIfEnabled(result.StandardOutput, result.StandardError, CommandOutputReceived);
-                }
-
-                Debug.WriteLine($"ipatool output: {IpatoolCommandLog.Preview(result.StandardOutput)}");
-                Debug.WriteLine($"ipatool stderr: {IpatoolCommandLog.Preview(result.StandardError)}");
-                (string output, string error) = IpatoolResponseParser.NormalizeStreams(result.StandardOutput, result.StandardError, result.ExitCode);
-                return new IpatoolResult(output, error, result.ExitCode, false);
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                return new IpatoolResult(null, ex.Message, -1, false);
-            }
-            finally
-            {
-                if (isLogout)
-                {
-                    IpatoolPathResolver.DeleteCookieLockFile();
+                    CommandOutputReceived?.Invoke(text);
                 }
             }
         }
 
-        private static string LF(string key, params object[] args)
+        /// <summary>密钥解析：显式传入优先，否则回退到 PassphraseStore（对齐原 IpatoolCommandBuilder.ResolvePassphrase）。</summary>
+        internal static string ResolvePassphrase(string? passphrase)
         {
-            return string.Format(System.Globalization.CultureInfo.CurrentCulture, Loader.GetString(key), args);
+            if (!string.IsNullOrWhiteSpace(passphrase))
+            {
+                return passphrase.Trim();
+            }
+
+            return PassphraseStore.Get();
         }
     }
 }

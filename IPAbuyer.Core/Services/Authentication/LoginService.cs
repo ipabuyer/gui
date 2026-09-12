@@ -1,8 +1,8 @@
 using IPAbuyer.Core.Configuration;
 using IPAbuyer.Core.Integration.Ipatool;
-using IPAbuyer.Core.Serialization;
+using IPAbuyer.Core.Native;
 using Microsoft.Windows.ApplicationModel.Resources;
-using System.Text.Json;
+using System.Globalization;
 
 namespace IPAbuyer.Core.Services.Authentication
 {
@@ -24,10 +24,14 @@ namespace IPAbuyer.Core.Services.Authentication
         public bool IsTimeout => Status == LoginStatus.Timeout;
     }
 
+    /// <summary>
+    /// 登录流程门面：占位验证码触发双重验证、验证码完成登录。
+    /// 命令执行与结果分类在 Rust core（ipabuyer_core_auth_login / auth_verify_code）；
+    /// 模拟账户（test/test）由 Core 侧识别并直接成功。
+    /// </summary>
     public static class LoginService
     {
         private static readonly ResourceLoader Loader = new();
-        private static readonly TimeSpan TestLoginDelay = TimeSpan.FromMilliseconds(1000);
 
         public static Task<LoginResult> LoginAsync(string account, string password, string passphrase, CancellationToken cancellationToken)
         {
@@ -41,38 +45,29 @@ namespace IPAbuyer.Core.Services.Authentication
 
         private static async Task<LoginResult> ExecuteLoginAsync(string account, string password, string passphrase, string authCode, CancellationToken cancellationToken, bool isTwoFactor)
         {
-            if (DevelopmentAccountRules.IsMockAccount(account, password))
-            {
-                try
-                {
-                    await Task.Delay(TestLoginDelay, cancellationToken).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException)
-                {
-                    return new LoginResult(LoginStatus.UnknownError, L("LoginService/Status/Canceled"));
-                }
-
-                return new LoginResult(LoginStatus.Success, L("LoginService/Status/Success"));
-            }
+            string executablePath = IpatoolPathResolver.ResolveExecutablePath();
+            string resolvedPassphrase = IpatoolClient.ResolvePassphrase(passphrase);
+            bool detailedLog = ApplicationSettings.GetDetailedIpatoolLogEnabled();
 
             try
             {
-                var response = await IpatoolClient.AuthLoginAsync(account, password, authCode, passphrase, cancellationToken).ConfigureAwait(false);
-
-                if (response.TimedOut)
+                CoreLoginResult result = await Task.Run(() =>
                 {
-                    return new LoginResult(LoginStatus.Timeout, L("LoginService/Status/Timeout"));
-                }
+                    using var cancel = new CoreCancelFlag();
+                    using CancellationTokenRegistration registration = cancellationToken.Register(cancel.Cancel);
+                    return isTwoFactor
+                        ? CoreNative.AuthVerifyCode(executablePath, account, password, authCode, resolvedPassphrase, detailedLog, cancel.Handle)
+                        : CoreNative.AuthLogin(executablePath, account, password, authCode, resolvedPassphrase, detailedLog, cancel.Handle);
+                }).ConfigureAwait(false);
 
-                string payload = response.OutputOrError ?? string.Empty;
-                if (string.IsNullOrWhiteSpace(payload))
-                {
-                    return new LoginResult(LoginStatus.UnknownError, L("LoginService/Status/EmptyResponse"), payload);
-                }
-
-                return InterpretPayload(payload, isTwoFactor);
+                IpatoolClient.EmitCoreLogs(result.Logs);
+                return MapResult(result);
             }
             catch (OperationCanceledException)
+            {
+                return new LoginResult(LoginStatus.UnknownError, L("LoginService/Status/Canceled"));
+            }
+            catch (Exception) when (cancellationToken.IsCancellationRequested)
             {
                 return new LoginResult(LoginStatus.UnknownError, L("LoginService/Status/Canceled"));
             }
@@ -82,163 +77,20 @@ namespace IPAbuyer.Core.Services.Authentication
             }
         }
 
-        private static LoginResult InterpretPayload(string payload, bool isTwoFactor)
+        private static LoginResult MapResult(CoreLoginResult result)
         {
-            foreach (JsonElement token in JsonPayload.EnumerateTokens(payload))
+            LoginStatus status = result.Status switch
             {
-                string segment = token.GetRawText();
-                var result = InterpretJsonSegment(token, segment, isTwoFactor);
-                if (result != null)
-                {
-                    return result;
-                }
-            }
+                "Success" => LoginStatus.Success,
+                "RequiresTwoFactor" => LoginStatus.RequiresTwoFactor,
+                "InvalidCredential" => LoginStatus.InvalidCredential,
+                "AuthCodeInvalid" => LoginStatus.AuthCodeInvalid,
+                "NetworkError" => LoginStatus.NetworkError,
+                "Timeout" => LoginStatus.Timeout,
+                _ => LoginStatus.UnknownError,
+            };
 
-            if (DetectTwoFactorRequirement(payload))
-            {
-                return new LoginResult(LoginStatus.RequiresTwoFactor, L("LoginService/Status/RequiresTwoFactor"), payload);
-            }
-
-            return ClassifyFailure(payload, payload, isTwoFactor);
-        }
-
-        private static LoginResult? InterpretJsonSegment(JsonElement root, string segment, bool isTwoFactor)
-        {
-            if (JsonPayload.TryReadBoolean(root, "success", out bool success))
-            {
-                if (success)
-                {
-                    return new LoginResult(LoginStatus.Success, L("LoginService/Status/Success"), segment);
-                }
-
-                string error = ExtractErrorMessage(root);
-                return ClassifyFailure(error, segment, isTwoFactor);
-            }
-
-            string message = ExtractErrorMessage(root);
-            if (!string.IsNullOrWhiteSpace(message))
-            {
-                var failure = ClassifyFailure(message, segment, isTwoFactor);
-                if (failure.Status != LoginStatus.UnknownError)
-                {
-                    return failure;
-                }
-            }
-
-            if (DetectTwoFactorRequirement(segment))
-            {
-                return new LoginResult(LoginStatus.RequiresTwoFactor, L("LoginService/Status/RequiresTwoFactor"), segment);
-            }
-
-            return null;
-        }
-
-        private static string ExtractErrorMessage(JsonElement root)
-        {
-            if (JsonPayload.TryReadString(root, out string? message, "error", "message", "reason"))
-            {
-                return message ?? string.Empty;
-            }
-
-            return string.Empty;
-        }
-
-        private static LoginResult ClassifyFailure(string message, string payload, bool isTwoFactor)
-        {
-            if (string.IsNullOrWhiteSpace(message))
-            {
-                message = payload;
-            }
-
-            // 双重验证阶段：错误消息（如 "invalid auth code"）会同时命中双重验证关键词，需先按验证码错误分类。
-            if (isTwoFactor && DetectAuthCodeInvalid(message))
-            {
-                return new LoginResult(LoginStatus.AuthCodeInvalid, L("LoginService/Status/AuthCodeInvalid"), payload);
-            }
-
-            if (DetectTwoFactorRequirement(message) || (!isTwoFactor && DetectGenericAppleAuthFailure(message)))
-            {
-                return new LoginResult(LoginStatus.RequiresTwoFactor, L("LoginService/Status/RequiresTwoFactor"), payload);
-            }
-
-            if (DetectInvalidCredential(message))
-            {
-                return new LoginResult(LoginStatus.InvalidCredential, L("LoginService/Status/InvalidCredential"), payload);
-            }
-
-            if (DetectNetworkIssue(message))
-            {
-                return new LoginResult(LoginStatus.NetworkError, L("LoginService/Status/NetworkError"), payload);
-            }
-
-            return new LoginResult(LoginStatus.UnknownError, string.IsNullOrWhiteSpace(message) ? L("LoginService/Status/FailedRetry") : message, payload);
-        }
-
-        private static bool DetectTwoFactorRequirement(string message)
-        {
-            if (string.IsNullOrWhiteSpace(message))
-            {
-                return false;
-            }
-
-            message = message.ToLowerInvariant();
-            return message.Contains("auth code")
-                || message.Contains("two factor")
-                || message.Contains("2fa")
-                || message.Contains("请输入验证码")
-                || message.Contains("authentication code");
-        }
-
-        private static bool DetectGenericAppleAuthFailure(string message)
-        {
-            if (string.IsNullOrWhiteSpace(message))
-            {
-                return false;
-            }
-
-            return message.Contains("something went wrong", StringComparison.OrdinalIgnoreCase);
-        }
-
-        private static bool DetectInvalidCredential(string message)
-        {
-            if (string.IsNullOrWhiteSpace(message))
-            {
-                return false;
-            }
-
-            message = message.ToLowerInvariant();
-            return message.Contains("invalid credentials")
-                || message.Contains("incorrect")
-                || message.Contains("username or password")
-                || message.Contains("bad credentials");
-        }
-
-        private static bool DetectAuthCodeInvalid(string message)
-        {
-            if (string.IsNullOrWhiteSpace(message))
-            {
-                return false;
-            }
-
-            message = message.ToLowerInvariant();
-            return message.Contains("invalid auth code")
-                || message.Contains("auth code is incorrect")
-                || message.Contains("验证码错误");
-        }
-
-        private static bool DetectNetworkIssue(string message)
-        {
-            if (string.IsNullOrWhiteSpace(message))
-            {
-                return false;
-            }
-
-            message = message.ToLowerInvariant();
-            return message.Contains("network")
-                || message.Contains("timeout")
-                || message.Contains("timed out")
-                || message.Contains("connection")
-                || message.Contains("ssl");
+            return new LoginResult(status, CoreMessages.Render(result.Message), result.RawPayload);
         }
 
         private static string L(string key)
@@ -248,8 +100,7 @@ namespace IPAbuyer.Core.Services.Authentication
 
         private static string LF(string key, params object[] args)
         {
-            return string.Format(System.Globalization.CultureInfo.CurrentCulture, L(key), args);
+            return string.Format(CultureInfo.CurrentCulture, L(key), args);
         }
-
     }
 }
