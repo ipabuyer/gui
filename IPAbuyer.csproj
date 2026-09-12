@@ -51,9 +51,9 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
         <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.4.0" />
         <ProjectReference Include="IPAbuyer.Core\IPAbuyer.Core.csproj" />
-        <ProjectReference Include="IPAbuyer.Pages\IPAbuyer.Pages.csproj" />
         <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2705" />
         <Manifest Include="$(ApplicationManifest)" />
 
@@ -81,12 +81,14 @@
     <ItemGroup>
         <Compile Remove="IPAbuyer.Core\**\*.cs" />
         <Compile Remove="IPAbuyer.Core.Execution\**\*.cs" />
-        <Compile Remove="IPAbuyer.Pages\**\*.cs" />
         <Compile Remove="IPAbuyer.Tests\**\*.cs" />
-        <Page Remove="IPAbuyer.Pages\**\*.xaml" />
-        <None Remove="IPAbuyer.Pages\**\*.xaml" />
         <Page Remove="IPAbuyer.Tests\**\*.xaml" />
         <None Remove="IPAbuyer.Tests\**\*.xaml" />
+    </ItemGroup>
+    <ItemGroup>
+        <Page Update="IPAbuyer.Pages\**\*.xaml">
+            <Generator>MSBuild:Compile</Generator>
+        </Page>
     </ItemGroup>
     <ItemGroup>
         <TrimmerRootDescriptor Include="ILLink.Descriptors.xml" />

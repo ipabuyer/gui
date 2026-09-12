@@ -53,8 +53,7 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
 
 | 项目 | 职责 |
 | --- | --- |
-| `IPAbuyer`（`IPAbuyer.csproj`） | 主应用入口（`App.xaml`），打包与发布配置集中于此 |
-| `IPAbuyer.Pages` | 全部 UI：`MainWindow`、`MainPage`（主页）、`LoginPage`（账户）、`IpatoolPage`、`Settings`（设置）、`LogViewerWindow`（日志窗口） |
+| `IPAbuyer`（`IPAbuyer.csproj`） | 主应用入口（`App.xaml`），打包与发布配置集中于此；全部 UI 同在本工程（源码位于 `IPAbuyer.Pages/` 目录，保留 `IPAbuyer.Pages` 命名空间）：`MainWindow`、`MainPage`（主页）、`LoginPage`（账户）、`IpatoolPage`、`Settings`（设置）、`LogViewerWindow`（日志窗口） |
 | `IPAbuyer.Core` | 业务逻辑：配置、数据库、ipatool 集成、搜索、购买、下载队列、日志存储 |
 | `IPAbuyer.Core.Execution` | 进程执行基础设施（无 WinUI 依赖） |
 | `IPAbuyer.Tests` | xUnit 单元测试，仅引用 `IPAbuyer.Core` |
