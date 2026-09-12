@@ -20,7 +20,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\IPAbuyer.Core.Execution\IPAbuyer.Core.Execution.csproj" />
-        <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.11" />
+        <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
         <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.4.0" />
         <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="3.53.3" />
     </ItemGroup>
