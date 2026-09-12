@@ -16,10 +16,6 @@ namespace IPAbuyer.Core.Configuration
 
         public static void SaveDetailedIpatoolLogEnabled(bool enabled) => ConfigurationStore.SaveDetailedIpatoolLogEnabled(enabled);
 
-        public static bool GetOwnedCheckEnabled() => ConfigurationStore.GetOwnedCheckEnabled();
-
-        public static void SaveOwnedCheckEnabled(bool enabled) => ConfigurationStore.SaveOwnedCheckEnabled(enabled);
-
         public static bool GetKeychainPassphraseRotationEnabled() => ConfigurationStore.GetKeychainPassphraseRotationEnabled();
 
         public static void SaveKeychainPassphraseRotationEnabled(bool enabled) => ConfigurationStore.SaveKeychainPassphraseRotationEnabled(enabled);

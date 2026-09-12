@@ -56,6 +56,14 @@ namespace IPAbuyer.Core.Integration.Ipatool
             return ExecuteAsync(new[] { "auth", "info" }, passphrase, cancellationToken, silent);
         }
 
+        public static Task<IpatoolResult> ListPurchasesAsync(int maxResults, int page, CancellationToken cancellationToken = default)
+        {
+            return ExecuteAsync(
+                IpatoolCommandBuilder.BuildListPurchasesArguments(maxResults, page),
+                passphrase: null,
+                cancellationToken);
+        }
+
         public static Task<IpatoolResult> PurchaseAppAsync(string bundleId, string account, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(account))

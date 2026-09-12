@@ -47,11 +47,21 @@
                     </StackPanel>
                 </Grid>
             </controls:SettingsCard>
-            <controls:SettingsCard x:Uid="Settings/Card/OwnedPrompt" HorizontalAlignment="Stretch">
+            <controls:SettingsCard x:Uid="Settings/Card/PurchaseSync" HorizontalAlignment="Stretch">
                 <controls:SettingsCard.HeaderIcon>
-                    <FontIcon FontSize="20" Glyph="&#xE9D5;" />
+                    <FontIcon FontSize="20" Glyph="&#xE895;" />
                 </controls:SettingsCard.HeaderIcon>
-                <ToggleSwitch x:Name="OwnedCheckBox" Toggled="OwnedCheckBox_Toggled" />
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <TextBlock
+                        x:Name="PurchaseSyncStatusTextBlock"
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextTrimming="CharacterEllipsis" />
+                    <Button
+                        x:Name="RefreshPurchasedListButton"
+                        x:Uid="Settings/PurchaseSync/RefreshButton"
+                        Click="RefreshPurchasedListButton_Click" />
+                </StackPanel>
             </controls:SettingsCard>
             <controls:SettingsCard x:Uid="Settings/Card/KeychainPassphraseRotation" HorizontalAlignment="Stretch">
                 <controls:SettingsCard.HeaderIcon>

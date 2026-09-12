@@ -56,7 +56,6 @@
                         <ToggleButton x:Uid="MainPage/Filter/AllItem" x:Name="AllFilterButton" Style="{StaticResource MainFilterButtonStyle}" Tag="All" IsChecked="True" Click="FilterButton_Click" />
                         <ToggleButton x:Uid="MainPage/Filter/OnlyNotPurchasedItem" x:Name="OnlyNotPurchasedFilterButton" Style="{StaticResource MainFilterButtonStyle}" Tag="OnlyNotPurchased" Click="FilterButton_Click" />
                         <ToggleButton x:Uid="MainPage/Filter/OnlyPurchasedItem" x:Name="OnlyPurchasedFilterButton" Style="{StaticResource MainFilterButtonStyle}" Tag="OnlyPurchased" Click="FilterButton_Click" />
-                        <ToggleButton x:Uid="MainPage/Filter/OnlyOwnedItem" x:Name="OnlyHadFilterButton" Style="{StaticResource MainFilterButtonStyle}" Tag="OnlyHad" Click="FilterButton_Click" />
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
                         <ComboBox
@@ -167,11 +166,6 @@
                                                     <MenuFlyoutItem x:Uid="MainPage/Context/MarkPurchasedItem" Click="ContextMenuMarkPurchased_Click">
                                                         <MenuFlyoutItem.Icon>
                                                             <SymbolIcon Symbol="Accept" />
-                                                        </MenuFlyoutItem.Icon>
-                                                    </MenuFlyoutItem>
-                                                    <MenuFlyoutItem x:Uid="MainPage/Context/MarkOwnedItem" Click="ContextMenuMarkOwned_Click">
-                                                        <MenuFlyoutItem.Icon>
-                                                            <SymbolIcon Symbol="Contact" />
                                                         </MenuFlyoutItem.Icon>
                                                     </MenuFlyoutItem>
                                                     <MenuFlyoutSeparator />

@@ -19,7 +19,8 @@ IPAbuyer：WinUI 3 桌面应用，调用 [ipatool](https://github.com/majd/ipato
 ## 页面与核心服务
 
 - 4 个导航页：主页（`MainPage`）、账户（`LoginPage`）、ipatool（`IpatoolPage`）、设置（`Settings`）；另有全局日志窗口 `LogViewerWindow`。
-- 数据库：`PurchasedAppDb.db`（LocalState 目录），记录已购买 App、邮箱与状态（已购买/已拥有）。
+- 数据库：`PurchasedAppDb.db`（LocalState 目录），记录已购买 App 与邮箱；"已拥有"已合并为"已购买"，账户级同步时间存于 `SyncState` 表。
+- 已购买列表同步由 `PurchaseSyncService` 管理：调用 `list-purchases` 全量同步（每页 100，消耗大），触发时机为登录后未同步过、启动时距上次成功同步超过 7 天、用户在设置页手动刷新。
 - 下载队列由 `DownloadQueueService` 管理，主页只有“终止下载”入口；主页不做批量操作。
 - 设置写入 `ApplicationData.Current.LocalSettings`；加密密钥存于 Windows PasswordVault。
 
@@ -30,11 +31,12 @@ IPAbuyer：WinUI 3 桌面应用，调用 [ipatool](https://github.com/majd/ipato
 | 登录         | `ipatool.exe auth login --auth-code 双重验证码 --email 邮箱 --password 密码 --keychain-passphrase 加密密钥`                                 |
 | 查询登录状态 | `ipatool.exe auth info --keychain-passphrase 加密密钥`                                                                                      |
 | 退出登录     | `ipatool.exe auth revoke`                                                                                                                   |
+| 列出已拥有   | `ipatool.exe list-purchases --max-results 每页数量(≤100) --page 页码 --keychain-passphrase 加密密钥 --format json --non-interactive --verbose` |
 | 购买         | `ipatool.exe purchase --bundle-identifier APPID --keychain-passphrase 加密密钥 --format json --non-interactive --verbose`                   |
 | 下载         | `ipatool.exe download --output 输出位置 --bundle-identifier APPID --keychain-passphrase 加密密钥 --format json --non-interactive --verbose` |
 
-测试账户：用户名 `test`、密码 `test`，购买/下载一律直接成功。
+测试账户：用户名 `test`、密码 `test`，购买/下载一律直接成功，不执行 list-purchases 同步。
 
 ## LocalSettings 键速查
 
-`CountryCode`（默认 `cn`）、`DownloadDirectory`、`OwnedCheckEnabled`、`KeychainPassphraseRotationEnabled`、`IpatoolFlavor`（`Main`/`Custom`）、`CustomIpatoolPath`、`DetailedIpatoolLogEnabled`。
+`CountryCode`（默认 `cn`）、`DownloadDirectory`、`KeychainPassphraseRotationEnabled`、`IpatoolFlavor`（`Main`/`Custom`）、`CustomIpatoolPath`、`DetailedIpatoolLogEnabled`。

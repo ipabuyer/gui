@@ -111,6 +111,10 @@ namespace IPAbuyer
                 }
 
                 SessionState.SetLoginState(account, true);
+                if (!SessionState.IsMockAccount && PurchaseSyncService.Instance.ShouldAutoSync(account))
+                {
+                    _ = PurchaseSyncService.Instance.SyncAsync(account);
+                }
             }
             catch (Exception ex)
             {

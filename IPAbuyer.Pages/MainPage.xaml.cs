@@ -30,7 +30,6 @@ namespace IPAbuyer.Pages
         private string _selectedFilter = "All";
         private string? _selectedDeveloper;
         private static readonly string StatusPurchased = PurchaseStatusPolicy.PurchasedStatus;
-        private static readonly string StatusOwned = PurchaseStatusPolicy.OwnedStatus;
         private static readonly string StatusCanPurchase = PurchaseStatusPolicy.CanPurchaseStatus;
 
         public int SearchLimitNum { get; set; } = 200;
@@ -132,7 +131,7 @@ namespace IPAbuyer.Pages
                 return;
             }
 
-            if (IsPurchasedStatus(app.purchased) || IsOwnedStatus(app.purchased))
+            if (IsPurchasedStatus(app.purchased))
             {
                 await AddSingleAppToDownloadQueueAsync(app);
                 return;
@@ -305,11 +304,6 @@ namespace IPAbuyer.Pages
             MarkAppsStatus(sender, StatusPurchased);
         }
 
-        private void ContextMenuMarkOwned_Click(object sender, RoutedEventArgs e)
-        {
-            MarkAppsStatus(sender, StatusOwned);
-        }
-
         private void MarkAppsStatus(object sender, string status)
         {
             var selectedApps = GetContextTargetApps(sender);
@@ -432,7 +426,6 @@ namespace IPAbuyer.Pages
             SetFilterButtonState(AllFilterButton, "All");
             SetFilterButtonState(OnlyNotPurchasedFilterButton, "OnlyNotPurchased");
             SetFilterButtonState(OnlyPurchasedFilterButton, "OnlyPurchased");
-            SetFilterButtonState(OnlyHadFilterButton, "OnlyHad");
         }
 
         private void SetFilterButtonState(ToggleButton? button, string filter)
@@ -681,7 +674,6 @@ namespace IPAbuyer.Pages
             {
                 "OnlyPurchased" => _allResults.Where(a => IsPurchasedStatus(a.purchased)),
                 "OnlyNotPurchased" => _allResults.Where(a => IsCanPurchaseStatus(a.purchased)),
-                "OnlyHad" => _allResults.Where(a => IsOwnedStatus(a.purchased)),
                 _ => _allResults,
             };
 
@@ -733,23 +725,18 @@ namespace IPAbuyer.Pages
 
                     case PurchaseOutcome.AlreadyOwned:
                         {
-                            SearchResult updatedApp = ReplaceSearchResultStatus(app, PurchaseStatusPolicy.OwnedStatus);
+                            SearchResult updatedApp = ReplaceSearchResultStatus(app, PurchaseStatusPolicy.PurchasedStatus);
                             AppendHomeLog(LF("MainPage/Purchase/OwnedDetected", GetAppDisplayLabel(updatedApp, bundleId)), UiLogLevel.Success);
                             break;
                         }
 
                     case PurchaseOutcome.NeedsOwnedConfirmation:
-                        if (await ConfirmMarkOwnedAsync(app).ConfigureAwait(true))
                         {
-                            SearchResult updatedApp = ReplaceSearchResultStatus(app, PurchaseStatusPolicy.OwnedStatus);
-                            PurchaseService.Mark(bundleId, account, PurchaseStatusPolicy.OwnedStatus);
-                            AppendHomeLog(LF("MainPage/Purchase/OwnedMarked", GetAppDisplayLabel(updatedApp, bundleId)), UiLogLevel.Success);
+                            // STDQ 报错即视为已拥有：直接标记为已购买，不再弹窗确认。
+                            SearchResult updatedApp = ReplaceSearchResultStatus(app, PurchaseStatusPolicy.PurchasedStatus);
+                            AppendHomeLog(LF("MainPage/Purchase/OwnedDetected", GetAppDisplayLabel(updatedApp, bundleId)), UiLogLevel.Success);
+                            break;
                         }
-                        else
-                        {
-                            AppendHomeLog(LF("MainPage/Purchase/OwnedNotMarked", appLabel), UiLogLevel.Info);
-                        }
-                        break;
 
                     case PurchaseOutcome.Failed:
                         string reason = string.IsNullOrWhiteSpace(result.Detail)
@@ -762,45 +749,6 @@ namespace IPAbuyer.Pages
             return true;
         }
 
-        private async Task<bool> ConfirmMarkOwnedAsync(SearchResult app)
-        {
-            if (ApplicationSettings.GetOwnedCheckEnabled())
-            {
-                return true;
-            }
-
-            var disablePromptCheckBox = new CheckBox
-            {
-                Content = L("MainPage/OwnedPrompt/DisablePrompt")
-            };
-
-            var contentPanel = new StackPanel { Spacing = 8 };
-            contentPanel.Children.Add(new TextBlock
-            {
-                Text = LF("MainPage/OwnedPrompt/Message", app.name ?? app.bundleId ?? string.Empty),
-                TextWrapping = TextWrapping.Wrap
-            });
-            contentPanel.Children.Add(disablePromptCheckBox);
-
-            var dialog = new ContentDialog
-            {
-                Title = L("MainPage/OwnedPrompt/Title"),
-                Content = contentPanel,
-                PrimaryButtonText = L("MainPage/OwnedPrompt/PrimaryButton"),
-                CloseButtonText = L("Common/Cancel"),
-                XamlRoot = XamlRoot
-            };
-
-            ContentDialogResult dialogResult = await dialog.ShowAsync();
-            bool shouldMark = dialogResult == ContentDialogResult.Primary;
-            if (shouldMark && disablePromptCheckBox.IsChecked == true)
-            {
-                ApplicationSettings.SaveOwnedCheckEnabled(true);
-            }
-
-            return shouldMark;
-        }
-
         private static string ResolveUnpurchasedStatusForPrice(string? price)
         {
             return PurchaseStatusPolicy.ResolveUnpurchasedStatus(price);
@@ -809,11 +757,6 @@ namespace IPAbuyer.Pages
         private static bool IsPurchasedStatus(string? status)
         {
             return PurchaseStatusPolicy.IsPurchased(status);
-        }
-
-        private static bool IsOwnedStatus(string? status)
-        {
-            return PurchaseStatusPolicy.IsOwned(status);
         }
 
         private static bool IsCanPurchaseStatus(string? status)
@@ -1035,7 +978,6 @@ namespace IPAbuyer.Pages
     {
         private static readonly ResourceLoader Loader = new();
         private static readonly string PurchasedText = Loader.GetString("Common/Status/Purchased");
-        private static readonly string OwnedText = Loader.GetString("Common/Status/Owned");
         private static readonly string PurchaseBlockedText = Loader.GetString("Common/Status/PurchaseBlocked");
 
         public object? Convert(object value, Type targetType, object parameter, string language)
@@ -1046,8 +988,7 @@ namespace IPAbuyer.Pages
                 return null;
             }
 
-            if (status.Trim().Equals(PurchasedText, StringComparison.OrdinalIgnoreCase)
-                || status.Trim().Equals(OwnedText, StringComparison.OrdinalIgnoreCase))
+            if (status.Trim().Equals(PurchasedText, StringComparison.OrdinalIgnoreCase))
             {
                 return new SolidColorBrush(Windows.UI.Color.FromArgb(0xFF, 0x2E, 0xA0, 0x43));
             }
@@ -1126,7 +1067,6 @@ namespace IPAbuyer.Pages
     {
         private static readonly ResourceLoader Loader = new();
         private static readonly string PurchasedText = Loader.GetString("Common/Status/Purchased");
-        private static readonly string OwnedText = Loader.GetString("Common/Status/Owned");
         private static readonly string PurchaseBlockedText = Loader.GetString("Common/Status/PurchaseBlocked");
 
         public object Convert(object value, Type targetType, object parameter, string language)
@@ -1137,7 +1077,7 @@ namespace IPAbuyer.Pages
                 return PurchaseBlockedText;
             }
 
-            if (IsStatus(status, PurchasedText) || IsStatus(status, OwnedText))
+            if (IsStatus(status, PurchasedText))
             {
                 return Loader.GetString("MainPage/Context/AddToQueueItem/Text");
             }

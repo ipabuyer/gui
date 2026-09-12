@@ -22,7 +22,6 @@ namespace IPAbuyer.Core.Configuration
         private const string CountryCodeSettingKey = "CountryCode";
         private const string DownloadDirectorySettingKey = "DownloadDirectory";
         private const string DetailedIpatoolLogEnabledSettingKey = "DetailedIpatoolLogEnabled";
-        private const string OwnedCheckEnabledSettingKey = "OwnedCheckEnabled";
         private const string KeychainPassphraseRotationEnabledSettingKey = "KeychainPassphraseRotationEnabled";
         internal const string IpatoolFlavorMain = "Main";
         internal const string IpatoolFlavorCustom = "Custom";
@@ -197,24 +196,6 @@ namespace IPAbuyer.Core.Configuration
             {
                 var settings = LoadSettingsInternal();
                 settings.DetailedIpatoolLogEnabled = enabled;
-                SaveSettingsInternal(settings);
-            }
-        }
-
-        internal static bool GetOwnedCheckEnabled()
-        {
-            lock (SyncRoot)
-            {
-                return LoadSettingsInternal().OwnedCheckEnabled;
-            }
-        }
-
-        internal static void SaveOwnedCheckEnabled(bool enabled)
-        {
-            lock (SyncRoot)
-            {
-                var settings = LoadSettingsInternal();
-                settings.OwnedCheckEnabled = enabled;
                 SaveSettingsInternal(settings);
             }
         }
@@ -518,11 +499,6 @@ namespace IPAbuyer.Core.Configuration
                 model.DetailedIpatoolLogEnabled = verboseValue;
             }
 
-            if (TryReadBooleanSetting(values, out bool ownedCheckValue, OwnedCheckEnabledSettingKey, "owned_check"))
-            {
-                model.OwnedCheckEnabled = ownedCheckValue;
-            }
-
             if (TryReadBooleanSetting(values, out bool rotationValue, KeychainPassphraseRotationEnabledSettingKey, "keychain_passphrase_rotation"))
             {
                 model.KeychainPassphraseRotationEnabled = rotationValue;
@@ -586,7 +562,6 @@ namespace IPAbuyer.Core.Configuration
             values[CountryCodeSettingKey] = settings.CountryCode;
             values[DownloadDirectorySettingKey] = settings.DownloadDirectory;
             values[DetailedIpatoolLogEnabledSettingKey] = settings.DetailedIpatoolLogEnabled;
-            values[OwnedCheckEnabledSettingKey] = settings.OwnedCheckEnabled;
             values[KeychainPassphraseRotationEnabledSettingKey] = settings.KeychainPassphraseRotationEnabled;
             values[IpatoolFlavorSettingKey] = settings.IpatoolFlavor;
             values[CustomIpatoolPathSettingKey] = settings.CustomIpatoolPath;
@@ -599,6 +574,7 @@ namespace IPAbuyer.Core.Configuration
             values.Remove("download_dir");
             values.Remove("verbose");
             values.Remove("owned_check");
+            values.Remove("OwnedCheckEnabled");
             values.Remove("keychain_passphrase_rotation");
             values.Remove("AuthIpatoolFlavor");
             values.Remove("auth_ipatool_flavor");
@@ -630,11 +606,6 @@ namespace IPAbuyer.Core.Configuration
             if (TryReadBooleanProperty(root, out bool verboseValue, "verbose", "DetailedIpatoolLogEnabled"))
             {
                 model.DetailedIpatoolLogEnabled = verboseValue;
-            }
-
-            if (TryReadBooleanProperty(root, out bool ownedCheckValue, "owned_check", "OwnedCheckEnabled"))
-            {
-                model.OwnedCheckEnabled = ownedCheckValue;
             }
 
             if (TryReadBooleanProperty(root, out bool rotationValue, "keychain_passphrase_rotation", "KeychainPassphraseRotationEnabled"))
@@ -699,7 +670,6 @@ namespace IPAbuyer.Core.Configuration
                 CountryCode = DefaultCountryCode,
                 DownloadDirectory = GetDefaultDownloadDirectory(),
                 DetailedIpatoolLogEnabled = false,
-                OwnedCheckEnabled = false,
                 KeychainPassphraseRotationEnabled = true,
                 IpatoolFlavor = IpatoolFlavorMain,
                 CustomIpatoolPath = string.Empty
@@ -857,8 +827,6 @@ namespace IPAbuyer.Core.Configuration
             public string DownloadDirectory { get; set; } = string.Empty;
 
             public bool DetailedIpatoolLogEnabled { get; set; }
-
-            public bool OwnedCheckEnabled { get; set; }
 
             public bool KeychainPassphraseRotationEnabled { get; set; } = true;
 

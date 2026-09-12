@@ -108,6 +108,7 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
 | 登录 | `ipatool.exe auth login --auth-code 双重验证码 --email 邮箱 --password 密码 --keychain-passphrase 加密密钥` |
 | 查询登录状态 | `ipatool.exe auth info --keychain-passphrase 加密密钥` |
 | 退出登录 | `ipatool.exe auth revoke` |
+| 列出已拥有 | `ipatool.exe list-purchases --max-results 每页数量(≤100) --page 页码 --keychain-passphrase 加密密钥 --format json --non-interactive --verbose` |
 | 购买 | `ipatool.exe purchase --bundle-identifier APPID --keychain-passphrase 加密密钥 --format json --non-interactive --verbose` |
 | 下载 | `ipatool.exe download --output 输出位置 --bundle-identifier APPID --keychain-passphrase 加密密钥 --format json --non-interactive --verbose` |
 
@@ -146,12 +147,13 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
 
 ## 10. 数据库
 
-1. `PurchasedAppDb.db` 文件存放已购买 App、购买 App 的邮箱地址、App 的状态（即“已购买”和“已拥有”）。
-2. 数据库文件目录：
+1. `PurchasedAppDb.db` 文件存放已购买 App 与购买 App 的邮箱地址，状态统一为“已购买”（原“已拥有”已合并，数据库迁移 `user_version` 2 归并旧数据）。
+2. 另有 `SyncState` 表记录账户级同步状态（`LastSuccessSyncUtc`、`LastAttemptSyncUtc`），供 `PurchaseSyncService` 判定自动同步阈值。
+3. 数据库文件目录：
    1. 使用 packaged 应用 LocalState 路径：`%AppData%\Local\Packages\IPAbuyer.IPAbuyer_kr1hdvrv6tpd0\LocalState\`。
    2. 通过 Windows API（`ApplicationData.Current.LocalFolder`）获取上述路径。
    3. 不需要实现或保留未打包运行状态的本地目录回退逻辑。
-3. 实现位于 `IPAbuyer.Core/Data/PurchasedApps/`（`Database.cs`、`PurchasedAppDb.cs`），使用 Microsoft.Data.Sqlite。
+4. 实现位于 `IPAbuyer.Core/Data/PurchasedApps/`（`Database.cs`、`PurchasedAppDb.cs`），使用 Microsoft.Data.Sqlite。
 
 ## 11. UI 总体规范
 
@@ -170,15 +172,15 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
 1. 主页包含标题栏搜索框、筛选/日志操作区、搜索结果卡片列表和底部状态提示。
 2. 搜索框嵌入标题栏并居中。
 3. 主页标题栏保留搜索框；非主页仅将搜索框设为禁用，不移除、不隐藏、不使用额外占位控件。
-4. 操作区左侧使用筛选 ToggleButton：“全部”、“未购买”、“已购买”、“已拥有”；右侧包含“日志”按钮和仅在下载队列运行时显示的“终止下载”按钮。
+4. 操作区左侧使用筛选 ToggleButton：“全部”、“未购买”、“已购买”；右侧包含“日志”按钮和仅在下载队列运行时显示的“终止下载”按钮。
 5. 搜索结果使用 `ListView` + CommunityToolkit `SettingsCard` 卡片列表，不再使用带表头的传统表格，也不使用批量复选框。
 6. 搜索结果卡片要求：
    1. Header 显示 App 名称，Description 显示开发者。
    2. HeaderIcon 显示 App 图标。
    3. 卡片右侧显示版本号、购买状态、单项操作按钮和“三个点”菜单。
    4. 购买状态来自数据库；App 名称、App ID、开发者、版本号、价格、图标来自搜索结果。
-   5. 购买状态文字需要区分颜色：已购买/已拥有为绿色，无法购买为红色。
-   6. 单项操作按钮根据状态切换：未购买时为购买；已购买/已拥有时为下载；无法购买时禁用。
+   5. 购买状态文字需要区分颜色：已购买为绿色，无法购买为红色。
+   6. 单项操作按钮根据状态切换：未购买时为购买；已购买时为下载；无法购买时禁用。
    7. 无法购买状态旁需要按账户界面问号 tooltip 的方式展示原因。
 7. 搜索结果列表为空时显示空状态提示；搜索中显示居中的 `ProgressRing`。
 8. 主页使用 `InfoBar` 展示操作状态，详细日志通过全局日志窗口查看。
@@ -187,19 +189,22 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
 
 1. 主页搜索结果卡片使用“三个点”按钮打开菜单，不再依赖传统表格行右键。
 2. 菜单分三个区：标记区、复制区、操作区。
-3. 标记区：标记为未购买、已购买、已拥有。
+3. 标记区：标记为未购买、已购买。
 4. 复制区：复制 App 名称、ID。
 5. 操作区：打开 App Store 中该软件详情页。
 6. 主页卡片的“三个点”弹出菜单项需要带 icon，复制类菜单项统一使用复制 icon。
 
 ## 13. 购买状态
 
-1. 分为“全部”、“未购买”、“已购买”和“已拥有”。
-2. “已购买”指通过本软件进行购买的 App。
-3. “已拥有”指用户购买过的 App，但不是通过本软件购买的。
-4. 另有“无法购买”状态，用于非免费或当前不可购买的 App；该状态不应作为可执行购买状态处理。
-5. “已购买”和“已拥有”需要写入数据库文件。
-6. 当 `ipatool` 返回 `failed to purchase item with param 'STDQ'` 时，判断 App 为疑似已拥有，按设置决定是否弹窗询问用户是否要标记为已拥有，并提供不再提示选框（受 `OwnedCheckEnabled` 控制，见[设置页](#16-设置页settings)）。
+1. 分为“全部”、“未购买”和“已购买”。
+2. “已购买”指用户拥有许可的 App：通过本软件购买的、以及账户中已拥有但非通过本软件购买的（原“已拥有”状态已合并入“已购买”，由数据库迁移 `user_version` 2 归并旧数据）。
+3. 另有“无法购买”状态，用于非免费或当前不可购买的 App；该状态不入库，由价格推导，不应作为可执行购买状态处理。
+4. 当 `ipatool` 返回 `alreadyOwned` 或 `failed to purchase item with param 'STDQ'` 时，直接在本地标记为已购买，不弹窗确认。
+5. 已购买列表同步由 `PurchaseSyncService`（`IPAbuyer.Core/Services/Purchases/PurchaseSyncService.cs`）负责：
+   1. 通过 `list-purchases` 分页拉取全量（每页 100，为 ipatool 单页上限），逐页写入数据库并统一标记为已购买；页面解析位于 `OwnedAppsPageParser`。
+   2. 触发时机：登录成功且该账户从未同步过；应用启动且距上次成功同步超过 7 天（后台静默执行）；设置页“刷新已购买列表”手动触发。
+   3. `list-purchases` 消耗较大，自动同步按 `SyncState` 表中上次成功时间判定阈值，失败不推进成功时间；同步进行中忽略新的同步请求。
+   4. 测试账户（`test`/`test`）不执行同步。
 
 ## 14. ipatool 页（IpatoolPage）
 
@@ -233,12 +238,10 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
 2. 如果旧版 `settings.json` 存在，需要先迁移到 LocalSettings；迁移成功后将原文件改名为 `settings.json.migrated`。
 3. 修改和重置国家代码（默认为 `cn`）功能：
    1. LocalSettings 名称：`CountryCode`
-   2. 需要提示用户：跨地区购买会导致标记为疑似已拥有。
+   2. 需要提示用户：跨地区购买会导致已拥有 App 不在同步列表中。
 4. 修改和重置下载目录功能，默认为当前用户的下载文件夹：
    1. LocalSettings 名称：`DownloadDirectory`
-5. 标记为已拥有前的提示：
-   1. LocalSettings 名称：`OwnedCheckEnabled`
-   2. `OwnedCheckEnabled` 为 `true` 时，标记为已拥有不再弹窗询问；为 `false` 时，标记前需要弹窗确认。
+5. 刷新已购买列表卡片：显示上次同步时间，按钮手动触发 `PurchaseSyncService` 全量同步，同步中禁用按钮并显示进度；未登录或测试账户时弹窗提示。
 6. 关闭加密密钥轮换功能：
    1. LocalSettings 名称：`KeychainPassphraseRotationEnabled`
 7. 开发者官方网站（按钮跳转 <https://www.blazesnow.com/ipa/>）：
@@ -254,7 +257,6 @@ IPAbuyer 是一款 WinUI 3 桌面应用，帮助用户浏览、购买（仅限�
 | --- | --- | --- |
 | `CountryCode` | App Store 国家/地区代码（ISO 3166-1 Alpha-2） | `cn`（首次启动从 Windows 区域初始化） |
 | `DownloadDirectory` | 下载目录 | 当前用户下载文件夹 |
-| `OwnedCheckEnabled` | 标记为已拥有前是否弹窗确认（`true` 为不弹窗） | — |
 | `KeychainPassphraseRotationEnabled` | 退出登录后是否自动轮换加密密钥 | — |
 | `IpatoolFlavor` | ipatool 来源：`Main` 内置 / `Custom` 自定义 | `Main` |
 | `CustomIpatoolPath` | 自定义 `ipatool.exe` 路径 | — |

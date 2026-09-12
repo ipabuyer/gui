@@ -25,7 +25,6 @@ namespace IPAbuyer.Pages
         }
 
         private bool _isInitializingLanguageOption;
-        private bool _isInitializingOwnedCheckOption;
         private bool _isInitializingPassphraseRotationOption;
 
         public Settings()
@@ -35,7 +34,7 @@ namespace IPAbuyer.Pages
             InitializeDisplayLanguage();
             InitializeCountryCode();
             InitializeDownloadDirectory();
-            InitializeOwnedCheckOption();
+            InitializePurchaseSyncCard();
             InitializeKeychainPassphraseRotationOption();
             InitializeAppVersion();
         }
@@ -413,32 +412,72 @@ namespace IPAbuyer.Pages
             AppVersionValueTextBlock.Text = $"{version.Major}.{version.Minor}.{version.Build}.{version.Revision}";
         }
 
-        private void InitializeOwnedCheckOption()
+        private void InitializePurchaseSyncCard()
         {
-            if (OwnedCheckBox == null)
+            PurchaseSyncStatusTextBlock.Text = FormatPurchaseSyncStatus();
+        }
+
+        private static string FormatPurchaseSyncStatus()
+        {
+            string account = SessionState.IsLoggedIn ? SessionState.CurrentAccount.Trim() : string.Empty;
+            DateTime? lastSyncUtc = string.IsNullOrWhiteSpace(account)
+                ? null
+                : PurchaseHistoryService.GetLastSuccessfulSyncUtc(account);
+            return lastSyncUtc == null
+                ? L("Settings/PurchaseSync/NeverSynced")
+                : LF("Settings/PurchaseSync/LastSyncFormat", lastSyncUtc.Value.ToLocalTime().ToString("g"));
+        }
+
+        private async void RefreshPurchasedListButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (PurchaseSyncService.Instance.IsRunning)
             {
                 return;
             }
 
-            _isInitializingOwnedCheckOption = true;
+            string account = SessionState.IsLoggedIn ? SessionState.CurrentAccount.Trim() : string.Empty;
+            if (string.IsNullOrWhiteSpace(account))
+            {
+                await ShowDialogAsync(
+                    L("Settings/PurchaseSync/LoginRequiredTitle"),
+                    L("Settings/PurchaseSync/LoginRequiredMessage"));
+                return;
+            }
+
+            if (SessionState.IsMockAccount)
+            {
+                await ShowDialogAsync(
+                    L("Settings/PurchaseSync/MockTitle"),
+                    L("Settings/PurchaseSync/MockMessage"));
+                return;
+            }
+
+            RefreshPurchasedListButton.IsEnabled = false;
+            void OnProgress(int synced, int total)
+            {
+                DispatcherQueue.TryEnqueue(() =>
+                {
+                    PurchaseSyncStatusTextBlock.Text = LF("Settings/PurchaseSync/ProgressFormat", synced, total);
+                });
+            }
+
+            PurchaseSyncService.Instance.ProgressChanged += OnProgress;
             try
             {
-                OwnedCheckBox.IsOn = ApplicationSettings.GetOwnedCheckEnabled();
+                bool success = await PurchaseSyncService.Instance.SyncAsync(account);
+                PurchaseSyncStatusTextBlock.Text = FormatPurchaseSyncStatus();
+                if (!success)
+                {
+                    await ShowDialogAsync(
+                        L("Settings/Dialog/OperationFailedTitle"),
+                        L("Settings/PurchaseSync/FailedMessage"));
+                }
             }
             finally
             {
-                _isInitializingOwnedCheckOption = false;
+                PurchaseSyncService.Instance.ProgressChanged -= OnProgress;
+                RefreshPurchasedListButton.IsEnabled = true;
             }
-        }
-
-        private void OwnedCheckBox_Toggled(object sender, RoutedEventArgs e)
-        {
-            if (_isInitializingOwnedCheckOption)
-            {
-                return;
-            }
-
-            ApplicationSettings.SaveOwnedCheckEnabled(OwnedCheckBox.IsOn);
         }
 
         private void InitializeKeychainPassphraseRotationOption()

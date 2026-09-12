@@ -2,6 +2,7 @@
 using IPAbuyer.Core.Integration.Ipatool;
 using IPAbuyer.Core.Logging;
 using IPAbuyer.Core.Services.Authentication;
+using IPAbuyer.Core.Services.Purchases;
 using IPAbuyer.Core.State;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
@@ -669,6 +670,7 @@ namespace IPAbuyer.Pages
             HideInlineTwoFactor();
             bool isMockAccount = DevelopmentAccountRules.IsMockAccount(_account, _password);
             SessionState.SetLoginState(_account, true, isMockAccount);
+            TriggerPurchaseSyncInBackground(isMockAccount, _account);
             ApplyOperationLock(true);
             DisposeCurrentOperation();
             ShowSuccess(L("LoginPage/Status/LoginSuccess"));
@@ -680,6 +682,26 @@ namespace IPAbuyer.Pages
         {
             _operationLocked = isLocked;
             SetInputControlsEnabled(true);
+        }
+
+        private static async void TriggerPurchaseSyncInBackground(bool isMockAccount, string account)
+        {
+            if (isMockAccount || string.IsNullOrWhiteSpace(account))
+            {
+                return;
+            }
+
+            try
+            {
+                if (PurchaseSyncService.Instance.ShouldAutoSync(account))
+                {
+                    await PurchaseSyncService.Instance.SyncAsync(account);
+                }
+            }
+            catch
+            {
+                // 后台同步失败不影响登录流程。
+            }
         }
 
         private void OperationLockOverlay_Tapped(object sender, TappedRoutedEventArgs e)

@@ -10,8 +10,7 @@ namespace IPAbuyer.Core.Services.Purchases
         {
             string bundleId = app.bundleId?.Trim() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(bundleId)
-                || PurchaseStatusPolicy.IsPurchased(app.purchased)
-                || PurchaseStatusPolicy.IsOwned(app.purchased))
+                || PurchaseStatusPolicy.IsPurchased(app.purchased))
             {
                 return new PurchaseResult(bundleId, PurchaseOutcome.Skipped);
             }
@@ -32,13 +31,13 @@ namespace IPAbuyer.Core.Services.Purchases
 
             IpatoolResult response = await IpatoolClient.PurchaseAppAsync(bundleId, account, cancellationToken).ConfigureAwait(false);
             PurchaseOutcome outcome = PurchaseResponseInterpreter.Interpret(response.OutputOrError);
-            if (outcome == PurchaseOutcome.Purchased)
+
+            // 已拥有已合并为已购买：成功、alreadyOwned、STDQ 三种结果都写入同一条已购买记录。
+            if (outcome == PurchaseOutcome.Purchased
+                || outcome == PurchaseOutcome.AlreadyOwned
+                || outcome == PurchaseOutcome.NeedsOwnedConfirmation)
             {
                 PurchaseHistoryService.Mark(bundleId, account, PurchaseStatusPolicy.PurchasedStatus);
-            }
-            else if (outcome == PurchaseOutcome.AlreadyOwned)
-            {
-                PurchaseHistoryService.Mark(bundleId, account, PurchaseStatusPolicy.OwnedStatus);
             }
 
             return new PurchaseResult(bundleId, outcome, response.OutputOrError);

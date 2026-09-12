@@ -9,9 +9,9 @@ namespace IPAbuyer.Tests.Services.Purchases
         [InlineData("purchased", "purchased")]
         [InlineData("Purchased", "purchased")]
         [InlineData("已购买", "purchased")]
-        [InlineData("owned", "owned")]
-        [InlineData("Already owned", "owned")]
-        [InlineData("已拥有", "owned")]
+        [InlineData("owned", "purchased")]
+        [InlineData("Already owned", "purchased")]
+        [InlineData("已拥有", "purchased")]
         public void TryNormalize_AcceptsCanonicalAndLegacyPurchaseRecords(string status, string expected)
         {
             bool normalized = PurchaseRecordStatus.TryNormalize(status, out string actual);
@@ -41,10 +41,10 @@ namespace IPAbuyer.Tests.Services.Purchases
 
         [Theory]
         [InlineData("  purchased  ", "purchased")]
-        [InlineData("OWNED", "owned")]
-        [InlineData(" ALREADY OWNED ", "owned")]
+        [InlineData("OWNED", "purchased")]
+        [InlineData(" ALREADY OWNED ", "purchased")]
         [InlineData(" 已购买 ", "purchased")]
-        [InlineData(" 已拥有 ", "owned")]
+        [InlineData(" 已拥有 ", "purchased")]
         public void TryNormalize_TrimsWhitespaceAndIgnoresCase(string status, string expected)
         {
             bool normalized = PurchaseRecordStatus.TryNormalize(status, out string actual);

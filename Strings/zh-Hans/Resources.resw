@@ -248,11 +248,56 @@
   <data name="Settings/Card/ProjectRepository.Header" xml:space="preserve">
     <value>项目仓库</value>
   </data>
-  <data name="Settings/Card/OwnedPrompt.Description" xml:space="preserve">
-    <value>开启后，标记“已拥有”时不再确认。</value>
+  <data name="Settings/Card/PurchaseSync.Description" xml:space="preserve">
+    <value>同步 Apple 账户的已拥有 App 列表并标记为已购买；登录后与每间隔一段时间会自动同步。</value>
   </data>
-  <data name="Settings/Card/OwnedPrompt.Header" xml:space="preserve">
-    <value>不再确认已拥有</value>
+  <data name="Settings/Card/PurchaseSync.Header" xml:space="preserve">
+    <value>刷新已购买列表</value>
+  </data>
+  <data name="Settings/PurchaseSync/RefreshButton.Content" xml:space="preserve">
+    <value>刷新</value>
+  </data>
+  <data name="Settings/PurchaseSync/NeverSynced" xml:space="preserve">
+    <value>从未同步</value>
+  </data>
+  <data name="Settings/PurchaseSync/LastSyncFormat" xml:space="preserve">
+    <value>上次同步：{0}</value>
+  </data>
+  <data name="Settings/PurchaseSync/ProgressFormat" xml:space="preserve">
+    <value>同步中… {0}/{1}</value>
+  </data>
+  <data name="Settings/PurchaseSync/LoginRequiredTitle" xml:space="preserve">
+    <value>尚未登录</value>
+  </data>
+  <data name="Settings/PurchaseSync/LoginRequiredMessage" xml:space="preserve">
+    <value>请先在账户页登录 Apple 账户。</value>
+  </data>
+  <data name="Settings/PurchaseSync/MockTitle" xml:space="preserve">
+    <value>测试账户</value>
+  </data>
+  <data name="Settings/PurchaseSync/MockMessage" xml:space="preserve">
+    <value>测试账户不执行同步。</value>
+  </data>
+  <data name="Settings/PurchaseSync/FailedMessage" xml:space="preserve">
+    <value>同步未完成，请稍后重试；详细信息见日志。</value>
+  </data>
+  <data name="PurchaseSync/Log/Start" xml:space="preserve">
+    <value>开始同步已购买列表：{0}</value>
+  </data>
+  <data name="PurchaseSync/Log/Completed" xml:space="preserve">
+    <value>同步完成：本次 {0} 个（账户共 {1} 个）</value>
+  </data>
+  <data name="PurchaseSync/Log/Failed" xml:space="preserve">
+    <value>同步失败：{0}</value>
+  </data>
+  <data name="PurchaseSync/Log/Canceled" xml:space="preserve">
+    <value>已取消同步。</value>
+  </data>
+  <data name="PurchaseSync/Log/AlreadyRunning" xml:space="preserve">
+    <value>同步正在进行中，已忽略本次请求。</value>
+  </data>
+  <data name="PurchaseSync/Error/EmptyResponse" xml:space="preserve">
+    <value>list-purchases 未返回有效数据。</value>
   </data>
   <data name="Settings/Card/KeychainPassphraseRotation.Description" xml:space="preserve">
     <value>关闭后，退出登录时不再自动生成新的加密密钥。</value>
@@ -449,9 +494,6 @@
   <data name="MainPage/Filter/OnlyPurchasedItem.Content" xml:space="preserve">
     <value>已购买</value>
   </data>
-  <data name="MainPage/Filter/OnlyOwnedItem.Content" xml:space="preserve">
-    <value>已拥有</value>
-  </data>
   <data name="MainPage/Header/NameButton.Content" xml:space="preserve">
     <value>App名称</value>
   </data>
@@ -481,9 +523,6 @@
   </data>
   <data name="MainPage/Context/MarkPurchasedItem.Text" xml:space="preserve">
     <value>标记为已购买</value>
-  </data>
-  <data name="MainPage/Context/MarkOwnedItem.Text" xml:space="preserve">
-    <value>标记为已拥有</value>
   </data>
   <data name="MainPage/Context/CopyNameItem.Text" xml:space="preserve">
     <value>复制 App 名称</value>
@@ -639,13 +678,7 @@
     <value>购买成功: {0}</value>
   </data>
   <data name="MainPage/Purchase/OwnedDetected" xml:space="preserve">
-    <value>已拥有: {0}</value>
-  </data>
-  <data name="MainPage/Purchase/OwnedMarked" xml:space="preserve">
-    <value>疑似已拥有，已标记: {0}</value>
-  </data>
-  <data name="MainPage/Purchase/OwnedNotMarked" xml:space="preserve">
-    <value>疑似已拥有，未标记: {0}</value>
+    <value>已拥有，已标记为已购买：{0}</value>
   </data>
   <data name="MainPage/Purchase/UnknownError" xml:space="preserve">
     <value>未知错误</value>
@@ -653,26 +686,11 @@
   <data name="MainPage/Purchase/Failed" xml:space="preserve">
     <value>购买失败: {0} - {1}</value>
   </data>
-  <data name="MainPage/OwnedPrompt/DisablePrompt" xml:space="preserve">
-    <value>不再提示，后续直接标记为已拥有</value>
-  </data>
-  <data name="MainPage/OwnedPrompt/Message" xml:space="preserve">
-    <value>ipatool 返回 STDQ：{0} 可能已拥有，是否标记为“已拥有”？</value>
-  </data>
-  <data name="MainPage/OwnedPrompt/Title" xml:space="preserve">
-    <value>疑似已拥有</value>
-  </data>
-  <data name="MainPage/OwnedPrompt/PrimaryButton" xml:space="preserve">
-    <value>标记为已拥有</value>
-  </data>
   <data name="Common/Cancel" xml:space="preserve">
     <value>取消</value>
   </data>
   <data name="Common/Status/Purchased" xml:space="preserve">
     <value>已购买</value>
-  </data>
-  <data name="Common/Status/Owned" xml:space="preserve">
-    <value>已拥有</value>
   </data>
   <data name="Common/Status/NotPurchased" xml:space="preserve">
     <value>未购买</value>

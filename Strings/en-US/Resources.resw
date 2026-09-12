@@ -248,11 +248,56 @@
   <data name="Settings/Card/ProjectRepository.Header" xml:space="preserve">
     <value>Project repository</value>
   </data>
-  <data name="Settings/Card/OwnedPrompt.Description" xml:space="preserve">
-    <value>When turned on, confirmation is skipped when marking an app as "Owned".</value>
+  <data name="Settings/Card/PurchaseSync.Description" xml:space="preserve">
+    <value>Sync the list of apps owned by the Apple account and mark them as purchased. The app syncs automatically after sign-in and at intervals.</value>
   </data>
-  <data name="Settings/Card/OwnedPrompt.Header" xml:space="preserve">
-    <value>Skip "Owned" confirmation</value>
+  <data name="Settings/Card/PurchaseSync.Header" xml:space="preserve">
+    <value>Refresh purchased list</value>
+  </data>
+  <data name="Settings/PurchaseSync/RefreshButton.Content" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="Settings/PurchaseSync/NeverSynced" xml:space="preserve">
+    <value>Never synced</value>
+  </data>
+  <data name="Settings/PurchaseSync/LastSyncFormat" xml:space="preserve">
+    <value>Last sync: {0}</value>
+  </data>
+  <data name="Settings/PurchaseSync/ProgressFormat" xml:space="preserve">
+    <value>Syncing… {0}/{1}</value>
+  </data>
+  <data name="Settings/PurchaseSync/LoginRequiredTitle" xml:space="preserve">
+    <value>Not signed in</value>
+  </data>
+  <data name="Settings/PurchaseSync/LoginRequiredMessage" xml:space="preserve">
+    <value>Sign in with an Apple account on the account page first.</value>
+  </data>
+  <data name="Settings/PurchaseSync/MockTitle" xml:space="preserve">
+    <value>Test account</value>
+  </data>
+  <data name="Settings/PurchaseSync/MockMessage" xml:space="preserve">
+    <value>The test account does not perform synchronization.</value>
+  </data>
+  <data name="Settings/PurchaseSync/FailedMessage" xml:space="preserve">
+    <value>Sync did not finish. Try again later; see the log for details.</value>
+  </data>
+  <data name="PurchaseSync/Log/Start" xml:space="preserve">
+    <value>Start syncing purchased list: {0}</value>
+  </data>
+  <data name="PurchaseSync/Log/Completed" xml:space="preserve">
+    <value>Sync finished: {0} apps this run ({1} in account)</value>
+  </data>
+  <data name="PurchaseSync/Log/Failed" xml:space="preserve">
+    <value>Sync failed: {0}</value>
+  </data>
+  <data name="PurchaseSync/Log/Canceled" xml:space="preserve">
+    <value>Sync canceled.</value>
+  </data>
+  <data name="PurchaseSync/Log/AlreadyRunning" xml:space="preserve">
+    <value>A sync is already running; this request was ignored.</value>
+  </data>
+  <data name="PurchaseSync/Error/EmptyResponse" xml:space="preserve">
+    <value>list-purchases returned no valid data.</value>
   </data>
   <data name="Settings/Card/KeychainPassphraseRotation.Description" xml:space="preserve">
     <value>When turned off, new encryption keys will no longer be automatically generated when logging out.</value>
@@ -449,9 +494,6 @@
   <data name="MainPage/Filter/OnlyPurchasedItem.Content" xml:space="preserve">
     <value>Purchased</value>
   </data>
-  <data name="MainPage/Filter/OnlyOwnedItem.Content" xml:space="preserve">
-    <value>Already owned</value>
-  </data>
   <data name="MainPage/Header/NameButton.Content" xml:space="preserve">
     <value>App name</value>
   </data>
@@ -481,9 +523,6 @@
   </data>
   <data name="MainPage/Context/MarkPurchasedItem.Text" xml:space="preserve">
     <value>Mark as purchased</value>
-  </data>
-  <data name="MainPage/Context/MarkOwnedItem.Text" xml:space="preserve">
-    <value>Mark as owned</value>
   </data>
   <data name="MainPage/Context/CopyNameItem.Text" xml:space="preserve">
     <value>Copy app name</value>
@@ -639,40 +678,19 @@
     <value>Purchase successful: {0}</value>
   </data>
   <data name="MainPage/Purchase/OwnedDetected" xml:space="preserve">
-    <value>Already own: {0}</value>
-  </data>
-  <data name="MainPage/Purchase/OwnedMarked" xml:space="preserve">
-    <value>Suspected to be owned, marked: {0}</value>
-  </data>
-  <data name="MainPage/Purchase/OwnedNotMarked" xml:space="preserve">
-    <value>Suspected to be owned, unmarked: {0}</value>
+    <value>Already owned, marked as purchased: {0}</value>
   </data>
   <data name="MainPage/Purchase/UnknownError" xml:space="preserve">
-    <value>unknown error</value>
+    <value>Unknown error</value>
   </data>
   <data name="MainPage/Purchase/Failed" xml:space="preserve">
     <value>Purchase failed: {0} - {1}</value>
-  </data>
-  <data name="MainPage/OwnedPrompt/DisablePrompt" xml:space="preserve">
-    <value>No more prompts, just mark it as owned in the future.</value>
-  </data>
-  <data name="MainPage/OwnedPrompt/Message" xml:space="preserve">
-    <value>ipatool returns STDQ: {0} may be owned, is it marked as "owned"?</value>
-  </data>
-  <data name="MainPage/OwnedPrompt/Title" xml:space="preserve">
-    <value>Suspected to have</value>
-  </data>
-  <data name="MainPage/OwnedPrompt/PrimaryButton" xml:space="preserve">
-    <value>Mark as owned</value>
   </data>
   <data name="Common/Cancel" xml:space="preserve">
     <value>Cancel</value>
   </data>
   <data name="Common/Status/Purchased" xml:space="preserve">
     <value>Purchased</value>
-  </data>
-  <data name="Common/Status/Owned" xml:space="preserve">
-    <value>Already owned</value>
   </data>
   <data name="Common/Status/NotPurchased" xml:space="preserve">
     <value>Not purchased</value>

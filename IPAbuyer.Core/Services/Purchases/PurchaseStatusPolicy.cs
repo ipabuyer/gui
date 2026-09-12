@@ -7,19 +7,15 @@ namespace IPAbuyer.Core.Services.Purchases
     {
         private static readonly ResourceLoader Loader = new();
         private static readonly string Purchased = L("Common/Status/Purchased");
-        private static readonly string Owned = L("Common/Status/Owned");
         private static readonly string CanPurchase = L("Common/Status/NotPurchased");
         private static readonly string PurchaseBlocked = L("Common/Status/PurchaseBlocked");
         private static readonly string Free = L("Common/Price/Free");
 
         public static string PurchasedStatus => Purchased;
-        public static string OwnedStatus => Owned;
         public static string CanPurchaseStatus => CanPurchase;
         public static string PurchaseBlockedStatus => PurchaseBlocked;
 
         public static bool IsPurchased(string? status) => Matches(status, Purchased);
-
-        public static bool IsOwned(string? status) => Matches(status, Owned);
 
         public static bool IsPurchaseBlocked(string? status) => Matches(status, PurchaseBlocked);
 
@@ -33,12 +29,8 @@ namespace IPAbuyer.Core.Services.Purchases
 
         public static string NormalizeStoredStatus(string? status)
         {
-            if (PurchaseRecordStatus.TryNormalize(status, out string normalizedStatus))
-            {
-                return normalizedStatus == PurchaseRecordStatus.Purchased ? Purchased : Owned;
-            }
-
-            return CanPurchase;
+            // owned 已并入 purchased（数据库 v2 迁移 + 归一化兜底）。
+            return PurchaseRecordStatus.TryNormalize(status, out _) ? Purchased : CanPurchase;
         }
 
         public static string ResolveSearchStatus(string bundleId, string price, IReadOnlyDictionary<string, string> purchasedApps)

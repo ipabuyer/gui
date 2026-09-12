@@ -1,5 +1,6 @@
 using IPAbuyer.Core.Configuration;
 using Microsoft.Windows.ApplicationModel.Resources;
+using System.Globalization;
 
 namespace IPAbuyer.Core.Integration.Ipatool
 {
@@ -52,6 +53,16 @@ namespace IPAbuyer.Core.Integration.Ipatool
             {
                 "download", "--output", outputDirectory, "--bundle-identifier", bundleId, "--purchase",
                 "--keychain-passphrase", passphrase, "--format", "json", "--non-interactive", "--verbose"
+            };
+        }
+
+        internal static IReadOnlyList<string> BuildListPurchasesArguments(int maxResults, int page)
+        {
+            return new[]
+            {
+                "list-purchases",
+                "--max-results", maxResults.ToString(CultureInfo.InvariantCulture),
+                "--page", page.ToString(CultureInfo.InvariantCulture)
             };
         }
 

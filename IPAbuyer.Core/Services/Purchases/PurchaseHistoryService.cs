@@ -1,4 +1,5 @@
 using IPAbuyer.Core.Data.PurchasedApps;
+using System.Globalization;
 
 namespace IPAbuyer.Core.Services.Purchases
 {
@@ -34,6 +35,21 @@ namespace IPAbuyer.Core.Services.Purchases
         public static int GetTotalCount()
         {
             return PurchasedAppDb.GetTotalCount();
+        }
+
+        public static DateTime? GetLastSuccessfulSyncUtc(string account)
+        {
+            return PurchasedAppDb.GetLastSuccessfulSyncUtc(account);
+        }
+
+        public static void RecordSyncAttempt(string account, bool succeeded)
+        {
+            PurchasedAppDb.RecordSyncAttempt(account, succeeded, DateTime.UtcNow);
+        }
+
+        public static int BulkMarkPurchased(IEnumerable<string> appIds, string account)
+        {
+            return PurchasedAppDb.BulkMarkPurchased(appIds, account);
         }
     }
 }
